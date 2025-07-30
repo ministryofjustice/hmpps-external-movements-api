@@ -2,7 +2,7 @@ generic-service:
   nameOverride: hmpps-external-movements-api
   productId: "DPS125" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
 
-  replicaCount: 4
+  replicaCount: 2
 
   image:
     repository: ghcr.io/ministryofjustice/hmpps-external-movements-api
@@ -13,6 +13,9 @@ generic-service:
     enabled: true
     host: app-hostname.local # override per environment
     tlsSecretName: hmpps-external-movements-api-cert
+
+  # Used to access resources like S3 buckets, SQS queues and SNS topics
+  serviceAccountName: hmpps-external-movements-api
 
   # Environment variables to load into the deployment
   env:
@@ -28,6 +31,20 @@ generic-service:
   namespace_secrets:
     hmpps-external-movements-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
+    hmpps-external-movements-api:
+      SYSTEM_CLIENT_ID: "SYSTEM_CLIENT_ID"
+      SYSTEM_CLIENT_SECRET: "SYSTEM_CLIENT_SECRET"
+    rds-postgresql-instance-output:
+      DB_SERVER: "rds_instance_address"
+      DB_NAME: "database_name"
+      DB_USER: "database_username"
+      DB_PASS: "database_password"
+    hmpps-domain-events-topic:
+      HMPPS_SQS_TOPICS_HMPPSEVENTTOPIC_ARN: "topic_arn"
+    domain-events-queue-secret:
+      HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_QUEUE_NAME: "queue_name"
+    domain-events-dlq-secret:
+      HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_DLQ_NAME: "queue_name"
 
   allowlist:
     groups:
