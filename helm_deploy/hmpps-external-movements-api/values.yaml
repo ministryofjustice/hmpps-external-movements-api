@@ -3,6 +3,13 @@ generic-service:
   productId: "DPS125" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
 
   replicaCount: 2
+  resources:
+    requests:
+      cpu: 128m
+      memory: 1024Mi
+    limits:
+      cpu: 2048m
+      memory: 1280Mi
 
   image:
     repository: ghcr.io/ministryofjustice/hmpps-external-movements-api
@@ -13,27 +20,29 @@ generic-service:
     enabled: true
     host: app-hostname.local # override per environment
     tlsSecretName: hmpps-external-movements-api-cert
+    annotations:
+      nginx.ingress.kubernetes.io/server-snippet: |
+        server_tokens off;
+        location /queue-admin/retry-all-dlqs {
+          deny all;
+          return 401;
+        }
 
   # Used to access resources like S3 buckets, SQS queues and SNS topics
   serviceAccountName: hmpps-external-movements-api
 
   # Environment variables to load into the deployment
   env:
-    JAVA_OPTS: "-Xmx512m"
+    JDK_JAVA_OPTIONS: "-Xmx512m -XX:+UseG1GC"
     SERVER_PORT: "8080"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
-
-  # Pre-existing kubernetes secrets to load as environment variables in the deployment.
-  # namespace_secrets:
-  #   [name of kubernetes secret]:
-  #     [name of environment variable as seen by app]: [key of kubernetes secret to load]
 
   namespace_secrets:
     hmpps-external-movements-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
     hmpps-external-movements-api:
-      SYSTEM_CLIENT_ID: "SYSTEM_CLIENT_ID"
-      SYSTEM_CLIENT_SECRET: "SYSTEM_CLIENT_SECRET"
+      CLIENT_ID: "SYSTEM_CLIENT_ID"
+      CLIENT_SECRET: "SYSTEM_CLIENT_SECRET"
     rds-postgresql-instance-output:
       DB_SERVER: "rds_instance_address"
       DB_NAME: "database_name"
@@ -48,7 +57,12 @@ generic-service:
 
   allowlist:
     groups:
-      - internal
+      - digital_staff_and_mojo
+      - moj_cloud_platform
+
+  retryDlqCronjob:
+    enabled: true
+    retryDlqSchedule: "0/30 * * * *"
 
 generic-prometheus-alerts:
   targetApplication: hmpps-external-movements-api

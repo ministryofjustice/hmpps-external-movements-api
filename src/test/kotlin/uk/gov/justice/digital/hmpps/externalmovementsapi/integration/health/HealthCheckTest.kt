@@ -1,9 +1,10 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.health
 
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
 
-class HealthCheckTest : IntegrationTestBase() {
+class HealthCheckTest : IntegrationTest() {
 
   @Test
   fun `Health page reports ok`() {
@@ -64,4 +65,8 @@ class HealthCheckTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("status").isEqualTo("UP")
   }
+}
+
+private fun stubPingWithResponse(status: Int) {
+  hmppsAuth.health(status)
 }
