@@ -80,7 +80,7 @@ with reasons as (
                   ('R19', 'Unpaid work - Manufacturing', 1280, true),
                   ('R18', 'Unpaid work - Retail and wholesale', 1290, true),
                   ('R21', 'Unpaid work - Transportation and storage', 1300, true),
-                  ('R25', 'Unpaid Work - Other', 1310, true),
+                  ('R25', 'Unpaid work - Other', 1310, true),
                   ('LTX', 'Court, legal, police or prison transfer', 1320, true),
                   ('C3', 'Death or funeral', 1330, true),
                   ('C6', 'Inpatient medical or dental appointment', 1340, true),
