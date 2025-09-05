@@ -24,7 +24,7 @@ class ExternalMovementsApiExceptionHandler {
         userMessage = "Validation failure: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.info("Validation exception: {}", e.message) }
+    )
 
   @ExceptionHandler(NoResourceFoundException::class)
   fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -35,7 +35,7 @@ class ExternalMovementsApiExceptionHandler {
         userMessage = "No resource found failure: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.info("No resource found exception: {}", e.message) }
+    )
 
   @ExceptionHandler(AccessDeniedException::class)
   fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -46,7 +46,7 @@ class ExternalMovementsApiExceptionHandler {
         userMessage = "Forbidden: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.debug("Forbidden (403) returned: {}", e.message) }
+    )
 
   @ExceptionHandler(Exception::class)
   fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity

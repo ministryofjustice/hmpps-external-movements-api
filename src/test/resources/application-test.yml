@@ -7,3 +7,26 @@ management.endpoint:
 
 hmpps-auth:
   url: "http://localhost:8090/auth"
+manage-users:
+  url: "http://localhost:9000"
+
+spring:
+  datasource:
+    url: 'jdbc:postgresql://localhost:5432/movements'
+    username: external
+    password: movements
+  flyway:
+    locations: classpath:db/schema,classpath:db/data
+  jpa.show-sql: true
+
+hmpps.sqs:
+  provider: localstack
+  queues:
+    hmppseventtestqueue:
+      queueName: ${random.uuid}
+      dlqName: ${random.uuid}
+      subscribeTopicId: hmppseventtopic
+      subscribeFilter: '{"eventType":["external-movements.person.arrived"]}'
+  topics:
+    hmppseventtopic:
+      arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
