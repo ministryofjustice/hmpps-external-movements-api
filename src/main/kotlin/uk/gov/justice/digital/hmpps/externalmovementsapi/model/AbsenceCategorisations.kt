@@ -1,11 +1,11 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
 
-data class AbsenceCategorisations(val content: List<AbsenceCategorisation>)
+data class AbsenceCategorisations(val domain: CodedDescription, val items: List<AbsenceCategorisation>)
 data class AbsenceCategorisation(
   val code: String,
   val description: String,
   val hintText: String?,
-  val nextDomain: ReferenceDataDomain?,
+  val nextDomain: ReferenceDataDomain.Code?,
 )

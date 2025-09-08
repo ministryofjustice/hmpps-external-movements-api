@@ -47,7 +47,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${hmpps-auth.url}/.well-known/jwks.json
+          jwk-set-uri: ${integration.hmpps-auth.url}/.well-known/jwks.json
 
       client:
         registration:
@@ -59,7 +59,7 @@ spring:
             scope: read
         provider:
           hmpps-auth:
-            token-uri: ${hmpps-auth.url}/oauth/token
+            token-uri: ${integration.hmpps-auth.url}/oauth/token
 
   http:
     codecs:
