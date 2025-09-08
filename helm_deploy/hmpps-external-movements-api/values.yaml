@@ -35,6 +35,7 @@ generic-service:
   env:
     JDK_JAVA_OPTIONS: "-Xmx512m -XX:+UseG1GC"
     SERVER_PORT: "8080"
+    DB_SSL_MODE: "verify-full"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
 
   namespace_secrets:
