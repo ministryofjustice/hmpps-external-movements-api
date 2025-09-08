@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 
 @Immutable
 @Entity
@@ -25,33 +26,32 @@ class ReferenceData(
 ) : ReferenceDataLookup by key
 
 interface ReferenceDataLookup {
-  val domain: ReferenceDataDomain
+  val domain: ReferenceDataDomain.Type
   val code: String
 }
 
 @Embeddable
 data class ReferenceDataKey(
   @Enumerated(EnumType.STRING)
-  override val domain: ReferenceDataDomain,
+  override val domain: ReferenceDataDomain.Type,
   override val code: String,
 ) : ReferenceDataLookup
 
-enum class ReferenceDataDomain {
-  ABSENCE_TYPE,
-  ABSENCE_SUB_TYPE,
-  ABSENCE_REASON_CATEGORY,
-  ABSENCE_REASON,
-  ;
-
-  companion object {
-    fun of(domain: String): ReferenceDataDomain = entries.firstOrNull {
-      it.name.lowercase().replace("_", "") == domain.lowercase().replace("[_|-]".toRegex(), "")
-    } ?: throw IllegalArgumentException("Reference data domain not recognised $domain")
-  }
-}
-
-infix fun ReferenceDataDomain.of(code: String) = ReferenceDataKey(this, code)
+infix fun ReferenceDataDomain.Type.of(code: String) = ReferenceDataKey(this, code)
 
 interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
-  fun findByKeyDomain(domain: ReferenceDataDomain): List<ReferenceData>
+  @Query(
+    """
+    select rd as referenceData, rddl.domain as nextDomain
+    from ReferenceData rd
+    left join fetch ReferenceDataDomainLink rddl on rd.id = rddl.id
+    where rd.key.domain = :domain and rd.active = true
+    """,
+  )
+  fun findWithDomainLink(domain: ReferenceDataDomain.Type): List<RdWithDomainLink>
+}
+
+interface RdWithDomainLink {
+  val referenceData: ReferenceData
+  val nextDomain: ReferenceDataDomain.Type?
 }

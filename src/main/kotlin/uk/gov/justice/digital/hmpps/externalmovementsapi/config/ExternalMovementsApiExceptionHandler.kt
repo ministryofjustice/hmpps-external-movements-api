@@ -11,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
@@ -33,6 +34,17 @@ class ExternalMovementsApiExceptionHandler {
       ErrorResponse(
         status = NOT_FOUND,
         userMessage = "No resource found failure: ${e.message}",
+        developerMessage = e.message,
+      ),
+    )
+
+  @ExceptionHandler(NotFoundException::class)
+  fun handleNoResourceFoundException(e: NotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(NOT_FOUND)
+    .body(
+      ErrorResponse(
+        status = NOT_FOUND,
+        userMessage = e.message,
         developerMessage = e.message,
       ),
     )

@@ -1,3 +1,10 @@
+insert into reference_data_domain(code, description)
+values ('ABSENCE_TYPE', 'Absence type'),
+       ('ABSENCE_SUB_TYPE', 'Absence sub type'),
+       ('ABSENCE_REASON_CATEGORY', 'Absence reason category'),
+       ('ABSENCE_REASON', 'Absence reason')
+on conflict do nothing ;
+
 with types as (
     (select *
      from (values ('SR', 'Standard ROTL (Release on Temporary Licence)', 10, true),
@@ -13,6 +20,19 @@ insert
 into reference_data(domain, code, description, sequence_number, active)
 select 'ABSENCE_TYPE', code, description, sequence_number, active
 from types
+on conflict do nothing;
+
+with links as (select id,
+                      case
+                          when code in ('SR', 'RR', 'YT') then 'ABSENCE_SUB_TYPE'
+                          when code = 'SE' then 'ABSENCE_REASON' end as domain
+               from reference_data
+               where domain = 'ABSENCE_TYPE')
+insert
+into reference_data_domain_link(id, domain)
+select id, domain
+from links
+where domain is not null
 on conflict do nothing;
 
 with sub_types as (
@@ -41,6 +61,20 @@ select 'ABSENCE_SUB_TYPE', code, description, sequence_number, active, hint_text
 from sub_types
 on conflict do nothing;
 
+with links as (select id,
+                      case
+                          when code in ('RDR') then 'ABSENCE_REASON_CATEGORY'
+                          when code in ('SPL', 'YTRA', 'YTRC', 'YTRE', 'YTRF') then 'ABSENCE_REASON' end as domain
+               from reference_data
+               where domain = 'ABSENCE_SUB_TYPE')
+insert
+into reference_data_domain_link(id, domain)
+select id, domain
+from links
+where domain is not null
+on conflict do nothing;
+
+
 with categories as (
     (select *
      from (values ('FBR', 'Accommodation-related', 1110, true),
@@ -56,6 +90,18 @@ insert
 into reference_data(domain, code, description, sequence_number, active)
 select 'ABSENCE_REASON_CATEGORY', code, description, sequence_number, active
 from categories
+on conflict do nothing;
+
+with links as (select id,
+                      case
+                          when code in ('PW', 'UPW') then 'ABSENCE_REASON' end as domain
+               from reference_data
+               where domain = 'ABSENCE_REASON_CATEGORY')
+insert
+into reference_data_domain_link(id, domain)
+select id, domain
+from links
+where domain is not null
 on conflict do nothing;
 
 with reasons as (
@@ -159,3 +205,4 @@ into reference_data(domain, code, description, sequence_number, active)
 select 'ABSENCE_REASON', code, description, sequence_number, active
 from reasons
 on conflict do nothing;
+

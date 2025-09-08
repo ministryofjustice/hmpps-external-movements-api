@@ -5,10 +5,11 @@ management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
 
-hmpps-auth:
-  url: "http://localhost:8090/auth"
-manage-users:
-  url: "http://localhost:9000"
+integration:
+  hmpps-auth:
+    url: "http://localhost:8090/auth"
+  prisoner-search:
+    url: "http://localhost:9000"
 
 spring:
   datasource:

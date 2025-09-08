@@ -8,8 +8,11 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.ReferenceDataDomain.Type.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.ReferenceDataDomain.Type.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AbsenceCategorisations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CodedDescription
 
 class AbsenceCategorisationIntegrationTest : IntegrationTest() {
   @Test
@@ -24,10 +27,12 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
 
   @Test
   fun `403 forbidden without correct role`() {
-    getReferenceDataSpec(
-      "any-domain",
-      "ROLE_ANY__OTHER_RW",
-    ).expectStatus().isForbidden
+    getReferenceDataSpec("any-domain", "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+  }
+
+  @Test
+  fun `404 not found if invalid domain`() {
+    getReferenceDataSpec("any-domain").expectStatus().isNotFound
   }
 
   @Test
@@ -40,12 +45,13 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
         .returnResult()
         .responseBody!!
 
-    assertThat(rd.content).containsExactly(
-      AbsenceCategorisation("SR", "Standard ROTL (Release on Temporary Licence)", null, null),
-      AbsenceCategorisation("RR", "Restricted ROTL (Release on Temporary Licence)", null, null),
+    assertThat(rd.domain).isEqualTo(CodedDescription("ABSENCE_TYPE", "Absence type"))
+    assertThat(rd.items).containsExactly(
+      AbsenceCategorisation("SR", "Standard ROTL (Release on Temporary Licence)", null, ABSENCE_SUB_TYPE),
+      AbsenceCategorisation("RR", "Restricted ROTL (Release on Temporary Licence)", null, ABSENCE_SUB_TYPE),
       AbsenceCategorisation("PP", "Police production", null, null),
-      AbsenceCategorisation("SE", "Security escort", null, null),
-      AbsenceCategorisation("YT", "Youth temporary release", null, null),
+      AbsenceCategorisation("SE", "Security escort", null, ABSENCE_REASON),
+      AbsenceCategorisation("YT", "Youth temporary release", null, ABSENCE_SUB_TYPE),
     )
   }
 
@@ -60,7 +66,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
         .returnResult()
         .responseBody!!
 
-    assertThat(rd.content).isNotEmpty
+    assertThat(rd.items).isNotEmpty
   }
 
   private fun getReferenceDataSpec(
@@ -76,7 +82,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
     const val REFERENCE_DATA_URL = "/absence-categorisation/{domain}"
 
     @JvmStatic
-    fun referenceDataDomains() = ReferenceDataDomain.entries.map { rdd ->
+    fun referenceDataDomains() = ReferenceDataDomain.Type.entries.map { rdd ->
       Arguments.of(rdd.name)
       Arguments.of(rdd.name.lowercase())
       Arguments.of(rdd.name.lowercase().replace("_", "-"))
