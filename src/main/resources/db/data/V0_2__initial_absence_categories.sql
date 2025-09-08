@@ -377,3 +377,78 @@ select rd1_id, rd2_id, row_num
 from links
 on conflict do nothing;
 
+with links as (select rd1.id rd1_id,
+                      rd2.id rd2_id,
+                      10 as  row_num
+               from reference_data rd1
+                        cross join reference_data rd2
+               where rd1.domain = 'ABSENCE_TYPE'
+                 and rd1.code in ('PP')
+                 and rd2.domain = 'ABSENCE_SUB_TYPE'
+                 and rd2.code in ('PP'))
+insert
+into reference_data_link(reference_data_id_1, reference_data_id_2, sequence_number)
+select rd1_id, rd2_id, row_num
+from links
+on conflict do nothing;
+
+with links as (select rd1.id rd1_id,
+                      rd2.id rd2_id,
+                      10 as  row_num
+               from reference_data rd1
+                        cross join reference_data rd2
+               where rd1.domain = 'ABSENCE_SUB_TYPE'
+                 and rd1.code in ('PP')
+                 and rd2.domain = 'ABSENCE_REASON'
+                 and rd2.code in ('PC'))
+insert
+into reference_data_link(reference_data_id_1, reference_data_id_2, sequence_number)
+select rd1_id, rd2_id, row_num
+from links
+on conflict do nothing;
+
+with links as (select rd1.id rd1_id,
+                      rd2.id rd2_id,
+                      10 as  row_num
+               from reference_data rd1
+                        cross join reference_data rd2
+               where rd1.domain = 'ABSENCE_SUB_TYPE'
+                 and rd1.code in ('CRL')
+                 and rd2.domain = 'ABSENCE_REASON'
+                 and rd2.code in ('3'))
+insert
+into reference_data_link(reference_data_id_1, reference_data_id_2, sequence_number)
+select rd1_id, rd2_id, row_num
+from links
+on conflict do nothing;
+
+with links as (select rd1.id rd1_id,
+                      rd2.id rd2_id,
+                      10 as  row_num
+               from reference_data rd1
+                        cross join reference_data rd2
+               where rd1.domain = 'ABSENCE_SUB_TYPE'
+                 and rd1.code in ('ROR')
+                 and rd2.domain = 'ABSENCE_REASON'
+                 and rd2.code in ('RO'))
+insert
+into reference_data_link(reference_data_id_1, reference_data_id_2, sequence_number)
+select rd1_id, rd2_id, row_num
+from links
+on conflict do nothing;
+
+
+with links as (select rd1.id rd1_id,
+                      rd2.id rd2_id,
+                      10 as  row_num
+               from reference_data rd1
+                        cross join reference_data rd2
+               where rd1.domain = 'ABSENCE_SUB_TYPE'
+                 and rd1.code in ('ROR')
+                 and rd2.domain = 'ABSENCE_REASON'
+                 and rd2.code in ('RO'))
+insert
+into reference_data_link(reference_data_id_1, reference_data_id_2, sequence_number)
+select rd1_id, rd2_id, row_num
+from links
+on conflict do nothing;
