@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.entity
+package uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata
 
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -13,7 +13,7 @@ import org.hibernate.annotations.Immutable
 class ReferenceDataDomainLink(
 
   @Enumerated(EnumType.STRING)
-  val domain: ReferenceDataDomain.Type,
+  val domain: ReferenceDataDomain.Code,
 
   @Id
   val id: Long,
