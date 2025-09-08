@@ -78,7 +78,7 @@ on conflict do nothing;
 with categories as (
     (select *
      from (values ('FB', 'Accommodation-related', 1110, true),
-                  ('ET', 'Education or training ', 1120, true),
+                  ('ET', 'Education or training', 1120, true),
                   ('R3', 'Maintaining family ties', 1130, true),
                   ('PW', 'Paid work', 1140, true),
                   ('PAP', 'Prisoner apprenticeships pathway', 1150, true),
@@ -107,7 +107,7 @@ on conflict do nothing;
 with reasons as (
     (select *
      from (values ('FB', 'Accommodation-related', 1110, true),
-                  ('ET', 'Education or training ', 1120, true),
+                  ('ET', 'Education or training', 1120, true),
                   ('R3', 'Maintaining family ties', 1130, true),
                   ('PAP', 'Prisoner apprenticeships pathway', 1140, true),
                   ('YOTR', 'Other temporary release linked to sentence or resettlement plan', 1150, true),
@@ -132,7 +132,7 @@ with reasons as (
                   ('C6', 'Inpatient medical or dental appointment', 1340, true),
                   ('C5', 'Outpatient medical or dental appointment', 1350, true),
                   ('C7', 'Visit a dying relative', 1360, true),
-                  ('C4', 'Wedding or civil ceremony ', 1370, true),
+                  ('C4', 'Wedding or civil ceremony', 1370, true),
                   ('4', 'Other compassionate reason', 1380, true),
                   ('SE', 'Other security escort', 1390, true),
                   ('YRDR', 'RDR (Resettlement Day Release)', 1400, true),
