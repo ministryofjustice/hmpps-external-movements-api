@@ -147,7 +147,6 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
         AbsenceCategorisations(
           CodedDescription("ABSENCE_REASON", "Absence reason"),
           listOf(
-            AbsenceCategorisation("LTX", "Court, legal, police or prison transfer", null, null),
             AbsenceCategorisation("C3", "Death or funeral", null, null),
             AbsenceCategorisation("C6", "Inpatient medical or dental appointment", null, null),
             AbsenceCategorisation("C5", "Outpatient medical or dental appointment", null, null),
@@ -274,7 +273,6 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
             AbsenceCategorisation("C6", "Inpatient medical or dental appointment", null, null),
             AbsenceCategorisation("C5", "Outpatient medical or dental appointment", null, null),
             AbsenceCategorisation("C7", "Visit a dying relative", null, null),
-            AbsenceCategorisation("C4", "Wedding or civil ceremony", null, null),
             AbsenceCategorisation("4", "Other compassionate reason", null, null),
           ),
         ),
