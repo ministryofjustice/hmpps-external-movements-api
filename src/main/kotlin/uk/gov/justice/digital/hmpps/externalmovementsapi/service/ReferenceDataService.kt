@@ -16,7 +16,7 @@ class ReferenceDataService(
 ) {
   fun findByDomain(code: ReferenceDataDomain.Code): ReferenceDataResponse {
     val domain = domainRepository.getDomain(code)
-    val items = referenceDataRepository.findByKeyDomainAndActiveTrue(code)
+    val items = referenceDataRepository.findByKeyDomainAndActiveTrue(code).sortedBy { it.sequenceNumber }
     return ReferenceDataResponse(domain.asCodedDescription(), items.map(ReferenceData::asCodedDescription))
   }
 }
