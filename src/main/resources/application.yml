@@ -21,7 +21,7 @@ spring:
     enabled: true
     baseline-on-migrate: true
     validate-on-migrate: false
-    locations: classpath:db/schema
+    locations: classpath:db/schema,classpath:db/data
 
   jackson:
     date-format: "yyyy-MM-dd HH:mm:ss"
