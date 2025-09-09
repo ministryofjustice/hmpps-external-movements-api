@@ -8,9 +8,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.getByDomainAndCodeWithDomainLink
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.getDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AbsenceCategorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AbsenceCategorisations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 
 @Service
 class AbsenceCategorisationRetriever(

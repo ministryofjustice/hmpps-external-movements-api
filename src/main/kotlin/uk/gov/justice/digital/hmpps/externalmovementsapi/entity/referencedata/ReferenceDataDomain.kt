@@ -24,6 +24,10 @@ class ReferenceDataDomain(
     ABSENCE_SUB_TYPE,
     ABSENCE_REASON_CATEGORY,
     ABSENCE_REASON,
+
+    ACCOMPANIED_BY,
+    TRANSPORT,
+    TAP_STATUS,
     ;
 
     companion object {
