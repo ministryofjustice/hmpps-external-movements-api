@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.http.HttpHeader
@@ -58,17 +57,6 @@ class HmppsAuthMockServer : WireMockServer(WIREMOCK_PORT) {
               """.trimIndent(),
             ),
         ),
-    )
-  }
-
-  fun health(status: Int) {
-    stubFor(
-      get("/auth/health/ping").willReturn(
-        aResponse()
-          .withHeader("Content-Type", "application/json")
-          .withBody(if (status == 200) """{"status":"UP"}""" else """{"status":"DOWN"}""")
-          .withStatus(status),
-      ),
     )
   }
 }
