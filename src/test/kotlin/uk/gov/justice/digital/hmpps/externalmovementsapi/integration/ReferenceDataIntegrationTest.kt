@@ -10,7 +10,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.ReferenceDataResponse
 
 class ReferenceDataIntegrationTest : IntegrationTest() {
   @Test
@@ -33,6 +34,25 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
     getReferenceDataSpec("any-domain").expectStatus().isNotFound
   }
 
+  @Test
+  fun `sorts by sequence number`() {
+    val rd =
+      getReferenceDataSpec("tap-status")
+        .expectStatus()
+        .isOk
+        .expectBody<ReferenceDataResponse>()
+        .returnResult()
+        .responseBody!!
+
+    assertThat(rd.items).containsExactly(
+      CodedDescription("PEN", "Pending"),
+      CodedDescription("APP-SCH", "Approved (Scheduled)"),
+      CodedDescription("APP-UNSCH", "Approved (Unscheduled)"),
+      CodedDescription("CANC", "Cancelled"),
+      CodedDescription("DEN", "Denied"),
+    )
+  }
+
   @ParameterizedTest
   @MethodSource("referenceDataDomains")
   fun `200 ok - can retrieve reference data domains with correct role`(domain: String) {
@@ -40,7 +60,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
       getReferenceDataSpec(domain)
         .expectStatus()
         .isOk
-        .expectBody<AbsenceCategorisations>()
+        .expectBody<ReferenceDataResponse>()
         .returnResult()
         .responseBody!!
 
