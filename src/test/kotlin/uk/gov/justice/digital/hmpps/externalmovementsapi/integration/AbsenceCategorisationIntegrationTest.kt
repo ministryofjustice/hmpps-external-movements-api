@@ -7,13 +7,13 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AbsenceCategorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AbsenceCategorisations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 
 class AbsenceCategorisationIntegrationTest : IntegrationTest() {
   @Test
@@ -53,7 +53,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
 
   @Test
   fun `404 links not found if invalid domain`() {
-    getDomainSpec("any-domain").expectStatus().isNotFound
+    getLinksSpec("any-domain", "anycode").expectStatus().isNotFound
   }
 
   @Test
@@ -133,7 +133,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
     const val LINKED_RD_URL = "$REFERENCE_DATA_URL/{code}"
 
     @JvmStatic
-    fun referenceDataDomains() = ReferenceDataDomain.Code.entries.map { rdd ->
+    fun referenceDataDomains() = listOf(ABSENCE_TYPE, ABSENCE_SUB_TYPE, ABSENCE_REASON_CATEGORY, ABSENCE_REASON).map { rdd ->
       Arguments.of(rdd.name)
       Arguments.of(rdd.name.lowercase())
       Arguments.of(rdd.name.lowercase().replace("_", "-"))

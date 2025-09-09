@@ -11,6 +11,7 @@ import org.hibernate.annotations.Immutable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 
 @Immutable
 @Entity
@@ -60,7 +61,11 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
     """,
   )
   fun findByCodeWithDomainLink(domain: ReferenceDataDomain.Code, code: String): RdWithDomainLink?
+
+  fun findByKeyDomainAndActiveTrue(domain: ReferenceDataDomain.Code): List<ReferenceData>
 }
+
+fun ReferenceData.asCodedDescription() = CodedDescription(code, description)
 
 interface RdWithDomainLink {
   val referenceData: ReferenceData
