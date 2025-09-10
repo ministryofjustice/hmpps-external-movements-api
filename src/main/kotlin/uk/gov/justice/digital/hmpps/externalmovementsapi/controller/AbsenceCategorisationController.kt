@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.controller
 
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,11 +18,42 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.AbsenceCategori
 class AbsenceCategorisationController(private val acRetriever: AbsenceCategorisationRetriever) {
   @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
   @GetMapping("/{domain}")
-  fun getDomain(@PathVariable domain: String): AbsenceCategorisations = acRetriever.findByDomain(ReferenceDataDomain.Code.of(domain))
+  fun getDomain(
+    @Parameter(
+      description = "The reference data domain required. This is case insensitive.",
+      schema =
+      Schema(
+        type = "string",
+        allowableValues = [
+          "absence-reason",
+          "absence-reason-category",
+          "absence-sub-type",
+          "absence-type",
+        ],
+      ),
+    )
+    @PathVariable domain: String,
+  ): AbsenceCategorisations = acRetriever.findByDomain(ReferenceDataDomain.Code.of(domain))
 
   @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
   @GetMapping("/{domain}/{code}")
-  fun getOptions(@PathVariable domain: String, @PathVariable code: String): ResponseEntity<AbsenceCategorisations> = acRetriever.findOptions(ReferenceDataDomain.Code.of(domain), code)?.let {
+  fun getOptions(
+    @Parameter(
+      description = "The reference data domain required. This is case insensitive.",
+      schema =
+      Schema(
+        type = "string",
+        allowableValues = [
+          "absence-reason",
+          "absence-reason-category",
+          "absence-sub-type",
+          "absence-type",
+        ],
+      ),
+    )
+    @PathVariable domain: String,
+    @PathVariable code: String,
+  ): ResponseEntity<AbsenceCategorisations> = acRetriever.findOptions(ReferenceDataDomain.Code.of(domain), code)?.let {
     ResponseEntity.ok(it)
   } ?: ResponseEntity.noContent().build()
 }

@@ -11,9 +11,12 @@ configurations {
 }
 
 val hmppsKotlinVersion = "1.4.11"
+val hypersistenceVersion = "3.10.3"
 val sentryVersion = "8.17.0"
 val springDocVersion = "2.8.9"
+val sqsStarterVersion = "5.4.9"
 val testContainersVersion = "1.21.3"
+val uuidGeneratorVersion = "5.1.0"
 val wiremockVersion = "3.13.1"
 
 dependencies {
@@ -25,9 +28,10 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.hibernate.orm:hibernate-envers")
   implementation("org.springframework.data:spring-data-envers")
-  implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.10.3")
+  implementation("io.hypersistence:hypersistence-utils-hibernate-63:$hypersistenceVersion")
+  implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.9")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:$sqsStarterVersion")
 
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")

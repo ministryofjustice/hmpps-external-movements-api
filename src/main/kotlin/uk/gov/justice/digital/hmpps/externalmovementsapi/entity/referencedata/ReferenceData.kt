@@ -1,11 +1,16 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata
 
+import jakarta.persistence.Column
+import jakarta.persistence.DiscriminatorColumn
+import jakarta.persistence.DiscriminatorType
 import jakarta.persistence.Embeddable
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
+import jakarta.persistence.Inheritance
+import jakarta.persistence.InheritanceType
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.springframework.data.jpa.repository.JpaRepository
@@ -16,7 +21,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.Cod
 @Immutable
 @Entity
 @Table(name = "reference_data")
-class ReferenceData(
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "domain", discriminatorType = DiscriminatorType.STRING)
+open class ReferenceData(
   @Embedded
   val key: ReferenceDataKey,
   val description: String,
@@ -35,7 +42,9 @@ interface ReferenceDataLookup {
 @Embeddable
 data class ReferenceDataKey(
   @Enumerated(EnumType.STRING)
+  @Column(insertable = false, updatable = false)
   override val domain: ReferenceDataDomain.Code,
+  @Column(insertable = false, updatable = false)
   override val code: String,
 ) : ReferenceDataLookup
 
@@ -63,6 +72,8 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
   fun findByCodeWithDomainLink(domain: ReferenceDataDomain.Code, code: String): RdWithDomainLink?
 
   fun findByKeyDomainAndActiveTrue(domain: ReferenceDataDomain.Code): List<ReferenceData>
+
+  fun findByKeyIn(keys: Set<ReferenceDataKey>): List<ReferenceData>
 }
 
 fun ReferenceData.asCodedDescription() = CodedDescription(code, description)
