@@ -6,6 +6,7 @@ generic-service:
     host: external-movements-api.hmpps.service.justice.gov.uk
 
   env:
+    SENTRY_ENVIRONMENT: prod
     INTEGRATION_HMPPS_AUTH_URL: "https://sign-in.hmpps.service.justice.gov.uk/auth"
     INTEGRATION_PRISONER_SEARCH_URL: "https://prisoner-search.prison.service.justice.gov.uk"
 
