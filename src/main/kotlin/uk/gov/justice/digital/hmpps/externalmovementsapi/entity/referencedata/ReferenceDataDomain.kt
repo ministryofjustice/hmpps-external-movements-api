@@ -28,6 +28,7 @@ class ReferenceDataDomain(
     ACCOMPANIED_BY,
     TRANSPORT,
     TAP_STATUS,
+    LOCATION_TYPE,
     ;
 
     companion object {
