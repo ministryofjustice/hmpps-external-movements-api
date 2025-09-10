@@ -50,7 +50,7 @@ class SyncTapApplication(
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = TemporaryAbsenceSeries(
     personIdentifier = personIdentifier,
-    prisonCode = prisonId ?: "UNK",
+    prisonCode = requireNotNull(prisonId),
     absenceType = temporaryAbsenceType?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType },
     absenceSubType = temporaryAbsenceSubType?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
     absenceReason = rdProvider(ABSENCE_REASON, eventSubType) as AbsenceReason,

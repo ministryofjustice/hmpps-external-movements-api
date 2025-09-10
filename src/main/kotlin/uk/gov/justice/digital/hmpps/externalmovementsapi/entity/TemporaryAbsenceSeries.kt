@@ -162,7 +162,7 @@ class TemporaryAbsenceSeries(
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = apply {
     this.personIdentifier = personIdentifier
-    prisonCode = request.prisonId ?: "UNK"
+    prisonCode = requireNotNull(request.prisonId)
     absenceType = request.temporaryAbsenceType?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType }
     absenceSubType = request.temporaryAbsenceSubType?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
     absenceReason = rdProvider(ABSENCE_REASON, request.eventSubType) as AbsenceReason
