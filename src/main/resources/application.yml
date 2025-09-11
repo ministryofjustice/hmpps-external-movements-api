@@ -65,6 +65,9 @@ spring:
     codecs:
       max-in-memory-size: 10MB
 
+sentry:
+  exception-resolver-order: -2147483647
+
 springdoc:
   paths-to-exclude: "/queue-admin/**"
 
