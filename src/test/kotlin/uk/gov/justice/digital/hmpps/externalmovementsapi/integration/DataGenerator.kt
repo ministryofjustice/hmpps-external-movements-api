@@ -12,4 +12,5 @@ object DataGenerator {
 
   fun username(): String = (0..12).joinToString("") { letters.random().toString() }
   fun cellLocation(): String = "${letters.random()}-${(1..9).random()}-${(111..999).random()}"
+  fun prisonCode(): String = (1..3).map { letters.random() }.joinToString("")
 }

@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
@@ -12,14 +11,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceSeriesOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceSeriesOperations.Companion.temporaryAbsenceSeries
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TestConfig
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.NomisAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-@ContextConfiguration(classes = [TestConfig::class])
 class SynTapApplicationIntTest(
   @Autowired private val tasOperations: TempAbsenceSeriesOperations,
 ) : IntegrationTest(),

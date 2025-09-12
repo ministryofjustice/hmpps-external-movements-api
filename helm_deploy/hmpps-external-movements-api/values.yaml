@@ -37,10 +37,14 @@ generic-service:
     SERVER_PORT: "8080"
     DB_SSL_MODE: "verify-full"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
+    SENTRY_IGNORED_EXCEPTIONS_FOR_TYPE: "org.apache.catalina.connector.ClientAbortException,org.springframework.web.servlet.resource.NoResourceFoundException,org.springframework.web.context.request.async.AsyncRequestNotUsableException"
 
   namespace_secrets:
     hmpps-external-movements-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
+    hmpps-external-movements-api-sentry:
+      SENTRY_DSN: SENTRY_DSN
+      SENTRY_AUTH_TOKEN: SENTRY_AUTH_TOKEN
     hmpps-external-movements-api:
       CLIENT_ID: "SYSTEM_CLIENT_ID"
       CLIENT_SECRET: "SYSTEM_CLIENT_SECRET"

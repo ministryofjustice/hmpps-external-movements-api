@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
@@ -32,7 +33,10 @@ data class TapApplicationRequest(
   val temporaryAbsenceSubType: String?,
   val audit: NomisAudit,
 ) {
+  @JsonIgnore
   fun isRepeating() = applicationType == "REPEATING"
+
+  @JsonIgnore
   fun isAccompanied() = escortCode != "U"
 
   fun requiredReferenceData() = listOfNotNull(
