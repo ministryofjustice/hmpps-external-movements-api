@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.tapseries.CreateTapSeriesRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -95,8 +96,30 @@ interface TempAbsenceSeriesOperations {
     assertThat(accompaniedBy?.code).isEqualTo(request.escortCode)
     assertThat(transport?.code).isEqualTo(request.transportType)
     assertThat(notes).isEqualTo(request.comment)
-    assertThat(submittedAt.truncatedTo(SECONDS)).isEqualTo(LocalDateTime.of(request.applicationDate, LocalTime.MIN).truncatedTo(SECONDS))
+    assertThat(submittedAt.truncatedTo(SECONDS)).isEqualTo(
+      LocalDateTime.of(request.applicationDate, LocalTime.MIN).truncatedTo(SECONDS),
+    )
     assertThat(toAgencyCode).isEqualTo(request.toAgencyId)
+  }
+
+  fun TemporaryAbsenceSeries.verifyAgainst(personIdentifier: String, request: CreateTapSeriesRequest) {
+    assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+    assertThat(submittedAt.truncatedTo(SECONDS)).isEqualTo(submittedAt.truncatedTo(SECONDS))
+    assertThat(status.code).isEqualTo(request.statusCode)
+    assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
+    assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+    assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
+    assertThat(repeat).isEqualTo(request.repeat)
+    assertThat(releaseAt.truncatedTo(SECONDS)).isEqualTo(request.releaseAt.truncatedTo(SECONDS))
+    assertThat(returnBy.truncatedTo(SECONDS)).isEqualTo(request.returnBy.truncatedTo(SECONDS))
+    assertThat(accompanied).isEqualTo(request.accompanied)
+    assertThat(accompaniedBy?.code).isEqualTo(request.accompaniedByCode)
+    assertThat(transport?.code).isEqualTo(request.transportCode)
+    assertThat(notes).isEqualTo(request.notes)
+    assertThat(locationType.code).isEqualTo(request.locationTypeCode)
+    assertThat(locationId).isEqualTo(request.locationId)
+    assertThat(legacyId).isNull()
+    assertThat(toAgencyCode).isNull()
   }
 }
 

@@ -37,6 +37,10 @@ class PrisonerSearchClient(
       .block()!!
   }
 
+  fun getPrisoner(personIdentifier: String): Prisoner? = getPrisoners(setOf(personIdentifier)).firstOrNull {
+    it.prisonerNumber == personIdentifier
+  }
+
   fun getFilteredPrisoners(
     prisonCode: String,
     request: PersonSearchRequest,

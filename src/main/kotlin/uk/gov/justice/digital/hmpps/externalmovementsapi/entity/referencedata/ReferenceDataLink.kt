@@ -27,7 +27,8 @@ class ReferenceDataLink(
 interface ReferenceDataLinkRepository : JpaRepository<ReferenceDataLink, Long> {
   @Query(
     """
-    select rdl.rd2 as referenceData, dl.domain as nextDomain, rdl.sequenceNumber as sequenceNumber from ReferenceDataLink rdl
+    select rdl.rd2 as referenceData, dl.domain as nextDomain, rdl.sequenceNumber as sequenceNumber 
+    from ReferenceDataLink rdl
     left join ReferenceDataDomainLink dl on rdl.rd2.id = dl.id
     where rdl.rd1.id = :id and rdl.rd2.key.domain = :code
     """,
