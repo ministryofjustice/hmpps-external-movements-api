@@ -74,6 +74,15 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
   fun findByKeyDomainAndActiveTrue(domain: ReferenceDataDomain.Code): List<ReferenceData>
 
   fun findByKeyIn(keys: Set<ReferenceDataKey>): List<ReferenceData>
+
+  @Query(
+    """
+    select rdl.rd2 as referenceData from ReferenceDataLink rdl
+    left join ReferenceDataDomainLink dl on rdl.rd2.id = dl.id
+    where rdl.rd1.id = :id
+    """,
+  )
+  fun findLinkedItems(id: Long): List<ReferenceData>
 }
 
 fun ReferenceData.asCodedDescription() = CodedDescription(code, description)

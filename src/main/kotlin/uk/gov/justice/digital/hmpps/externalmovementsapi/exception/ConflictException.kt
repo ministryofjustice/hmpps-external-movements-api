@@ -1,3 +1,3 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.exception
 
-class NotFoundException(message: String) : RuntimeException(message)
+class ConflictException(message: String) : RuntimeException(message)

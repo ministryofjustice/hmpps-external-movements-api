@@ -7,6 +7,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.envers.Audited
@@ -156,6 +157,10 @@ class TemporaryAbsenceSeries(
   var toAgencyCode: String? = toAgencyCode
     private set
 
+  @Version
+  var version: Int? = null
+    private set
+
   fun update(
     personIdentifier: String,
     request: TapApplicationRequest,
@@ -186,4 +191,9 @@ class TemporaryAbsenceSeries(
 
 interface TemporaryAbsenceSeriesRepository : JpaRepository<TemporaryAbsenceSeries, UUID> {
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceSeries?
+  fun findByPersonIdentifierAndReleaseAtAndReturnBy(
+    personIdentifier: String,
+    releaseAt: LocalDateTime,
+    returnBy: LocalDateTime,
+  ): TemporaryAbsenceSeries?
 }

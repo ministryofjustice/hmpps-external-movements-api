@@ -102,6 +102,8 @@ management:
       cache:
         time-to-live: 2000ms
 
+service:
+  active-prisons:
 
 client:
   id: external-movements

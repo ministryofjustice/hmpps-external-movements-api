@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.config
 import jakarta.validation.ValidationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
@@ -11,11 +12,23 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
 class ExternalMovementsApiExceptionHandler {
+  @ExceptionHandler(ConflictException::class)
+  fun handleValidationException(e: ConflictException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(CONFLICT)
+    .body(
+      ErrorResponse(
+        status = CONFLICT,
+        userMessage = "Validation failure: ${e.message}",
+        developerMessage = e.message,
+      ),
+    )
+
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: ValidationException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_REQUEST)
