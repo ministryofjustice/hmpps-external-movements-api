@@ -59,7 +59,7 @@ class SyncTapApplicationIntTest(
     val prisonCode = "TAU"
     val legacyId = newId()
     val existing = givenTemporaryAbsenceSeries(temporaryAbsenceSeries(prisonCode, legacyId = legacyId))
-    val request = applicationRequest(id = existing.id, prisonId =  prisonCode, movementApplicationId = legacyId)
+    val request = applicationRequest(id = existing.id, prisonId = prisonCode, movementApplicationId = legacyId)
     val res = syncApplication(existing.personIdentifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
