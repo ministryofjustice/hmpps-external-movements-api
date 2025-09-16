@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -16,8 +17,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
-class SynTapApplicationIntTest(
+class SyncTapApplicationIntTest(
   @Autowired private val tasOperations: TempAbsenceSeriesOperations,
 ) : IntegrationTest(),
   TempAbsenceSeriesOperations by tasOperations {
@@ -34,13 +36,13 @@ class SynTapApplicationIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    syncApplication(personIdentifier(), applicationRequest("NE1"), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+    syncApplication(personIdentifier(), applicationRequest(prisonId = "NE1"), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
   }
 
   @Test
   fun `200 ok application created successfully`() {
     val pi = personIdentifier()
-    val request = applicationRequest("TAC")
+    val request = applicationRequest(prisonId = "TAC")
     val res = syncApplication(pi, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -57,7 +59,7 @@ class SynTapApplicationIntTest(
     val prisonCode = "TAU"
     val legacyId = newId()
     val existing = givenTemporaryAbsenceSeries(temporaryAbsenceSeries(prisonCode, legacyId = legacyId))
-    val request = applicationRequest(prisonCode, movementApplicationId = legacyId)
+    val request = applicationRequest(id = existing.id, prisonId = prisonCode, movementApplicationId = legacyId)
     val res = syncApplication(existing.personIdentifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -69,7 +71,24 @@ class SynTapApplicationIntTest(
     saved.verifyAgainst(existing.personIdentifier, request)
   }
 
+  @Test
+  fun `200 ok application created if series with the given uuid does not exist`() {
+    val pi = personIdentifier()
+    val uuid = newUuid()
+    val request = applicationRequest(id = uuid, prisonId = "TAZ")
+    val res = syncApplication(pi, request)
+      .expectStatus().isOk
+      .expectBody<SyncResponse>()
+      .returnResult()
+      .responseBody!!
+
+    assertThat(res.id).isEqualTo(uuid)
+    val saved = requireNotNull(findTemporaryAbsenceSeries(res.id))
+    saved.verifyAgainst(pi, request)
+  }
+
   private fun applicationRequest(
+    id: UUID? = null,
     prisonId: String?,
     eventSubType: String = "R15",
     temporaryAbsenceType: String? = "SR",
@@ -91,6 +110,7 @@ class SynTapApplicationIntTest(
     applicationType: String = "SINGLE",
     audit: NomisAudit = NomisAuditGenerator.generate(),
   ) = TapApplicationRequest(
+    id,
     movementApplicationId,
     eventSubType,
     applicationDate,

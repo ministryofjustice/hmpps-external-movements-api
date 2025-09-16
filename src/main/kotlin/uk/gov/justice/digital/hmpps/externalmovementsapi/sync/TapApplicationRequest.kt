@@ -10,8 +10,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
 data class TapApplicationRequest(
+  val id: UUID?,
   val movementApplicationId: Long,
   val eventSubType: String,
   val applicationDate: LocalDate,
