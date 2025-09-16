@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
 class SynTapApplicationIntTest(
   @Autowired private val tasOperations: TempAbsenceSeriesOperations,
@@ -57,7 +58,7 @@ class SynTapApplicationIntTest(
     val prisonCode = "TAU"
     val legacyId = newId()
     val existing = givenTemporaryAbsenceSeries(temporaryAbsenceSeries(prisonCode, legacyId = legacyId))
-    val request = applicationRequest(prisonCode, movementApplicationId = legacyId)
+    val request = applicationRequest(prisonCode, movementApplicationId = legacyId, id = existing.id)
     val res = syncApplication(existing.personIdentifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -90,7 +91,9 @@ class SynTapApplicationIntTest(
     contactPersonName: String? = null,
     applicationType: String = "SINGLE",
     audit: NomisAudit = NomisAuditGenerator.generate(),
+    id: UUID? = null,
   ) = TapApplicationRequest(
+    id,
     movementApplicationId,
     eventSubType,
     applicationDate,

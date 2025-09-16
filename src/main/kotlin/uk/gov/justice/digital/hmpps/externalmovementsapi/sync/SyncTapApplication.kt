@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceSeries
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceSeriesRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
@@ -39,9 +40,12 @@ class SyncTapApplication(
       referenceDataRepository.findByKeyIn(request.requiredReferenceData().map { it.first of it.second }.toSet())
         .associateBy { it.key }
     val rdProvider = { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
-    val application =
-      seriesRepository.findByLegacyId(request.movementApplicationId)?.update(personIdentifier, request, rdProvider)
-        ?: seriesRepository.save(request.asEntity(personIdentifier, rdProvider))
+    val existingSeries = request.id?.let { seriesRepository.findById(it) }
+    val application = if (existingSeries?.isPresent == true) {
+      existingSeries.get().update(personIdentifier, request, rdProvider)
+    } else {
+      seriesRepository.save(request.asEntity(personIdentifier, rdProvider))
+    }
     return SyncResponse(application.id)
   }
 
@@ -49,6 +53,7 @@ class SyncTapApplication(
     personIdentifier: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = TemporaryAbsenceSeries(
+    id = id ?: newUuid(),
     personIdentifier = personIdentifier,
     prisonCode = requireNotNull(prisonId),
     absenceType = temporaryAbsenceType?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType },
