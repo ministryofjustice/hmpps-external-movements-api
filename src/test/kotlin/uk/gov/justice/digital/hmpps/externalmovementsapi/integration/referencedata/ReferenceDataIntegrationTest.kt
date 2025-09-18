@@ -54,6 +54,23 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
     )
   }
 
+  @Test
+  fun `can get reference data with hint text`() {
+    val rd =
+      getReferenceDataSpec("location-type")
+        .expectStatus()
+        .isOk
+        .expectBody<ReferenceDataResponse>()
+        .returnResult()
+        .responseBody!!
+
+    assertThat(rd.items).containsExactly(
+      CodedDescription("CORP", "Business or community", "These are places of business or community settings such as workplaces, approved premises, hospitals and colleges. This does not have to be a specific addresses but can be a whole area (for example, York)."),
+      CodedDescription("OFF", "Personal", "These are locations personal to the prisoner. For example, their home address, relatives’ addresses or partner’s address."),
+      CodedDescription("AGY", "Official", "These are official locations associated with the justice system. For example, probation offices, police stations and courts."),
+    )
+  }
+
   @ParameterizedTest
   @MethodSource("referenceDataDomains")
   fun `200 ok - can retrieve reference data domains with correct role`(domain: String) {
