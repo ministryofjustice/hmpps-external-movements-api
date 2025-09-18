@@ -85,7 +85,7 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
   fun findLinkedItems(id: Long): List<ReferenceData>
 }
 
-fun ReferenceData.asCodedDescription() = CodedDescription(code, description)
+fun ReferenceData.asCodedDescription() = CodedDescription(code, description, hintText)
 
 interface RdWithDomainLink {
   val referenceData: ReferenceData
