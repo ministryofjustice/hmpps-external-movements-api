@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.0.1"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.0.2"
   kotlin("plugin.spring") version "2.2.20"
   kotlin("plugin.jpa") version "2.2.20"
 }
@@ -10,11 +10,11 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
-val hmppsKotlinVersion = "1.6.0"
+val hmppsKotlinVersion = "1.7.0"
 val hypersistenceVersion = "3.11.0"
 val sentryVersion = "8.21.1"
 val springDocVersion = "2.8.13"
-val sqsStarterVersion = "5.4.10"
+val sqsStarterVersion = "5.4.11"
 val testContainersVersion = "1.21.3"
 val uuidGeneratorVersion = "5.1.0"
 val wiremockVersion = "3.13.1"
