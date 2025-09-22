@@ -30,14 +30,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
+import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.util.UUID
 
 @Audited
 @Entity
-@Table(name = "temporary_absence_series")
-class TemporaryAbsenceSeries(
+@Table(name = "temporary_absence_authorisation")
+class TemporaryAbsenceAuthorisation(
   personIdentifier: String,
   prisonCode: String,
   absenceType: AbsenceType?,
@@ -53,9 +53,13 @@ class TemporaryAbsenceSeries(
   transport: Transport?,
   status: TapStatus,
   notes: String?,
+  applicationDate: LocalDate,
   submittedAt: LocalDateTime,
+  submittedBy: String,
+  approvedAt: LocalDateTime?,
+  approvedBy: String?,
   legacyId: Long?,
-  toAgencyCode: String?,
+  contact: String?,
   @Id
   @Column(name = "id", nullable = false)
   val id: UUID = newUuid(),
@@ -144,17 +148,34 @@ class TemporaryAbsenceSeries(
     private set
 
   @NotNull
+  @Column(name = "application_date", nullable = false)
+  var applicationDate: LocalDate = applicationDate
+    private set
+
+  @NotNull
   @Column(name = "submitted_at", nullable = false)
   var submittedAt: LocalDateTime = submittedAt
+    private set
+
+  @NotNull
+  @Column(name = "submitted_by", nullable = false)
+  var submittedBy: String = submittedBy
+    private set
+
+  @Column(name = "approved_at")
+  var approvedAt: LocalDateTime? = approvedAt
+    private set
+
+  @Column(name = "approved_by", nullable = false)
+  var approvedBy: String? = approvedBy
     private set
 
   @Column(name = "legacy_id")
   var legacyId: Long? = legacyId
     private set
 
-  @Size(max = 6)
-  @Column(name = "to_agency_code", length = 6)
-  var toAgencyCode: String? = toAgencyCode
+  @Column(name = "contact")
+  var contact: String? = contact
     private set
 
   @Version
@@ -183,17 +204,20 @@ class TemporaryAbsenceSeries(
     transport = request.transportType?.let { rdProvider(TRANSPORT, it) as Transport }
     status = rdProvider(TAP_STATUS, request.applicationStatus) as TapStatus
     notes = request.comment
-    submittedAt = LocalDateTime.of(request.applicationDate, LocalTime.MIN)
+    submittedAt = request.audit.createDatetime
+    submittedBy = request.audit.createUsername
     legacyId = request.movementApplicationId
-    toAgencyCode = request.toAgencyId
+    applicationDate = request.applicationDate
+    approvedAt = request.approvedAt
+    approvedBy = request.approvedBy
   }
 }
 
-interface TemporaryAbsenceSeriesRepository : JpaRepository<TemporaryAbsenceSeries, UUID> {
-  fun findByLegacyId(legacyId: Long): TemporaryAbsenceSeries?
+interface TemporaryAbsenceAuthorisationRepository : JpaRepository<TemporaryAbsenceAuthorisation, UUID> {
+  fun findByLegacyId(legacyId: Long): TemporaryAbsenceAuthorisation?
   fun findByPersonIdentifierAndReleaseAtAndReturnBy(
     personIdentifier: String,
     releaseAt: LocalDateTime,
     returnBy: LocalDateTime,
-  ): TemporaryAbsenceSeries?
+  ): TemporaryAbsenceAuthorisation?
 }

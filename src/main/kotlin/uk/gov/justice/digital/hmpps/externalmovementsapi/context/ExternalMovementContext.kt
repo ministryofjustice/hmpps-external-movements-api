@@ -14,10 +14,14 @@ data class ExternalMovementContext(
     const val SYSTEM_USERNAME = "SYS"
 
     fun get(): ExternalMovementContext = ExternalMovementContextHolder.getContext()
+    fun clear() {
+      ExternalMovementContextHolder.clearContext()
+    }
   }
 }
 
 fun ExternalMovementContext.set() = apply { ExternalMovementContextHolder.setContext(this) }
+fun ExternalMovementContext.clear() = apply { ExternalMovementContextHolder.clearContext() }
 
 @Component
 class ExternalMovementContextHolder {
@@ -28,6 +32,10 @@ class ExternalMovementContextHolder {
     internal fun getContext(): ExternalMovementContext = context.get()
     internal fun setContext(emc: ExternalMovementContext) {
       context.set(emc)
+    }
+
+    internal fun clearContext() {
+      context.remove()
     }
   }
 }

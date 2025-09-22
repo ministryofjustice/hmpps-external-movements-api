@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.tapseries.CreateTapSeriesRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateTapSeries
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateTapAuthorisation
 
 @RestController
-@RequestMapping("/temporary-absence-series")
-class TapSeriesController(private val create: CreateTapSeries) {
+@RequestMapping("/temporary-absence-authorisation")
+class TapAuthorisationController(private val create: CreateTapAuthorisation) {
   @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping("/{personIdentifier}")
-  fun createTapSeries(@PathVariable personIdentifier: String, @RequestBody request: CreateTapSeriesRequest) = create.tapSeries(personIdentifier, request)
+  fun createTapAuthorisation(@PathVariable personIdentifier: String, @RequestBody request: CreateTapAuthorisationRequest) = create.tapAuthorisation(personIdentifier, request)
 }

@@ -2,8 +2,8 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceSeries
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceSeriesRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceType
@@ -24,39 +24,39 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.tapseries.CreateTapSeriesRequest
 
 @Transactional
 @Service
-class CreateTapSeries(
+class CreateTapAuthorisation(
   private val prisonerSearch: PrisonerSearchClient,
   private val referenceDataRepository: ReferenceDataRepository,
-  private val seriesRepository: TemporaryAbsenceSeriesRepository,
+  private val tapAuthRepository: TemporaryAbsenceAuthorisationRepository,
 ) {
-  fun tapSeries(personIdentifier: String, request: CreateTapSeriesRequest): ReferenceId {
+  fun tapAuthorisation(personIdentifier: String, request: CreateTapAuthorisationRequest): ReferenceId {
     val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
     val rdMap =
       referenceDataRepository.findByKeyIn(request.requiredReferenceData().map { it.first of it.second }.toSet())
         .associateBy { it.key }
     val linkProvider = { id: Long -> referenceDataRepository.findLinkedItems(id).single() }
     val rdProvider = { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
-    val series = seriesRepository.findByPersonIdentifierAndReleaseAtAndReturnBy(
+    val authorisation = tapAuthRepository.findByPersonIdentifierAndReleaseAtAndReturnBy(
       personIdentifier,
       request.releaseAt,
       request.returnBy,
     )?.also {
-      throw ConflictException("A matching series already exists")
+      throw ConflictException("A matching TAP authorisation already exists")
     } ?: request.asEntity(personIdentifier, prisoner.lastPrisonId, rdProvider, linkProvider)
-    return ReferenceId(seriesRepository.save(series).id)
+    return ReferenceId(tapAuthRepository.save(authorisation).id)
   }
 
-  fun CreateTapSeriesRequest.asEntity(
+  fun CreateTapAuthorisationRequest.asEntity(
     personIdentifier: String,
     prisonCode: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
     linkProvider: (Long) -> ReferenceData,
-  ): TemporaryAbsenceSeries {
+  ): TemporaryAbsenceAuthorisation {
     val type = rdProvider(ABSENCE_TYPE, absenceTypeCode) as AbsenceType
     val subType = (
       absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) }
@@ -66,7 +66,7 @@ class CreateTapSeries(
       absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) }
         ?: linkProvider(subType.id)
       ) as AbsenceReason
-    return TemporaryAbsenceSeries(
+    return TemporaryAbsenceAuthorisation(
       personIdentifier = personIdentifier,
       prisonCode = prisonCode,
       absenceType = type,
@@ -81,10 +81,14 @@ class CreateTapSeries(
       transport = transportCode?.let { rdProvider(TRANSPORT, it) as Transport },
       status = rdProvider(TAP_STATUS, statusCode) as TapStatus,
       notes = notes,
+      applicationDate = applicationDate,
       submittedAt = submittedAt,
+      submittedBy = submittedBy,
+      approvedAt = approvedAt,
+      approvedBy = approvedBy,
       locationId = locationId,
       legacyId = null,
-      toAgencyCode = null,
+      contact = null,
     )
   }
 }

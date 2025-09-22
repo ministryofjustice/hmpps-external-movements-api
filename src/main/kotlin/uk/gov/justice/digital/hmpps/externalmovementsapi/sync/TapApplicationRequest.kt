@@ -8,6 +8,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus.Code
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus.Code.APPROVED_SCHEDULED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus.Code.APPROVED_UNSCHEDULED
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -51,6 +54,23 @@ data class TapApplicationRequest(
     toAddressOwnerClass?.let { LOCATION_TYPE to it },
     LOCATION_TYPE to "OTHER",
   )
+
+  @JsonIgnore
+  private val approvalRequired = applicationStatus in listOf(APPROVED_SCHEDULED, APPROVED_UNSCHEDULED).map(Code::value)
+
+  @JsonIgnore
+  val approvedAt = if (approvalRequired) {
+    audit.modifyDatetime ?: audit.createDatetime
+  } else {
+    null
+  }
+
+  @JsonIgnore
+  val approvedBy = if (approvalRequired) {
+    audit.modifyUserId ?: audit.createUsername
+  } else {
+    null
+  }
 }
 
 data class NomisAudit(

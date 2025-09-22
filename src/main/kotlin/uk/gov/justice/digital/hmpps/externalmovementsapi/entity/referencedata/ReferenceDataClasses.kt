@@ -78,7 +78,13 @@ class TapStatus(
   sequenceNumber: Int,
   active: Boolean,
   id: Long,
-) : ReferenceData(key, description, hintText, sequenceNumber, active, id)
+) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
+  enum class Code(val value: String) {
+    PENDING("PEN"),
+    APPROVED_SCHEDULED("APP-SCH"),
+    APPROVED_UNSCHEDULED("APP-UNSCH"),
+  }
+}
 
 @Entity
 @DiscriminatorValue("LOCATION_TYPE")
