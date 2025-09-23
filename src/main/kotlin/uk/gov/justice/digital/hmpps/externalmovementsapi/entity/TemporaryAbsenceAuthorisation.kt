@@ -25,9 +25,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
@@ -51,7 +51,7 @@ class TemporaryAbsenceAuthorisation(
   accompanied: Boolean,
   accompaniedBy: AccompaniedBy?,
   transport: Transport?,
-  status: TapStatus,
+  status: TapAuthorisationStatus,
   notes: String?,
   applicationDate: LocalDate,
   submittedAt: LocalDateTime,
@@ -140,7 +140,7 @@ class TemporaryAbsenceAuthorisation(
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "status_id", nullable = false)
-  var status: TapStatus = status
+  var status: TapAuthorisationStatus = status
     private set
 
   @Column(name = "notes")
@@ -202,7 +202,7 @@ class TemporaryAbsenceAuthorisation(
     accompanied = request.isAccompanied()
     accompaniedBy = request.escortCode?.let { rdProvider(ACCOMPANIED_BY, it) as AccompaniedBy }
     transport = request.transportType?.let { rdProvider(TRANSPORT, it) as Transport }
-    status = rdProvider(TAP_STATUS, request.applicationStatus) as TapStatus
+    status = rdProvider(TAP_AUTHORISATION_STATUS, request.tapAuthStatusCode.name) as TapAuthorisationStatus
     notes = request.comment
     submittedAt = request.audit.createDatetime
     submittedBy = request.audit.createUsername

@@ -18,10 +18,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -40,7 +40,7 @@ interface TempAbsenceAuthorisationOperations {
     fun temporaryAbsenceAuthorisation(
       prisonCode: String,
       personIdentifier: String = personIdentifier(),
-      status: String = TapStatus.Code.APPROVED_SCHEDULED.value,
+      status: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.APPROVED,
       absenceType: String? = "SR",
       absenceSubType: String? = "RDR",
       absenceReason: String = "R15",
@@ -75,7 +75,7 @@ interface TempAbsenceAuthorisationOperations {
         accompanied,
         accompaniedBy?.let { rdSupplier(ACCOMPANIED_BY, it) as AccompaniedBy },
         transport?.let { rdSupplier(TRANSPORT, it) as Transport },
-        rdSupplier(TAP_STATUS, status) as TapStatus,
+        rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
         notes,
         applicationDate,
         submittedAt,
@@ -91,7 +91,7 @@ interface TempAbsenceAuthorisationOperations {
   fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: TapApplicationRequest) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
     assertThat(legacyId).isEqualTo(request.movementApplicationId)
-    assertThat(status.code).isEqualTo(request.applicationStatus)
+    assertThat(status.code).isEqualTo(request.tapAuthStatusCode.name)
     assertThat(absenceType?.code).isEqualTo(request.temporaryAbsenceType)
     assertThat(absenceSubType?.code).isEqualTo(request.temporaryAbsenceSubType)
     assertThat(absenceReason?.code).isEqualTo(request.eventSubType)
@@ -133,7 +133,9 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(legacyId).isNull()
     assertThat(applicationDate).isEqualTo(request.applicationDate)
     assertThat(submittedBy).isEqualTo(request.submittedBy)
-    assertThat(approvedAt).isCloseTo(request.approvedAt, within(1, SECONDS))
+    approvedAt?.also {
+      assertThat(it).isCloseTo(request.approvedAt, within(1, SECONDS))
+    }
     assertThat(approvedBy).isEqualTo(request.approvedBy)
   }
 }

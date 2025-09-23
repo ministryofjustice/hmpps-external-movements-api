@@ -43,6 +43,10 @@ dependencies {
   testImplementation("org.wiremock:wiremock-standalone:$wiremockVersion")
 }
 
+dependencyCheck {
+  analyzers.ossIndex.enabled = false
+}
+
 kotlin {
   jvmToolchain(21)
 }

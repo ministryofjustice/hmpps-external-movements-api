@@ -75,6 +75,8 @@ class CreateTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
+    assertThat(saved.approvedAt).isNull()
+    assertThat(saved.approvedBy).isNull()
   }
 
   @Test
@@ -83,7 +85,7 @@ class CreateTapAuthorisationIntTest(
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request =
-      createTapAuthorisationRequest(absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCode = null)
+      createTapAuthorisationRequest(approvalRequired = false, absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCode = null)
     val res = createTapAuthorisation(pi, request)
       .expectStatus().isCreated
       .expectBody<ReferenceId>()
@@ -93,6 +95,8 @@ class CreateTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request.copy(absenceSubTypeCode = "PP", absenceReasonCode = "PC"))
+    assertThat(saved.approvedAt).isNotNull()
+    assertThat(saved.approvedBy).isNotNull()
   }
 
   private fun createTapAuthorisationRequest(

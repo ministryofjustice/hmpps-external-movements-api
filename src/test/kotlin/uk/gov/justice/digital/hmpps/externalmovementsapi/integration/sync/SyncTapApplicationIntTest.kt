@@ -7,7 +7,6 @@ import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -49,7 +48,7 @@ class SyncTapApplicationIntTest(
     val pi = personIdentifier()
     val request = applicationRequest(
       prisonId = "TAC",
-      applicationStatus = TapStatus.Code.PENDING.value,
+      applicationStatus = "PEN",
       audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
     )
     val res = syncApplication(pi, request)
@@ -106,7 +105,7 @@ class SyncTapApplicationIntTest(
     eventSubType: String = "R15",
     temporaryAbsenceType: String? = "SR",
     temporaryAbsenceSubType: String? = "RDR",
-    applicationStatus: String = TapStatus.Code.APPROVED_SCHEDULED.value,
+    applicationStatus: String = "APP-SCH",
     applicationDate: LocalDate = LocalDate.now().minusMonths(1),
     fromDate: LocalDate = LocalDate.now().minusDays(7),
     releaseTime: LocalDateTime = LocalDateTime.now().minusDays(7),
