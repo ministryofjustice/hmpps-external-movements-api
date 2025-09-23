@@ -70,15 +70,20 @@ class Transport(
 ) : ReferenceData(key, description, hintText, sequenceNumber, active, id)
 
 @Entity
-@DiscriminatorValue("TAP_STATUS")
-class TapStatus(
+@DiscriminatorValue("TAP_AUTHORISATION_STATUS")
+class TapAuthorisationStatus(
   key: ReferenceDataKey,
   description: String,
   hintText: String?,
   sequenceNumber: Int,
   active: Boolean,
   id: Long,
-) : ReferenceData(key, description, hintText, sequenceNumber, active, id)
+) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
+  enum class Code {
+    PENDING,
+    APPROVED,
+  }
+}
 
 @Entity
 @DiscriminatorValue("LOCATION_TYPE")

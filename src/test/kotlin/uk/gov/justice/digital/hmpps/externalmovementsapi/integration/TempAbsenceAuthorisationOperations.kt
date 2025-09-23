@@ -1,10 +1,11 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceSeries
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceSeriesRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceType
@@ -17,29 +18,29 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.tapseries.CreateTapSeriesRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
+import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
-interface TempAbsenceSeriesOperations {
-  fun givenTemporaryAbsenceSeries(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceSeries): TemporaryAbsenceSeries
-  fun findTemporaryAbsenceSeries(id: UUID): TemporaryAbsenceSeries?
+interface TempAbsenceAuthorisationOperations {
+  fun givenTemporaryAbsenceAuthorisation(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation
+  fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation?
 
   companion object {
-    fun temporaryAbsenceSeries(
+    fun temporaryAbsenceAuthorisation(
       prisonCode: String,
       personIdentifier: String = personIdentifier(),
-      status: String = "APP-SCH",
+      status: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.APPROVED,
       absenceType: String? = "SR",
       absenceSubType: String? = "RDR",
       absenceReason: String = "R15",
@@ -52,11 +53,15 @@ interface TempAbsenceSeriesOperations {
       accompaniedBy: String? = "L",
       transport: String? = "OD",
       notes: String? = "Some notes on the original creation",
+      applicationDate: LocalDate = LocalDate.now().minusMonths(1),
       submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
+      submittedBy: String = "O7h3rU53r",
+      approvedAt: LocalDateTime? = null,
+      approvedBy: String? = null,
       legacyId: Long? = null,
-      toAgencyCode: String? = null,
-    ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceSeries = { rdSupplier ->
-      TemporaryAbsenceSeries(
+      contact: String? = null,
+    ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation = { rdSupplier ->
+      TemporaryAbsenceAuthorisation(
         personIdentifier,
         prisonCode,
         absenceType?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType },
@@ -70,48 +75,55 @@ interface TempAbsenceSeriesOperations {
         accompanied,
         accompaniedBy?.let { rdSupplier(ACCOMPANIED_BY, it) as AccompaniedBy },
         transport?.let { rdSupplier(TRANSPORT, it) as Transport },
-        rdSupplier(TAP_STATUS, status) as TapStatus,
+        rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
         notes,
+        applicationDate,
         submittedAt,
+        submittedBy,
+        approvedAt,
+        approvedBy,
         legacyId,
-        toAgencyCode,
+        contact,
       )
     }
   }
 
-  fun TemporaryAbsenceSeries.verifyAgainst(personIdentifier: String, request: TapApplicationRequest) {
+  fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: TapApplicationRequest) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
     assertThat(legacyId).isEqualTo(request.movementApplicationId)
-    assertThat(status.code).isEqualTo(request.applicationStatus)
+    assertThat(status.code).isEqualTo(request.tapAuthStatusCode.name)
     assertThat(absenceType?.code).isEqualTo(request.temporaryAbsenceType)
     assertThat(absenceSubType?.code).isEqualTo(request.temporaryAbsenceSubType)
     assertThat(absenceReason?.code).isEqualTo(request.eventSubType)
     assertThat(prisonCode).isEqualTo(request.prisonId)
     assertThat(repeat).isEqualTo(request.isRepeating())
-    assertThat(releaseAt.truncatedTo(SECONDS)).isEqualTo(request.releaseTime.truncatedTo(SECONDS))
-    assertThat(returnBy.truncatedTo(SECONDS)).isEqualTo(request.returnTime.truncatedTo(SECONDS))
+    assertThat(releaseAt).isCloseTo(request.releaseTime, within(1, SECONDS))
+    assertThat(returnBy).isCloseTo(request.returnTime, within(1, SECONDS))
     assertThat(locationType.code).isEqualTo(request.toAddressOwnerClass ?: "OTHER")
     assertThat(locationId).isEqualTo(request.toAddressId?.toString())
     assertThat(accompanied).isEqualTo(request.isAccompanied())
     assertThat(accompaniedBy?.code).isEqualTo(request.escortCode)
     assertThat(transport?.code).isEqualTo(request.transportType)
     assertThat(notes).isEqualTo(request.comment)
-    assertThat(submittedAt.truncatedTo(SECONDS)).isEqualTo(
-      LocalDateTime.of(request.applicationDate, LocalTime.MIN).truncatedTo(SECONDS),
-    )
-    assertThat(toAgencyCode).isEqualTo(request.toAgencyId)
+    assertThat(applicationDate).isEqualTo(request.applicationDate)
+    assertThat(submittedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
+    assertThat(submittedBy).isEqualTo(request.audit.createUsername)
+    approvedAt?.also {
+      assertThat(it).isCloseTo(request.approvedAt, within(1, SECONDS))
+    }
+    assertThat(approvedBy).isEqualTo(request.approvedBy)
   }
 
-  fun TemporaryAbsenceSeries.verifyAgainst(personIdentifier: String, request: CreateTapSeriesRequest) {
+  fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: CreateTapAuthorisationRequest) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    assertThat(submittedAt.truncatedTo(SECONDS)).isEqualTo(submittedAt.truncatedTo(SECONDS))
+    assertThat(submittedAt).isCloseTo(request.submittedAt, within(1, SECONDS))
     assertThat(status.code).isEqualTo(request.statusCode)
     assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
     assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
     assertThat(repeat).isEqualTo(request.repeat)
-    assertThat(releaseAt.truncatedTo(SECONDS)).isEqualTo(request.releaseAt.truncatedTo(SECONDS))
-    assertThat(returnBy.truncatedTo(SECONDS)).isEqualTo(request.returnBy.truncatedTo(SECONDS))
+    assertThat(releaseAt).isCloseTo(request.releaseAt, within(1, SECONDS))
+    assertThat(returnBy).isCloseTo(request.returnBy, within(1, SECONDS))
     assertThat(accompanied).isEqualTo(request.accompanied)
     assertThat(accompaniedBy?.code).isEqualTo(request.accompaniedByCode)
     assertThat(transport?.code).isEqualTo(request.transportCode)
@@ -119,22 +131,27 @@ interface TempAbsenceSeriesOperations {
     assertThat(locationType.code).isEqualTo(request.locationTypeCode)
     assertThat(locationId).isEqualTo(request.locationId)
     assertThat(legacyId).isNull()
-    assertThat(toAgencyCode).isNull()
+    assertThat(applicationDate).isEqualTo(request.applicationDate)
+    assertThat(submittedBy).isEqualTo(request.submittedBy)
+    approvedAt?.also {
+      assertThat(it).isCloseTo(request.approvedAt, within(1, SECONDS))
+    }
+    assertThat(approvedBy).isEqualTo(request.approvedBy)
   }
 }
 
-class TempAbsenceSeriesOperationsImpl(
+class TempAbsenceAuthorisationOperationsImpl(
   private val transactionTemplate: TransactionTemplate,
   private val referenceDataRepository: ReferenceDataRepository,
-  private val temporaryAbsenceSeriesRepository: TemporaryAbsenceSeriesRepository,
-) : TempAbsenceSeriesOperations {
-  override fun givenTemporaryAbsenceSeries(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceSeries): TemporaryAbsenceSeries = transactionTemplate.execute {
+  private val temporaryAbsenceAuthorisationRepository: TemporaryAbsenceAuthorisationRepository,
+) : TempAbsenceAuthorisationOperations {
+  override fun givenTemporaryAbsenceAuthorisation(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation = transactionTemplate.execute {
     val rdMap = referenceDataRepository.findAll().associateBy { it.key.domain of it.key.code }
-    val series: TemporaryAbsenceSeries = tas { dc: ReferenceDataDomain.Code, c: String ->
+    val authorisation: TemporaryAbsenceAuthorisation = tas { dc: ReferenceDataDomain.Code, c: String ->
       requireNotNull(rdMap[dc of c])
     }
-    temporaryAbsenceSeriesRepository.save(series)
+    temporaryAbsenceAuthorisationRepository.save(authorisation)
   }!!
 
-  override fun findTemporaryAbsenceSeries(id: UUID): TemporaryAbsenceSeries? = temporaryAbsenceSeriesRepository.findByIdOrNull(id)
+  override fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation? = temporaryAbsenceAuthorisationRepository.findByIdOrNull(id)
 }

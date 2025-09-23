@@ -9,23 +9,23 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceSeriesOperations.Companion.temporaryAbsenceSeries
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.tapseries.CreateTapSeriesRequest
 import java.time.LocalDateTime
 import java.util.UUID
 
-class CreateTapSeriesIntTest(
-  @Autowired private val tasOperations: TempAbsenceSeriesOperations,
+class CreateTapAuthorisationIntTest(
+  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
 ) : IntegrationTest(),
-  TempAbsenceSeriesOperations by tasOperations {
+  TempAbsenceAuthorisationOperations by tasOperations {
 
   @Test
   fun `401 unauthorised without a valid token`() {
     webTestClient
       .post()
-      .uri(CREATE_TAP_SERIES_URL, personIdentifier())
+      .uri(CREATE_TAP_AUTH_URL, personIdentifier())
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -33,67 +33,76 @@ class CreateTapSeriesIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    createTapSeries(personIdentifier(), createTapSeriesRequest(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+    createTapAuthorisation(
+      personIdentifier(),
+      createTapAuthorisationRequest(),
+      "ROLE_ANY__OTHER_RW",
+    ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 prisoner does not exist`() {
     val pi = personIdentifier()
     prisonerSearch.getPrisoners("NE1", setOf(pi), listOf())
-    val request = createTapSeriesRequest()
-    createTapSeries(pi, request).expectStatus().isNotFound
+    val request = createTapAuthorisationRequest()
+    createTapAuthorisation(pi, request).expectStatus().isNotFound
   }
 
   @Test
-  fun `409 conflict - matching tap series already exists`() {
+  fun `409 conflict - matching tap authorisation already exists`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val series = givenTemporaryAbsenceSeries(temporaryAbsenceSeries(prisonCode, pi))
+    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, pi))
 
-    val request = createTapSeriesRequest(releaseAt = series.releaseAt, returnBy = series.returnBy)
-    createTapSeries(pi, request)
+    val request = createTapAuthorisationRequest(releaseAt = authorisation.releaseAt, returnBy = authorisation.returnBy)
+    createTapAuthorisation(pi, request)
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
   }
 
   @Test
-  fun `200 ok tap series created successfully`() {
+  fun `200 ok tap authorisation created successfully`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val request = createTapSeriesRequest()
-    val res = createTapSeries(pi, request)
+    val request = createTapAuthorisationRequest()
+    val res = createTapAuthorisation(pi, request)
       .expectStatus().isCreated
       .expectBody<ReferenceId>()
       .returnResult()
       .responseBody!!
 
     assertThat(res.id).isNotNull
-    val saved = requireNotNull(findTemporaryAbsenceSeries(res.id))
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
+    assertThat(saved.approvedAt).isNull()
+    assertThat(saved.approvedBy).isNull()
   }
 
   @Test
-  fun `200 ok tap series created successfully using default links`() {
+  fun `200 ok tap authorisation created successfully using default links`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val request = createTapSeriesRequest(absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCode = null)
-    val res = createTapSeries(pi, request)
+    val request =
+      createTapAuthorisationRequest(approvalRequired = false, absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCode = null)
+    val res = createTapAuthorisation(pi, request)
       .expectStatus().isCreated
       .expectBody<ReferenceId>()
       .returnResult()
       .responseBody!!
 
     assertThat(res.id).isNotNull
-    val saved = requireNotNull(findTemporaryAbsenceSeries(res.id))
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request.copy(absenceSubTypeCode = "PP", absenceReasonCode = "PC"))
+    assertThat(saved.approvedAt).isNotNull()
+    assertThat(saved.approvedBy).isNotNull()
   }
 
-  private fun createTapSeriesRequest(
+  private fun createTapAuthorisationRequest(
     submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
     repeat: Boolean = false,
-    statusCode: String = "APP-SCH",
+    approvalRequired: Boolean = true,
     absenceTypeCode: String = "SR",
     absenceSubTypeCode: String? = "RDR",
     absenceReasonCode: String? = "R15",
@@ -102,13 +111,13 @@ class CreateTapSeriesIntTest(
     accompanied: Boolean = true,
     accompaniedByCode: String? = "L",
     transportCode: String? = "OD",
-    notes: String? = "Some notes about the series",
+    notes: String? = "Some notes about the authorisation",
     locationId: String? = UUID.randomUUID().toString(),
     locationTypeCode: String = "CORP",
-  ) = CreateTapSeriesRequest(
+  ) = CreateTapAuthorisationRequest(
     submittedAt,
     repeat,
-    statusCode,
+    approvalRequired,
     absenceTypeCode,
     absenceSubTypeCode,
     absenceReasonCode,
@@ -122,18 +131,18 @@ class CreateTapSeriesIntTest(
     locationId,
   )
 
-  private fun createTapSeries(
+  private fun createTapAuthorisation(
     personIdentifier: String,
-    request: CreateTapSeriesRequest,
+    request: CreateTapAuthorisationRequest,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .post()
-    .uri(CREATE_TAP_SERIES_URL, personIdentifier)
+    .uri(CREATE_TAP_AUTH_URL, personIdentifier)
     .bodyValue(request)
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
-    const val CREATE_TAP_SERIES_URL = "/temporary-absence-series/{personIdentifier}"
+    const val CREATE_TAP_AUTH_URL = "/temporary-absence-authorisation/{personIdentifier}"
   }
 }

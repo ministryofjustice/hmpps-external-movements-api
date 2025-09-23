@@ -8,7 +8,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
@@ -38,7 +38,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
   @Test
   fun `sorts by sequence number`() {
     val rd =
-      getReferenceDataSpec("tap-status")
+      getReferenceDataSpec("tap-authorisation-status")
         .expectStatus()
         .isOk
         .expectBody<ReferenceDataResponse>()
@@ -46,11 +46,10 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
         .responseBody!!
 
     assertThat(rd.items).containsExactly(
-      CodedDescription("PEN", "Pending"),
-      CodedDescription("APP-SCH", "Approved (Scheduled)"),
-      CodedDescription("APP-UNSCH", "Approved (Unscheduled)"),
-      CodedDescription("CANC", "Cancelled"),
-      CodedDescription("DEN", "Denied"),
+      CodedDescription("PENDING", "Pending"),
+      CodedDescription("APPROVED", "Approved"),
+      CodedDescription("CANCELLED", "Cancelled"),
+      CodedDescription("DENIED", "Denied"),
     )
   }
 
@@ -98,7 +97,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
     const val REFERENCE_DATA_URL = "/reference-data/{domain}"
 
     @JvmStatic
-    fun referenceDataDomains() = listOf(ACCOMPANIED_BY, TRANSPORT, TAP_STATUS).map { rdd ->
+    fun referenceDataDomains() = listOf(ACCOMPANIED_BY, TRANSPORT, TAP_AUTHORISATION_STATUS).map { rdd ->
       Arguments.of(rdd.name)
       Arguments.of(rdd.name.lowercase())
       Arguments.of(rdd.name.lowercase().replace("_", "-"))

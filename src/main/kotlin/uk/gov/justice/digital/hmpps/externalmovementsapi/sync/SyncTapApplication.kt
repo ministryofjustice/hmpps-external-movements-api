@@ -1,13 +1,14 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
 
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceSeries
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceSeriesRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceType
@@ -19,20 +20,18 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
-import java.time.LocalDateTime
-import java.time.LocalTime
 
 @Transactional
 @Service
 class SyncTapApplication(
   private val referenceDataRepository: ReferenceDataRepository,
-  private val seriesRepository: TemporaryAbsenceSeriesRepository,
+  private val tapAuthRepository: TemporaryAbsenceAuthorisationRepository,
 ) {
   fun sync(personIdentifier: String, request: TapApplicationRequest): SyncResponse {
     ExternalMovementContext.get().copy(source = DataSource.NOMIS).set()
@@ -40,19 +39,16 @@ class SyncTapApplication(
       referenceDataRepository.findByKeyIn(request.requiredReferenceData().map { it.first of it.second }.toSet())
         .associateBy { it.key }
     val rdProvider = { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
-    val existingSeries = request.id?.let { seriesRepository.findById(it) }
-    val application = if (existingSeries?.isPresent == true) {
-      existingSeries.get().update(personIdentifier, request, rdProvider)
-    } else {
-      seriesRepository.save(request.asEntity(personIdentifier, rdProvider))
-    }
+    val application = (request.id?.let { tapAuthRepository.findByIdOrNull(it) } ?: tapAuthRepository.findByLegacyId(request.movementApplicationId))
+      ?.update(personIdentifier, request, rdProvider)
+      ?: tapAuthRepository.save(request.asEntity(personIdentifier, rdProvider))
     return SyncResponse(application.id)
   }
 
   fun TapApplicationRequest.asEntity(
     personIdentifier: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
-  ) = TemporaryAbsenceSeries(
+  ) = TemporaryAbsenceAuthorisation(
     id = id ?: newUuid(),
     personIdentifier = personIdentifier,
     prisonCode = requireNotNull(prisonId),
@@ -68,10 +64,14 @@ class SyncTapApplication(
     accompanied = isAccompanied(),
     accompaniedBy = escortCode?.let { rdProvider(ACCOMPANIED_BY, it) as AccompaniedBy },
     transport = transportType?.let { rdProvider(TRANSPORT, it) as Transport },
-    status = rdProvider(TAP_STATUS, applicationStatus) as TapStatus,
+    status = rdProvider(TAP_AUTHORISATION_STATUS, tapAuthStatusCode.name) as TapAuthorisationStatus,
     notes = comment,
-    submittedAt = LocalDateTime.of(applicationDate, LocalTime.MIN),
+    applicationDate = applicationDate,
+    submittedAt = audit.createDatetime,
+    submittedBy = audit.createUsername,
+    approvedAt = approvedAt,
+    approvedBy = approvedBy,
     legacyId = movementApplicationId,
-    toAgencyCode = toAgencyId,
+    contact = contactPersonName,
   )
 }

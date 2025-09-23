@@ -6,8 +6,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus.Code.APPROVED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus.Code.PENDING
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -41,8 +43,15 @@ data class TapApplicationRequest(
   @JsonIgnore
   fun isAccompanied() = escortCode != "U"
 
+  @JsonIgnore
+  val tapAuthStatusCode = when (applicationStatus) {
+    "APP-SCH", "APP-UNSCH" -> APPROVED
+    "PEN" -> PENDING
+    else -> throw IllegalArgumentException("Unexpected application status")
+  }
+
   fun requiredReferenceData() = listOfNotNull(
-    TAP_STATUS to applicationStatus,
+    TAP_AUTHORISATION_STATUS to tapAuthStatusCode.name,
     ABSENCE_REASON to eventSubType,
     temporaryAbsenceType?.let { ABSENCE_TYPE to it },
     temporaryAbsenceSubType?.let { ABSENCE_SUB_TYPE to it },
@@ -51,6 +60,20 @@ data class TapApplicationRequest(
     toAddressOwnerClass?.let { LOCATION_TYPE to it },
     LOCATION_TYPE to "OTHER",
   )
+
+  @JsonIgnore
+  val approvedAt = if (tapAuthStatusCode == APPROVED) {
+    audit.modifyDatetime ?: audit.createDatetime
+  } else {
+    null
+  }
+
+  @JsonIgnore
+  val approvedBy = if (tapAuthStatusCode == APPROVED) {
+    audit.modifyUserId ?: audit.createUsername
+  } else {
+    null
+  }
 }
 
 data class NomisAudit(

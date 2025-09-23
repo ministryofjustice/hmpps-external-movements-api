@@ -31,7 +31,6 @@ class AuditRevision {
   var timestamp: LocalDateTime? = null
 
   var username: String? = null
-  var caseloadId: String? = null
 
   @Enumerated(EnumType.STRING)
   var source: DataSource? = null
@@ -43,7 +42,6 @@ class AuditRevisionEntityListener : RevisionListener {
       val context = ExternalMovementContext.get()
       timestamp = context.requestAt
       username = context.username
-      caseloadId = context.activeCaseloadId
       source = context.source
     }
   }
