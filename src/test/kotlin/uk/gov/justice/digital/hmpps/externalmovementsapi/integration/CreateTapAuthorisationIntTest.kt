@@ -7,19 +7,24 @@ import org.springframework.http.HttpStatus
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 import java.time.LocalDateTime
 import java.util.UUID
 
 class CreateTapAuthorisationIntTest(
   @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations {
+  TempAbsenceAuthorisationOperations by tasOperations,
+  TempAbsenceOccurrenceOperations by taoOperations {
 
   @Test
   fun `401 unauthorised without a valid token`() {
@@ -54,8 +59,16 @@ class CreateTapAuthorisationIntTest(
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, pi))
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
 
-    val request = createTapAuthorisationRequest(releaseAt = authorisation.releaseAt, returnBy = authorisation.returnBy)
+    val request = createTapAuthorisationRequest(
+      occurrences = listOf(
+        createTapOccurrenceRequest(
+          releaseAt = occurrence.releaseAt,
+          returnBy = occurrence.returnBy,
+        ),
+      ),
+    )
     createTapAuthorisation(pi, request)
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
   }
@@ -85,7 +98,12 @@ class CreateTapAuthorisationIntTest(
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request =
-      createTapAuthorisationRequest(approvalRequired = false, absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCode = null)
+      createTapAuthorisationRequest(
+        absenceTypeCode = "PP",
+        absenceSubTypeCode = null,
+        absenceReasonCode = null,
+        statusCode = TapAuthorisationStatus.Code.APPROVED,
+      )
     val res = createTapAuthorisation(pi, request)
       .expectStatus().isCreated
       .expectBody<ReferenceId>()
@@ -99,36 +117,40 @@ class CreateTapAuthorisationIntTest(
     assertThat(saved.approvedBy).isNotNull()
   }
 
-  private fun createTapAuthorisationRequest(
-    submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
-    repeat: Boolean = false,
-    approvalRequired: Boolean = true,
-    absenceTypeCode: String = "SR",
-    absenceSubTypeCode: String? = "RDR",
-    absenceReasonCode: String? = "R15",
+  private fun createTapOccurrenceRequest(
     releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     returnBy: LocalDateTime = LocalDateTime.now(),
-    accompanied: Boolean = true,
     accompaniedByCode: String? = "L",
     transportCode: String? = "OD",
     notes: String? = "Some notes about the authorisation",
     locationId: String? = UUID.randomUUID().toString(),
     locationTypeCode: String = "CORP",
+  ) = CreateTapOccurrenceRequest(
+    releaseAt = releaseAt,
+    returnBy = returnBy,
+    accompaniedByCode = accompaniedByCode,
+    transportCode = transportCode,
+    notes = notes,
+    locationTypeCode = locationTypeCode,
+    locationId = locationId,
+  )
+
+  private fun createTapAuthorisationRequest(
+    submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
+    absenceTypeCode: String = "SR",
+    absenceSubTypeCode: String? = "RDR",
+    absenceReasonCode: String? = "R15",
+    statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
+    occurrences: List<CreateTapOccurrenceRequest> = listOf(createTapOccurrenceRequest()),
+    notes: String? = null,
   ) = CreateTapAuthorisationRequest(
     submittedAt,
-    repeat,
-    approvalRequired,
     absenceTypeCode,
     absenceSubTypeCode,
     absenceReasonCode,
-    releaseAt,
-    returnBy,
-    accompanied,
-    accompaniedByCode,
-    transportCode,
+    occurrences,
+    statusCode,
     notes,
-    locationTypeCode,
-    locationId,
   )
 
   private fun createTapAuthorisation(
@@ -143,6 +165,6 @@ class CreateTapAuthorisationIntTest(
     .exchange()
 
   companion object {
-    const val CREATE_TAP_AUTH_URL = "/temporary-absence-authorisation/{personIdentifier}"
+    const val CREATE_TAP_AUTH_URL = "/temporary-absence-authorisations/{personIdentifier}"
   }
 }

@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceType
@@ -19,12 +21,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 
 @Transactional
@@ -33,6 +37,7 @@ class CreateTapAuthorisation(
   private val prisonerSearch: PrisonerSearchClient,
   private val referenceDataRepository: ReferenceDataRepository,
   private val tapAuthRepository: TemporaryAbsenceAuthorisationRepository,
+  private val tapOccurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
   fun tapAuthorisation(personIdentifier: String, request: CreateTapAuthorisationRequest): ReferenceId {
     val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
@@ -41,17 +46,26 @@ class CreateTapAuthorisation(
         .associateBy { it.key }
     val linkProvider = { id: Long -> referenceDataRepository.findLinkedItems(id).single() }
     val rdProvider = { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
-    val authorisation = tapAuthRepository.findByPersonIdentifierAndReleaseAtAndReturnBy(
-      personIdentifier,
-      request.releaseAt,
-      request.returnBy,
-    )?.also {
-      throw ConflictException("A matching TAP authorisation already exists")
-    } ?: request.asEntity(personIdentifier, prisoner.lastPrisonId, rdProvider, linkProvider)
-    return ReferenceId(tapAuthRepository.save(authorisation).id)
+    request.occurrences.mapNotNull {
+      tapOccurrenceRepository.findByPersonIdentifierAndReleaseAtAndReturnBy(
+        personIdentifier,
+        it.releaseAt,
+        it.returnBy,
+      )
+    }.takeIf { it.isNotEmpty() }
+      ?.also {
+        throw ConflictException("A matching TAP authorisation already exists")
+      }
+    val authorisation = tapAuthRepository.save(
+      request.asAuthorisation(personIdentifier, prisoner.lastPrisonId, rdProvider, linkProvider),
+    )
+    tapOccurrenceRepository.saveAll(
+      request.occurrences.map { it.asOccurrence(authorisation, rdProvider) },
+    )
+    return ReferenceId(authorisation.id)
   }
 
-  fun CreateTapAuthorisationRequest.asEntity(
+  fun CreateTapAuthorisationRequest.asAuthorisation(
     personIdentifier: String,
     prisonCode: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
@@ -72,23 +86,43 @@ class CreateTapAuthorisation(
       absenceType = type,
       absenceSubType = subType,
       absenceReason = reason,
-      repeat = repeat,
-      releaseAt = releaseAt,
-      returnBy = returnBy,
-      locationType = rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, locationTypeCode) as LocationType,
-      accompanied = accompanied,
-      accompaniedBy = accompaniedByCode?.let { rdProvider(ACCOMPANIED_BY, it) as AccompaniedBy },
-      transport = transportCode?.let { rdProvider(TRANSPORT, it) as Transport },
-      status = rdProvider(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus,
+      status = rdProvider(TAP_AUTHORISATION_STATUS, statusCode.name) as TapAuthorisationStatus,
       notes = notes,
       applicationDate = applicationDate,
       submittedAt = submittedAt,
       submittedBy = submittedBy,
       approvedAt = approvedAt,
       approvedBy = approvedBy,
-      locationId = locationId,
+      repeat = occurrences.size > 1,
       legacyId = null,
+    )
+  }
+
+  fun CreateTapOccurrenceRequest.asOccurrence(
+    authorisation: TemporaryAbsenceAuthorisation,
+    rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ): TemporaryAbsenceOccurrence {
+    val authStatus = TapAuthorisationStatus.Code.valueOf(authorisation.status.code)
+    val occurrenceStatusCode = when (authStatus) {
+      TapAuthorisationStatus.Code.PENDING -> TapOccurrenceStatus.Code.PENDING
+      TapAuthorisationStatus.Code.APPROVED -> TapOccurrenceStatus.Code.SCHEDULED
+    }.name
+    return TemporaryAbsenceOccurrence(
+      authorisation,
+      releaseAt = releaseAt,
+      returnBy = returnBy,
+      status = rdProvider(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS, occurrenceStatusCode) as TapOccurrenceStatus,
+      locationType = rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, locationTypeCode) as LocationType,
+      accompaniedBy = accompaniedByCode?.let { rdProvider(ACCOMPANIED_BY, it) as AccompaniedBy },
+      transport = transportCode?.let { rdProvider(TRANSPORT, it) as Transport },
+      locationId = locationId,
       contact = null,
+      addedAt = authorisation.submittedAt,
+      addedBy = authorisation.submittedBy,
+      cancelledAt = null,
+      cancelledBy = null,
+      notes = notes,
+      legacyId = null,
     )
   }
 }
