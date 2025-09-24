@@ -31,6 +31,7 @@ class ReferenceDataController(private val rdService: ReferenceDataService) {
           "accompanied-by",
           "location-type",
           "tap-authorisation-status",
+          "tap-occurrence-status",
           "transport",
         ],
       ),
