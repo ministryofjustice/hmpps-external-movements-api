@@ -34,11 +34,7 @@ class SyncTapApplication(
       referenceDataRepository.findByKeyIn(request.requiredReferenceData().map { it.first of it.second }.toSet())
         .associateBy { it.key }
     val rdProvider = { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
-    val application = (
-      request.id?.let { tapAuthRepository.findByIdOrNull(it) } ?: tapAuthRepository.findByLegacyId(
-        request.movementApplicationId,
-      )
-      )
+    val application = (request.id?.let { tapAuthRepository.findByIdOrNull(it) } ?: tapAuthRepository.findByLegacyId(request.movementApplicationId))
       ?.update(personIdentifier, request, rdProvider)
       ?: tapAuthRepository.save(request.asEntity(personIdentifier, rdProvider))
     return SyncResponse(application.id)

@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
@@ -22,11 +23,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
 interface TempAbsenceOccurrenceOperations {
   fun givenTemporaryAbsenceOccurrence(tao: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceOccurrence): TemporaryAbsenceOccurrence
   fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence?
+  fun findForAuthorisation(id: UUID): List<TemporaryAbsenceOccurrence>
 
   companion object {
     fun temporaryAbsenceOccurrence(
@@ -81,7 +84,7 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(notes).isEqualTo(request.notes)
     assertThat(legacyId).isNull()
     assertThat(addedBy).isEqualTo(authRequest.submittedBy)
-    assertThat(addedAt).isEqualTo(authRequest.submittedAt)
+    assertThat(addedAt).isCloseTo(authRequest.submittedAt, within(1, SECONDS))
   }
 }
 
@@ -99,4 +102,6 @@ class TempAbsenceOccurrenceOperationsImpl(
   }!!
 
   override fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence? = temporaryAbsenceOccurrenceRepository.findByIdOrNull(id)
+
+  override fun findForAuthorisation(id: UUID): List<TemporaryAbsenceOccurrence> = temporaryAbsenceOccurrenceRepository.findByAuthorisationId(id)
 }

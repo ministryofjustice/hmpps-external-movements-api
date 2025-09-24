@@ -133,4 +133,6 @@ interface TemporaryAbsenceOccurrenceRepository : JpaRepository<TemporaryAbsenceO
     releaseAt: LocalDateTime,
     returnBy: LocalDateTime,
   ): TemporaryAbsenceOccurrence?
+
+  fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
 }

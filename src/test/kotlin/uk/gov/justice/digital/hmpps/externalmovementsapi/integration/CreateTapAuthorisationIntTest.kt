@@ -90,6 +90,8 @@ class CreateTapAuthorisationIntTest(
     saved.verifyAgainst(pi, request)
     assertThat(saved.approvedAt).isNull()
     assertThat(saved.approvedBy).isNull()
+    val occurrences = findForAuthorisation(saved.id)
+    occurrences.first().verifyAgainst(pi, request.occurrences.first(), request)
   }
 
   @Test
@@ -115,6 +117,8 @@ class CreateTapAuthorisationIntTest(
     saved.verifyAgainst(pi, request.copy(absenceSubTypeCode = "PP", absenceReasonCode = "PC"))
     assertThat(saved.approvedAt).isNotNull()
     assertThat(saved.approvedBy).isNotNull()
+    val occurrences = findForAuthorisation(saved.id)
+    occurrences.first().verifyAgainst(pi, request.occurrences.first(), request)
   }
 
   private fun createTapOccurrenceRequest(
