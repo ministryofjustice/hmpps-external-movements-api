@@ -28,6 +28,7 @@ class ReferenceDataDomain(
     ACCOMPANIED_BY,
     TRANSPORT,
     TAP_AUTHORISATION_STATUS,
+    TAP_OCCURRENCE_STATUS,
     LOCATION_TYPE,
     ;
 
