@@ -156,7 +156,7 @@ class CreateTapAuthorisationIntTest(
     occurrences,
     statusCode,
     notes,
-    repeat
+    repeat,
   )
 
   private fun createTapAuthorisation(
