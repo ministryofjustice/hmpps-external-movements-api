@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.1"
   kotlin("plugin.spring") version "2.2.20"
   kotlin("plugin.jpa") version "2.2.20"
 }
