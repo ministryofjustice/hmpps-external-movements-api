@@ -93,7 +93,7 @@ class CreateTapAuthorisation(
       submittedBy = submittedBy,
       approvedAt = approvedAt,
       approvedBy = approvedBy,
-      repeat = occurrences.size > 1,
+      repeat = repeat,
       legacyId = null,
     )
   }

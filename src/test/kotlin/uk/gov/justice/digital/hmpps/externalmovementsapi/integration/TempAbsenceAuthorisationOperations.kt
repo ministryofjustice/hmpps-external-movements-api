@@ -93,6 +93,7 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
     assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
     assertThat(notes).isEqualTo(request.notes)
+    assertThat(repeat).isEqualTo(request.repeat)
     assertThat(legacyId).isNull()
     assertThat(applicationDate).isEqualTo(request.applicationDate)
     assertThat(submittedBy).isEqualTo(request.submittedBy)

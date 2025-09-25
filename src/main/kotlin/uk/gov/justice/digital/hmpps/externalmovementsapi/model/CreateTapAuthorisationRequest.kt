@@ -25,6 +25,7 @@ data class CreateTapAuthorisationRequest(
   val occurrences: List<CreateTapOccurrenceRequest>,
   val statusCode: TapAuthorisationStatus.Code,
   val notes: String?,
+  val repeat: Boolean,
   @JsonIgnore
   val applicationDate: LocalDate = LocalDate.now(),
   @JsonIgnore

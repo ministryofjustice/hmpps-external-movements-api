@@ -147,6 +147,7 @@ class CreateTapAuthorisationIntTest(
     statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
     occurrences: List<CreateTapOccurrenceRequest> = listOf(createTapOccurrenceRequest()),
     notes: String? = null,
+    repeat: Boolean = false,
   ) = CreateTapAuthorisationRequest(
     submittedAt,
     absenceTypeCode,
@@ -155,6 +156,7 @@ class CreateTapAuthorisationIntTest(
     occurrences,
     statusCode,
     notes,
+    repeat
   )
 
   private fun createTapAuthorisation(
