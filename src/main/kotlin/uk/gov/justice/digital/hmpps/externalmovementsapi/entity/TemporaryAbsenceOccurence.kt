@@ -10,14 +10,18 @@ import jakarta.persistence.Table
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml.comment
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.springframework.data.jpa.repository.JpaRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -125,6 +129,27 @@ class TemporaryAbsenceOccurrence(
   @Version
   var version: Int? = null
     private set
+
+  fun update(
+    request: ScheduledTemporaryAbsenceRequest,
+    rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) = apply {
+    releaseAt = request.startTime
+    returnBy = request.returnTime
+    status = rdProvider(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS, request.occurrenceStatusCode.name) as TapOccurrenceStatus
+    locationType = request.toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
+      ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType
+    locationId = request.toAddressId?.toString()
+    contact = request.contactPersonName
+    accompaniedBy = request.escort?.let { rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, it) as AccompaniedBy }
+    transport = request.transportType?.let { rdProvider(ReferenceDataDomain.Code.TRANSPORT, it) as Transport }
+    notes = request.comment
+    addedAt = request.audit.createDatetime
+    addedBy = request.audit.createUsername
+    cancelledAt = request.cancelledAt
+    cancelledBy = request.cancelledBy
+    legacyId = request.eventId
+  }
 }
 
 interface TemporaryAbsenceOccurrenceRepository : JpaRepository<TemporaryAbsenceOccurrence, UUID> {
@@ -133,6 +158,8 @@ interface TemporaryAbsenceOccurrenceRepository : JpaRepository<TemporaryAbsenceO
     releaseAt: LocalDateTime,
     returnBy: LocalDateTime,
   ): TemporaryAbsenceOccurrence?
+
+  fun findByLegacyId(legacyId: Long): TemporaryAbsenceOccurrence?
 
   fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
 }

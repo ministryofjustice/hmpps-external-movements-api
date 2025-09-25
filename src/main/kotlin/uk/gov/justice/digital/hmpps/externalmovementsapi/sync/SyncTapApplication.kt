@@ -40,7 +40,7 @@ class SyncTapApplication(
     return SyncResponse(application.id)
   }
 
-  fun TapApplicationRequest.asEntity(
+  private fun TapApplicationRequest.asEntity(
     personIdentifier: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = TemporaryAbsenceAuthorisation(

@@ -98,6 +98,8 @@ class TapOccurrenceStatus(
   enum class Code {
     PENDING,
     SCHEDULED,
+    CANCELLED,
+    COMPLETED,
   }
 }
 

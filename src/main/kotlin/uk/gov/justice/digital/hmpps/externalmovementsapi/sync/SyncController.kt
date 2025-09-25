@@ -7,14 +7,24 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import java.util.UUID
 
 @RestController
 @RequestMapping("sync")
 @PreAuthorize("hasRole('${Roles.NOMIS_SYNC}')")
-class SyncController(private val tapApplication: SyncTapApplication) {
+class SyncController(
+  private val tapApplication: SyncTapApplication,
+  private val scheduledAbsence: SyncScheduledTemporaryAbsence,
+) {
   @PutMapping("/temporary-absence-application/{personIdentifier}")
   fun syncTap(
     @PathVariable personIdentifier: String,
     @RequestBody request: TapApplicationRequest,
   ): SyncResponse = tapApplication.sync(personIdentifier, request)
+
+  @PutMapping("/scheduled-temporary-absence/{parentId}")
+  fun syncTap(
+    @PathVariable parentId: UUID,
+    @RequestBody request: ScheduledTemporaryAbsenceRequest,
+  ): SyncResponse = scheduledAbsence.sync(parentId, request)
 }

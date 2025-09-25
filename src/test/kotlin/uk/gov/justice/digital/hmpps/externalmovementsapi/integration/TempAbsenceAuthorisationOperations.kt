@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
@@ -32,7 +33,7 @@ interface TempAbsenceAuthorisationOperations {
 
   companion object {
     fun temporaryAbsenceAuthorisation(
-      prisonCode: String,
+      prisonCode: String = prisonCode(),
       personIdentifier: String = personIdentifier(),
       status: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.APPROVED,
       absenceType: String? = "SR",
