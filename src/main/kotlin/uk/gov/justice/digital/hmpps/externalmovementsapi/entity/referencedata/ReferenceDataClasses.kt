@@ -94,7 +94,12 @@ class TapOccurrenceStatus(
   sequenceNumber: Int,
   active: Boolean,
   id: Long,
-) : ReferenceData(key, description, hintText, sequenceNumber, active, id)
+) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
+  enum class Code {
+    PENDING,
+    SCHEDULED,
+  }
+}
 
 @Entity
 @DiscriminatorValue("LOCATION_TYPE")

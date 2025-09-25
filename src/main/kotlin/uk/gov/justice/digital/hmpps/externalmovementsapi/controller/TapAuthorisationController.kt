@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateTapAuthorisation
 
 @RestController
-@RequestMapping("/temporary-absence-authorisation")
+@RequestMapping("/temporary-absence-authorisations")
 class TapAuthorisationController(private val create: CreateTapAuthorisation) {
   @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
   @ResponseStatus(HttpStatus.CREATED)
