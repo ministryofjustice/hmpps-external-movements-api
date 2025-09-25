@@ -9,20 +9,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
@@ -45,21 +39,13 @@ interface TempAbsenceAuthorisationOperations {
       absenceSubType: String? = "RDR",
       absenceReason: String = "R15",
       repeat: Boolean = false,
-      releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
-      returnBy: LocalDateTime = LocalDateTime.now(),
-      locationType: String = "OTHER",
-      locationId: String? = null,
-      accompanied: Boolean = true,
-      accompaniedBy: String? = "L",
-      transport: String? = "OD",
-      notes: String? = "Some notes on the original creation",
+      notes: String? = "Some notes on the original authorisation",
       applicationDate: LocalDate = LocalDate.now().minusMonths(1),
       submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
       submittedBy: String = "O7h3rU53r",
       approvedAt: LocalDateTime? = null,
       approvedBy: String? = null,
       legacyId: Long? = null,
-      contact: String? = null,
     ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation = { rdSupplier ->
       TemporaryAbsenceAuthorisation(
         personIdentifier,
@@ -68,13 +54,6 @@ interface TempAbsenceAuthorisationOperations {
         absenceSubType?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
         rdSupplier(ABSENCE_REASON, absenceReason) as AbsenceReason,
         repeat,
-        releaseAt,
-        returnBy,
-        rdSupplier(LOCATION_TYPE, locationType) as LocationType,
-        locationId,
-        accompanied,
-        accompaniedBy?.let { rdSupplier(ACCOMPANIED_BY, it) as AccompaniedBy },
-        transport?.let { rdSupplier(TRANSPORT, it) as Transport },
         rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
         notes,
         applicationDate,
@@ -83,7 +62,6 @@ interface TempAbsenceAuthorisationOperations {
         approvedAt,
         approvedBy,
         legacyId,
-        contact,
       )
     }
   }
@@ -97,13 +75,6 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(absenceReason?.code).isEqualTo(request.eventSubType)
     assertThat(prisonCode).isEqualTo(request.prisonId)
     assertThat(repeat).isEqualTo(request.isRepeating())
-    assertThat(releaseAt).isCloseTo(request.releaseTime, within(1, SECONDS))
-    assertThat(returnBy).isCloseTo(request.returnTime, within(1, SECONDS))
-    assertThat(locationType.code).isEqualTo(request.toAddressOwnerClass ?: "OTHER")
-    assertThat(locationId).isEqualTo(request.toAddressId?.toString())
-    assertThat(accompanied).isEqualTo(request.isAccompanied())
-    assertThat(accompaniedBy?.code).isEqualTo(request.escortCode)
-    assertThat(transport?.code).isEqualTo(request.transportType)
     assertThat(notes).isEqualTo(request.comment)
     assertThat(applicationDate).isEqualTo(request.applicationDate)
     assertThat(submittedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
@@ -117,19 +88,12 @@ interface TempAbsenceAuthorisationOperations {
   fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: CreateTapAuthorisationRequest) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
     assertThat(submittedAt).isCloseTo(request.submittedAt, within(1, SECONDS))
-    assertThat(status.code).isEqualTo(request.statusCode)
+    assertThat(status.code).isEqualTo(request.statusCode.name)
     assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
     assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
-    assertThat(repeat).isEqualTo(request.repeat)
-    assertThat(releaseAt).isCloseTo(request.releaseAt, within(1, SECONDS))
-    assertThat(returnBy).isCloseTo(request.returnBy, within(1, SECONDS))
-    assertThat(accompanied).isEqualTo(request.accompanied)
-    assertThat(accompaniedBy?.code).isEqualTo(request.accompaniedByCode)
-    assertThat(transport?.code).isEqualTo(request.transportCode)
     assertThat(notes).isEqualTo(request.notes)
-    assertThat(locationType.code).isEqualTo(request.locationTypeCode)
-    assertThat(locationId).isEqualTo(request.locationId)
+    assertThat(repeat).isEqualTo(request.repeat)
     assertThat(legacyId).isNull()
     assertThat(applicationDate).isEqualTo(request.applicationDate)
     assertThat(submittedBy).isEqualTo(request.submittedBy)

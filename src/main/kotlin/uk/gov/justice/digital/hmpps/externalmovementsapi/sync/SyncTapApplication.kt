@@ -12,19 +12,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 
 @Transactional
@@ -56,14 +51,6 @@ class SyncTapApplication(
     absenceSubType = temporaryAbsenceSubType?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
     absenceReason = rdProvider(ABSENCE_REASON, eventSubType) as AbsenceReason,
     repeat = isRepeating(),
-    releaseAt = releaseTime,
-    returnBy = returnTime,
-    locationType = toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
-      ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType,
-    locationId = toAddressId?.toString(),
-    accompanied = isAccompanied(),
-    accompaniedBy = escortCode?.let { rdProvider(ACCOMPANIED_BY, it) as AccompaniedBy },
-    transport = transportType?.let { rdProvider(TRANSPORT, it) as Transport },
     status = rdProvider(TAP_AUTHORISATION_STATUS, tapAuthStatusCode.name) as TapAuthorisationStatus,
     notes = comment,
     applicationDate = applicationDate,
@@ -72,6 +59,5 @@ class SyncTapApplication(
     approvedAt = approvedAt,
     approvedBy = approvedBy,
     legacyId = movementApplicationId,
-    contact = contactPersonName,
   )
 }

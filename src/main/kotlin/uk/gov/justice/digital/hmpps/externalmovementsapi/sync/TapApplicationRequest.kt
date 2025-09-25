@@ -41,9 +41,6 @@ data class TapApplicationRequest(
   fun isRepeating() = applicationType == "REPEATING"
 
   @JsonIgnore
-  fun isAccompanied() = escortCode != "U"
-
-  @JsonIgnore
   val tapAuthStatusCode = when (applicationStatus) {
     "APP-SCH", "APP-UNSCH" -> APPROVED
     "PEN" -> PENDING
