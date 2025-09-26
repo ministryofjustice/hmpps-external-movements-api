@@ -8,29 +8,40 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Version
+import jakarta.persistence.criteria.JoinType
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.FROM_DATE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.PERSON_IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.TO_DATE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData.Companion.KEY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataKey.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.collections.map
 
 @Audited
 @Entity
@@ -59,7 +70,7 @@ class TemporaryAbsenceAuthorisation(
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
-  var personIdentifier: String = personIdentifier
+  var personIdentifier: String = personIdentifier.uppercase()
     private set
 
   @Size(max = 6)
@@ -147,7 +158,7 @@ class TemporaryAbsenceAuthorisation(
     request: TapApplicationRequest,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = apply {
-    this.personIdentifier = personIdentifier
+    this.personIdentifier = personIdentifier.uppercase()
     prisonCode = requireNotNull(request.prisonId)
     absenceType = request.temporaryAbsenceType?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType }
     absenceSubType = request.temporaryAbsenceSubType?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
@@ -164,9 +175,19 @@ class TemporaryAbsenceAuthorisation(
     fromDate = request.fromDate
     toDate = request.toDate
   }
+
+  companion object {
+    val PRISON_CODE = TemporaryAbsenceAuthorisation::prisonCode.name
+    val PERSON_IDENTIFIER = TemporaryAbsenceAuthorisation::personIdentifier.name
+    val FROM_DATE = TemporaryAbsenceAuthorisation::fromDate.name
+    val TO_DATE = TemporaryAbsenceAuthorisation::toDate.name
+    val STATUS = TemporaryAbsenceAuthorisation::status.name
+  }
 }
 
-interface TemporaryAbsenceAuthorisationRepository : JpaRepository<TemporaryAbsenceAuthorisation, UUID> {
+interface TemporaryAbsenceAuthorisationRepository :
+  JpaRepository<TemporaryAbsenceAuthorisation, UUID>,
+  JpaSpecificationExecutor<TemporaryAbsenceAuthorisation> {
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceAuthorisation?
 
   @Query(
@@ -181,3 +202,20 @@ interface TemporaryAbsenceAuthorisationRepository : JpaRepository<TemporaryAbsen
 }
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")
+
+fun matchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  cb.equal(taa.get<String>(PRISON_CODE), prisonCode)
+}
+
+fun matchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  cb.equal(taa.get<String>(PERSON_IDENTIFIER), personIdentifier)
+}
+
+fun matchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  cb.and(cb.greaterThanOrEqualTo(taa.get(FROM_DATE), fromDate), cb.lessThanOrEqualTo(taa.get(TO_DATE), toDate))
+}
+
+fun statusCodeIn(statusCodes: Set<TapAuthorisationStatus.Code>) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  val status = taa.join<TemporaryAbsenceAuthorisation, ReferenceData>(STATUS, JoinType.INNER)
+  status.get<String>(KEY).get<String>(CODE).`in`(statusCodes.map { it.name })
+}

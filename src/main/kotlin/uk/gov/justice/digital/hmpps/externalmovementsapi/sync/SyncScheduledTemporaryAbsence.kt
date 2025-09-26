@@ -52,7 +52,7 @@ class SyncScheduledTemporaryAbsence(
     ) as TapOccurrenceStatus,
     locationType = toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
       ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType,
-    locationId = toAddressId?.toString(),
+    locationId = toAddressId.toString(),
     contact = contactPersonName,
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, escortOrDefault()) as AccompaniedBy,
     transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, transportTypeOrDefault()) as Transport,
