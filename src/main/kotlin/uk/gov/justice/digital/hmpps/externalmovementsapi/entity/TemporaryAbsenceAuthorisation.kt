@@ -13,6 +13,7 @@ import jakarta.validation.constraints.Size
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceSubType
@@ -24,6 +25,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -41,6 +43,8 @@ class TemporaryAbsenceAuthorisation(
   repeat: Boolean,
   status: TapAuthorisationStatus,
   notes: String?,
+  fromDate: LocalDate,
+  toDate: LocalDate,
   applicationDate: LocalDate,
   submittedAt: LocalDateTime,
   submittedBy: String,
@@ -97,6 +101,16 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   @NotNull
+  @Column(name = "from_date", nullable = false)
+  var fromDate: LocalDate = fromDate
+    private set
+
+  @NotNull
+  @Column(name = "to_date", nullable = false)
+  var toDate: LocalDate = toDate
+    private set
+
+  @NotNull
   @Column(name = "application_date", nullable = false)
   var applicationDate: LocalDate = applicationDate
     private set
@@ -146,9 +160,13 @@ class TemporaryAbsenceAuthorisation(
     applicationDate = request.applicationDate
     approvedAt = request.approvedAt
     approvedBy = request.approvedBy
+    fromDate = request.fromDate
+    toDate = request.toDate
   }
 }
 
 interface TemporaryAbsenceAuthorisationRepository : JpaRepository<TemporaryAbsenceAuthorisation, UUID> {
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceAuthorisation?
 }
+
+fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")

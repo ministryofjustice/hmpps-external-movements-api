@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Pr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -124,10 +125,10 @@ class CreateTapAuthorisationIntTest(
   private fun createTapOccurrenceRequest(
     releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     returnBy: LocalDateTime = LocalDateTime.now(),
-    accompaniedByCode: String? = "L",
-    transportCode: String? = "OD",
+    accompaniedByCode: String = "L",
+    transportCode: String = "OD",
     notes: String? = "Some notes about the authorisation",
-    locationId: String? = UUID.randomUUID().toString(),
+    locationId: String = UUID.randomUUID().toString(),
     locationTypeCode: String = "CORP",
   ) = CreateTapOccurrenceRequest(
     releaseAt = releaseAt,
@@ -144,6 +145,8 @@ class CreateTapAuthorisationIntTest(
     absenceTypeCode: String = "SR",
     absenceSubTypeCode: String? = "RDR",
     absenceReasonCode: String? = "R15",
+    fromDate: LocalDate = LocalDate.now().minusDays(7),
+    toDate: LocalDate = LocalDate.now().minusDays(1),
     statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
     occurrences: List<CreateTapOccurrenceRequest> = listOf(createTapOccurrenceRequest()),
     notes: String? = null,
@@ -157,6 +160,8 @@ class CreateTapAuthorisationIntTest(
     statusCode,
     notes,
     repeat,
+    fromDate,
+    toDate,
   )
 
   private fun createTapAuthorisation(

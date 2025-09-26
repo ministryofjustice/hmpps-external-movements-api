@@ -40,7 +40,7 @@ class SyncTapApplication(
     return SyncResponse(application.id)
   }
 
-  fun TapApplicationRequest.asEntity(
+  private fun TapApplicationRequest.asEntity(
     personIdentifier: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = TemporaryAbsenceAuthorisation(
@@ -53,6 +53,8 @@ class SyncTapApplication(
     repeat = isRepeating(),
     status = rdProvider(TAP_AUTHORISATION_STATUS, tapAuthStatusCode.name) as TapAuthorisationStatus,
     notes = comment,
+    fromDate = fromDate,
+    toDate = toDate,
     applicationDate = applicationDate,
     submittedAt = audit.createDatetime,
     submittedBy = audit.createUsername,

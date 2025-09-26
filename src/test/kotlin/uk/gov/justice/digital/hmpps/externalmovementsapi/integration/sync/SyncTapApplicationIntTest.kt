@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.NomisAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 
 class SyncTapApplicationIntTest(
@@ -107,41 +106,27 @@ class SyncTapApplicationIntTest(
     temporaryAbsenceSubType: String? = "RDR",
     applicationStatus: String = "APP-SCH",
     applicationDate: LocalDate = LocalDate.now().minusMonths(1),
-    fromDate: LocalDate = LocalDate.now().minusDays(7),
-    releaseTime: LocalDateTime = LocalDateTime.now().minusDays(7),
-    toDate: LocalDate = LocalDate.now(),
-    returnTime: LocalDateTime = LocalDateTime.now(),
-    escortCode: String? = "L",
-    transportType: String? = "OD",
     comment: String? = "Some notes about the application",
     movementApplicationId: Long = newId(),
-    toAgencyId: String? = null,
-    toAddressId: Long? = null,
-    toAddressOwnerClass: String? = null,
     contactPersonName: String? = null,
     applicationType: String = "SINGLE",
+    fromDate: LocalDate = LocalDate.now().minusDays(7),
+    toDate: LocalDate = LocalDate.now().minusDays(1),
     audit: NomisAudit = NomisAuditGenerator.generate(),
   ) = TapApplicationRequest(
     id,
     movementApplicationId,
     eventSubType,
     applicationDate,
-    fromDate,
-    releaseTime,
-    toDate,
-    returnTime,
     applicationStatus,
-    escortCode,
-    transportType,
     comment,
     prisonId,
-    toAgencyId,
-    toAddressId,
-    toAddressOwnerClass,
     contactPersonName,
     applicationType,
     temporaryAbsenceType,
     temporaryAbsenceSubType,
+    fromDate,
+    toDate,
     audit,
   )
 
