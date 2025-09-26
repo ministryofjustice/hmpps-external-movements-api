@@ -1,0 +1,69 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.service
+
+import org.springframework.data.domain.Page
+import org.springframework.data.jpa.domain.Specification
+import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.matchesDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.matchesPersonIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.matchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.statusCodeIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationResult
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchResponse
+
+@Service
+class SearchTapAuthorisation(
+  private val prisonerSearch: PrisonerSearchClient,
+  private val authRepository: TemporaryAbsenceAuthorisationRepository,
+  private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+) {
+  fun find(request: TapAuthorisationSearchRequest): TapAuthorisationSearchResponse {
+    val page = authRepository.findAll(request.asSpecification(), request.pageable())
+    val occurrences = occurrenceRepository.findByAuthorisationIdIn(page.content.map { it.id }.toSet())
+    val prisoners = prisonerSearch.getPrisoners(page.map { it.personIdentifier }.toSet())
+      .associateBy { it.prisonerNumber }
+    val getPerson = { personIdentifier: String ->
+      prisoners[personIdentifier]?.asPerson() ?: Person.unknown(personIdentifier)
+    }
+    return page.map { it.with(getPerson(it.personIdentifier), occurrences) }.asResponse()
+  }
+
+  private fun TapAuthorisationSearchRequest.asSpecification(): Specification<TemporaryAbsenceAuthorisation> = listOfNotNull(
+    matchesPrisonCode(prisonCode),
+    matchesDateRange(fromDate, toDate),
+    status.takeIf { it.isNotEmpty() }?.let { statusCodeIn(it) },
+    queryString?.let { matchesPersonIdentifier(it) },
+  ).reduce { spec, current -> spec.and(current) }
+
+  private fun TemporaryAbsenceAuthorisation.with(
+    person: Person,
+    occurrences: List<TemporaryAbsenceOccurrence>,
+  ): TapAuthorisationResult = TapAuthorisationResult(
+    id = id,
+    person = person,
+    status.asCodedDescription(),
+    absenceType?.asCodedDescription(),
+    absenceSubType?.asCodedDescription(),
+    absenceReason?.asCodedDescription(),
+    repeat,
+    fromDate,
+    toDate,
+    occurrences.map { Location(it.locationType.asCodedDescription()) },
+    occurrences.size,
+    submittedAt,
+  )
+}
+
+fun Page<TapAuthorisationResult>.asResponse() = TapAuthorisationSearchResponse(content, PageMetadata(totalElements))
+
+fun Prisoner.asPerson() = Person(prisonerNumber, firstName, lastName, cellLocation)

@@ -32,7 +32,11 @@ open class ReferenceData(
   val active: Boolean,
   @Id
   val id: Long,
-) : ReferenceDataLookup by key
+) : ReferenceDataLookup by key {
+  companion object {
+    val KEY = ReferenceData::key.name
+  }
+}
 
 interface ReferenceDataLookup {
   val domain: ReferenceDataDomain.Code
@@ -46,7 +50,11 @@ data class ReferenceDataKey(
   override val domain: ReferenceDataDomain.Code,
   @Column(insertable = false, updatable = false)
   override val code: String,
-) : ReferenceDataLookup
+) : ReferenceDataLookup {
+  companion object {
+    val CODE = ReferenceDataKey::code.name
+  }
+}
 
 infix fun ReferenceDataDomain.Code.of(code: String) = ReferenceDataKey(this, code)
 
