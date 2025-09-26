@@ -42,8 +42,8 @@ interface TempAbsenceOccurrenceOperations {
       locationId: String = newUuid().toString(),
       contact: String? = null,
       accompanied: Boolean = true,
-      accompaniedBy: String? = "L",
-      transport: String? = "OD",
+      accompaniedBy: String = "L",
+      transport: String = "OD",
       notes: String? = "Some notes on the occurrence",
       addedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
       addedBy: String = "O7h3rU53r",
@@ -59,8 +59,8 @@ interface TempAbsenceOccurrenceOperations {
         locationType = rdSupplier(LOCATION_TYPE, locationType) as LocationType,
         locationId = locationId,
         contact = contact,
-        accompaniedBy = accompaniedBy?.let { rdSupplier(ACCOMPANIED_BY, it) as AccompaniedBy },
-        transport = transport?.let { rdSupplier(TRANSPORT, it) as Transport },
+        accompaniedBy = rdSupplier(ACCOMPANIED_BY, accompaniedBy) as AccompaniedBy,
+        transport = rdSupplier(TRANSPORT, transport) as Transport,
         notes = notes,
         addedAt = addedAt,
         addedBy = addedBy,
@@ -76,8 +76,8 @@ interface TempAbsenceOccurrenceOperations {
   ) {
     assertThat(releaseAt).isCloseTo(request.startTime, within(1, SECONDS))
     assertThat(returnBy).isCloseTo(request.returnTime, within(1, SECONDS))
-    assertThat(accompaniedBy?.code).isEqualTo(request.escort)
-    assertThat(transport?.code).isEqualTo(request.transportType)
+    assertThat(accompaniedBy.code).isEqualTo(request.escort)
+    assertThat(transport.code).isEqualTo(request.transportType)
     assertThat(locationType.code).isEqualTo(request.toAddressOwnerClass ?: "OTHER")
     assertThat(locationId).isEqualTo(request.toAddressId?.toString())
     assertThat(notes).isEqualTo(request.comment)

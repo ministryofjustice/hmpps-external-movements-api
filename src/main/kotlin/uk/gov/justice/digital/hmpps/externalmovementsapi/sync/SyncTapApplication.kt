@@ -53,6 +53,8 @@ class SyncTapApplication(
     repeat = isRepeating(),
     status = rdProvider(TAP_AUTHORISATION_STATUS, tapAuthStatusCode.name) as TapAuthorisationStatus,
     notes = comment,
+    fromDate = fromDate,
+    toDate = toDate,
     applicationDate = applicationDate,
     submittedAt = audit.createDatetime,
     submittedBy = audit.createUsername,

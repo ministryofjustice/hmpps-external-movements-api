@@ -10,7 +10,6 @@ import jakarta.persistence.Table
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
-import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml.comment
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.springframework.data.jpa.repository.JpaRepository
@@ -37,8 +36,8 @@ class TemporaryAbsenceOccurrence(
   returnBy: LocalDateTime,
   locationType: LocationType,
   locationId: String?,
-  accompaniedBy: AccompaniedBy?,
-  transport: Transport?,
+  accompaniedBy: AccompaniedBy,
+  transport: Transport,
   contact: String?,
   notes: String?,
   status: TapOccurrenceStatus,
@@ -81,13 +80,13 @@ class TemporaryAbsenceOccurrence(
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "accompanied_by_id")
-  var accompaniedBy: AccompaniedBy? = accompaniedBy
+  var accompaniedBy: AccompaniedBy = accompaniedBy
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "transport_id")
-  var transport: Transport? = transport
+  var transport: Transport = transport
     private set
 
   @Column(name = "contact")
@@ -141,8 +140,8 @@ class TemporaryAbsenceOccurrence(
       ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType
     locationId = request.toAddressId?.toString()
     contact = request.contactPersonName
-    accompaniedBy = request.escort?.let { rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, it) as AccompaniedBy }
-    transport = request.transportType?.let { rdProvider(ReferenceDataDomain.Code.TRANSPORT, it) as Transport }
+    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.escortOrDefault()) as AccompaniedBy
+    transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, request.transportTypeOrDefault()) as Transport
     notes = request.comment
     addedAt = request.audit.createDatetime
     addedBy = request.audit.createUsername

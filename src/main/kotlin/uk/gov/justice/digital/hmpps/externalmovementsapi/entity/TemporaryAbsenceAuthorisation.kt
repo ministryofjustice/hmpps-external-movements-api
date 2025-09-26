@@ -43,6 +43,8 @@ class TemporaryAbsenceAuthorisation(
   repeat: Boolean,
   status: TapAuthorisationStatus,
   notes: String?,
+  fromDate: LocalDate,
+  toDate: LocalDate,
   applicationDate: LocalDate,
   submittedAt: LocalDateTime,
   submittedBy: String,
@@ -99,6 +101,16 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   @NotNull
+  @Column(name = "from_date", nullable = false)
+  var fromDate: LocalDate = fromDate
+    private set
+
+  @NotNull
+  @Column(name = "to_date", nullable = false)
+  var toDate: LocalDate = toDate
+    private set
+
+  @NotNull
   @Column(name = "application_date", nullable = false)
   var applicationDate: LocalDate = applicationDate
     private set
@@ -148,6 +160,8 @@ class TemporaryAbsenceAuthorisation(
     applicationDate = request.applicationDate
     approvedAt = request.approvedAt
     approvedBy = request.approvedBy
+    fromDate = request.fromDate
+    toDate = request.toDate
   }
 }
 

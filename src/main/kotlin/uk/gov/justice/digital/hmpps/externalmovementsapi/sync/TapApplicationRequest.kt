@@ -23,6 +23,8 @@ data class TapApplicationRequest(
   val applicationType: String,
   val temporaryAbsenceType: String?,
   val temporaryAbsenceSubType: String?,
+  val fromDate: LocalDate,
+  val toDate: LocalDate,
   val audit: NomisAudit,
 ) {
   @JsonIgnore

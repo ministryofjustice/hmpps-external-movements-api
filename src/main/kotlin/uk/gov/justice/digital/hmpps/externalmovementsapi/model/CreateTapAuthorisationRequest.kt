@@ -26,6 +26,8 @@ data class CreateTapAuthorisationRequest(
   val statusCode: TapAuthorisationStatus.Code,
   val notes: String?,
   val repeat: Boolean,
+  val fromDate: LocalDate,
+  val toDate: LocalDate,
   @JsonIgnore
   val applicationDate: LocalDate = LocalDate.now(),
   @JsonIgnore
@@ -52,16 +54,15 @@ data class CreateTapAuthorisationRequest(
 data class CreateTapOccurrenceRequest(
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
-  val accompaniedByCode: String?,
-  val transportCode: String?,
-  val notes: String?,
+  val accompaniedByCode: String,
+  val transportCode: String,
   val locationTypeCode: String,
-  val locationId: String?,
+  val locationId: String,
+  val notes: String?,
 ) {
   fun requiredReferenceData() = listOfNotNull(
     LOCATION_TYPE to locationTypeCode,
-    accompaniedByCode?.let { ACCOMPANIED_BY to it },
-    accompaniedByCode?.let { ACCOMPANIED_BY to it },
-    transportCode?.let { TRANSPORT to it },
+    ACCOMPANIED_BY to accompaniedByCode,
+    TRANSPORT to transportCode,
   )
 }

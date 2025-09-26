@@ -110,6 +110,8 @@ class SyncTapApplicationIntTest(
     movementApplicationId: Long = newId(),
     contactPersonName: String? = null,
     applicationType: String = "SINGLE",
+    fromDate: LocalDate = LocalDate.now().minusDays(7),
+    toDate: LocalDate = LocalDate.now().minusDays(1),
     audit: NomisAudit = NomisAuditGenerator.generate(),
   ) = TapApplicationRequest(
     id,
@@ -123,6 +125,8 @@ class SyncTapApplicationIntTest(
     applicationType,
     temporaryAbsenceType,
     temporaryAbsenceSubType,
+    fromDate,
+    toDate,
     audit,
   )
 

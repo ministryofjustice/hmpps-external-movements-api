@@ -41,6 +41,8 @@ interface TempAbsenceAuthorisationOperations {
       absenceReason: String = "R15",
       repeat: Boolean = false,
       notes: String? = "Some notes on the original authorisation",
+      fromDate: LocalDate = LocalDate.now().minusDays(7),
+      toDate: LocalDate = LocalDate.now().minusDays(1),
       applicationDate: LocalDate = LocalDate.now().minusMonths(1),
       submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
       submittedBy: String = "O7h3rU53r",
@@ -57,6 +59,8 @@ interface TempAbsenceAuthorisationOperations {
         repeat,
         rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
         notes,
+        fromDate,
+        toDate,
         applicationDate,
         submittedAt,
         submittedBy,
@@ -77,6 +81,8 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(prisonCode).isEqualTo(request.prisonId)
     assertThat(repeat).isEqualTo(request.isRepeating())
     assertThat(notes).isEqualTo(request.comment)
+    assertThat(fromDate).isEqualTo(request.fromDate)
+    assertThat(toDate).isEqualTo(request.toDate)
     assertThat(applicationDate).isEqualTo(request.applicationDate)
     assertThat(submittedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
     assertThat(submittedBy).isEqualTo(request.audit.createUsername)
@@ -96,6 +102,8 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(notes).isEqualTo(request.notes)
     assertThat(repeat).isEqualTo(request.repeat)
     assertThat(legacyId).isNull()
+    assertThat(fromDate).isEqualTo(request.fromDate)
+    assertThat(toDate).isEqualTo(request.toDate)
     assertThat(applicationDate).isEqualTo(request.applicationDate)
     assertThat(submittedBy).isEqualTo(request.submittedBy)
     approvedAt?.also {

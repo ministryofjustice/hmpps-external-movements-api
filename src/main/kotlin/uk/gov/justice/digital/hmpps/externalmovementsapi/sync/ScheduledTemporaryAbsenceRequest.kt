@@ -39,10 +39,9 @@ data class ScheduledTemporaryAbsenceRequest(
 
   fun requiredReferenceData() = listOfNotNull(
     TAP_OCCURRENCE_STATUS to occurrenceStatusCode.name,
-    escort?.let { ACCOMPANIED_BY to it },
-    transportType?.let { TRANSPORT to it },
-    toAddressOwnerClass?.let { LOCATION_TYPE to it },
-    LOCATION_TYPE to "OTHER",
+    ACCOMPANIED_BY to escortOrDefault(),
+    TRANSPORT to transportTypeOrDefault(),
+    LOCATION_TYPE to (toAddressOwnerClass ?: "OTHER"),
   )
 
   @JsonIgnore
@@ -58,4 +57,7 @@ data class ScheduledTemporaryAbsenceRequest(
   } else {
     null
   }
+
+  fun escortOrDefault(): String = escort ?: "U"
+  fun transportTypeOrDefault(): String = transportType ?: "TNR"
 }
