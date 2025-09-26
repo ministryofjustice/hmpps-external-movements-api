@@ -13,6 +13,7 @@ import jakarta.validation.constraints.Size
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
@@ -135,9 +136,13 @@ class TemporaryAbsenceOccurrence(
   ) = apply {
     releaseAt = request.startTime
     returnBy = request.returnTime
-    status = rdProvider(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS, request.occurrenceStatusCode.name) as TapOccurrenceStatus
-    locationType = request.toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
-      ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType
+    status = rdProvider(
+      ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS,
+      request.occurrenceStatusCode.name,
+    ) as TapOccurrenceStatus
+    locationType =
+      request.toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
+        ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType
     locationId = request.toAddressId?.toString()
     contact = request.contactPersonName
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.escortOrDefault()) as AccompaniedBy
@@ -161,4 +166,45 @@ interface TemporaryAbsenceOccurrenceRepository : JpaRepository<TemporaryAbsenceO
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceOccurrence?
 
   fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
+
+  @Query(
+    """
+    select
+    sum(case when tao.release_at between current_date and (current_date + 1) then 1 else 0 end) as leavingToday,
+    sum(case when tao.release_at between (current_date + 1) and (current_date + 8) then 1 else 0 end) as leavingNextSevenDays
+    from temporary_absence_occurrence tao
+        join temporary_absence_authorisation taa on taa.id = tao.authorisation_id
+        join reference_data st on st.id = tao.status_id
+    where taa.prison_code = :prisonIdentifier
+      and st.code = 'SCHEDULED'
+      and tao.release_at between current_date and (current_date + 8)
+    group by taa.prison_code
+  """,
+    nativeQuery = true,
+  )
+  fun findUpcomingLeaverCounts(prisonIdentifier: String): PrisonLeaverCounts?
+
+  @Query(
+    """
+    select count(1) as returningToday
+    from temporary_absence_occurrence tao
+        join temporary_absence_authorisation taa on taa.id = tao.authorisation_id
+        join reference_data st on st.id = tao.status_id
+    where taa.prison_code = :prisonIdentifier
+      and st.code = 'SCHEDULED'
+      and tao.return_by between current_date and (current_date + 1)
+  """,
+    nativeQuery = true,
+  )
+  fun findReturningTodayCount(prisonIdentifier: String): Int
+}
+
+interface PrisonLeaverCounts {
+  val leavingToday: Int
+  val leavingNextSevenDays: Int
+
+  data object Default : PrisonLeaverCounts {
+    override val leavingToday: Int = 0
+    override val leavingNextSevenDays: Int = 0
+  }
 }

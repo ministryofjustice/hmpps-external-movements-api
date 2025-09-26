@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
@@ -80,11 +79,7 @@ class CreateTapAuthorisationIntTest(
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = createTapAuthorisationRequest()
-    val res = createTapAuthorisation(pi, request)
-      .expectStatus().isCreated
-      .expectBody<ReferenceId>()
-      .returnResult()
-      .responseBody!!
+    val res = createTapAuthorisation(pi, request).successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -107,11 +102,7 @@ class CreateTapAuthorisationIntTest(
         absenceReasonCode = null,
         statusCode = TapAuthorisationStatus.Code.APPROVED,
       )
-    val res = createTapAuthorisation(pi, request)
-      .expectStatus().isCreated
-      .expectBody<ReferenceId>()
-      .returnResult()
-      .responseBody!!
+    val res = createTapAuthorisation(pi, request).successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
