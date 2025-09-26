@@ -14,8 +14,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.ReferenceDataSe
 
 @RestController
 @RequestMapping("reference-data")
+@PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
 class ReferenceDataController(private val rdService: ReferenceDataService) {
-  @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
   @GetMapping("/{domain}")
   fun getDomain(
     @Parameter(

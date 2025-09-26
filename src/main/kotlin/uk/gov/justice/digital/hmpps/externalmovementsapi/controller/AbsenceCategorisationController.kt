@@ -15,8 +15,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.AbsenceCategori
 
 @RestController
 @RequestMapping("absence-categorisation")
+@PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
 class AbsenceCategorisationController(private val acRetriever: AbsenceCategorisationRetriever) {
-  @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
   @GetMapping("/{domain}")
   fun getDomain(
     @Parameter(
@@ -35,7 +35,6 @@ class AbsenceCategorisationController(private val acRetriever: AbsenceCategorisa
     @PathVariable domain: String,
   ): AbsenceCategorisations = acRetriever.findByDomain(ReferenceDataDomain.Code.of(domain))
 
-  @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
   @GetMapping("/{domain}/{code}")
   fun getOptions(
     @Parameter(

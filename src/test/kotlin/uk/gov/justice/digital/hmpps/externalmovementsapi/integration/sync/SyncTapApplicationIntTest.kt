@@ -3,12 +3,12 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -35,26 +35,18 @@ class SyncTapApplicationIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    syncApplication(
-      personIdentifier(),
-      applicationRequest(prisonId = "NE1"),
-      "ROLE_ANY__OTHER_RW",
-    ).expectStatus().isForbidden
+    syncApplication(personIdentifier(), applicationRequest(), "ROLE_ANY__OTHER_RW")
+      .expectStatus().isForbidden
   }
 
   @Test
   fun `200 ok application created successfully`() {
     val pi = personIdentifier()
     val request = applicationRequest(
-      prisonId = "TAC",
       applicationStatus = "PEN",
       audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
     )
-    val res = syncApplication(pi, request)
-      .expectStatus().isOk
-      .expectBody<SyncResponse>()
-      .returnResult()
-      .responseBody!!
+    val res = syncApplication(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -65,15 +57,10 @@ class SyncTapApplicationIntTest(
 
   @Test
   fun `200 ok application updated successfully`() {
-    val prisonCode = "TAU"
     val legacyId = newId()
-    val existing = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, legacyId = legacyId))
-    val request = applicationRequest(id = existing.id, prisonId = prisonCode, movementApplicationId = legacyId)
-    val res = syncApplication(existing.personIdentifier, request)
-      .expectStatus().isOk
-      .expectBody<SyncResponse>()
-      .returnResult()
-      .responseBody!!
+    val existing = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = legacyId))
+    val request = applicationRequest(id = existing.id, existing.prisonCode, movementApplicationId = legacyId)
+    val res = syncApplication(existing.personIdentifier, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
@@ -86,12 +73,8 @@ class SyncTapApplicationIntTest(
   fun `200 ok application created if authorisation with the given uuid does not exist`() {
     val pi = personIdentifier()
     val uuid = newUuid()
-    val request = applicationRequest(id = uuid, prisonId = "TAZ")
-    val res = syncApplication(pi, request)
-      .expectStatus().isOk
-      .expectBody<SyncResponse>()
-      .returnResult()
-      .responseBody!!
+    val request = applicationRequest(id = uuid)
+    val res = syncApplication(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(uuid)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -100,7 +83,7 @@ class SyncTapApplicationIntTest(
 
   private fun applicationRequest(
     id: UUID? = null,
-    prisonId: String?,
+    prisonId: String? = prisonCode(),
     eventSubType: String = "R15",
     temporaryAbsenceType: String? = "SR",
     temporaryAbsenceSubType: String? = "RDR",

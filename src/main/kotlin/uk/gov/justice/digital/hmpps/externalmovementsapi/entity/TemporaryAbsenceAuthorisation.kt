@@ -13,6 +13,7 @@ import jakarta.validation.constraints.Size
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AbsenceReason
@@ -167,6 +168,16 @@ class TemporaryAbsenceAuthorisation(
 
 interface TemporaryAbsenceAuthorisationRepository : JpaRepository<TemporaryAbsenceAuthorisation, UUID> {
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceAuthorisation?
+
+  @Query(
+    """
+    select count(1) as approvalsRequired
+    from TemporaryAbsenceAuthorisation taa
+    where taa.prisonCode = :prisonIdentifier 
+    and taa.status.key.code = 'PENDING' and taa.fromDate >= current_date
+  """,
+  )
+  fun findApprovalsRequiredCount(prisonIdentifier: String): Int
 }
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")
