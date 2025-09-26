@@ -39,8 +39,7 @@ class SearchTapAuthIntTest(
       prisonCode(),
       LocalDate.now(),
       LocalDate.now(),
-      null,
-      "ROLE_ANY__OTHER_RW",
+      role = "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
@@ -125,11 +124,43 @@ class SearchTapAuthIntTest(
     assertThat(res.metadata.totalElements).isEqualTo(2)
   }
 
+  @Test
+  fun `can find by prison number`() {
+    val prisonCode = prisonCode()
+    val fromDate = LocalDate.now().plusDays(1)
+    val toDate = LocalDate.now().plusDays(3)
+
+    val toFind = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.PENDING,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.PENDING,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    prisonerSearch.getPrisoners(prisonCode, setOf(toFind.personIdentifier))
+
+    val res = searchTapAuthorisations(prisonCode, fromDate, toDate, personIdentifier = toFind.personIdentifier)
+      .successResponse<TapAuthorisationSearchResponse>()
+
+    assertThat(res.content.size).isEqualTo(1)
+    assertThat(res.metadata.totalElements).isEqualTo(1)
+  }
+
   private fun searchTapAuthorisations(
     prisonCode: String,
     fromDate: LocalDate,
     toDate: LocalDate,
     status: TapAuthorisationStatus.Code? = null,
+    personIdentifier: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()
@@ -139,6 +170,7 @@ class SearchTapAuthIntTest(
       uri.queryParam("fromDate", ISO_DATE.format(fromDate))
       uri.queryParam("toDate", ISO_DATE.format(toDate))
       status?.let { uri.queryParam("status", it.name) }
+      personIdentifier?.let { uri.queryParam("query", it) }
       uri.build()
     }
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
