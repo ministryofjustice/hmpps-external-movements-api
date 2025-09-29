@@ -36,7 +36,7 @@ class TemporaryAbsenceOccurrence(
   releaseAt: LocalDateTime,
   returnBy: LocalDateTime,
   locationType: LocationType,
-  locationId: String?,
+  locationId: String,
   accompaniedBy: AccompaniedBy,
   transport: Transport,
   contact: String?,
@@ -75,7 +75,7 @@ class TemporaryAbsenceOccurrence(
 
   @Size(max = 36)
   @Column(name = "location_id", length = 36)
-  var locationId: String? = locationId
+  var locationId: String = locationId
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
@@ -143,7 +143,7 @@ class TemporaryAbsenceOccurrence(
     locationType =
       request.toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
         ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType
-    locationId = request.toAddressId?.toString()
+    locationId = request.toAddressId.toString()
     contact = request.contactPersonName
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.escortOrDefault()) as AccompaniedBy
     transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, request.transportTypeOrDefault()) as Transport
@@ -166,6 +166,7 @@ interface TemporaryAbsenceOccurrenceRepository : JpaRepository<TemporaryAbsenceO
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceOccurrence?
 
   fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
+  fun findByAuthorisationIdIn(authorisationIds: Set<UUID>): List<TemporaryAbsenceOccurrence>
 
   @Query(
     """
