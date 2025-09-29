@@ -16,7 +16,7 @@ val sentryVersion = "8.22.0"
 val springDocVersion = "2.8.13"
 val sqsStarterVersion = "5.4.11"
 val testContainersVersion = "1.21.3"
-val uuidGeneratorVersion = "5.1.0"
+val uuidGeneratorVersion = "5.1.1"
 val wiremockVersion = "3.13.1"
 
 dependencies {
