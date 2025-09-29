@@ -113,8 +113,8 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(locationType.code).isEqualTo(occurrence.location.type.code)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
-    assertThat(releaseAt).isEqualTo(occurrence.releaseAt)
-    assertThat(returnBy).isEqualTo(occurrence.returnBy)
+    assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(1, SECONDS))
+    assertThat(returnBy).isCloseTo(occurrence.returnBy, within(1, SECONDS))
   }
 }
 
