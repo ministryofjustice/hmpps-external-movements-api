@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.matchesPersonIde
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.matchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.statusCodeIn
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
@@ -20,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationResult
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerson
 
 @Service
 class SearchTapAuthorisation(
@@ -65,5 +65,3 @@ class SearchTapAuthorisation(
 }
 
 fun Page<TapAuthorisationResult>.asResponse() = TapAuthorisationSearchResponse(content, PageMetadata(totalElements))
-
-fun Prisoner.asPerson() = Person(prisonerNumber, firstName, lastName, cellLocation)

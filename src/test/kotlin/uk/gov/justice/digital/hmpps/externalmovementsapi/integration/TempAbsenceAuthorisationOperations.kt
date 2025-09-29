@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -110,6 +111,23 @@ interface TempAbsenceAuthorisationOperations {
       assertThat(it).isCloseTo(request.approvedAt, within(1, SECONDS))
     }
     assertThat(approvedBy).isEqualTo(request.approvedBy)
+  }
+
+  fun TemporaryAbsenceAuthorisation.verifyAgainst(authorisation: TapAuthorisation) {
+    assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+    assertThat(status.code).isEqualTo(authorisation.status.code)
+    assertThat(absenceType?.code).isEqualTo(authorisation.absenceType?.code)
+    assertThat(absenceSubType?.code).isEqualTo(authorisation.absenceSubType?.code)
+    assertThat(absenceReason?.code).isEqualTo(authorisation.absenceReason?.code)
+    assertThat(repeat).isEqualTo(authorisation.repeat)
+    assertThat(fromDate).isEqualTo(authorisation.fromDate)
+    assertThat(toDate).isEqualTo(authorisation.toDate)
+    assertThat(submittedAt).isCloseTo(authorisation.submitted.at, within(1, SECONDS))
+    assertThat(submittedBy).isEqualTo(authorisation.submitted.by)
+    approvedAt?.also {
+      assertThat(it).isCloseTo(authorisation.approved!!.at, within(1, SECONDS))
+    }
+    assertThat(approvedBy).isEqualTo(authorisation.approved?.by)
   }
 }
 
