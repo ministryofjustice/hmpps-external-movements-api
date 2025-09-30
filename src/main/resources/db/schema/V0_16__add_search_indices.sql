@@ -1,0 +1,2 @@
+create index if not exists idx_taa_prison_code_person_identifier_from_to on temporary_absence_authorisation (prison_code, person_identifier, from_date, to_date);
+create index if not exists idx_tao_authorisation_id on temporary_absence_occurrence (authorisation_id);

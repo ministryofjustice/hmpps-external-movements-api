@@ -7,11 +7,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.matchesDateRange
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.matchesPersonIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.matchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.authorisationMatchesDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.authorisationMatchesPersonIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.authorisationMatchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.authorisationStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.asCodedDescription
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.statusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
@@ -40,10 +40,10 @@ class SearchTapAuthorisation(
   }
 
   private fun TapAuthorisationSearchRequest.asSpecification(): Specification<TemporaryAbsenceAuthorisation> = listOfNotNull(
-    matchesPrisonCode(prisonCode),
-    matchesDateRange(fromDate, toDate),
-    status.takeIf { it.isNotEmpty() }?.let { statusCodeIn(it) },
-    queryString?.let { matchesPersonIdentifier(it) },
+    authorisationMatchesPrisonCode(prisonCode),
+    authorisationMatchesDateRange(fromDate, toDate),
+    status.takeIf { it.isNotEmpty() }?.let { authorisationStatusCodeIn(it) },
+    queryString?.let { authorisationMatchesPersonIdentifier(it) },
   ).reduce { spec, current -> spec.and(current) }
 
   private fun TemporaryAbsenceAuthorisation.with(

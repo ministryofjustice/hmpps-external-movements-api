@@ -203,19 +203,19 @@ interface TemporaryAbsenceAuthorisationRepository :
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")
 
-fun matchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+fun authorisationMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
   cb.equal(taa.get<String>(PRISON_CODE), prisonCode)
 }
 
-fun matchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+fun authorisationMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
   cb.equal(taa.get<String>(PERSON_IDENTIFIER), personIdentifier)
 }
 
-fun matchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+fun authorisationMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
   cb.and(cb.greaterThanOrEqualTo(taa.get(FROM_DATE), fromDate), cb.lessThanOrEqualTo(taa.get(TO_DATE), toDate))
 }
 
-fun statusCodeIn(statusCodes: Set<TapAuthorisationStatus.Code>) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+fun authorisationStatusCodeIn(statusCodes: Set<TapAuthorisationStatus.Code>) = Specification<TemporaryAbsenceAuthorisation> { taa, _, _ ->
   val status = taa.join<TemporaryAbsenceAuthorisation, ReferenceData>(STATUS, JoinType.INNER)
   status.get<String>(KEY).get<String>(CODE).`in`(statusCodes.map { it.name })
 }
