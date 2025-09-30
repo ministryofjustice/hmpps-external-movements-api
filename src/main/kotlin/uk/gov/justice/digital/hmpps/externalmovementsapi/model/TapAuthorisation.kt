@@ -15,18 +15,16 @@ data class TapAuthorisation(
   val repeat: Boolean,
   val fromDate: LocalDate,
   val toDate: LocalDate,
-  val occurrences: List<TapOccurrence>,
+  val occurrences: List<Occurrence>,
   val submitted: AtAndBy,
   val approved: AtAndBy?,
-)
-
-data class TapOccurrence(
-  val id: UUID,
-  val releaseAt: LocalDateTime,
-  val returnBy: LocalDateTime,
-  val location: Location,
-  val accompaniedBy: CodedDescription,
-  val transport: CodedDescription,
-)
-
-data class AtAndBy(val at: LocalDateTime, val by: String)
+) {
+  data class Occurrence(
+    val id: UUID,
+    val releaseAt: LocalDateTime,
+    val returnBy: LocalDateTime,
+    val location: Location,
+    val accompaniedBy: CodedDescription,
+    val transport: CodedDescription,
+  )
+}
