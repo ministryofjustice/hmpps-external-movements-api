@@ -4,12 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus.Code.CANCELLED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus.Code.COMPLETED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus.Code.PENDING
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus.Code.SCHEDULED
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -29,30 +24,23 @@ data class ScheduledTemporaryAbsenceRequest(
   val audit: NomisAudit,
 ) {
   @JsonIgnore
-  val occurrenceStatusCode = when (eventStatus) {
-    "PEN" -> PENDING
-    "CANC", "DEN" -> CANCELLED
-    "SCH" -> SCHEDULED
-    "COMP", "EXP" -> COMPLETED
-    else -> throw IllegalArgumentException("Unexpected scheduled absence status")
-  }
+  val cancelled = eventStatus in listOf("CANC", "DEN")
 
   fun requiredReferenceData() = listOfNotNull(
-    TAP_OCCURRENCE_STATUS to occurrenceStatusCode.name,
     ACCOMPANIED_BY to escortOrDefault(),
     TRANSPORT to transportTypeOrDefault(),
     LOCATION_TYPE to (toAddressOwnerClass ?: "OTHER"),
   )
 
   @JsonIgnore
-  val cancelledAt = if (occurrenceStatusCode == CANCELLED) {
+  val cancelledAt = if (cancelled) {
     audit.modifyDatetime ?: audit.createDatetime
   } else {
     null
   }
 
   @JsonIgnore
-  val cancelledBy = if (occurrenceStatusCode == CANCELLED) {
+  val cancelledBy = if (cancelled) {
     audit.modifyUserId ?: audit.createUsername
   } else {
     null

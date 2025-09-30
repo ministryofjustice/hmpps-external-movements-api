@@ -8,12 +8,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus.Code.APPROVED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus.Code.PENDING
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -43,11 +40,6 @@ data class CreateTapAuthorisationRequest(
     absenceSubTypeCode?.also { add(ABSENCE_SUB_TYPE to it) }
     absenceReasonCode?.also { add(ABSENCE_REASON to it) }
     addAll(occurrences.flatMap(CreateTapOccurrenceRequest::requiredReferenceData))
-    val occurrenceStatus = when (statusCode) {
-      PENDING -> TapOccurrenceStatus.Code.PENDING
-      APPROVED -> TapOccurrenceStatus.Code.SCHEDULED
-    }
-    add(TAP_OCCURRENCE_STATUS to occurrenceStatus.name)
   }
 }
 

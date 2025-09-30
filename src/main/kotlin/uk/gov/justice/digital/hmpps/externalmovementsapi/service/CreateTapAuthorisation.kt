@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
@@ -103,28 +102,20 @@ class CreateTapAuthorisation(
   fun CreateTapOccurrenceRequest.asOccurrence(
     authorisation: TemporaryAbsenceAuthorisation,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
-  ): TemporaryAbsenceOccurrence {
-    val authStatus = TapAuthorisationStatus.Code.valueOf(authorisation.status.code)
-    val occurrenceStatusCode = when (authStatus) {
-      TapAuthorisationStatus.Code.PENDING -> TapOccurrenceStatus.Code.PENDING
-      TapAuthorisationStatus.Code.APPROVED -> TapOccurrenceStatus.Code.SCHEDULED
-    }.name
-    return TemporaryAbsenceOccurrence(
-      authorisation,
-      releaseAt = releaseAt,
-      returnBy = returnBy,
-      status = rdProvider(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS, occurrenceStatusCode) as TapOccurrenceStatus,
-      locationType = rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, locationTypeCode) as LocationType,
-      accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
-      transport = rdProvider(TRANSPORT, transportCode) as Transport,
-      locationId = locationId,
-      contact = null,
-      addedAt = authorisation.submittedAt,
-      addedBy = authorisation.submittedBy,
-      cancelledAt = null,
-      cancelledBy = null,
-      notes = notes,
-      legacyId = null,
-    )
-  }
+  ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
+    authorisation,
+    releaseAt = releaseAt,
+    returnBy = returnBy,
+    locationType = rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, locationTypeCode) as LocationType,
+    accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
+    transport = rdProvider(TRANSPORT, transportCode) as Transport,
+    locationId = locationId,
+    contact = null,
+    addedAt = authorisation.submittedAt,
+    addedBy = authorisation.submittedBy,
+    cancelledAt = null,
+    cancelledBy = null,
+    notes = notes,
+    legacyId = null,
+  )
 }

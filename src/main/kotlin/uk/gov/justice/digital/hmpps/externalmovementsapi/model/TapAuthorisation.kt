@@ -22,7 +22,6 @@ data class TapAuthorisation(
 
 data class TapOccurrence(
   val id: UUID,
-  val status: CodedDescription,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   val location: Location,

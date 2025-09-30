@@ -82,24 +82,8 @@ class TapAuthorisationStatus(
   enum class Code {
     PENDING,
     APPROVED,
-  }
-}
-
-@Entity
-@DiscriminatorValue("TAP_OCCURRENCE_STATUS")
-class TapOccurrenceStatus(
-  key: ReferenceDataKey,
-  description: String,
-  hintText: String?,
-  sequenceNumber: Int,
-  active: Boolean,
-  id: Long,
-) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
-  enum class Code {
-    PENDING,
-    SCHEDULED,
-    CANCELLED,
-    COMPLETED,
+    WITHDRAWN,
+    DENIED,
   }
 }
 

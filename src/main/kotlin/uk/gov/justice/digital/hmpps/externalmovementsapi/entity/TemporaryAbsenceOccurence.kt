@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Ac
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDateTime
@@ -41,7 +40,6 @@ class TemporaryAbsenceOccurrence(
   transport: Transport,
   contact: String?,
   notes: String?,
-  status: TapOccurrenceStatus,
   addedAt: LocalDateTime,
   addedBy: String,
   cancelledAt: LocalDateTime?,
@@ -98,12 +96,6 @@ class TemporaryAbsenceOccurrence(
   var notes: String? = notes
     private set
 
-  @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "status_id", nullable = false)
-  var status: TapOccurrenceStatus = status
-    private set
-
   @NotNull
   @Column(name = "added_at", nullable = false)
   var addedAt: LocalDateTime = addedAt
@@ -136,10 +128,6 @@ class TemporaryAbsenceOccurrence(
   ) = apply {
     releaseAt = request.startTime
     returnBy = request.returnTime
-    status = rdProvider(
-      ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS,
-      request.occurrenceStatusCode.name,
-    ) as TapOccurrenceStatus
     locationType =
       request.toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
         ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType
@@ -175,9 +163,9 @@ interface TemporaryAbsenceOccurrenceRepository : JpaRepository<TemporaryAbsenceO
     sum(case when tao.release_at between (current_date + 1) and (current_date + 8) then 1 else 0 end) as leavingNextSevenDays
     from temporary_absence_occurrence tao
         join temporary_absence_authorisation taa on taa.id = tao.authorisation_id
-        join reference_data st on st.id = tao.status_id
+        join reference_data st on st.id = taa.status_id
     where taa.prison_code = :prisonIdentifier
-      and st.code = 'SCHEDULED'
+      and st.code = 'APPROVED'
       and tao.release_at between current_date and (current_date + 8)
     group by taa.prison_code
   """,
@@ -190,9 +178,9 @@ interface TemporaryAbsenceOccurrenceRepository : JpaRepository<TemporaryAbsenceO
     select count(1) as returningToday
     from temporary_absence_occurrence tao
         join temporary_absence_authorisation taa on taa.id = tao.authorisation_id
-        join reference_data st on st.id = tao.status_id
+        join reference_data st on st.id = taa.status_id
     where taa.prison_code = :prisonIdentifier
-      and st.code = 'SCHEDULED'
+      and st.code = 'APPROVED'
       and tao.return_by between current_date and (current_date + 1)
   """,
     nativeQuery = true,

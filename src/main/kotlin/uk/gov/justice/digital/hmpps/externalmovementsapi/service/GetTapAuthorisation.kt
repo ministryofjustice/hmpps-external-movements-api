@@ -49,7 +49,6 @@ private fun TemporaryAbsenceAuthorisation.with(person: Person, occurrences: List
 
 private fun TemporaryAbsenceOccurrence.asOccurrence() = TapOccurrence(
   id = id,
-  status = status.asCodedDescription(),
   releaseAt = releaseAt,
   returnBy = returnBy,
   location = Location(type = locationType.asCodedDescription()),
