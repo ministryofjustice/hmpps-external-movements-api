@@ -8,19 +8,28 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Version
+import jakarta.persistence.criteria.JoinType
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.PERSON_IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.RETURN_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -142,9 +151,18 @@ class TemporaryAbsenceOccurrence(
     cancelledBy = request.cancelledBy
     legacyId = request.eventId
   }
+
+  companion object {
+    val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
+    val PERSON_IDENTIFIER = TemporaryAbsenceOccurrence::personIdentifier.name
+    val RELEASE_AT = TemporaryAbsenceOccurrence::releaseAt.name
+    val RETURN_BY = TemporaryAbsenceOccurrence::returnBy.name
+  }
 }
 
-interface TemporaryAbsenceOccurrenceRepository : JpaRepository<TemporaryAbsenceOccurrence, UUID> {
+interface TemporaryAbsenceOccurrenceRepository :
+  JpaRepository<TemporaryAbsenceOccurrence, UUID>,
+  JpaSpecificationExecutor<TemporaryAbsenceOccurrence> {
   fun findByPersonIdentifierAndReleaseAtAndReturnBy(
     personIdentifier: String,
     releaseAt: LocalDateTime,
@@ -196,4 +214,17 @@ interface PrisonLeaverCounts {
     override val leavingToday: Int = 0
     override val leavingNextSevenDays: Int = 0
   }
+}
+
+fun occurrenceMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  val authorisation = tao.join<TemporaryAbsenceOccurrence, TemporaryAbsenceAuthorisation>(AUTHORISATION, JoinType.INNER)
+  cb.equal(authorisation.get<String>(PRISON_CODE), prisonCode)
+}
+
+fun occurrenceMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.equal(tao.get<String>(PERSON_IDENTIFIER), personIdentifier)
+}
+
+fun occurrenceMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.and(cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), fromDate.atStartOfDay()), cb.lessThanOrEqualTo(tao.get(RETURN_BY), toDate.plusDays(1).atStartOfDay()))
 }

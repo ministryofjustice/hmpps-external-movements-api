@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthoris
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter.ISO_DATE
 
-class SearchTapAuthIntTest(
+class SearchTapAuthorisationIntTest(
   @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -27,7 +27,7 @@ class SearchTapAuthIntTest(
   fun `401 unauthorised without a valid token`() {
     webTestClient
       .get()
-      .uri(SEARCH_TAP_AUTH_URL, prisonCode())
+      .uri(SEARCH_TAP_AUTH_URL)
       .exchange()
       .expectStatus()
       .isUnauthorized
