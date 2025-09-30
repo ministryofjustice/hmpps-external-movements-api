@@ -16,8 +16,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
@@ -36,7 +34,6 @@ interface TempAbsenceOccurrenceOperations {
   companion object {
     fun temporaryAbsenceOccurrence(
       authorisation: TemporaryAbsenceAuthorisation,
-      status: TapOccurrenceStatus.Code = TapOccurrenceStatus.Code.SCHEDULED,
       releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
       returnBy: LocalDateTime = LocalDateTime.now(),
       locationType: String = "OTHER",
@@ -56,7 +53,6 @@ interface TempAbsenceOccurrenceOperations {
         authorisation = authorisation,
         releaseAt = releaseAt,
         returnBy = returnBy,
-        status = rdSupplier(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS, status.name) as TapOccurrenceStatus,
         locationType = rdSupplier(LOCATION_TYPE, locationType) as LocationType,
         locationId = locationId,
         contact = contact,
@@ -93,11 +89,6 @@ interface TempAbsenceOccurrenceOperations {
     authRequest: CreateTapAuthorisationRequest,
   ) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    val expectedStatus = when (authRequest.statusCode) {
-      TapAuthorisationStatus.Code.PENDING -> TapOccurrenceStatus.Code.PENDING
-      TapAuthorisationStatus.Code.APPROVED -> TapOccurrenceStatus.Code.SCHEDULED
-    }
-    assertThat(status.code).isEqualTo(expectedStatus.name)
     assertThat(notes).isEqualTo(request.notes)
     assertThat(legacyId).isNull()
     assertThat(locationType.code).isEqualTo(request.locationTypeCode)
@@ -109,7 +100,6 @@ interface TempAbsenceOccurrenceOperations {
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    assertThat(status.code).isEqualTo(occurrence.status.code)
     assertThat(locationType.code).isEqualTo(occurrence.location.type.code)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)

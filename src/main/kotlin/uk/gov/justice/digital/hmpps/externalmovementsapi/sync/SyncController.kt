@@ -17,13 +17,13 @@ class SyncController(
   private val scheduledAbsence: SyncScheduledTemporaryAbsence,
 ) {
   @PutMapping("/temporary-absence-application/{personIdentifier}")
-  fun syncTap(
+  fun syncTemporaryAbsenceApplication(
     @PathVariable personIdentifier: String,
     @RequestBody request: TapApplicationRequest,
   ): SyncResponse = tapApplication.sync(personIdentifier, request)
 
   @PutMapping("/scheduled-temporary-absence/{parentId}")
-  fun syncTap(
+  fun syncScheduledTemporaryAbsence(
     @PathVariable parentId: UUID,
     @RequestBody request: ScheduledTemporaryAbsenceRequest,
   ): SyncResponse = scheduledAbsence.sync(parentId, request)

@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Lo
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import java.util.UUID
@@ -46,10 +45,6 @@ class SyncScheduledTemporaryAbsence(
     authorisation = authorisation,
     releaseAt = startTime,
     returnBy = returnTime,
-    status = rdProvider(
-      ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS,
-      occurrenceStatusCode.name,
-    ) as TapOccurrenceStatus,
     locationType = toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
       ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType,
     locationId = toAddressId.toString(),
