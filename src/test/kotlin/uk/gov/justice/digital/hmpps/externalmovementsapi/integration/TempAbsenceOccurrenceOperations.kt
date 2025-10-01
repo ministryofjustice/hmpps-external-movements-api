@@ -105,6 +105,7 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
     assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(1, SECONDS))
     assertThat(returnBy).isCloseTo(occurrence.returnBy, within(1, SECONDS))
+    assertThat(cancelledAt != null && cancelledBy != null).isEqualTo(occurrence.isCancelled)
   }
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {

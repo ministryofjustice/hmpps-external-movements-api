@@ -12,12 +12,14 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.cellLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.dob
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.json.Json
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerNumbers
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoners
+import java.time.LocalDate
 
 class PrisonerSearchServer : WireMockServer(9000) {
 
@@ -63,11 +65,13 @@ class PrisonerSearchServer : WireMockServer(9000) {
       personIdentifier: String = personIdentifier(),
       firstName: String = name(8),
       lastName: String = name(12),
+      dateOfBirth: LocalDate = dob(),
       cellLocation: String = cellLocation(),
     ): Prisoner = Prisoner(
       personIdentifier,
       firstName,
       lastName,
+      dateOfBirth,
       prisonCode,
       prisonCode,
       cellLocation,

@@ -62,4 +62,5 @@ private fun TemporaryAbsenceOccurrence.asOccurrence() = TapAuthorisation.Occurre
   location = Location(type = locationType.asCodedDescription()),
   accompaniedBy = accompaniedBy.asCodedDescription(),
   transport = transport.asCodedDescription(),
+  isCancelled = cancelledAt != null,
 )

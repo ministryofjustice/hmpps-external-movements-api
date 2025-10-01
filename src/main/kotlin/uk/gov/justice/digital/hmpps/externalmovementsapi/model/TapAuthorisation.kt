@@ -26,5 +26,6 @@ data class TapAuthorisation(
     val location: Location,
     val accompaniedBy: CodedDescription,
     val transport: CodedDescription,
+    val isCancelled: Boolean,
   )
 }
