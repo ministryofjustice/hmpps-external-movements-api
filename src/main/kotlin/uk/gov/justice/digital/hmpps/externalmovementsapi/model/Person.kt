@@ -1,7 +1,15 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
-data class Person(val personIdentifier: String, val firstName: String, val lastName: String, val cellLocation: String?) {
+import java.time.LocalDate
+
+data class Person(
+  val personIdentifier: String,
+  val firstName: String,
+  val lastName: String,
+  val dateOfBirth: LocalDate,
+  val cellLocation: String?,
+) {
   companion object {
-    fun unknown(personIdentifier: String) = Person(personIdentifier, firstName = "", lastName = "", cellLocation = null)
+    fun unknown(personIdentifier: String) = Person(personIdentifier, firstName = "", lastName = "", LocalDate.EPOCH, cellLocation = null)
   }
 }

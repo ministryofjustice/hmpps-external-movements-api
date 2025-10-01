@@ -2,10 +2,9 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.getAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.getOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers.ManageUsersClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers.UserDetails
@@ -13,54 +12,43 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersea
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerson
 import java.util.UUID
 
 @Service
-class GetTapAuthorisation(
+class GetTapOccurrence(
   private val prisonerSearch: PrisonerSearchClient,
   private val manageUsers: ManageUsersClient,
-  private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
-  fun byId(id: UUID): TapAuthorisation {
-    val authorisation = authorisationRepository.getAuthorisation(id)
-    val person = prisonerSearch.getPrisoner(authorisation.personIdentifier)?.asPerson()
-      ?: Person.unknown(authorisation.personIdentifier)
-    val occurrences = occurrenceRepository.findByAuthorisationId(authorisation.id)
-      .map(TemporaryAbsenceOccurrence::asOccurrence)
-    val users = manageUsers.getUsersDetails(setOfNotNull(authorisation.submittedBy, authorisation.approvedBy))
+  fun byId(id: UUID): TapOccurrence {
+    val occurrence = occurrenceRepository.getOccurrence(id)
+    val person = prisonerSearch.getPrisoner(occurrence.authorisation.personIdentifier)?.asPerson()
+      ?: Person.unknown(occurrence.authorisation.personIdentifier)
+    val users = manageUsers.getUsersDetails(setOfNotNull(occurrence.addedBy, occurrence.cancelledBy))
       .associateBy { it.username }
-    return authorisation.with(person, occurrences) { requireNotNull(users[it]) }
+    return occurrence.with(person) { requireNotNull(users[it]) }
   }
 }
 
-private fun TemporaryAbsenceAuthorisation.with(
-  person: Person,
-  occurrences: List<TapAuthorisation.Occurrence>,
-  user: (String) -> UserDetails,
-) = TapAuthorisation(
+private fun TemporaryAbsenceAuthorisation.with(person: Person) = TapOccurrence.Authorisation(
   id = id,
   person = person,
   status = status.asCodedDescription(),
   absenceType = absenceType?.asCodedDescription(),
   absenceSubType = absenceSubType?.asCodedDescription(),
   absenceReason = absenceReason?.asCodedDescription(),
-  repeat = repeat,
-  fromDate = fromDate,
-  toDate = toDate,
-  occurrences = occurrences,
-  submitted = AtAndBy(submittedAt, submittedBy, user(submittedBy).name),
-  approved = approvedBy?.let { AtAndBy(checkNotNull(approvedAt), it, user(it).name) },
 )
 
-private fun TemporaryAbsenceOccurrence.asOccurrence() = TapAuthorisation.Occurrence(
+private fun TemporaryAbsenceOccurrence.with(person: Person, user: (String) -> UserDetails) = TapOccurrence(
   id = id,
+  authorisation = authorisation.with(person),
   releaseAt = releaseAt,
   returnBy = returnBy,
   location = Location(type = locationType.asCodedDescription()),
   accompaniedBy = accompaniedBy.asCodedDescription(),
   transport = transport.asCodedDescription(),
-  isCancelled = cancelledAt != null,
+  added = AtAndBy(addedAt, addedBy, user(addedBy).name),
+  cancelled = cancelledBy?.let { AtAndBy(checkNotNull(cancelledAt), it, user(it).name) },
 )

@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Tr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDateTime
@@ -98,8 +99,17 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(addedAt).isCloseTo(authRequest.submittedAt, within(1, SECONDS))
   }
 
+  fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapAuthorisation.Occurrence) {
+    assertThat(locationType.code).isEqualTo(occurrence.location.type.code)
+    assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
+    assertThat(transport.code).isEqualTo(occurrence.transport.code)
+    assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(1, SECONDS))
+    assertThat(returnBy).isCloseTo(occurrence.returnBy, within(1, SECONDS))
+    assertThat(cancelledAt != null && cancelledBy != null).isEqualTo(occurrence.isCancelled)
+  }
+
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {
-    assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+    assertThat(personIdentifier).isEqualTo(occurrence.authorisation.person.personIdentifier)
     assertThat(locationType.code).isEqualTo(occurrence.location.type.code)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)

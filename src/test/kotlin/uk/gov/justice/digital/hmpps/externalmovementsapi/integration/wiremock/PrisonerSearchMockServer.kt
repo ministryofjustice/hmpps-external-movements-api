@@ -1,8 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
@@ -15,14 +12,16 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.cellLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.dob
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.json.Json
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerNumbers
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoners
+import java.time.LocalDate
 
 class PrisonerSearchServer : WireMockServer(9000) {
-  private val mapper: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
 
   fun getPrisoners(
     prisonCode: String,
@@ -31,11 +30,11 @@ class PrisonerSearchServer : WireMockServer(9000) {
   ) {
     stubFor(
       post(urlPathEqualTo("/prisoner-search/prisoner-numbers"))
-        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbers(prisonNumbers)), true, true))
+        .withRequestBody(equalToJson(Json.mapper.writeValueAsString(PrisonerNumbers(prisonNumbers)), true, true))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
-            .withBody(mapper.writeValueAsString(prisoners))
+            .withBody(Json.mapper.writeValueAsString(prisoners))
             .withStatus(200),
         ),
     )
@@ -54,7 +53,7 @@ class PrisonerSearchServer : WireMockServer(9000) {
       request.willReturn(
         aResponse()
           .withHeader("Content-Type", "application/json")
-          .withBody(mapper.writeValueAsString(prisoners))
+          .withBody(Json.mapper.writeValueAsString(prisoners))
           .withStatus(200),
       ),
     )
@@ -66,11 +65,13 @@ class PrisonerSearchServer : WireMockServer(9000) {
       personIdentifier: String = personIdentifier(),
       firstName: String = name(8),
       lastName: String = name(12),
+      dateOfBirth: LocalDate = dob(),
       cellLocation: String = cellLocation(),
     ): Prisoner = Prisoner(
       personIdentifier,
       firstName,
       lastName,
+      dateOfBirth,
       prisonCode,
       prisonCode,
       cellLocation,
