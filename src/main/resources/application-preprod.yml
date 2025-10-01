@@ -1,10 +1,10 @@
 integration:
   hmpps-auth:
-    url: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
+    url: "https://sign-in-preprod.hmpps.service.justice.gov.uk/auth"
   manage-users:
     url:  "https://manage-users-api-preprod.hmpps.service.justice.gov.uk"
   prisoner-search:
-    url: "https://prisoner-search-dev.prison.service.justice.gov.uk"
+    url: "https://prisoner-search-preprod.prison.service.justice.gov.uk"
 
 service:
   active-prisons: "FDI,LYI,SPI"
