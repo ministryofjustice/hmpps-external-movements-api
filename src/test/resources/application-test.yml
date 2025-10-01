@@ -10,6 +10,8 @@ integration:
     url: "http://localhost:8090/auth"
   manage-users:
     url:  "http://localhost:8095"
+  organisations:
+    url: "http://localhost:8900"
   prisoner-search:
     url: "http://localhost:9000"
 

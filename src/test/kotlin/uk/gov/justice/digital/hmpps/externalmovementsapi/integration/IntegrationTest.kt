@@ -17,13 +17,21 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.L
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.OrganisationsExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.MissingTopicException
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
-@ExtendWith(value = [HmppsAuthApiExtension::class, PrisonerSearchExtension::class, ManageUsersExtension::class])
+@ExtendWith(
+  value = [
+    HmppsAuthApiExtension::class,
+    ManageUsersExtension::class,
+    OrganisationsExtension::class,
+    PrisonerSearchExtension::class,
+  ],
+)
 @ContextConfiguration(classes = [TestConfig::class])
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")

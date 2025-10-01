@@ -28,7 +28,7 @@ class ManageUsersClient(@Qualifier("manageUsersWebClient") private val webClient
   } else {
     webClient
       .get()
-      .uri("/users/{username}", username)
+      .uri(GET_USER_DETAILS_URL, username)
       .exchangeToMono { res ->
         when (res.statusCode()) {
           HttpStatus.NOT_FOUND -> Mono.just(username.asSystemUser())
@@ -36,5 +36,9 @@ class ManageUsersClient(@Qualifier("manageUsersWebClient") private val webClient
           else -> res.createError()
         }
       }.retryOnTransientException()
+  }
+
+  companion object {
+    const val GET_USER_DETAILS_URL = "/users/{username}"
   }
 }
