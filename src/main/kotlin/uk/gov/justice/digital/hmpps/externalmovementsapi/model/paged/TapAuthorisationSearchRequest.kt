@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.PERSON_IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.TO_DATE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.removeNullChar
 import java.time.LocalDate
 
 data class TapAuthorisationSearchRequest(
@@ -27,7 +28,7 @@ data class TapAuthorisationSearchRequest(
   private fun sortByDate(direction: Direction) = by(direction, FROM_DATE, TO_DATE, PERSON_IDENTIFIER)
 
   @JsonIgnore
-  val queryString: String? = query?.replace("\u0000", "")?.trim()?.takeIf { it.isNotBlank() }
+  val queryString: String? = query?.removeNullChar()?.takeIf { it.isNotBlank() }
 
   override fun buildSort(field: String, direction: Direction): Sort = when (field) {
     DATE_RANGE -> sortByDate(direction)

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort.by
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.PERSON_IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.RETURN_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.removeNullChar
 import java.time.LocalDate
 
 data class TapOccurrenceSearchRequest(
@@ -25,7 +26,7 @@ data class TapOccurrenceSearchRequest(
   private fun sortByDate(direction: Direction) = by(direction, RELEASE_AT, RETURN_BY, PERSON_IDENTIFIER)
 
   @JsonIgnore
-  val queryString: String? = query?.replace("\u0000", "")?.trim()?.takeIf { it.isNotBlank() }
+  val queryString: String? = query?.removeNullChar()?.takeIf { it.isNotBlank() }
 
   override fun buildSort(field: String, direction: Direction): Sort = when (field) {
     DATE_RANGE -> sortByDate(direction)
