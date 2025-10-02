@@ -96,4 +96,10 @@ class LocationType(
   sequenceNumber: Int,
   active: Boolean,
   id: Long,
-) : ReferenceData(key, description, hintText, sequenceNumber, active, id)
+) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
+  enum class Code {
+    CORP,
+    OFF,
+    AGY,
+  }
+}

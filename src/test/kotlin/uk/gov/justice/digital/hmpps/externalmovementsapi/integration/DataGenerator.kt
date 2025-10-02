@@ -15,11 +15,12 @@ object DataGenerator {
 
   fun dob(): LocalDate {
     val month = Month.entries.random()
-    val day = (1..month.maxLength()).random()
+    val day = (1..28).random()
     return LocalDate.of(years.random(), month, day)
   }
 
   fun username(): String = (0..12).joinToString("") { letters.random().toString() }
   fun cellLocation(): String = "${letters.random()}-${(1..9).random()}-${(111..999).random()}"
   fun prisonCode(): String = (1..3).map { letters.random() }.joinToString("")
+  fun postcode(): String = ((1..2).map { letters.random() } + (1..3).map { (1..9).random() } + (1..2).map { letters.random() }).joinToString("")
 }

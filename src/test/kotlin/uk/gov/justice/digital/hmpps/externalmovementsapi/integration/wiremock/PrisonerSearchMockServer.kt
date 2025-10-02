@@ -2,9 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
-import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import org.junit.jupiter.api.extension.AfterAllCallback
@@ -18,7 +16,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.json.Json
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerNumbers
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoners
 import java.time.LocalDate
 
 class PrisonerSearchServer : WireMockServer(9000) {
@@ -37,25 +34,6 @@ class PrisonerSearchServer : WireMockServer(9000) {
             .withBody(Json.mapper.writeValueAsString(prisoners))
             .withStatus(200),
         ),
-    )
-  }
-
-  fun filteredPrisoners(
-    prisonCode: String,
-    prisoners: Prisoners,
-    queryParams: Map<String, String> = mapOf(),
-  ) {
-    val request = get(urlPathEqualTo("/prison/$prisonCode/prisoners"))
-    queryParams.forEach { queryParam ->
-      request.withQueryParam(queryParam.key, equalTo(queryParam.value))
-    }
-    stubFor(
-      request.willReturn(
-        aResponse()
-          .withHeader("Content-Type", "application/json")
-          .withBody(Json.mapper.writeValueAsString(prisoners))
-          .withStatus(200),
-      ),
     )
   }
 
