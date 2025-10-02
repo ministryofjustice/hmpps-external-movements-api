@@ -6,6 +6,7 @@ data class LocationSearchResponse(
 ) : PagedResponse<LocationResult>
 
 data class LocationResult(
+  val id: String,
   val name: String?,
   val premise: String?,
   val street: String?,

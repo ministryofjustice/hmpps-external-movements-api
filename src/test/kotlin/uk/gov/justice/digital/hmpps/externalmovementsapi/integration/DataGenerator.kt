@@ -23,4 +23,5 @@ object DataGenerator {
   fun cellLocation(): String = "${letters.random()}-${(1..9).random()}-${(111..999).random()}"
   fun prisonCode(): String = (1..3).map { letters.random() }.joinToString("")
   fun postcode(): String = ((1..2).map { letters.random() } + (1..3).map { (1..9).random() } + (1..2).map { letters.random() }).joinToString("")
+  fun telephone(): String = (1..9).map { (0..9) }.joinToString("", "07")
 }

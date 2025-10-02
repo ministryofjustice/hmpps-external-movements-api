@@ -62,6 +62,7 @@ class SearchLocationsIntTest : IntegrationTest() {
   private fun LocationResult.verifyAgainst(organisation: Organisation) {
     assertThat(postcode).isEqualTo(organisation.postcode)
     assertThat(name).isEqualTo(organisation.organisationName)
+    assertThat(id).isEqualTo(organisation.organisationId.toString())
   }
 
   private fun searchLocations(
