@@ -57,7 +57,7 @@ class GetTapOccurrenceIntTest(
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
     assertThat(response.added.displayName).isEqualTo(user.name)
-    assertThat(response.location.name).isEqualTo(organisation.organisationName)
+    assertThat(response.location.description).isEqualTo(organisation.organisationName)
   }
 
   private fun getTapOccurrence(

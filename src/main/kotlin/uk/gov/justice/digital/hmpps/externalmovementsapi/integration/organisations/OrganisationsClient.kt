@@ -33,7 +33,7 @@ class OrganisationsClient(@Qualifier("organisationsWebClient") private val webCl
     }.retryOnTransientException()
     .block()!!
 
-  fun findById(id: String): Mono<OrganisationDetails> = webClient
+  fun findById(id: Long): Mono<OrganisationDetails> = webClient
     .get()
     .uri(ORGANISATION_BY_ID_URL, id)
     .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
@@ -45,9 +45,9 @@ class OrganisationsClient(@Qualifier("organisationsWebClient") private val webCl
       }
     }.retryOnTransientException()
 
-  fun getById(id: String): OrganisationDetails? = findById(id).block()!!
+  fun getById(id: Long): OrganisationDetails? = findById(id).block()!!
 
-  fun getByIds(ids: Set<String>) = Flux.fromIterable(ids)
+  fun getByIds(ids: Set<Long>) = Flux.fromIterable(ids)
     .flatMap({ findById(it) }, 10)
     .collectList()
     .block()!!

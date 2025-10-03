@@ -48,11 +48,11 @@ class GetLocationsByIdIntTest : IntegrationTest() {
 
   private fun Location.verifyAgainst(organisation: OrganisationDetails) {
     assertThat(type).isEqualTo(CodedDescription("CORP", "Business or community", "These are places of business or community settings such as workplaces, approved premises, hospitals and colleges. This does not have to be a specific addresses but can be a whole area (for example, York)."))
-    assertThat(name).isEqualTo(organisation.organisationName)
-    assertThat(contact?.name).isEqualTo(organisation.addresses.firstOrNull { it.primaryAddress }?.contactPersonName)
+    assertThat(description).isEqualTo(organisation.organisationName)
+    assertThat(contactInformation?.name).isEqualTo(organisation.addresses.firstOrNull { it.primaryAddress }?.contactPersonName)
     val orgPhoneCount = organisation.phoneNumbers.size +
       (organisation.addresses.firstOrNull { it.primaryAddress }?.phoneNumbers?.size ?: 0)
-    assertThat(contact?.phones).hasSize(orgPhoneCount)
+    assertThat(contactInformation?.phones).hasSize(orgPhoneCount)
   }
 
   private fun getLocation(

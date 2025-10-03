@@ -32,12 +32,12 @@ class CorporationSearch(
 
   override fun byId(typeCode: LocationType.Code, id: String): Location? {
     val type = checkNotNull(referenceDataRepository.findByKey(ReferenceDataDomain.Code.LOCATION_TYPE of typeCode.name))
-    return organisations.getById(id)?.asLocation(type)
+    return id.toLongOrNull()?.let { organisations.getById(it)?.asLocation(type) }
   }
 
   override fun byIds(typeCode: LocationType.Code, ids: Set<String>): List<Location> {
     val type = checkNotNull(referenceDataRepository.findByKey(ReferenceDataDomain.Code.LOCATION_TYPE of typeCode.name))
-    return organisations.getByIds(ids).map { it.asLocation(type) }
+    return ids.mapNotNull { it.toLongOrNull() }.takeIf { it.isNotEmpty() }?.let { ids -> organisations.getByIds(ids.toSet()).map { it.asLocation(type) } } ?: emptyList()
   }
 
   private fun Organisation.asResult() = LocationResult(

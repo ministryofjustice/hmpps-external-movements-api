@@ -1,13 +1,14 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
+import java.util.SequencedSet
 
 data class Location(
   val type: CodedDescription,
-  val name: String,
+  val description: String,
   val isActive: Boolean,
   val address: Address?,
-  val contact: Contact?,
+  val contactInformation: ContactInformation?,
   val id: String?,
 ) {
 
@@ -21,8 +22,8 @@ data class Location(
     val postcode: String?,
   )
 
-  data class Contact(
-    val name: String,
+  data class ContactInformation(
+    val names: SequencedSet<String> = linkedSetOf(),
     val phones: List<Phone> = emptyList(),
     val emails: List<EmailAddress> = emptyList(),
     val webAddresses: List<WebAddress> = emptyList(),
