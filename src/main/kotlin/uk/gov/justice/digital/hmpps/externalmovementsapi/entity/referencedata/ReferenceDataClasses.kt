@@ -101,5 +101,6 @@ class LocationType(
     CORP,
     OFF,
     AGY,
+    OTHER,
   }
 }
