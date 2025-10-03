@@ -11,18 +11,19 @@ fun OrganisationDetails.asLocation(type: ReferenceData): Location {
     organisationName,
     active,
     primaryAddress?.asLocationAddress(),
-    primaryAddress?.let { contactDetails(it) },
+    contactInformation(primaryAddress),
     "$organisationId",
   )
 }
 
-private fun OrganisationDetails.contactDetails(primaryAddress: OrganisationAddressDetails): Location.Contact? = primaryAddress.contactPersonName?.let { contactName ->
-  Location.Contact(contactName, phoneNumbers(primaryAddress))
-}
+private fun OrganisationDetails.contactInformation(primaryAddress: OrganisationAddressDetails?): Location.ContactInformation = Location.ContactInformation(
+  names = primaryAddress?.contactPersonName?.let { linkedSetOf(it) } ?: linkedSetOf(),
+  phones = phoneNumbers(primaryAddress),
+)
 
-private fun OrganisationDetails.phoneNumbers(pa: OrganisationAddressDetails): List<Location.Contact.Phone> = pa.phoneNumbers.map { it.asLocationPhone(true) } + phoneNumbers.map { it.asLocationPhone(false) }
+private fun OrganisationDetails.phoneNumbers(pa: OrganisationAddressDetails?): List<Location.ContactInformation.Phone> = (pa?.phoneNumbers?.map { it.asLocationPhone(true) } ?: emptyList()) + phoneNumbers.map { it.asLocationPhone(false) }
 
-private fun OrganisationPhoneDetails.asLocationPhone(addressSpecific: Boolean) = Location.Contact.Phone(
+private fun OrganisationPhoneDetails.asLocationPhone(addressSpecific: Boolean) = Location.ContactInformation.Phone(
   phoneTypeDescription,
   phoneNumber,
   extNumber,
