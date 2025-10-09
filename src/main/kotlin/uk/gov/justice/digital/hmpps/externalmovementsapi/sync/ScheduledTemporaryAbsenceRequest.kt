@@ -2,9 +2,11 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain.Code.TRANSPORT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -22,14 +24,14 @@ data class ScheduledTemporaryAbsenceRequest(
   val transportType: String?,
   @Schema(description = "Audit data associated with the records")
   val audit: NomisAudit,
-) {
+) : ReferenceDataRequired {
   @JsonIgnore
   val cancelled = eventStatus in listOf("CANC", "DEN")
 
-  fun requiredReferenceData() = listOfNotNull(
-    ACCOMPANIED_BY to escortOrDefault(),
-    TRANSPORT to transportTypeOrDefault(),
-    LOCATION_TYPE to (toAddressOwnerClass ?: "OTHER"),
+  override fun requiredReferenceData() = setOfNotNull(
+    ACCOMPANIED_BY of escortOrDefault(),
+    TRANSPORT of transportTypeOrDefault(),
+    LOCATION_TYPE of (toAddressOwnerClass ?: "OTHER"),
   )
 
   @JsonIgnore

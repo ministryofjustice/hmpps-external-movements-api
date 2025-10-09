@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
 import jakarta.persistence.DiscriminatorValue
 import jakarta.persistence.Entity
@@ -56,7 +56,11 @@ class AccompaniedBy(
   sequenceNumber: Int,
   active: Boolean,
   id: Long,
-) : ReferenceData(key, description, hintText, sequenceNumber, active, id)
+) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
+  enum class Code {
+    NOT_PROVIDED,
+  }
+}
 
 @Entity
 @DiscriminatorValue("TRANSPORT")

@@ -1,21 +1,23 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
+package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.getAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import java.util.UUID
 
 @Transactional
@@ -27,12 +29,12 @@ class SyncScheduledTemporaryAbsence(
 ) {
   fun sync(parentId: UUID, request: ScheduledTemporaryAbsenceRequest): SyncResponse {
     val authorisation = authorisationRepository.getAuthorisation(parentId)
-    val rdMap =
-      referenceDataRepository.findByKeyIn(request.requiredReferenceData().map { it.first of it.second }.toSet())
-        .associateBy { it.key }
-    val rdProvider = { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
+    val rdProvider = referenceDataRepository.rdProvider(request)
     val occurrence =
-      (request.id?.let { occurrenceRepository.findByIdOrNull(it) } ?: occurrenceRepository.findByLegacyId(request.eventId))
+      (
+        request.id?.let { occurrenceRepository.findByIdOrNull(it) }
+          ?: occurrenceRepository.findByLegacyId(request.eventId)
+        )
         ?.update(request, rdProvider)
         ?: occurrenceRepository.save(request.asEntity(authorisation, rdProvider))
     return SyncResponse(occurrence.id)

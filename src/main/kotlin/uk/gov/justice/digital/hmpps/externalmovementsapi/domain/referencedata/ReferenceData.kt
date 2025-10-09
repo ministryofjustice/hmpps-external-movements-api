@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
 import jakarta.persistence.Column
 import jakarta.persistence.DiscriminatorColumn
@@ -93,6 +93,11 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
     """,
   )
   fun findLinkedItems(id: Long): List<ReferenceData>
+}
+
+fun ReferenceDataRepository.rdProvider(rdr: ReferenceDataRequired): (ReferenceDataDomain.Code, String) -> ReferenceData {
+  val rdMap = findByKeyIn(rdr.requiredReferenceData()).associateBy { it.key }
+  return { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
 }
 
 fun ReferenceData.asCodedDescription() = CodedDescription(code, description, hintText)

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.entity
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
 
 import com.fasterxml.uuid.Generators
 import java.util.UUID

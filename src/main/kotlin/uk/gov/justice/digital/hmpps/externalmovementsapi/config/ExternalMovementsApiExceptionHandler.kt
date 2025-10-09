@@ -18,14 +18,27 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
 class ExternalMovementsApiExceptionHandler {
+  private fun RuntimeException.devMessage(): String = message ?: "${this::class.simpleName}: ${cause?.message ?: ""}"
+
   @ExceptionHandler(ConflictException::class)
-  fun handleValidationException(e: ConflictException): ResponseEntity<ErrorResponse> = ResponseEntity
+  fun handleConflictException(e: ConflictException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(CONFLICT)
     .body(
       ErrorResponse(
         status = CONFLICT,
         userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.message,
+        developerMessage = e.devMessage(),
+      ),
+    )
+
+  @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class)
+  fun handleIllegalArgumentOrStateException(e: RuntimeException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(BAD_REQUEST)
+    .body(
+      ErrorResponse(
+        status = BAD_REQUEST,
+        userMessage = "Validation failure: ${e.message}",
+        developerMessage = e.devMessage(),
       ),
     )
 
@@ -36,7 +49,7 @@ class ExternalMovementsApiExceptionHandler {
       ErrorResponse(
         status = BAD_REQUEST,
         userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.message,
+        developerMessage = e.devMessage(),
       ),
     )
 
@@ -58,7 +71,7 @@ class ExternalMovementsApiExceptionHandler {
       ErrorResponse(
         status = NOT_FOUND,
         userMessage = e.message,
-        developerMessage = e.message,
+        developerMessage = e.devMessage(),
       ),
     )
 
@@ -69,7 +82,7 @@ class ExternalMovementsApiExceptionHandler {
       ErrorResponse(
         status = FORBIDDEN,
         userMessage = "Forbidden: ${e.message}",
-        developerMessage = e.message,
+        developerMessage = e.devMessage(),
       ),
     )
 
