@@ -22,8 +22,7 @@ data class TapMovementRequest(
   val direction: Direction,
   val escort: String?,
   val escortText: String?,
-  val fromPrison: String?,
-  val toPrison: String?,
+  val prisonCode: String?,
   val commentText: String?,
   val location: TapLocation = TapLocation(),
   val audit: NomisAudit,
@@ -40,10 +39,7 @@ data class TapMovementRequest(
 
   fun escortOrDefault(): String = escort ?: AccompaniedBy.Code.NOT_PROVIDED.name
 
-  fun prisonCodeOrDefault(): String = when (direction) {
-    Direction.IN -> toPrison ?: DEFAULT_PRISON_CODE
-    Direction.OUT -> fromPrison ?: DEFAULT_PRISON_CODE
-  }
+  fun prisonCodeOrDefault(): String = prisonCode ?: DEFAULT_PRISON_CODE
 
   companion object {
     const val DEFAULT_PRISON_CODE = "ZZGHI"
