@@ -45,9 +45,9 @@ data class TapMovementRequest(
 
 data class TapLocation(
   val id: String? = null,
-  val type: String? = null,
+  val typeCode: String? = null,
   val description: String? = null,
   val address: Address? = null,
 ) {
-  fun typeOrDefault(): String = type ?: LocationType.Code.OTHER.name
+  fun typeOrDefault(): String = typeCode ?: LocationType.Code.OTHER.name
 }
