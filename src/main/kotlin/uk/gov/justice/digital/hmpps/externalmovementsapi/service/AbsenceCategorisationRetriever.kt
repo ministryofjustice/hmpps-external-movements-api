@@ -1,13 +1,13 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.RdWithDomainLink
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomainRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataLinkRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.getByDomainAndCodeWithDomainLink
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.getDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.RdWithDomainLink
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomainRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataLinkRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getByDomainAndCodeWithDomainLink
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription

@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.service.locationsearch
 
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.organisations.Organisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.organisations.OrganisationsClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.organisations.PagedOrganisations

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
 import jakarta.persistence.Entity
 import jakarta.persistence.Id

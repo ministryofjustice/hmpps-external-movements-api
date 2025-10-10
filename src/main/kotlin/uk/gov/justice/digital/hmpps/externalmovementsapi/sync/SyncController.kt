@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncScheduledTemporaryAbsence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapApplication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapMovement
 import java.util.UUID
 
 @RestController
@@ -15,6 +18,7 @@ import java.util.UUID
 class SyncController(
   private val tapApplication: SyncTapApplication,
   private val scheduledAbsence: SyncScheduledTemporaryAbsence,
+  private val movement: SyncTapMovement,
 ) {
   @PutMapping("/temporary-absence-application/{personIdentifier}")
   fun syncTemporaryAbsenceApplication(
@@ -27,4 +31,10 @@ class SyncController(
     @PathVariable parentId: UUID,
     @RequestBody request: ScheduledTemporaryAbsenceRequest,
   ): SyncResponse = scheduledAbsence.sync(parentId, request)
+
+  @PutMapping("/temporary-absence-movement/{personIdentifier}")
+  fun syncTemporaryAbsenceMovement(
+    @PathVariable personIdentifier: String,
+    @RequestBody request: TapMovementRequest,
+  ): SyncResponse = movement.sync(personIdentifier, request)
 }

@@ -1,12 +1,12 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.getOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers.ManageUsersClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers.UserDetails
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient

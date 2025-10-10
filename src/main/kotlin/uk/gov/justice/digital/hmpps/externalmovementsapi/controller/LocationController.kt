@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.LocationSearchRequest

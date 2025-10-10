@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.entity
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -18,17 +18,17 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.PERSON_IDENTIFIER
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.TemporaryAbsenceOccurrence.Companion.RETURN_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.LocationType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.entity.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.PERSON_IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.RETURN_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDate
