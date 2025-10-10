@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location.Address
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -16,8 +15,7 @@ data class TapMovementRequest(
   val id: UUID?,
   val occurrenceId: UUID?,
   val legacyId: Long,
-  val movementDate: LocalDate,
-  val movementTime: LocalDateTime,
+  val movementDateTime: LocalDateTime,
   val movementReason: String,
   val direction: Direction,
   val escort: String?,
@@ -27,7 +25,6 @@ data class TapMovementRequest(
   val location: TapLocation = TapLocation(),
   val audit: NomisAudit,
 ) : ReferenceDataRequired {
-  val movementDateTime: LocalDateTime = LocalDateTime.of(movementDate, movementTime.toLocalTime())
 
   enum class Direction { IN, OUT }
 
@@ -48,9 +45,9 @@ data class TapMovementRequest(
 
 data class TapLocation(
   val id: String? = null,
-  val type: String? = null,
+  val typeCode: String? = null,
   val description: String? = null,
   val address: Address? = null,
 ) {
-  fun typeOrDefault(): String = type ?: LocationType.Code.OTHER.name
+  fun typeOrDefault(): String = typeCode ?: LocationType.Code.OTHER.name
 }

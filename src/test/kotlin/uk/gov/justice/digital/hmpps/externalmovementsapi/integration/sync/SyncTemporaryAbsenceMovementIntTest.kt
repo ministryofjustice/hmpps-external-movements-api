@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest.Direction
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -92,8 +91,22 @@ class SyncTemporaryAbsenceMovementIntTest(
   fun `200 ok temporary absence updated successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
-    val existing = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, authorisation.personIdentifier, occurrence, legacyId = newId()))
-    val request = tapMovementRequest(escortCode = "U", escortText = "Updated the text about the escort", direction = Direction.OUT, id = existing.id, occurrenceId = occurrence.id, legacyId = existing.legacyId!!)
+    val existing = givenTemporaryAbsenceMovement(
+      temporaryAbsenceMovement(
+        TemporaryAbsenceMovement.Direction.OUT,
+        authorisation.personIdentifier,
+        occurrence,
+        legacyId = newId(),
+      ),
+    )
+    val request = tapMovementRequest(
+      escortCode = "U",
+      escortText = "Updated the text about the escort",
+      direction = Direction.OUT,
+      id = existing.id,
+      occurrenceId = occurrence.id,
+      legacyId = existing.legacyId!!,
+    )
     val res = syncTapMovement(authorisation.personIdentifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -109,8 +122,21 @@ class SyncTemporaryAbsenceMovementIntTest(
   fun `200 ok temporary absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
-    val existing = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.IN, authorisation.personIdentifier, occurrence, legacyId = newId()))
-    val request = tapMovementRequest(escortCode = "U", escortText = "Updated the text about the escort", direction = Direction.IN, occurrenceId = occurrence.id, legacyId = existing.legacyId!!)
+    val existing = givenTemporaryAbsenceMovement(
+      temporaryAbsenceMovement(
+        TemporaryAbsenceMovement.Direction.IN,
+        authorisation.personIdentifier,
+        occurrence,
+        legacyId = newId(),
+      ),
+    )
+    val request = tapMovementRequest(
+      escortCode = "U",
+      escortText = "Updated the text about the escort",
+      direction = Direction.IN,
+      occurrenceId = occurrence.id,
+      legacyId = existing.legacyId!!,
+    )
     val res = syncTapMovement(authorisation.personIdentifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -142,8 +168,7 @@ class SyncTemporaryAbsenceMovementIntTest(
     occurrenceId: UUID? = null,
     direction: Direction,
     prisonCode: String = prisonCode(),
-    movementDate: LocalDate = LocalDate.now().minusDays(7),
-    movementTime: LocalDateTime = LocalDateTime.now(),
+    movementDateTime: LocalDateTime = LocalDateTime.now().minusDays(7),
     movementReason: String = "R15",
     escortCode: String? = "L",
     escortText: String? = "Information about the escort",
@@ -155,8 +180,7 @@ class SyncTemporaryAbsenceMovementIntTest(
     id,
     occurrenceId,
     legacyId,
-    movementDate,
-    movementTime,
+    movementDateTime,
     movementReason,
     direction,
     escortCode,
