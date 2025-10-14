@@ -42,7 +42,7 @@ class TemporaryAbsenceMovement(
   recordedAt: LocalDateTime,
   recordedBy: String,
   recordedByPrisonCode: String,
-  legacyId: Long?,
+  legacyId: String?,
   @Id
   @Column(name = "id", nullable = false)
   val id: UUID = newUuid(),
@@ -111,7 +111,7 @@ class TemporaryAbsenceMovement(
     private set
 
   @Column(name = "legacy_id")
-  var legacyId: Long? = legacyId
+  var legacyId: String? = legacyId
     private set
 
   @Version
@@ -163,5 +163,5 @@ fun TapLocation.embedded(
 interface TemporaryAbsenceMovementRepository :
   JpaRepository<TemporaryAbsenceMovement, UUID>,
   JpaSpecificationExecutor<TemporaryAbsenceMovement> {
-  fun findByLegacyId(legacyId: Long): TemporaryAbsenceMovement?
+  fun findByLegacyId(legacyId: String): TemporaryAbsenceMovement?
 }

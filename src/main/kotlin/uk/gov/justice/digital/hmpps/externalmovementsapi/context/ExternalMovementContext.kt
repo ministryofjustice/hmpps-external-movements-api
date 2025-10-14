@@ -21,7 +21,6 @@ data class ExternalMovementContext(
 }
 
 fun ExternalMovementContext.set() = apply { ExternalMovementContextHolder.setContext(this) }
-fun ExternalMovementContext.clear() = apply { ExternalMovementContextHolder.clearContext() }
 
 @Component
 class ExternalMovementContextHolder {
