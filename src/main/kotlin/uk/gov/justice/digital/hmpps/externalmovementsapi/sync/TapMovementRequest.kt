@@ -14,7 +14,7 @@ import java.util.UUID
 data class TapMovementRequest(
   val id: UUID?,
   val occurrenceId: UUID?,
-  val legacyId: Long,
+  val legacyId: String,
   val movementDateTime: LocalDateTime,
   val movementReason: String,
   val direction: Direction,

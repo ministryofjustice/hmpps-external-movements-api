@@ -96,7 +96,7 @@ class SyncTemporaryAbsenceMovementIntTest(
         TemporaryAbsenceMovement.Direction.OUT,
         authorisation.personIdentifier,
         occurrence,
-        legacyId = newId(),
+        legacyId = newId().toString(),
       ),
     )
     val request = tapMovementRequest(
@@ -127,7 +127,7 @@ class SyncTemporaryAbsenceMovementIntTest(
         TemporaryAbsenceMovement.Direction.IN,
         authorisation.personIdentifier,
         occurrence,
-        legacyId = newId(),
+        legacyId = newId().toString(),
       ),
     )
     val request = tapMovementRequest(
@@ -174,7 +174,7 @@ class SyncTemporaryAbsenceMovementIntTest(
     escortText: String? = "Information about the escort",
     comment: String? = "Some notes about the movement",
     location: TapLocation = TapLocation(),
-    legacyId: Long = newId(),
+    legacyId: String = "${newId()}",
     audit: NomisAudit = NomisAuditGenerator.generate(),
   ) = TapMovementRequest(
     id,

@@ -53,7 +53,7 @@ interface TempAbsenceMovementOperations {
       locationCounty: String? = "Movement County",
       locationCountry: String? = "Movement Country",
       locationPostcode: String? = "Movement Postcode",
-      legacyId: Long? = null,
+      legacyId: String? = null,
     ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceMovement = { rdSupplier ->
       TemporaryAbsenceMovement(
         personIdentifier = personIdentifier,
