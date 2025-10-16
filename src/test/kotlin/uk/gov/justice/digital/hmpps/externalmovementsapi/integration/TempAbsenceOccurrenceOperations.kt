@@ -1,27 +1,29 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
+import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
@@ -33,13 +35,24 @@ interface TempAbsenceOccurrenceOperations {
   fun findForAuthorisation(id: UUID): List<TemporaryAbsenceOccurrence>
 
   companion object {
+    fun address(
+      premise: String? = name(6),
+      street: String? = null,
+      area: String? = null,
+      city: String? = null,
+      county: String? = null,
+      country: String? = null,
+      postcode: String? = postcode(),
+    ) = Location.Address(premise, street, area, city, county, country, postcode)
+
+    fun location(description: String? = name(10), address: Location.Address? = address(), id: String? = "${newId()}") = Location(description, address, id)
+
     fun temporaryAbsenceOccurrence(
       authorisation: TemporaryAbsenceAuthorisation,
       releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
       returnBy: LocalDateTime = LocalDateTime.now(),
-      locationType: String = "OTHER",
-      locationId: String = newUuid().toString(),
-      contact: String? = null,
+      location: Location = location(),
+      contactInformation: String? = null,
       accompaniedBy: String = "L",
       transport: String = "OD",
       notes: String? = "Some notes on the occurrence",
@@ -47,15 +60,15 @@ interface TempAbsenceOccurrenceOperations {
       addedBy: String = "O7h3rU53r",
       cancelledAt: LocalDateTime? = null,
       cancelledBy: String? = null,
+      scheduleReference: JsonNode? = null,
       legacyId: Long? = null,
     ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceOccurrence = { rdSupplier ->
       TemporaryAbsenceOccurrence(
         authorisation = authorisation,
         releaseAt = releaseAt,
         returnBy = returnBy,
-        locationType = rdSupplier(LOCATION_TYPE, locationType) as LocationType,
-        locationId = locationId,
-        contact = contact,
+        location = location,
+        contactInformation = contactInformation,
         accompaniedBy = rdSupplier(ACCOMPANIED_BY, accompaniedBy) as AccompaniedBy,
         transport = rdSupplier(TRANSPORT, transport) as Transport,
         notes = notes,
@@ -63,6 +76,7 @@ interface TempAbsenceOccurrenceOperations {
         addedBy = addedBy,
         cancelledAt = cancelledAt,
         cancelledBy = cancelledBy,
+        scheduleReference = scheduleReference,
         legacyId = legacyId,
       )
     }
@@ -75,8 +89,7 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(returnBy).isCloseTo(request.returnTime, within(1, SECONDS))
     assertThat(accompaniedBy.code).isEqualTo(request.escort)
     assertThat(transport.code).isEqualTo(request.transportType)
-    assertThat(locationType.code).isEqualTo(request.toAddressOwnerClass ?: "OTHER")
-    assertThat(locationId).isEqualTo(request.toAddressId?.toString())
+    assertThat(location).isEqualTo(request.location.asLocation())
     assertThat(notes).isEqualTo(request.comment)
     assertThat(legacyId).isEqualTo(request.eventId)
     assertThat(addedBy).isEqualTo(request.audit.createUsername)
@@ -91,15 +104,17 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
     assertThat(notes).isEqualTo(request.notes)
     assertThat(legacyId).isNull()
-    assertThat(locationType.code).isEqualTo(request.locationTypeCode)
+    assertThat(location).isEqualTo(request.location)
     assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
     assertThat(transport.code).isEqualTo(request.transportCode)
     assertThat(addedBy).isEqualTo(authRequest.submittedBy)
     assertThat(addedAt).isCloseTo(authRequest.submittedAt, within(1, SECONDS))
+    assertThat(contactInformation).isEqualTo(request.contactInformation)
+    assertThat(scheduleReference).isEqualTo(request.scheduleReference)
   }
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapAuthorisation.Occurrence) {
-    assertThat(locationType.code).isEqualTo(occurrence.location.type.code)
+    assertThat(location).isEqualTo(occurrence.location)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
     assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(1, SECONDS))
@@ -109,11 +124,13 @@ interface TempAbsenceOccurrenceOperations {
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {
     assertThat(personIdentifier).isEqualTo(occurrence.authorisation.person.personIdentifier)
-    assertThat(locationType.code).isEqualTo(occurrence.location.type.code)
+    assertThat(location).isEqualTo(occurrence.location)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
     assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(1, SECONDS))
     assertThat(returnBy).isCloseTo(occurrence.returnBy, within(1, SECONDS))
+    assertThat(contactInformation).isEqualTo(occurrence.contactInformation)
+    assertThat(scheduleReference).isEqualTo(occurrence.scheduleReference)
   }
 }
 

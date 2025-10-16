@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
@@ -16,8 +15,7 @@ data class ScheduledTemporaryAbsenceRequest(
   val eventStatus: String,
   val startTime: LocalDateTime,
   val returnTime: LocalDateTime,
-  val toAddressOwnerClass: String?,
-  val toAddressId: Long?,
+  val location: TapLocation,
   val contactPersonName: String?,
   val escort: String?,
   val comment: String?,
@@ -31,7 +29,6 @@ data class ScheduledTemporaryAbsenceRequest(
   override fun requiredReferenceData() = setOfNotNull(
     ACCOMPANIED_BY of escortOrDefault(),
     TRANSPORT of transportTypeOrDefault(),
-    LOCATION_TYPE of (toAddressOwnerClass ?: "OTHER"),
   )
 
   @JsonIgnore

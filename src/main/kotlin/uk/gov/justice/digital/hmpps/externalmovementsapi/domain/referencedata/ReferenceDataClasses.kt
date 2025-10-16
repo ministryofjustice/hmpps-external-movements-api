@@ -90,21 +90,3 @@ class TapAuthorisationStatus(
     DENIED,
   }
 }
-
-@Entity
-@DiscriminatorValue("LOCATION_TYPE")
-class LocationType(
-  key: ReferenceDataKey,
-  description: String,
-  hintText: String?,
-  sequenceNumber: Int,
-  active: Boolean,
-  id: Long,
-) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
-  enum class Code {
-    CORP,
-    OFF,
-    AGY,
-    OTHER,
-  }
-}

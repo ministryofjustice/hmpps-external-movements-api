@@ -17,8 +17,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.L
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.OrganisationsExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.MissingTopicException
@@ -28,7 +28,6 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
   value = [
     HmppsAuthApiExtension::class,
     ManageUsersExtension::class,
-    OrganisationsExtension::class,
     PrisonerSearchExtension::class,
   ],
 )
@@ -63,6 +62,10 @@ abstract class IntegrationTest {
 
   internal final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(status: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(status)
     .expectBody(T::class.java)
+    .returnResult().responseBody!!
+
+  internal final fun WebTestClient.ResponseSpec.errorResponse(status: HttpStatus): ErrorResponse = expectStatus().isEqualTo(status)
+    .expectBody(ErrorResponse::class.java)
     .returnResult().responseBody!!
 
   companion object {

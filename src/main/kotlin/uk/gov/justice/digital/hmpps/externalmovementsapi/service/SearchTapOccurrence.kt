@@ -9,23 +9,19 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesPrisonCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType.Code.valueOf
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceResult
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.locationsearch.GetLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerson
 
 @Service
 class SearchTapOccurrence(
   private val prisonerSearch: PrisonerSearchClient,
-  private val locations: GetLocations,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
   fun find(request: TapOccurrenceSearchRequest): TapOccurrenceSearchResponse {
@@ -35,10 +31,7 @@ class SearchTapOccurrence(
     val getPerson = { personIdentifier: String ->
       prisoners[personIdentifier]?.asPerson() ?: Person.unknown(personIdentifier)
     }
-    val locationMap = locations.withIds(
-      page.map { valueOf(it.locationType.code) to it.locationId }.groupBy({ it.first }, { it.second }),
-    ).associateBy { it.type.code to it.id.toString() }
-    return page.map { it.with(getPerson(it.personIdentifier)) { code, id -> locationMap[code to id] } }.asResponse()
+    return page.map { it.with(getPerson(it.personIdentifier)) }.asResponse()
   }
 
   private fun TapOccurrenceSearchRequest.asSpecification(): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
@@ -47,14 +40,14 @@ class SearchTapOccurrence(
     queryString?.let { occurrenceMatchesPersonIdentifier(it) },
   ).reduce { spec, current -> spec.and(current) }
 
-  private fun TemporaryAbsenceOccurrence.with(person: Person, location: (String, String) -> Location?) = TapOccurrenceResult(
+  private fun TemporaryAbsenceOccurrence.with(person: Person) = TapOccurrenceResult(
     id = id,
     authorisation = authorisation.asOccurrenceAuth(person),
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedBy = accompaniedBy.asCodedDescription(),
     transport = transport.asCodedDescription(),
-    location = location(locationType.code, locationId) ?: Location.unknown(locationType.asCodedDescription()),
+    location = location,
     cancelledAt != null,
   )
 }

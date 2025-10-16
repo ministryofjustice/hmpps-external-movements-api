@@ -4,23 +4,21 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceOccurrenceOperations.Companion.location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
@@ -43,16 +41,7 @@ interface TempAbsenceMovementOperations {
       recordedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
       recordedBy: String = "O7h3rU53r",
       recordedByPrison: String = prisonCode(),
-      locationId: String = newUuid().toString(),
-      locationType: String = LocationType.Code.OTHER.name,
-      locationDescription: String? = "A location for the movement",
-      locationPremise: String? = "Movement Premise",
-      locationStreet: String? = "Movement Street",
-      locationArea: String? = "Movement Area",
-      locationCity: String? = "Movement City",
-      locationCounty: String? = "Movement County",
-      locationCountry: String? = "Movement Country",
-      locationPostcode: String? = "Movement Postcode",
+      location: Location = location(),
       legacyId: String? = null,
     ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceMovement = { rdSupplier ->
       TemporaryAbsenceMovement(
@@ -67,18 +56,7 @@ interface TempAbsenceMovementOperations {
         recordedAt = recordedAt,
         recordedBy = recordedBy,
         recordedByPrisonCode = recordedByPrison,
-        location = Location(
-          identifier = locationId,
-          type = rdSupplier(LOCATION_TYPE, locationType) as LocationType,
-          description = locationDescription,
-          premise = locationPremise,
-          street = locationStreet,
-          area = locationArea,
-          city = locationCity,
-          county = locationCounty,
-          country = locationCountry,
-          postcode = locationPostcode,
-        ),
+        location = location,
         legacyId = legacyId,
       )
     }
@@ -91,11 +69,9 @@ interface TempAbsenceMovementOperations {
     assertThat(occurredAt).isCloseTo(request.movementDateTime, within(1, SECONDS))
     assertThat(absenceReason.code).isEqualTo(request.movementReason)
     assertThat(accompaniedBy.code).isEqualTo(request.escortOrDefault())
-    with(location) {
-      assertThat(type.code).isEqualTo(request.location.typeOrDefault())
-      assertThat(identifier).isEqualTo(request.location.id)
-    }
     assertThat(recordedByPrisonCode).isEqualTo(request.prisonCodeOrDefault())
+    assertThat(location).isEqualTo(request.location.asLocation())
+    assertThat(location.description).isEqualTo(request.location.description)
     assertThat(notes).isEqualTo(request.commentText)
     assertThat(recordedBy).isEqualTo(request.audit.createUsername)
     assertThat(recordedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
