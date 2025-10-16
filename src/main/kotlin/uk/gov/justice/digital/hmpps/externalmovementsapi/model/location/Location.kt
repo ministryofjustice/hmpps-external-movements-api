@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.location
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 @ValidLocation
 data class Location(
   val description: String?,
@@ -16,6 +18,7 @@ data class Location(
     val country: String?,
     val postcode: String?,
   ) {
+    @JsonIgnore
     fun isEmpty() = listOfNotNull(
       premise,
       street,
