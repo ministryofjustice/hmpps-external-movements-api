@@ -108,7 +108,13 @@ class CreateTapAuthorisation(
     returnBy = returnBy,
     accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
     transport = rdProvider(TRANSPORT, transportCode) as Transport,
-    location = location,
+    location = location.let {
+      if (it.address?.isEmpty() == true) {
+        it.copy(address = null)
+      } else {
+        it
+      }
+    },
     addedAt = authorisation.submittedAt,
     addedBy = authorisation.submittedBy,
     cancelledAt = null,

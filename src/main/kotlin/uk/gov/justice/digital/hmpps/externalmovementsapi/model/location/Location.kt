@@ -1,5 +1,6 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.model
+package uk.gov.justice.digital.hmpps.externalmovementsapi.model.location
 
+@ValidLocation
 data class Location(
   val description: String?,
   val address: Address?,
@@ -14,7 +15,16 @@ data class Location(
     val county: String?,
     val country: String?,
     val postcode: String?,
-  )
+  ) {
+    fun isEmpty() = listOfNotNull(
+      premise,
+      street,
+      area,
+      city,
+      country,
+      postcode,
+    ).isEmpty()
+  }
 
   companion object {
     fun unknown() = Location("Location not found", null, null)

@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
 import com.fasterxml.jackson.databind.JsonNode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDateTime
 import java.util.UUID

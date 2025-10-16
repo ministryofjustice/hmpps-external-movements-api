@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.description
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
@@ -17,8 +18,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -51,9 +52,24 @@ class CreateTapAuthorisationIntTest(
   @Test
   fun `404 prisoner does not exist`() {
     val pi = personIdentifier()
-    prisonerSearch.getPrisoners("NE1", setOf(pi), listOf())
+    prisonerSearch.getPrisoners(prisonCode(), setOf(pi), listOf())
     val request = createTapAuthorisationRequest()
     createTapAuthorisation(pi, request).expectStatus().isNotFound
+  }
+
+  @Test
+  fun `400 location not valid`() {
+    val pi = personIdentifier()
+    val request = createTapAuthorisationRequest(
+      occurrences = listOf(
+        createTapOccurrenceRequest(
+          location = location(description = null, address = null),
+        ),
+      ),
+    )
+    val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(res.userMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
   }
 
   @Test
