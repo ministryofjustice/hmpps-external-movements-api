@@ -1,10 +1,8 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
@@ -32,7 +30,6 @@ data class TapMovementRequest(
   override fun requiredReferenceData() = setOfNotNull(
     ABSENCE_REASON of movementReason,
     ACCOMPANIED_BY of escortOrDefault(),
-    LOCATION_TYPE of location.typeOrDefault(),
   )
 
   fun escortOrDefault(): String = escort ?: AccompaniedBy.Code.NOT_PROVIDED.name
@@ -50,6 +47,5 @@ data class TapLocation(
   val description: String? = null,
   val address: Address? = null,
 ) {
-  fun typeOrDefault(): String = typeCode ?: LocationType.Code.OTHER.name
   fun asLocation() = Location(description, address, id)
 }

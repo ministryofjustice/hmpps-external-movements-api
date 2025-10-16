@@ -56,7 +56,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
   @Test
   fun `can get reference data with hint text`() {
     val rd =
-      getReferenceDataSpec("location-type")
+      getReferenceDataSpec("absence-sub-type")
         .expectStatus()
         .isOk
         .expectBody<ReferenceDataResponse>()
@@ -64,9 +64,32 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
         .responseBody!!
 
     assertThat(rd.items).containsExactly(
-      CodedDescription("CORP", "Business or community", "These are places of business or community settings such as workplaces, approved premises, hospitals and colleges. This does not have to be a specific addresses but can be a whole area (for example, York)."),
-      CodedDescription("OFF", "Personal", "These are locations personal to the prisoner. For example, their home address, relatives’ addresses or partner’s address."),
-      CodedDescription("AGY", "Official", "These are official locations associated with the justice system. For example, probation offices, police stations and courts."),
+      CodedDescription(
+        "CRL",
+        "CRL (Childcare Resettlement Licence)",
+        "To help prisoners prepare for parenting when they are released and support ties between primary carers and their children.",
+      ),
+      CodedDescription(
+        "RDR",
+        "RDR (Resettlement Day Release)",
+        "For prisoners to carry out activities linked to objectives in their sentence plan.",
+      ),
+      CodedDescription(
+        "ROR",
+        "ROR (Resettlement Overnight Release)",
+        "For prisoners to spend time at their release address to re-establish links with family and the local community.",
+      ),
+      CodedDescription(
+        "SPL",
+        "SPL (Special Purpose Licence)",
+        "For prisoners to spend time at their release address to re-establish links with family and the local community.",
+      ),
+      CodedDescription("PP", "Police production"),
+      CodedDescription("SE", "Security escort"),
+      CodedDescription("YTRA", "Accommodation"),
+      CodedDescription("YTRC", "Case work and transitions"),
+      CodedDescription("YTRE", "Education, training and employment"),
+      CodedDescription("YTRF", "Family"),
     )
   }
 

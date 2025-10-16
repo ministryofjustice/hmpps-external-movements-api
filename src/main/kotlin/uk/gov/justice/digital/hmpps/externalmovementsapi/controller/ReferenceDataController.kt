@@ -29,7 +29,6 @@ class ReferenceDataController(private val rdService: ReferenceDataService) {
           "absence-sub-type",
           "absence-type",
           "accompanied-by",
-          "location-type",
           "tap-authorisation-status",
           "tap-occurrence-status",
           "transport",

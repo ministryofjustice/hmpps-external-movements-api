@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
 
 import jakarta.persistence.Column
-import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -13,6 +12,8 @@ import jakarta.persistence.Table
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -21,7 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
 import java.time.LocalDateTime
 import java.util.UUID
@@ -88,7 +89,8 @@ class TemporaryAbsenceMovement(
   var notes: String? = notes
     private set
 
-  @Embedded
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "location")
   var location: Location = location
     private set
 
@@ -139,22 +141,10 @@ class TemporaryAbsenceMovement(
     recordedAt = request.audit.createDatetime
     recordedBy = request.audit.createUsername
     recordedByPrisonCode = request.prisonCodeOrDefault()
-    location = request.location.embedded()
+    location = request.location.asLocation()
     legacyId = request.legacyId
   }
 }
-
-fun TapLocation.embedded(): Location = Location(
-  id,
-  description = description,
-  premise = address?.premise,
-  street = address?.street,
-  area = address?.area,
-  city = address?.city,
-  county = address?.county,
-  country = address?.country,
-  postcode = address?.postcode,
-)
 
 interface TemporaryAbsenceMovementRepository :
   JpaRepository<TemporaryAbsenceMovement, UUID>,

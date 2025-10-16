@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -49,7 +50,7 @@ class TemporaryAbsenceOccurrence(
   returnBy: LocalDateTime,
   accompaniedBy: AccompaniedBy,
   transport: Transport,
-  location: uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location,
+  location: Location,
   contactInformation: String?,
   notes: String?,
   addedAt: LocalDateTime,
@@ -92,7 +93,7 @@ class TemporaryAbsenceOccurrence(
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "location")
-  var location: uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location = location
+  var location: Location = location
     private set
 
   @Column(name = "contact_information")
