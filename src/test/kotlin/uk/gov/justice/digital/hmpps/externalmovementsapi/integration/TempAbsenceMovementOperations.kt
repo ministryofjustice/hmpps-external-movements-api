@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -69,7 +68,6 @@ interface TempAbsenceMovementOperations {
         recordedByPrisonCode = recordedByPrison,
         location = Location(
           identifier = locationId,
-          type = rdSupplier(LOCATION_TYPE, locationType) as LocationType,
           description = locationDescription,
           premise = locationPremise,
           street = locationStreet,
@@ -91,11 +89,9 @@ interface TempAbsenceMovementOperations {
     assertThat(occurredAt).isCloseTo(request.movementDateTime, within(1, SECONDS))
     assertThat(absenceReason.code).isEqualTo(request.movementReason)
     assertThat(accompaniedBy.code).isEqualTo(request.escortOrDefault())
-    with(location) {
-      assertThat(type.code).isEqualTo(request.location.typeOrDefault())
-      assertThat(identifier).isEqualTo(request.location.id)
-    }
     assertThat(recordedByPrisonCode).isEqualTo(request.prisonCodeOrDefault())
+    assertThat(location.identifier).isEqualTo(request.location.id)
+    assertThat(location.description).isEqualTo(request.location.description)
     assertThat(notes).isEqualTo(request.commentText)
     assertThat(recordedBy).isEqualTo(request.audit.createUsername)
     assertThat(recordedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))

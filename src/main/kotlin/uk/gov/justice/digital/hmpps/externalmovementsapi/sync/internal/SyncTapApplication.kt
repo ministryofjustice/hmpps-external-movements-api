@@ -59,6 +59,7 @@ class SyncTapApplication(
     submittedBy = audit.createUsername,
     approvedAt = approvedAt,
     approvedBy = approvedBy,
+    schedule = null,
     legacyId = movementApplicationId,
   )
 }

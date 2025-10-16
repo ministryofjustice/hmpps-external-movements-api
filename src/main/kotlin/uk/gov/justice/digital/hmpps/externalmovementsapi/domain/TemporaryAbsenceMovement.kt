@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement.Direction.valueOf
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
@@ -140,16 +139,13 @@ class TemporaryAbsenceMovement(
     recordedAt = request.audit.createDatetime
     recordedBy = request.audit.createUsername
     recordedByPrisonCode = request.prisonCodeOrDefault()
-    location = request.location.embedded(rdProvider)
+    location = request.location.embedded()
     legacyId = request.legacyId
   }
 }
 
-fun TapLocation.embedded(
-  rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
-): Location = Location(
+fun TapLocation.embedded(): Location = Location(
   id,
-  rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, typeOrDefault()) as LocationType,
   description = description,
   premise = address?.premise,
   street = address?.street,

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
+import com.fasterxml.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -18,6 +19,7 @@ data class TapAuthorisation(
   val occurrences: List<Occurrence>,
   val submitted: AtAndBy,
   val approved: AtAndBy?,
+  val schedule: JsonNode?,
 ) {
   data class Occurrence(
     val id: UUID,

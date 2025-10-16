@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
@@ -95,6 +94,7 @@ class CreateTapAuthorisation(
       approvedAt = approvedAt,
       approvedBy = approvedBy,
       repeat = repeat,
+      schedule = schedule,
       legacyId = null,
     )
   }
@@ -106,16 +106,16 @@ class CreateTapAuthorisation(
     authorisation,
     releaseAt = releaseAt,
     returnBy = returnBy,
-    locationType = rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, locationTypeCode) as LocationType,
     accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
     transport = rdProvider(TRANSPORT, transportCode) as Transport,
-    locationId = locationId,
-    contact = null,
+    location = location,
     addedAt = authorisation.submittedAt,
     addedBy = authorisation.submittedBy,
     cancelledAt = null,
     cancelledBy = null,
+    contactInformation = contactInformation,
     notes = notes,
+    scheduleReference = scheduleReference,
     legacyId = null,
   )
 }

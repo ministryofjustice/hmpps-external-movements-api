@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.LOCATION_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location.Address
 import java.time.LocalDateTime
 import java.util.UUID
@@ -50,4 +51,5 @@ data class TapLocation(
   val address: Address? = null,
 ) {
   fun typeOrDefault(): String = typeCode ?: LocationType.Code.OTHER.name
+  fun asLocation() = Location(description, address, id)
 }

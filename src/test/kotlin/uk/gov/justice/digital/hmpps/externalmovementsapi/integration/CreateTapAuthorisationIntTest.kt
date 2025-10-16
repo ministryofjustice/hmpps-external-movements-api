@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
+import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -7,6 +8,8 @@ import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -14,10 +17,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
 
 class CreateTapAuthorisationIntTest(
   @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
@@ -118,18 +121,26 @@ class CreateTapAuthorisationIntTest(
     returnBy: LocalDateTime = LocalDateTime.now(),
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
+    contactInformation: String? = null,
     notes: String? = "Some notes about the authorisation",
-    locationId: String = UUID.randomUUID().toString(),
-    locationTypeCode: String = "CORP",
+    location: Location = location(),
+    scheduleReference: JsonNode? = null,
   ) = CreateTapOccurrenceRequest(
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedByCode = accompaniedByCode,
     transportCode = transportCode,
+    contactInformation = contactInformation,
     notes = notes,
-    locationTypeCode = locationTypeCode,
-    locationId = locationId,
+    location = location,
+    scheduleReference = scheduleReference,
   )
+
+  private fun location(
+    description: String? = name(10),
+    address: Location.Address? = null,
+    id: String = "${newId()}",
+  ): Location = Location(description, address, id)
 
   private fun createTapAuthorisationRequest(
     submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),

@@ -55,7 +55,7 @@ class SyncTapMovement(
     recordedAt = audit.createDatetime,
     recordedBy = audit.createUsername,
     recordedByPrisonCode = prisonCodeOrDefault(),
-    location = location.embedded(rdProvider),
+    location = location.embedded(),
     legacyId = legacyId,
     id = id ?: newUuid(),
   )
