@@ -21,6 +21,7 @@ data class Location(
       street,
       area,
       city,
+      county,
       country,
       postcode,
     ).isEmpty()
