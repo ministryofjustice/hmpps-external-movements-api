@@ -8,9 +8,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_USER=admin
-      - POSTGRES_DB=external-movements
+      - POSTGRES_PASSWORD=movements
+      - POSTGRES_USER=external
+      - POSTGRES_DB=movements
 
   localstack:
     image: localstack/localstack:latest

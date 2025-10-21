@@ -18,7 +18,7 @@ on:
         type: boolean
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -52,10 +52,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     with:
       docker_compose_file: 'docker-compose-schema-spy.yml'
-      database_name: 'external-movements-db'
+      database_name: 'movements'
       database_schema: 'public'
-      database_user: 'admin'
-      database_password: 'password'
+      database_user: 'external'
+      database_password: 'movements'
     secrets: inherit
   deploy_dev:
     name: Deploy to the development environment
