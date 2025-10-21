@@ -61,4 +61,11 @@ tasks {
       )
     }
   }
+  test {
+    if (project.hasProperty("init-db")) {
+      include("**/InitialiseDatabase.class")
+    } else {
+      exclude("**/InitialiseDatabase.class")
+    }
+  }
 }
