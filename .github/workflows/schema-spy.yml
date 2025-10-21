@@ -51,8 +51,6 @@ jobs:
   schema-spy:
     name: Schema Spy report generation
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     timeout-minutes: 240
     environment: test
     steps:
