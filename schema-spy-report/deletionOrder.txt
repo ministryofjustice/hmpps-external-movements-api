@@ -1,0 +1,11 @@
+temporary_absence_occurrence
+temporary_absence_movement
+reference_data_link
+reference_data_domain_link
+temporary_absence_occurrence_audit
+temporary_absence_movement_audit
+temporary_absence_authorisation_audit
+temporary_absence_authorisation
+reference_data
+reference_data_domain
+audit_revision
