@@ -3,6 +3,9 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
@@ -27,6 +30,7 @@ class SyncScheduledTemporaryAbsence(
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
   fun sync(parentId: UUID, request: ScheduledTemporaryAbsenceRequest): SyncResponse {
+    ExternalMovementContext.get().copy(source = DataSource.NOMIS).set()
     val authorisation = authorisationRepository.getAuthorisation(parentId)
     val rdProvider = referenceDataRepository.rdProvider(request)
     val occurrence =

@@ -1,11 +1,13 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.description
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
@@ -87,6 +89,13 @@ class SyncTemporaryAbsenceMovementIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceMovement(res.id))
     saved.verifyAgainst(authorisation.personIdentifier, request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -118,6 +127,13 @@ class SyncTemporaryAbsenceMovementIntTest(
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceMovement(existing.id))
     saved.verifyAgainst(authorisation.personIdentifier, request)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -148,6 +164,13 @@ class SyncTemporaryAbsenceMovementIntTest(
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceMovement(existing.id))
     saved.verifyAgainst(authorisation.personIdentifier, request)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -163,6 +186,13 @@ class SyncTemporaryAbsenceMovementIntTest(
     assertThat(res.id).isEqualTo(request.id)
     val saved = requireNotNull(findTemporaryAbsenceMovement(res.id))
     saved.verifyAgainst(personIdentifier, request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   private fun tapMovementRequest(

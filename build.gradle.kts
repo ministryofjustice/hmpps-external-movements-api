@@ -11,7 +11,6 @@ configurations {
 }
 
 val hmppsKotlinVersion = "1.7.0"
-val hypersistenceVersion = "3.11.0"
 val sentryVersion = "8.23.0"
 val springDocVersion = "2.8.13"
 val sqsStarterVersion = "5.5.0"
@@ -28,7 +27,6 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.hibernate.orm:hibernate-envers")
   implementation("org.springframework.data:spring-data-envers")
-  implementation("io.hypersistence:hypersistence-utils-hibernate-63:$hypersistenceVersion")
   implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:$sqsStarterVersion")

@@ -3,6 +3,9 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement.Direction.valueOf
@@ -27,6 +30,7 @@ class SyncTapMovement(
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
   fun sync(personIdentifier: String, request: TapMovementRequest): SyncResponse {
+    ExternalMovementContext.get().copy(source = DataSource.NOMIS).set()
     val occurrence = request.occurrenceId?.let { occurrenceRepository.getOccurrence(it) }?.also {
       require(personIdentifier == it.personIdentifier) { "Person identifier does not match occurrence" }
     }
