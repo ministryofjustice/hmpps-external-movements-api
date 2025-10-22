@@ -6,3 +6,7 @@ import java.util.UUID
 object IdGenerator {
   fun newUuid(): UUID = Generators.timeBasedEpochGenerator().generate()
 }
+
+interface Identifiable {
+  val id: UUID
+}

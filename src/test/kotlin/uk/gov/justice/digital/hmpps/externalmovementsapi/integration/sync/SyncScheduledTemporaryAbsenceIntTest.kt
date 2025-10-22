@@ -1,13 +1,15 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.description
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -66,6 +68,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
     saved.verifyAgainst(request)
     assertThat(saved.cancelledAt).isNull()
     assertThat(saved.cancelledBy).isNull()
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -84,6 +93,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
     saved.verifyAgainst(request)
     assertThat(saved.cancelledAt).isNotNull
     assertThat(saved.cancelledBy).isNotNull
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -102,6 +118,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
     saved.verifyAgainst(request)
     assertThat(saved.cancelledAt).isNotNull
     assertThat(saved.cancelledBy).isNotNull
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -117,6 +140,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
     assertThat(res.id).isEqualTo(request.id)
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(res.id))
     saved.verifyAgainst(request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   private fun scheduledAbsenceRequest(

@@ -2,12 +2,16 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
 import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.description
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -107,6 +111,13 @@ class CreateTapAuthorisationIntTest(
     assertThat(saved.approvedBy).isNull()
     val occurrences = findForAuthorisation(saved.id)
     occurrences.first().verifyAgainst(pi, request.occurrences.first(), request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -130,6 +141,13 @@ class CreateTapAuthorisationIntTest(
     assertThat(saved.approvedBy).isNotNull()
     val occurrences = findForAuthorisation(saved.id)
     occurrences.first().verifyAgainst(pi, request.occurrences.first(), request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   private fun createTapOccurrenceRequest(

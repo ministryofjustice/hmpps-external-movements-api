@@ -13,6 +13,8 @@ import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.envers.Audited
+import org.hibernate.envers.RelationTargetAuditMode
 import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
@@ -27,6 +29,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Audited
 @Entity
 @Table(name = "temporary_absence_movement")
 class TemporaryAbsenceMovement(
@@ -45,8 +48,8 @@ class TemporaryAbsenceMovement(
   legacyId: String?,
   @Id
   @Column(name = "id", nullable = false)
-  val id: UUID = newUuid(),
-) {
+  override val id: UUID = newUuid(),
+) : Identifiable {
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
@@ -69,12 +72,14 @@ class TemporaryAbsenceMovement(
   var direction: Direction = direction
     private set
 
+  @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "absence_reason_id", nullable = false)
   var absenceReason: AbsenceReason = absenceReason
     private set
 
+  @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)

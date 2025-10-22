@@ -44,7 +44,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequ
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
-import kotlin.collections.map
 
 @Audited
 @Entity
@@ -69,8 +68,8 @@ class TemporaryAbsenceAuthorisation(
   legacyId: Long?,
   @Id
   @Column(name = "id", nullable = false)
-  val id: UUID = newUuid(),
-) {
+  override val id: UUID = newUuid(),
+) : Identifiable {
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
