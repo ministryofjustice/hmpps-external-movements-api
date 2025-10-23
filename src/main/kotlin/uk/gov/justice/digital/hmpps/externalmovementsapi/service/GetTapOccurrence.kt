@@ -52,4 +52,5 @@ private fun TemporaryAbsenceOccurrence.with(person: Person, user: (String) -> Us
   cancelled = cancelledBy?.let { AtAndBy(checkNotNull(cancelledAt), it, user(it).name) },
   contactInformation = contactInformation,
   scheduleReference = scheduleReference,
+  notes = notes,
 )
