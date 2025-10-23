@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
+import com.fasterxml.jackson.databind.JsonNode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDateTime
 import java.util.UUID
@@ -7,6 +9,7 @@ import java.util.UUID
 data class TapOccurrence(
   val id: UUID,
   val authorisation: Authorisation,
+  val status: CodedDescription,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   val location: Location,
@@ -14,6 +17,9 @@ data class TapOccurrence(
   val transport: CodedDescription,
   val added: AtAndBy,
   val cancelled: AtAndBy?,
+  val contactInformation: String?,
+  val scheduleReference: JsonNode?,
+  val notes: String?,
 ) {
   data class Authorisation(
     val id: UUID,
@@ -22,5 +28,6 @@ data class TapOccurrence(
     val absenceType: CodedDescription?,
     val absenceSubType: CodedDescription?,
     val absenceReason: CodedDescription?,
+    val notes: String?,
   )
 }

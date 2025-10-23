@@ -1,12 +1,20 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
+import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.description
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -15,9 +23,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Pr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
 
 class CreateTapAuthorisationIntTest(
   @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
@@ -48,9 +56,24 @@ class CreateTapAuthorisationIntTest(
   @Test
   fun `404 prisoner does not exist`() {
     val pi = personIdentifier()
-    prisonerSearch.getPrisoners("NE1", setOf(pi), listOf())
+    prisonerSearch.getPrisoners(prisonCode(), setOf(pi), listOf())
     val request = createTapAuthorisationRequest()
     createTapAuthorisation(pi, request).expectStatus().isNotFound
+  }
+
+  @Test
+  fun `400 location not valid`() {
+    val pi = personIdentifier()
+    val request = createTapAuthorisationRequest(
+      occurrences = listOf(
+        createTapOccurrenceRequest(
+          location = location(description = null, address = null),
+        ),
+      ),
+    )
+    val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(res.userMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
   }
 
   @Test
@@ -88,6 +111,13 @@ class CreateTapAuthorisationIntTest(
     assertThat(saved.approvedBy).isNull()
     val occurrences = findForAuthorisation(saved.id)
     occurrences.first().verifyAgainst(pi, request.occurrences.first(), request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -111,6 +141,13 @@ class CreateTapAuthorisationIntTest(
     assertThat(saved.approvedBy).isNotNull()
     val occurrences = findForAuthorisation(saved.id)
     occurrences.first().verifyAgainst(pi, request.occurrences.first(), request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   private fun createTapOccurrenceRequest(
@@ -118,18 +155,26 @@ class CreateTapAuthorisationIntTest(
     returnBy: LocalDateTime = LocalDateTime.now(),
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
+    contactInformation: String? = null,
     notes: String? = "Some notes about the authorisation",
-    locationId: String = UUID.randomUUID().toString(),
-    locationTypeCode: String = "CORP",
+    location: Location = location(),
+    scheduleReference: JsonNode? = null,
   ) = CreateTapOccurrenceRequest(
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedByCode = accompaniedByCode,
     transportCode = transportCode,
+    contactInformation = contactInformation,
     notes = notes,
-    locationTypeCode = locationTypeCode,
-    locationId = locationId,
+    location = location,
+    scheduleReference = scheduleReference,
   )
+
+  private fun location(
+    description: String? = name(10),
+    address: Location.Address? = null,
+    id: String = "${newId()}",
+  ): Location = Location(description, address, id)
 
   private fun createTapAuthorisationRequest(
     submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.controller
 
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
@@ -27,7 +28,7 @@ class TapAuthorisationController(
   @PostMapping("/{personIdentifier}")
   fun createTapAuthorisation(
     @PathVariable personIdentifier: String,
-    @RequestBody request: CreateTapAuthorisationRequest,
+    @Valid @RequestBody request: CreateTapAuthorisationRequest,
   ) = create.tapAuthorisation(personIdentifier, request)
 
   @GetMapping("/{id}")

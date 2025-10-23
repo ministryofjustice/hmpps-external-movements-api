@@ -1,12 +1,16 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations
@@ -16,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.NomisAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -63,6 +68,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
     saved.verifyAgainst(request)
     assertThat(saved.cancelledAt).isNull()
     assertThat(saved.cancelledBy).isNull()
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -81,6 +93,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
     saved.verifyAgainst(request)
     assertThat(saved.cancelledAt).isNotNull
     assertThat(saved.cancelledBy).isNotNull
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -99,12 +118,19 @@ class SyncScheduledTemporaryAbsenceIntTest(
     saved.verifyAgainst(request)
     assertThat(saved.cancelledAt).isNotNull
     assertThat(saved.cancelledBy).isNotNull
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
   fun `200 ok scheduled absence created if one doesn't exist with the given uuid`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val request = scheduledAbsenceRequest(id = newUuid(), toAddressOwnerClass = "CORP")
+    val request = scheduledAbsenceRequest(id = newUuid())
     val res = syncScheduledTemporaryAbsence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -114,6 +140,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
     assertThat(res.id).isEqualTo(request.id)
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(res.id))
     saved.verifyAgainst(request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   private fun scheduledAbsenceRequest(
@@ -121,11 +154,10 @@ class SyncScheduledTemporaryAbsenceIntTest(
     eventStatus: String = "SCH",
     startTime: LocalDateTime = LocalDateTime.now().minusDays(7),
     returnTime: LocalDateTime = LocalDateTime.now(),
-    toAddressOwnerClass: String? = "OFF",
-    toAddressId: Long? = newId(),
     escortCode: String? = "L",
     transportType: String? = "OD",
-    comment: String? = "Some notes about the application",
+    location: TapLocation = TapLocation(description = name(10)),
+    comment: String? = "Some notes about the absence",
     contactPersonName: String? = null,
     eventId: Long = newId(),
     audit: NomisAudit = NomisAuditGenerator.generate(),
@@ -135,8 +167,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
     eventStatus,
     startTime,
     returnTime,
-    toAddressOwnerClass,
-    toAddressId,
+    location,
     contactPersonName,
     escortCode,
     comment,

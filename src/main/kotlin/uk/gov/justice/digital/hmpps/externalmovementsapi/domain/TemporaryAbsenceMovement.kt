@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
 
 import jakarta.persistence.Column
-import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -13,20 +12,24 @@ import jakarta.persistence.Table
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.envers.Audited
+import org.hibernate.envers.RelationTargetAuditMode
+import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement.Direction.valueOf
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Audited
 @Entity
 @Table(name = "temporary_absence_movement")
 class TemporaryAbsenceMovement(
@@ -45,8 +48,8 @@ class TemporaryAbsenceMovement(
   legacyId: String?,
   @Id
   @Column(name = "id", nullable = false)
-  val id: UUID = newUuid(),
-) {
+  override val id: UUID = newUuid(),
+) : Identifiable {
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
@@ -69,12 +72,14 @@ class TemporaryAbsenceMovement(
   var direction: Direction = direction
     private set
 
+  @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "absence_reason_id", nullable = false)
   var absenceReason: AbsenceReason = absenceReason
     private set
 
+  @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)
@@ -89,7 +94,8 @@ class TemporaryAbsenceMovement(
   var notes: String? = notes
     private set
 
-  @Embedded
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "location")
   var location: Location = location
     private set
 
@@ -140,25 +146,10 @@ class TemporaryAbsenceMovement(
     recordedAt = request.audit.createDatetime
     recordedBy = request.audit.createUsername
     recordedByPrisonCode = request.prisonCodeOrDefault()
-    location = request.location.embedded(rdProvider)
+    location = request.location.asLocation()
     legacyId = request.legacyId
   }
 }
-
-fun TapLocation.embedded(
-  rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
-): Location = Location(
-  id,
-  rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, typeOrDefault()) as LocationType,
-  description = description,
-  premise = address?.premise,
-  street = address?.street,
-  area = address?.area,
-  city = address?.city,
-  county = address?.county,
-  country = address?.country,
-  postcode = address?.postcode,
-)
 
 interface TemporaryAbsenceMovementRepository :
   JpaRepository<TemporaryAbsenceMovement, UUID>,

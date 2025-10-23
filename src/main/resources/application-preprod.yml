@@ -3,8 +3,6 @@ integration:
     url: "https://sign-in-preprod.hmpps.service.justice.gov.uk/auth"
   manage-users:
     url:  "https://manage-users-api-preprod.hmpps.service.justice.gov.uk"
-  organisations:
-    url: "https://organisations-api-preprod.hmpps.service.justice.gov.uk"
   prisoner-search:
     url: "https://prisoner-search-preprod.prison.service.justice.gov.uk"
 

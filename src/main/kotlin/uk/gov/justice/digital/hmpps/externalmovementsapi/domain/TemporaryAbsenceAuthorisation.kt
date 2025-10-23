@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
 
+import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -11,8 +12,10 @@ import jakarta.persistence.Version
 import jakarta.persistence.criteria.JoinType
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
+import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
@@ -41,7 +44,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequ
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
-import kotlin.collections.map
 
 @Audited
 @Entity
@@ -62,11 +64,12 @@ class TemporaryAbsenceAuthorisation(
   submittedBy: String,
   approvedAt: LocalDateTime?,
   approvedBy: String?,
+  schedule: JsonNode?,
   legacyId: Long?,
   @Id
   @Column(name = "id", nullable = false)
-  val id: UUID = newUuid(),
-) {
+  override val id: UUID = newUuid(),
+) : Identifiable {
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
@@ -143,6 +146,11 @@ class TemporaryAbsenceAuthorisation(
 
   @Column(name = "approved_by", nullable = false)
   var approvedBy: String? = approvedBy
+    private set
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "schedule")
+  var schedule: JsonNode? = schedule
     private set
 
   @Column(name = "legacy_id")

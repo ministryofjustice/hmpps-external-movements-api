@@ -13,7 +13,6 @@ import java.time.Duration.ofSeconds
 class WebClientConfiguration(
   @Value($$"${integration.hmpps-auth.url}") private val hmppsAuthBaseUri: String,
   @Value($$"${integration.manage-users.url}") private val manageUsersBaseUri: String,
-  @Value($$"${integration.organisations.url}") private val organisationsBaseUri: String,
   @Value($$"${integration.prisoner-search.url}") private val prisonerSearchBaseUri: String,
 ) {
   private val timeout = ofSeconds(2)
@@ -26,16 +25,10 @@ class WebClientConfiguration(
   fun manageUsersHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(manageUsersBaseUri, timeout)
 
   @Bean
-  fun organisationsHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(organisationsBaseUri, timeout)
-
-  @Bean
   fun prisonerSearchHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(prisonerSearchBaseUri, timeout)
 
   @Bean
   fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) = builder.authorisedWebClient(authorizedClientManager, defaultRegistrationId, manageUsersBaseUri, timeout)
-
-  @Bean
-  fun organisationsWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) = builder.authorisedWebClient(authorizedClientManager, defaultRegistrationId, organisationsBaseUri, timeout)
 
   @Bean
   fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) = builder.authorisedWebClient(authorizedClientManager, defaultRegistrationId, prisonerSearchBaseUri, timeout)

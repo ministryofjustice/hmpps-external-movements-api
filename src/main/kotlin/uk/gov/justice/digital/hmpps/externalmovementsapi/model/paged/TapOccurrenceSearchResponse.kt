@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged
 
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDateTime
 import java.util.UUID
@@ -14,6 +14,7 @@ data class TapOccurrenceSearchResponse(
 data class TapOccurrenceResult(
   val id: UUID,
   val authorisation: TapOccurrenceAuthorisation,
+  val status: CodedDescription,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   val accompaniedBy: CodedDescription,

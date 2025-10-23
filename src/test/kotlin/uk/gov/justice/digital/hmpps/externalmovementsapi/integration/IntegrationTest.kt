@@ -1,5 +1,11 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
+import jakarta.persistence.EntityManager
+import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.envers.AuditReaderFactory
+import org.hibernate.envers.RevisionType
+import org.hibernate.envers.query.AuditEntity
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -11,14 +17,18 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.transaction.support.TransactionTemplate
+import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TestConfig
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.OrganisationsExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.MissingTopicException
@@ -28,7 +38,6 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
   value = [
     HmppsAuthApiExtension::class,
     ManageUsersExtension::class,
-    OrganisationsExtension::class,
     PrisonerSearchExtension::class,
   ],
 )
@@ -44,6 +53,12 @@ abstract class IntegrationTest {
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @Autowired
+  protected lateinit var transactionTemplate: TransactionTemplate
+
+  @Autowired
+  protected lateinit var entityManager: EntityManager
+
+  @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService
 
   internal fun setAuthorisation(
@@ -51,6 +66,39 @@ abstract class IntegrationTest {
     roles: List<String> = listOf(),
     scopes: List<String> = listOf("read", "write"),
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisationHeader(username = username, scope = scopes, roles = roles)
+
+  internal fun verifyAudit(
+    entity: Identifiable,
+    revisionType: RevisionType,
+    affectedEntities: Set<String>,
+    context: ExternalMovementContext,
+  ) {
+    transactionTemplate.execute {
+      val auditReader = AuditReaderFactory.get(entityManager)
+      assertTrue(auditReader.isEntityClassAudited(entity::class.java))
+
+      val revisionNumber =
+        auditReader
+          .getRevisions(entity::class.java, entity.id)
+          .filterIsInstance<Long>()
+          .max()
+
+      val entityRevision: Array<*> =
+        auditReader
+          .createQuery()
+          .forRevisionsOfEntity(entity::class.java, false, true)
+          .add(AuditEntity.revisionNumber().eq(revisionNumber))
+          .resultList
+          .first() as Array<*>
+      assertThat(entityRevision[2]).isEqualTo(revisionType)
+
+      val auditRevision = entityRevision[1] as AuditRevision
+      with(auditRevision) {
+        assertThat(username).isEqualTo(context.username)
+        assertThat(this.affectedEntities).containsExactlyInAnyOrderElementsOf(affectedEntities)
+      }
+    }
+  }
 
   internal val hmppsEventsTestQueue by lazy {
     hmppsQueueService.findByQueueId("hmppseventtestqueue")
@@ -63,6 +111,10 @@ abstract class IntegrationTest {
 
   internal final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(status: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(status)
     .expectBody(T::class.java)
+    .returnResult().responseBody!!
+
+  internal final fun WebTestClient.ResponseSpec.errorResponse(status: HttpStatus): ErrorResponse = expectStatus().isEqualTo(status)
+    .expectBody(ErrorResponse::class.java)
     .returnResult().responseBody!!
 
   companion object {

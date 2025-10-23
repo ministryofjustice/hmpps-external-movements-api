@@ -1,0 +1,30 @@
+version: "3"
+services:
+  db:
+    image: postgres:16
+    networks:
+      - hmpps
+    container_name: external-movements-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=movements
+      - POSTGRES_USER=external
+      - POSTGRES_DB=movements
+
+  localstack:
+    image: localstack/localstack:latest
+    networks:
+      - hmpps
+    container_name: localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,sns
+      - DEBUG=${DEBUG-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+networks:
+  hmpps:

@@ -92,19 +92,12 @@ class TapAuthorisationStatus(
 }
 
 @Entity
-@DiscriminatorValue("LOCATION_TYPE")
-class LocationType(
+@DiscriminatorValue("TAP_OCCURRENCE_STATUS")
+class TapOccurrenceStatus(
   key: ReferenceDataKey,
   description: String,
   hintText: String?,
   sequenceNumber: Int,
   active: Boolean,
   id: Long,
-) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
-  enum class Code {
-    CORP,
-    OFF,
-    AGY,
-    OTHER,
-  }
-}
+) : ReferenceData(key, description, hintText, sequenceNumber, active, id)

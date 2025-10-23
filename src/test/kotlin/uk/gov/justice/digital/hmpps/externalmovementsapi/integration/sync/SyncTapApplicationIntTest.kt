@@ -1,11 +1,14 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -53,6 +56,13 @@ class SyncTapApplicationIntTest(
     saved.verifyAgainst(pi, request)
     assertThat(saved.approvedAt).isNull()
     assertThat(saved.approvedBy).isNull()
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -67,6 +77,13 @@ class SyncTapApplicationIntTest(
     saved.verifyAgainst(existing.personIdentifier, request)
     assertThat(saved.approvedAt).isNotNull
     assertThat(saved.approvedBy).isNotNull
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   @Test
@@ -79,6 +96,13 @@ class SyncTapApplicationIntTest(
     assertThat(res.id).isEqualTo(uuid)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      ExternalMovementContext.get(),
+    )
   }
 
   private fun applicationRequest(

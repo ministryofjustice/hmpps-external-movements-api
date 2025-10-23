@@ -4,6 +4,8 @@
 [![Docker Repository on ghcr](https://img.shields.io/badge/ghcr.io-repository-2496ED.svg?logo=docker)](https://ghcr.io/ministryofjustice/hmpps-external-movements-api)
 [![API docs](https://img.shields.io/badge/API_docs_-view-85EA2D.svg?logo=swagger)](https://external-movements-api-dev.hmpps.service.justice.gov.uk/swagger-ui/index.html)
 
+Datebase Schema diagram: https://ministryofjustice.github.io/hmpps-external-movements-api/schema-spy-report/
+
 Template github repo used for new Kotlin based projects.
 
 # Instructions

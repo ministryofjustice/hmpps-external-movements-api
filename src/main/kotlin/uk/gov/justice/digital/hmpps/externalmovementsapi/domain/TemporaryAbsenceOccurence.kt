@@ -1,18 +1,23 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
 
+import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import jakarta.persistence.criteria.JoinType
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
+import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
@@ -25,11 +30,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.RETURN_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.LocationType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -45,25 +51,35 @@ class TemporaryAbsenceOccurrence(
   val authorisation: TemporaryAbsenceAuthorisation,
   releaseAt: LocalDateTime,
   returnBy: LocalDateTime,
-  locationType: LocationType,
-  locationId: String,
   accompaniedBy: AccompaniedBy,
   transport: Transport,
-  contact: String?,
+  location: Location,
+  contactInformation: String?,
   notes: String?,
   addedAt: LocalDateTime,
   addedBy: String,
   cancelledAt: LocalDateTime?,
   cancelledBy: String?,
+  scheduleReference: JsonNode?,
   legacyId: Long?,
   @Id
   @Column(name = "id", nullable = false)
-  val id: UUID = newUuid(),
-) {
+  override val id: UUID = newUuid(),
+) : Identifiable {
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
   var personIdentifier: String = authorisation.personIdentifier
+    private set
+
+  @NotAudited
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinTable(
+    name = "temporary_absence_occurrence_status",
+    joinColumns = [JoinColumn(name = "occurrence_id", referencedColumnName = "id")],
+    inverseJoinColumns = [JoinColumn(name = "status_id", referencedColumnName = "id")],
+  )
+  var status: TapOccurrenceStatus? = null
     private set
 
   @NotNull
@@ -78,17 +94,6 @@ class TemporaryAbsenceOccurrence(
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "location_type_id")
-  var locationType: LocationType = locationType
-    private set
-
-  @Size(max = 36)
-  @Column(name = "location_id", length = 36)
-  var locationId: String = locationId
-    private set
-
-  @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "accompanied_by_id")
   var accompaniedBy: AccompaniedBy = accompaniedBy
     private set
@@ -99,8 +104,13 @@ class TemporaryAbsenceOccurrence(
   var transport: Transport = transport
     private set
 
-  @Column(name = "contact")
-  var contact: String? = contact
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "location")
+  var location: Location = location
+    private set
+
+  @Column(name = "contact_information")
+  var contactInformation: String? = contactInformation
     private set
 
   @Column(name = "notes")
@@ -125,6 +135,11 @@ class TemporaryAbsenceOccurrence(
   var cancelledBy: String? = cancelledBy
     private set
 
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "schedule_reference")
+  var scheduleReference: JsonNode? = scheduleReference
+    private set
+
   @Column(name = "legacy_id")
   var legacyId: Long? = legacyId
     private set
@@ -139,11 +154,8 @@ class TemporaryAbsenceOccurrence(
   ) = apply {
     releaseAt = request.startTime
     returnBy = request.returnTime
-    locationType =
-      request.toAddressOwnerClass?.let { rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, it) as? LocationType }
-        ?: rdProvider(ReferenceDataDomain.Code.LOCATION_TYPE, "OTHER") as LocationType
-    locationId = request.toAddressId.toString()
-    contact = request.contactPersonName
+    contactInformation = request.contactPersonName
+    location = request.location.asLocation()
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.escortOrDefault()) as AccompaniedBy
     transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, request.transportTypeOrDefault()) as Transport
     notes = request.comment
@@ -230,5 +242,8 @@ fun occurrenceMatchesPersonIdentifier(personIdentifier: String) = Specification<
 }
 
 fun occurrenceMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.and(cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), fromDate.atStartOfDay()), cb.lessThanOrEqualTo(tao.get(RETURN_BY), toDate.plusDays(1).atStartOfDay()))
+  cb.and(
+    cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), fromDate.atStartOfDay()),
+    cb.lessThanOrEqualTo(tao.get(RETURN_BY), toDate.plusDays(1).atStartOfDay()),
+  )
 }

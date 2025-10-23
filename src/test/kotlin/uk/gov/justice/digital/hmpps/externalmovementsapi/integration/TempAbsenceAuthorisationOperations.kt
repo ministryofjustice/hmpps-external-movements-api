@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
+import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
@@ -49,6 +50,7 @@ interface TempAbsenceAuthorisationOperations {
       submittedBy: String = "O7h3rU53r",
       approvedAt: LocalDateTime? = null,
       approvedBy: String? = null,
+      schedule: JsonNode? = null,
       legacyId: Long? = null,
     ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation = { rdSupplier ->
       TemporaryAbsenceAuthorisation(
@@ -67,6 +69,7 @@ interface TempAbsenceAuthorisationOperations {
         submittedBy,
         approvedAt,
         approvedBy,
+        schedule,
         legacyId,
       )
     }
@@ -111,6 +114,7 @@ interface TempAbsenceAuthorisationOperations {
       assertThat(it).isCloseTo(request.approvedAt, within(1, SECONDS))
     }
     assertThat(approvedBy).isEqualTo(request.approvedBy)
+    assertThat(schedule).isEqualTo(request.schedule)
   }
 
   fun TemporaryAbsenceAuthorisation.verifyAgainst(authorisation: TapAuthorisation) {
@@ -128,6 +132,7 @@ interface TempAbsenceAuthorisationOperations {
       assertThat(it).isCloseTo(authorisation.approved!!.at, within(1, SECONDS))
     }
     assertThat(approvedBy).isEqualTo(authorisation.approved?.by)
+    assertThat(schedule).isEqualTo(authorisation.schedule)
   }
 }
 

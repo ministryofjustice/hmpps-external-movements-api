@@ -1,9 +1,9 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.2"
-  kotlin("plugin.spring") version "2.2.20"
-  kotlin("plugin.jpa") version "2.2.20"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.3"
+  kotlin("plugin.spring") version "2.2.21"
+  kotlin("plugin.jpa") version "2.2.21"
 }
 
 configurations {
@@ -11,10 +11,9 @@ configurations {
 }
 
 val hmppsKotlinVersion = "1.7.0"
-val hypersistenceVersion = "3.11.0"
-val sentryVersion = "8.23.0"
+val sentryVersion = "8.24.0"
 val springDocVersion = "2.8.13"
-val sqsStarterVersion = "5.5.0"
+val sqsStarterVersion = "5.6.0"
 val testContainersVersion = "1.21.3"
 val uuidGeneratorVersion = "5.1.1"
 val wiremockVersion = "3.13.1"
@@ -28,7 +27,6 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.hibernate.orm:hibernate-envers")
   implementation("org.springframework.data:spring-data-envers")
-  implementation("io.hypersistence:hypersistence-utils-hibernate-63:$hypersistenceVersion")
   implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:$sqsStarterVersion")
@@ -59,6 +57,13 @@ tasks {
         "-Xwhen-guards",
         "-Xannotation-default-target=param-property",
       )
+    }
+  }
+  test {
+    if (project.hasProperty("init-db")) {
+      include("**/InitialiseDatabase.class")
+    } else {
+      exclude("**/InitialiseDatabase.class")
     }
   }
 }
