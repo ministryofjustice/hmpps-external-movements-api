@@ -299,5 +299,9 @@
             <column ascending="true" name="rev_id"/>
          </index>
       </table>
+      <table catalog="movements" name="temporary_absence_occurrence_status" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT id AS occurrence_id,&#10;    ( SELECT reference_data.id&#10;           FROM reference_data&#10;          WHERE (((reference_data.domain)::text = 'TAP_OCCURRENCE_STATUS'::text) AND ((reference_data.code)::text = (get_occurrence_status_code(tao.id))::text))) AS status_id&#10;   FROM temporary_absence_occurrence tao;">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="occurrence_id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="status_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+      </table>
    </tables>
 </database>
