@@ -38,6 +38,7 @@ private fun TemporaryAbsenceAuthorisation.with(person: Person) = TapOccurrence.A
   absenceType = absenceType?.asCodedDescription(),
   absenceSubType = absenceSubType?.asCodedDescription(),
   absenceReason = absenceReason?.asCodedDescription(),
+  notes = notes,
 )
 
 private fun TemporaryAbsenceOccurrence.with(person: Person, user: (String) -> UserDetails) = TapOccurrence(
@@ -52,4 +53,5 @@ private fun TemporaryAbsenceOccurrence.with(person: Person, user: (String) -> Us
   cancelled = cancelledBy?.let { AtAndBy(checkNotNull(cancelledAt), it, user(it).name) },
   contactInformation = contactInformation,
   scheduleReference = scheduleReference,
+  notes = notes,
 )

@@ -55,6 +55,7 @@ private fun TemporaryAbsenceAuthorisation.with(
   submitted = AtAndBy(submittedAt, submittedBy, user(submittedBy).name),
   approved = approvedBy?.let { AtAndBy(checkNotNull(approvedAt), it, user(it).name) },
   schedule = schedule,
+  notes = notes,
 )
 
 private fun TemporaryAbsenceOccurrence.asOccurrence() = TapAuthorisation.Occurrence(
@@ -64,5 +65,6 @@ private fun TemporaryAbsenceOccurrence.asOccurrence() = TapAuthorisation.Occurre
   location = location,
   accompaniedBy = accompaniedBy.asCodedDescription(),
   transport = transport.asCodedDescription(),
+  notes = notes,
   isCancelled = cancelledAt != null,
 )
