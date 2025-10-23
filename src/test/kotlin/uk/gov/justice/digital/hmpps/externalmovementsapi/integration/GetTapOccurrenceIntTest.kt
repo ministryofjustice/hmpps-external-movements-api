@@ -53,6 +53,7 @@ class GetTapOccurrenceIntTest(
     occurrence.verifyAgainst(response)
     assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
+    assertThat(response.status.code).isEqualTo("EXPIRED")
   }
 
   private fun getTapOccurrence(
