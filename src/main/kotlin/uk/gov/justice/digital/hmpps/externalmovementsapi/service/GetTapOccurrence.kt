@@ -38,6 +38,7 @@ private fun TemporaryAbsenceAuthorisation.with(person: Person) = TapOccurrence.A
   absenceType = absenceType?.asCodedDescription(),
   absenceSubType = absenceSubType?.asCodedDescription(),
   absenceReason = absenceReason?.asCodedDescription(),
+  notes = notes,
 )
 
 private fun TemporaryAbsenceOccurrence.with(person: Person, user: (String) -> UserDetails) = TapOccurrence(
