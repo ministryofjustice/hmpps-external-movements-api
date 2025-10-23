@@ -6,6 +6,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Version
@@ -14,6 +15,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.domain.Specification
@@ -30,6 +32,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -67,6 +70,16 @@ class TemporaryAbsenceOccurrence(
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
   var personIdentifier: String = authorisation.personIdentifier
+    private set
+
+  @NotAudited
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinTable(
+    name = "temporary_absence_occurrence_status",
+    joinColumns = [JoinColumn(name = "occurrence_id", referencedColumnName = "id")],
+    inverseJoinColumns = [JoinColumn(name = "status_id", referencedColumnName = "id")],
+  )
+  var status: TapOccurrenceStatus? = null
     private set
 
   @NotNull

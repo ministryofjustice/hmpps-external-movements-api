@@ -42,6 +42,7 @@ private fun TemporaryAbsenceAuthorisation.with(person: Person) = TapOccurrence.A
 
 private fun TemporaryAbsenceOccurrence.with(person: Person, user: (String) -> UserDetails) = TapOccurrence(
   id = id,
+  status = requireNotNull(status).asCodedDescription(),
   authorisation = authorisation.with(person),
   releaseAt = releaseAt,
   returnBy = returnBy,

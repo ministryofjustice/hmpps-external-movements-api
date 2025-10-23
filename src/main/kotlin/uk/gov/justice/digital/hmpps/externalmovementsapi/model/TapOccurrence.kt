@@ -9,6 +9,7 @@ import java.util.UUID
 data class TapOccurrence(
   val id: UUID,
   val authorisation: Authorisation,
+  val status: CodedDescription,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   val location: Location,

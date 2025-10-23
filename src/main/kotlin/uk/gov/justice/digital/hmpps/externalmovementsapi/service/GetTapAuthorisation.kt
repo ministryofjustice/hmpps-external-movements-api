@@ -59,10 +59,10 @@ private fun TemporaryAbsenceAuthorisation.with(
 
 private fun TemporaryAbsenceOccurrence.asOccurrence() = TapAuthorisation.Occurrence(
   id = id,
+  status = requireNotNull(status).asCodedDescription(),
   releaseAt = releaseAt,
   returnBy = returnBy,
   location = location,
   accompaniedBy = accompaniedBy.asCodedDescription(),
   transport = transport.asCodedDescription(),
-  isCancelled = cancelledAt != null,
 )

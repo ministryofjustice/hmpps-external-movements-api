@@ -14,6 +14,7 @@ data class TapOccurrenceSearchResponse(
 data class TapOccurrenceResult(
   val id: UUID,
   val authorisation: TapOccurrenceAuthorisation,
+  val status: CodedDescription,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   val accompaniedBy: CodedDescription,
