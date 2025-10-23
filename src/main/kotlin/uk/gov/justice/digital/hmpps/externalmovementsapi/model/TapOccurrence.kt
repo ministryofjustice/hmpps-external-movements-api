@@ -19,6 +19,7 @@ data class TapOccurrence(
   val cancelled: AtAndBy?,
   val contactInformation: String?,
   val scheduleReference: JsonNode?,
+  val notes: String?,
 ) {
   data class Authorisation(
     val id: UUID,
@@ -27,5 +28,6 @@ data class TapOccurrence(
     val absenceType: CodedDescription?,
     val absenceSubType: CodedDescription?,
     val absenceReason: CodedDescription?,
+    val notes: String?,
   )
 }

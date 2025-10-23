@@ -21,6 +21,7 @@ data class TapAuthorisation(
   val submitted: AtAndBy,
   val approved: AtAndBy?,
   val schedule: JsonNode?,
+  val notes: String?,
 ) {
   data class Occurrence(
     val id: UUID,
@@ -30,5 +31,6 @@ data class TapAuthorisation(
     val location: Location,
     val accompaniedBy: CodedDescription,
     val transport: CodedDescription,
+    val notes: String?,
   )
 }
