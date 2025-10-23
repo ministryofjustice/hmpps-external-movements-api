@@ -90,3 +90,14 @@ class TapAuthorisationStatus(
     DENIED,
   }
 }
+
+@Entity
+@DiscriminatorValue("TAP_OCCURRENCE_STATUS")
+class TapOccurrenceStatus(
+  key: ReferenceDataKey,
+  description: String,
+  hintText: String?,
+  sequenceNumber: Int,
+  active: Boolean,
+  id: Long,
+) : ReferenceData(key, description, hintText, sequenceNumber, active, id)

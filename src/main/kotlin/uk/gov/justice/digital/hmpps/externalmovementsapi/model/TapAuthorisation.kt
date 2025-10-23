@@ -25,12 +25,12 @@ data class TapAuthorisation(
 ) {
   data class Occurrence(
     val id: UUID,
+    val status: CodedDescription,
     val releaseAt: LocalDateTime,
     val returnBy: LocalDateTime,
     val location: Location,
     val accompaniedBy: CodedDescription,
     val transport: CodedDescription,
     val notes: String?,
-    val isCancelled: Boolean,
   )
 }
