@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.TO_DATE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
@@ -39,6 +40,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PersonReference
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisedInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
@@ -69,7 +74,8 @@ class TemporaryAbsenceAuthorisation(
   @Id
   @Column(name = "id", nullable = false)
   override val id: UUID = newUuid(),
-) : Identifiable {
+) : Identifiable,
+  DomainEventProducer {
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
@@ -182,6 +188,27 @@ class TemporaryAbsenceAuthorisation(
     approvedBy = request.approvedBy
     fromDate = request.fromDate
     toDate = request.toDate
+  }
+
+  override fun initialEvent(): DomainEvent<*>? = if (status.code == TapAuthorisationStatus.Code.APPROVED.name) {
+    TemporaryAbsenceAuthorised(
+      TemporaryAbsenceAuthorisedInformation(id),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  } else {
+    null
+  }
+
+  override fun stateChangedEvent(previousState: (String) -> Any?): DomainEvent<*>? {
+    val previousStatus = previousState(STATUS) as TapAuthorisationStatus
+    return if (previousStatus.code != status.code && status.code == TapAuthorisationStatus.Code.APPROVED.name) {
+      TemporaryAbsenceAuthorised(
+        TemporaryAbsenceAuthorisedInformation(id),
+        PersonReference.withIdentifier(personIdentifier),
+      )
+    } else {
+      null
+    }
   }
 
   companion object {

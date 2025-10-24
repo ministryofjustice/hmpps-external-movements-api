@@ -105,6 +105,8 @@ management:
 
 service:
   active-prisons:
+  domain-events:
+    poll-interval: 0
 
 client:
   id: external-movements

@@ -3,10 +3,10 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.description
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -17,12 +17,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceMovementOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceOccurrenceOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.NomisAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
@@ -95,7 +95,8 @@ class SyncTemporaryAbsenceMovementIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      ExternalMovementContext.get(),
+      setOf(),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
   }
 
@@ -133,7 +134,8 @@ class SyncTemporaryAbsenceMovementIntTest(
       saved,
       RevisionType.MOD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      ExternalMovementContext.get(),
+      setOf(),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
   }
 
@@ -170,7 +172,8 @@ class SyncTemporaryAbsenceMovementIntTest(
       saved,
       RevisionType.MOD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      ExternalMovementContext.get(),
+      setOf(),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
   }
 
@@ -192,7 +195,8 @@ class SyncTemporaryAbsenceMovementIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      ExternalMovementContext.get(),
+      setOf(),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
   }
 

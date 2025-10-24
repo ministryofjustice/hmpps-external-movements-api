@@ -29,11 +29,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.PERSON_IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence.Companion.RETURN_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PersonReference
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduledInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
@@ -65,7 +70,8 @@ class TemporaryAbsenceOccurrence(
   @Id
   @Column(name = "id", nullable = false)
   override val id: UUID = newUuid(),
-) : Identifiable {
+) : Identifiable,
+  DomainEventProducer {
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
@@ -165,6 +171,13 @@ class TemporaryAbsenceOccurrence(
     cancelledBy = request.cancelledBy
     legacyId = request.eventId
   }
+
+  override fun initialEvent(): DomainEvent<*> = TemporaryAbsenceScheduled(
+    TemporaryAbsenceScheduledInformation(id),
+    PersonReference.withIdentifier(personIdentifier),
+  )
+
+  override fun stateChangedEvent(previousState: (String) -> Any?): DomainEvent<*>? = null
 
   companion object {
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
