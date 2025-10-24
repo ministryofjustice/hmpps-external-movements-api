@@ -172,9 +172,10 @@ class CreateTapAuthorisationIntTest(
 
   private fun location(
     description: String? = name(10),
-    address: Location.Address? = null,
-    id: String = "${newId()}",
-  ): Location = Location(description, address, id)
+    address: String? = null,
+    postcode: String? = null,
+    uprn: String = "${newId()}",
+  ): Location = Location(description, address, postcode, uprn)
 
   private fun createTapAuthorisationRequest(
     submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),

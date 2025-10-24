@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations
@@ -205,7 +206,7 @@ class SyncTemporaryAbsenceMovementIntTest(
     escortCode: String? = "L",
     escortText: String? = "Information about the escort",
     comment: String? = "Some notes about the movement",
-    location: TapLocation = TapLocation(id = newId().toString(), description = name(10)),
+    location: TapLocation = TapLocation(description = name(10), postcode = postcode()),
     legacyId: String = "${newId()}",
     audit: NomisAudit = NomisAuditGenerator.generate(),
   ) = TapMovementRequest(

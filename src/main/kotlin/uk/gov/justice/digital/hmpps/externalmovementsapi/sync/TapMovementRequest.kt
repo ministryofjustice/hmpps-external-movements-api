@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location.Address
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -42,10 +41,9 @@ data class TapMovementRequest(
 }
 
 data class TapLocation(
-  val id: String? = null,
-  val typeCode: String? = null,
   val description: String? = null,
-  val address: Address? = null,
+  val address: String? = null,
+  val postcode: String? = null,
 ) {
-  fun asLocation() = Location(description, if (address?.isEmpty() != false) null else address, id)
+  fun asLocation() = Location(description, address, postcode, null)
 }
