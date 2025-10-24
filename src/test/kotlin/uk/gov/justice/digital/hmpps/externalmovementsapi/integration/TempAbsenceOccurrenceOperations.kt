@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrenceRepository
@@ -17,7 +18,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
@@ -35,17 +35,8 @@ interface TempAbsenceOccurrenceOperations {
   fun findForAuthorisation(id: UUID): List<TemporaryAbsenceOccurrence>
 
   companion object {
-    fun address(
-      premise: String? = name(6),
-      street: String? = null,
-      area: String? = null,
-      city: String? = null,
-      county: String? = null,
-      country: String? = null,
-      postcode: String? = postcode(),
-    ) = Location.Address(premise, street, area, city, county, country, postcode)
 
-    fun location(description: String? = name(10), address: Location.Address? = address(), id: String? = "${newId()}") = Location(description, address, id)
+    fun location(description: String? = name(10), address: String? = null, postcode: String? = postcode(), uprn: String? = "${newUuid()}") = Location(description, address, postcode, uprn)
 
     fun temporaryAbsenceOccurrence(
       authorisation: TemporaryAbsenceAuthorisation,

@@ -20,6 +20,8 @@ annotation class ValidLocation(
 
 class LocationValidator : ConstraintValidator<ValidLocation, Location> {
   override fun isValid(location: Location, context: ConstraintValidatorContext): Boolean = with(location) {
-    return !(description.isNullOrBlank() && (location.address?.isEmpty() ?: true))
+    return description.isPresent() || address.isPresent() || postcode.isPresent()
   }
 }
+
+private fun String?.isPresent(): Boolean = this != null && isNotBlank()
