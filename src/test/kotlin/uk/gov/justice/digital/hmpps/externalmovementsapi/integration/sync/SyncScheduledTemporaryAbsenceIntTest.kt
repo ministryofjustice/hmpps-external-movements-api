@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -72,7 +73,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get(),
     )
   }
@@ -144,7 +145,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get(),
     )
   }
