@@ -7,6 +7,7 @@
    <tables>
       <table catalog="movements" name="audit_revision" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('audit_revision_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
+            <child catalog="movements" column="rev_id" foreignKey="hmpps_domain_event_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="hmpps_domain_event_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_authorisation_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_movement_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_movement_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_occurrence_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_occurrence_audit"/>
@@ -20,6 +21,35 @@
             <column ascending="true" name="id"/>
          </index>
          <checkConstraint constraint="(((source)::text = ANY ((ARRAY['DPS'::character varying, 'NOMIS'::character varying])::text[])))" name="ch_audit_revision_source"/>
+      </table>
+      <table catalog="movements" name="hmpps_domain_event" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="event_type" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="event" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="published" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_hmpps_domain_event" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="hmpps_domain_event_unpublished" unique="false">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table catalog="movements" name="hmpps_domain_event_audit" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="rev_id" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
+            <parent catalog="movements" column="id" foreignKey="hmpps_domain_event_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="audit_revision"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="rev_type" nullable="false" remarks="" size="5" type="int2" typeCode="5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="event_type" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="event" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="published" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <primaryKey column="rev_id" sequenceNumberInPK="2"/>
+         <index name="pk_hmpps_domain_event_audit" unique="true">
+            <column ascending="true" name="id"/>
+            <column ascending="true" name="rev_id"/>
+         </index>
       </table>
       <table catalog="movements" name="reference_data" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
