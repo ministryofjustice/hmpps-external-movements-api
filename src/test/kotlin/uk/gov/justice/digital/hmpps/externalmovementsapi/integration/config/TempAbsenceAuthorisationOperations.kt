@@ -98,7 +98,7 @@ interface TempAbsenceAuthorisationOperations {
 
   fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: CreateTapAuthorisationRequest) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    assertThat(submittedAt).isCloseTo(request.submittedAt, within(1, SECONDS))
+    assertThat(submittedAt).isCloseTo(LocalDateTime.now(), within(1, SECONDS))
     assertThat(status.code).isEqualTo(request.statusCode.name)
     assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)

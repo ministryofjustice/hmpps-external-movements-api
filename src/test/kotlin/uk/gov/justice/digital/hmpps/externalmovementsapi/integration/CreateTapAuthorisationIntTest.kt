@@ -193,7 +193,6 @@ class CreateTapAuthorisationIntTest(
   ): Location = Location(description, address, postcode, uprn)
 
   private fun createTapAuthorisationRequest(
-    submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
     absenceTypeCode: String = "SR",
     absenceSubTypeCode: String? = "RDR",
     absenceReasonCode: String? = "R15",
@@ -204,7 +203,6 @@ class CreateTapAuthorisationIntTest(
     notes: String? = null,
     repeat: Boolean = false,
   ) = CreateTapAuthorisationRequest(
-    submittedAt,
     absenceTypeCode,
     absenceSubTypeCode,
     absenceReasonCode,

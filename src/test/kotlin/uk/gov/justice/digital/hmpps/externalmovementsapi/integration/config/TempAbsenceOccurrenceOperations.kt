@@ -99,7 +99,7 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
     assertThat(transport.code).isEqualTo(request.transportCode)
     assertThat(addedBy).isEqualTo(authRequest.submittedBy)
-    assertThat(addedAt).isCloseTo(authRequest.submittedAt, within(1, SECONDS))
+    assertThat(addedAt).isCloseTo(LocalDateTime.now(), within(1, SECONDS))
     assertThat(contactInformation).isEqualTo(request.contactInformation)
     assertThat(scheduleReference).isEqualTo(request.scheduleReference)
   }
