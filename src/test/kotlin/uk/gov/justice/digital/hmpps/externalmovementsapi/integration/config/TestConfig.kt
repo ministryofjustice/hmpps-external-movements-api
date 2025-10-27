@@ -7,17 +7,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceAuthorisationOperationsImpl
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceMovementOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceMovementOperationsImpl
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceOccurrenceOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.TempAbsenceOccurrenceOperationsImpl
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEventRepository
 
 @TestConfiguration
 class TestConfig(
   private val transactionTemplate: TransactionTemplate,
   private val referenceDataRepository: ReferenceDataRepository,
+  private val hmppsDomainEventRepository: HmppsDomainEventRepository,
   private val temporaryAbsenceAuthorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val temporaryAbsenceOccurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val temporaryAbsenceMovementRepository: TemporaryAbsenceMovementRepository,
@@ -42,4 +38,7 @@ class TestConfig(
     referenceDataRepository,
     temporaryAbsenceMovementRepository,
   )
+
+  @Bean
+  fun hmppsDomainEventOperations(): HmppsDomainEventOperations = HmppsDomainEventOperationsImpl(transactionTemplate, hmppsDomainEventRepository)
 }
