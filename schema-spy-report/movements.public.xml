@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><database name="movements" schema="public" type="PostgreSQL - 16.10 (Debian 16.10-1.pgdg13+1)">
+<?xml version="1.0" encoding="UTF-8"?><database name="movements" schema="public" type="PostgreSQL - 18.0 (Debian 18.0-1.pgdg13+3)">
    <sequences>
       <sequence increment="1" name="audit_revision_id_seq" startValue="1"/>
       <sequence increment="1" name="reference_data_id_seq" startValue="1"/>
@@ -20,7 +20,7 @@
          <index name="pk_audit_revision" unique="true">
             <column ascending="true" name="id"/>
          </index>
-         <checkConstraint constraint="(((source)::text = ANY ((ARRAY['DPS'::character varying, 'NOMIS'::character varying])::text[])))" name="ch_audit_revision_source"/>
+         <checkConstraint constraint="((source)::text = ANY ((ARRAY['DPS'::character varying, 'NOMIS'::character varying])::text[]))" name="ch_audit_revision_source"/>
       </table>
       <table catalog="movements" name="hmpps_domain_event" remarks="" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
@@ -51,7 +51,7 @@
             <column ascending="true" name="rev_id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data" numRows="158" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
             <child catalog="movements" column="id" foreignKey="fk_reference_data_domain_link_reference_data" implied="false" onDeleteCascade="false" schema="public" table="reference_data_domain_link"/>
             <child catalog="movements" column="reference_data_id_1" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data_link"/>
@@ -109,7 +109,7 @@
             <column ascending="true" name="id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data_link" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data_link" numRows="64" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_link_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="reference_data_id_1" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
             <parent catalog="movements" column="id" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
@@ -170,7 +170,7 @@
          <index name="uq_temporary_absence_authorisation_legacy_id" unique="true">
             <column ascending="true" name="legacy_id"/>
          </index>
-         <checkConstraint constraint="((((approved_at IS NULL) AND (approved_by IS NULL)) OR ((approved_at IS NOT NULL) AND (approved_by IS NOT NULL))))" name="ch_taa_approved_at_approved_by"/>
+         <checkConstraint constraint="(((approved_at IS NULL) AND (approved_by IS NULL)) OR ((approved_at IS NOT NULL) AND (approved_by IS NOT NULL)))" name="ch_taa_approved_at_approved_by"/>
       </table>
       <table catalog="movements" name="temporary_absence_authorisation_audit" remarks="" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="rev_id" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
@@ -299,7 +299,7 @@
          <index name="uq_temporary_absence_occurrence_legacy_id" unique="true">
             <column ascending="true" name="legacy_id"/>
          </index>
-         <checkConstraint constraint="((((cancelled_at IS NULL) AND (cancelled_by IS NULL)) OR ((cancelled_at IS NOT NULL) AND (cancelled_by IS NOT NULL))))" name="ch_tao_cancelled_at_cancelled_by"/>
+         <checkConstraint constraint="(((cancelled_at IS NULL) AND (cancelled_by IS NULL)) OR ((cancelled_at IS NOT NULL) AND (cancelled_by IS NOT NULL)))" name="ch_tao_cancelled_at_cancelled_by"/>
       </table>
       <table catalog="movements" name="temporary_absence_occurrence_audit" remarks="" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="rev_id" nullable="false" remarks="" size="19" type="int8" typeCode="-5">

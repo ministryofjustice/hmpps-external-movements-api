@@ -158,11 +158,11 @@
                                         <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
                                     </tr>
                                     <tr>
-                                        <td>temporary_absence_movement_audit_rev_id_fkey</td>
+                                        <td>temporary_absence_occurrence_audit_rev_id_fkey</td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/temporary_absence_movement_audit.html'>temporary_absence_movement_audit</a><span>.rev_id</span></td>
+                                                    <td><a href='tables/temporary_absence_occurrence_audit.html'>temporary_absence_occurrence_audit</a><span>.rev_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -176,11 +176,11 @@
                                         <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
                                     </tr>
                                     <tr>
-                                        <td>temporary_absence_occurrence_audit_rev_id_fkey</td>
+                                        <td>temporary_absence_movement_audit_rev_id_fkey</td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
-                                                    <td><a href='tables/temporary_absence_occurrence_audit.html'>temporary_absence_occurrence_audit</a><span>.rev_id</span></td>
+                                                    <td><a href='tables/temporary_absence_movement_audit.html'>temporary_absence_movement_audit</a><span>.rev_id</span></td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -459,17 +459,17 @@
                                     <tr>
                                         <td><a href='tables/audit_revision.html'>audit_revision</a></td>
                                         <td>ch_audit_revision_source</td>
-                                        <td>(((source)::text &#61; ANY ((ARRAY[&#39;DPS&#39;::character varying, &#39;NOMIS&#39;::character varying])::text[])))</td>
+                                        <td>((source)::text &#61; ANY ((ARRAY[&#39;DPS&#39;::character varying, &#39;NOMIS&#39;::character varying])::text[]))</td>
                                     </tr>
                                     <tr>
                                         <td><a href='tables/temporary_absence_authorisation.html'>temporary_absence_authorisation</a></td>
                                         <td>ch_taa_approved_at_approved_by</td>
-                                        <td>((((approved_at IS NULL) AND (approved_by IS NULL)) OR ((approved_at IS NOT NULL) AND (approved_by IS NOT NULL))))</td>
+                                        <td>(((approved_at IS NULL) AND (approved_by IS NULL)) OR ((approved_at IS NOT NULL) AND (approved_by IS NOT NULL)))</td>
                                     </tr>
                                     <tr>
                                         <td><a href='tables/temporary_absence_occurrence.html'>temporary_absence_occurrence</a></td>
                                         <td>ch_tao_cancelled_at_cancelled_by</td>
-                                        <td>((((cancelled_at IS NULL) AND (cancelled_by IS NULL)) OR ((cancelled_at IS NOT NULL) AND (cancelled_by IS NOT NULL))))</td>
+                                        <td>(((cancelled_at IS NULL) AND (cancelled_by IS NULL)) OR ((cancelled_at IS NOT NULL) AND (cancelled_by IS NOT NULL)))</td>
                                     </tr>
                                 </tbody>
                             </table>
