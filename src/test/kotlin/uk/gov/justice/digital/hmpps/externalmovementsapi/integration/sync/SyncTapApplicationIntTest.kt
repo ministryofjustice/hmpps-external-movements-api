@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -64,9 +63,10 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      setOf(),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
+
+    verifyEvents(saved, setOf())
   }
 
   @Test
@@ -86,7 +86,6 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.MOD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      setOf(),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
   }
@@ -106,7 +105,6 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      setOf(TemporaryAbsenceAuthorised.EVENT_TYPE),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
   }

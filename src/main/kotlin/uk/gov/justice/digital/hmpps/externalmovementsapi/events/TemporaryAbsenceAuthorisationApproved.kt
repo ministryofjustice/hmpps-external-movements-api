@@ -13,10 +13,19 @@ data class TemporaryAbsenceAuthorised(
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.approved"
+
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorised(
+      TemporaryAbsenceAuthorisedInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
   }
 }
 
 data class TemporaryAbsenceAuthorisedInformation(
   val id: UUID,
-  override val source: DataSource = ExternalMovementContext.get().source,
+  override val source: DataSource,
 ) : AdditionalInformation

@@ -6,7 +6,7 @@ import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.AuditReaderFactory
 import org.hibernate.envers.RevisionType
-import org.hibernate.envers.query.AuditEntity
+import org.hibernate.envers.query.AuditEntity.revisionNumber
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -96,8 +96,7 @@ abstract class IntegrationTest {
     entity: Identifiable,
     revisionType: RevisionType,
     affectedEntities: Set<String>,
-    eventTypes: Set<String>,
-    context: ExternalMovementContext,
+    context: ExternalMovementContext = ExternalMovementContext.get(),
   ) {
     transactionTemplate.execute {
       val auditReader = AuditReaderFactory.get(entityManager)
@@ -113,22 +112,10 @@ abstract class IntegrationTest {
         auditReader
           .createQuery()
           .forRevisionsOfEntity(entity::class.java, false, true)
-          .add(AuditEntity.revisionNumber().eq(revisionNumber))
+          .add(revisionNumber().eq(revisionNumber))
           .resultList
           .first() as Array<*>
       assertThat(entityRevision[2]).isEqualTo(revisionType)
-
-      val domainEventsPersisted: List<HmppsDomainEvent> =
-        auditReader
-          .createQuery()
-          .forRevisionsOfEntity(HmppsDomainEvent::class.java, true, true)
-          .add(AuditEntity.revisionNumber().eq(revisionNumber))
-          .resultList
-          .filterIsInstance<HmppsDomainEvent>()
-      domainEventsPersisted.forEach {
-        assertThat(it.eventType).isIn(eventTypes)
-        assertThat(it.event.additionalInformation.source).isEqualTo(context.source)
-      }
 
       val auditRevision = entityRevision[1] as AuditRevision
       with(auditRevision) {
@@ -136,6 +123,34 @@ abstract class IntegrationTest {
         assertThat(this.affectedEntities).containsExactlyInAnyOrderElementsOf(affectedEntities)
         assertThat(this.source).isEqualTo(context.source)
       }
+    }
+  }
+
+  fun verifyEvents(
+    entity: Identifiable,
+    events: Set<DomainEvent<*>>,
+  ) {
+    transactionTemplate.execute {
+      val auditReader = AuditReaderFactory.get(entityManager)
+      assertTrue(auditReader.isEntityClassAudited(entity::class.java))
+
+      val revisionNumber =
+        auditReader
+          .getRevisions(entity::class.java, entity.id)
+          .filterIsInstance<Long>()
+          .max()
+
+      val domainEventsPersisted: List<HmppsDomainEvent> =
+        auditReader
+          .createQuery()
+          .forRevisionsOfEntity(HmppsDomainEvent::class.java, true, true)
+          .add(revisionNumber().eq(revisionNumber))
+          .resultList
+          .filterIsInstance<HmppsDomainEvent>()
+      domainEventsPersisted.forEach {
+        assertThat(it.eventType).isEqualTo(it.event.eventType)
+      }
+      assertThat(domainEventsPersisted.map { it.event }).containsExactlyInAnyOrderElementsOf(events)
     }
   }
 

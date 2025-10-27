@@ -33,12 +33,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.Doma
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PersonReference
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduledInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
@@ -172,10 +171,11 @@ class TemporaryAbsenceOccurrence(
     legacyId = request.eventId
   }
 
-  override fun initialEvent(): DomainEvent<*> = TemporaryAbsenceScheduled(
-    TemporaryAbsenceScheduledInformation(id),
-    PersonReference.withIdentifier(personIdentifier),
-  )
+  override fun initialEvent(): DomainEvent<*>? = if (authorisation.status.code == TapAuthorisationStatus.Code.APPROVED.name) {
+    TemporaryAbsenceScheduled(personIdentifier, id)
+  } else {
+    null
+  }
 
   override fun stateChangedEvent(previousState: (String) -> Any?): DomainEvent<*>? = null
 

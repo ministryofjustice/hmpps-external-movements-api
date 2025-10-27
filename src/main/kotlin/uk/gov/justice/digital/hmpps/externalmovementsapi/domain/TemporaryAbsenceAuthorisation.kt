@@ -41,9 +41,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PersonReference
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisedInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
@@ -191,10 +189,7 @@ class TemporaryAbsenceAuthorisation(
   }
 
   override fun initialEvent(): DomainEvent<*>? = if (status.code == TapAuthorisationStatus.Code.APPROVED.name) {
-    TemporaryAbsenceAuthorised(
-      TemporaryAbsenceAuthorisedInformation(id),
-      PersonReference.withIdentifier(personIdentifier),
-    )
+    TemporaryAbsenceAuthorised(personIdentifier, id)
   } else {
     null
   }
@@ -202,10 +197,7 @@ class TemporaryAbsenceAuthorisation(
   override fun stateChangedEvent(previousState: (String) -> Any?): DomainEvent<*>? {
     val previousStatus = previousState(STATUS) as TapAuthorisationStatus
     return if (previousStatus.code != status.code && status.code == TapAuthorisationStatus.Code.APPROVED.name) {
-      TemporaryAbsenceAuthorised(
-        TemporaryAbsenceAuthorisedInformation(id),
-        PersonReference.withIdentifier(personIdentifier),
-      )
+      TemporaryAbsenceAuthorised(personIdentifier, id)
     } else {
       null
     }

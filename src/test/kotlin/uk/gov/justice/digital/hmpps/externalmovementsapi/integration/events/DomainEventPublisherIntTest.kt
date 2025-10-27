@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEventPublisher
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PersonReference
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisedInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.HmppsDomainEventOperations
@@ -23,12 +21,7 @@ class DomainEventPublisherIntTest(
 
     val id = newUuid()
     val personIdentifier = personIdentifier()
-    val toPublish = givenHmppsDomainEvent(
-      TemporaryAbsenceAuthorised(
-        TemporaryAbsenceAuthorisedInformation(id),
-        PersonReference.withIdentifier(personIdentifier),
-      ),
-    )
+    val toPublish = givenHmppsDomainEvent(TemporaryAbsenceAuthorised(personIdentifier, id))
 
     dep.publishUnpublishedEvents()
 

@@ -95,9 +95,9 @@ class SyncTemporaryAbsenceMovementIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      setOf(),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
+    verifyEvents(saved, setOf())
   }
 
   @Test
@@ -134,9 +134,9 @@ class SyncTemporaryAbsenceMovementIntTest(
       saved,
       RevisionType.MOD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      setOf(),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
+    verifyEvents(saved, setOf())
   }
 
   @Test
@@ -172,9 +172,9 @@ class SyncTemporaryAbsenceMovementIntTest(
       saved,
       RevisionType.MOD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      setOf(),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
+    verifyEvents(saved, setOf())
   }
 
   @Test
@@ -195,9 +195,9 @@ class SyncTemporaryAbsenceMovementIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      setOf(),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
+    verifyEvents(saved, setOf())
   }
 
   private fun tapMovementRequest(

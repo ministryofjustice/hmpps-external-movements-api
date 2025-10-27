@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
@@ -122,11 +121,10 @@ class CreateTapAuthorisationIntTest(
       setOf(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
-        HmppsDomainEvent::class.simpleName!!,
       ),
-      setOf(TemporaryAbsenceScheduled.EVENT_TYPE),
-      ExternalMovementContext.get(),
     )
+
+    verifyEvents(saved, setOf())
   }
 
   @Test
@@ -159,8 +157,11 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      setOf(TemporaryAbsenceAuthorised.EVENT_TYPE, TemporaryAbsenceScheduled.EVENT_TYPE),
-      ExternalMovementContext.get(),
+    )
+
+    verifyEvents(
+      saved,
+      (occurrences.map { TemporaryAbsenceScheduled(pi, it.id) } + TemporaryAbsenceAuthorised(pi, saved.id)).toSet(),
     )
   }
 
