@@ -17,7 +17,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class CreateTapAuthorisationRequest(
-  val submittedAt: LocalDateTime,
   val absenceTypeCode: String,
   val absenceSubTypeCode: String?,
   val absenceReasonCode: String?,

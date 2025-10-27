@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersea
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import java.time.LocalDateTime
 
 @Transactional
 @Service
@@ -89,7 +90,7 @@ class CreateTapAuthorisation(
       fromDate = fromDate,
       toDate = toDate,
       applicationDate = applicationDate,
-      submittedAt = submittedAt,
+      submittedAt = LocalDateTime.now(),
       submittedBy = submittedBy,
       approvedAt = approvedAt,
       approvedBy = approvedBy,
