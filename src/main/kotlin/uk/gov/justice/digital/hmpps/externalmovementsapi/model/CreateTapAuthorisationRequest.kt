@@ -30,9 +30,11 @@ data class CreateTapAuthorisationRequest(
   @JsonIgnore
   val applicationDate: LocalDate = LocalDate.now(),
   @JsonIgnore
+  val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,
+  @JsonIgnore
   val submittedBy: String = ExternalMovementContext.get().username,
   @JsonIgnore
-  val approvedAt: LocalDateTime? = if (statusCode == APPROVED) LocalDateTime.now() else null,
+  val approvedAt: LocalDateTime? = if (statusCode == APPROVED) ExternalMovementContext.get().requestAt else null,
   @JsonIgnore
   val approvedBy: String? = if (statusCode == APPROVED) ExternalMovementContext.get().username else null,
   val schedule: JsonNode? = null,
