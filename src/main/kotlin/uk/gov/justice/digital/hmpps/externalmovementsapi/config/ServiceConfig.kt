@@ -17,4 +17,7 @@ class ServiceConfigInfo(
 @ConfigurationProperties(prefix = "service")
 data class ServiceConfig(
   val activePrisons: Set<String>,
-)
+  val domainEvents: DomainEventConfig,
+) {
+  data class DomainEventConfig(val pollInterval: Int)
+}
