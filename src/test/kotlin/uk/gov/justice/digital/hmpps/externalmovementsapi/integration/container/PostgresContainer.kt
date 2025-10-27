@@ -17,7 +17,7 @@ object PostgresContainer {
 
     val logConsumer = Slf4jLogConsumer(log).withPrefix("postgresql")
 
-    return PostgreSQLContainer<Nothing>("postgres:17").apply {
+    return PostgreSQLContainer<Nothing>("postgres:18").apply {
       withEnv("HOSTNAME_EXTERNAL", "localhost")
       withDatabaseName("movements")
       withUsername("external")
@@ -32,7 +32,7 @@ object PostgresContainer {
   private fun isPostgresRunning(): Boolean = try {
     val serverSocket = ServerSocket(5432)
     serverSocket.localPort == 0
-  } catch (e: IOException) {
+  } catch (_: IOException) {
     true
   }
 }
