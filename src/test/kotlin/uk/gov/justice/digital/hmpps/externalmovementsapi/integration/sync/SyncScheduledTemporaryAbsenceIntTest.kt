@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
 class SyncScheduledTemporaryAbsenceIntTest(
@@ -200,4 +202,18 @@ class SyncScheduledTemporaryAbsenceIntTest(
   companion object {
     const val SYNC_SCHEDULED_TAP_URL = "/sync/scheduled-temporary-absence/{parentId}"
   }
+}
+
+private fun TemporaryAbsenceOccurrence.verifyAgainst(
+  request: ScheduledTemporaryAbsenceRequest,
+) {
+  assertThat(releaseAt).isCloseTo(request.startTime, within(1, SECONDS))
+  assertThat(returnBy).isCloseTo(request.returnTime, within(1, SECONDS))
+  assertThat(accompaniedBy.code).isEqualTo(request.escort)
+  assertThat(transport.code).isEqualTo(request.transportType)
+  assertThat(location).isEqualTo(request.location.asLocation())
+  assertThat(notes).isEqualTo(request.comment)
+  assertThat(legacyId).isEqualTo(request.eventId)
+  assertThat(addedBy).isEqualTo(request.audit.createUsername)
+  assertThat(addedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
 }

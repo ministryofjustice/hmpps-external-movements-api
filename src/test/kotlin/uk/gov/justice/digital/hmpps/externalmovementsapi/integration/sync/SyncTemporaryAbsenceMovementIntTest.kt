@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -29,6 +30,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest.Direction
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
 class SyncTemporaryAbsenceMovementIntTest(
@@ -242,4 +244,20 @@ class SyncTemporaryAbsenceMovementIntTest(
   companion object {
     const val SYNC_TAP_MOVEMENT_URL = "/sync/temporary-absence-movement/{personIdentifier}"
   }
+}
+
+private fun TemporaryAbsenceMovement.verifyAgainst(personIdentifier: String, request: TapMovementRequest) {
+  assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+  assertThat(direction.name).isEqualTo(request.direction.name)
+  assertThat(occurrence?.id).isEqualTo(request.occurrenceId)
+  assertThat(occurredAt).isCloseTo(request.movementDateTime, within(1, SECONDS))
+  assertThat(absenceReason.code).isEqualTo(request.movementReason)
+  assertThat(accompaniedBy.code).isEqualTo(request.escortOrDefault())
+  assertThat(recordedByPrisonCode).isEqualTo(request.prisonCodeOrDefault())
+  assertThat(location).isEqualTo(request.location.asLocation())
+  assertThat(location.description).isEqualTo(request.location.description)
+  assertThat(notes).isEqualTo(request.commentText)
+  assertThat(recordedBy).isEqualTo(request.audit.createUsername)
+  assertThat(recordedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
+  assertThat(legacyId).isEqualTo(request.legacyId)
 }

@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
@@ -72,20 +71,6 @@ interface TempAbsenceOccurrenceOperations {
         legacyId = legacyId,
       )
     }
-  }
-
-  fun TemporaryAbsenceOccurrence.verifyAgainst(
-    request: ScheduledTemporaryAbsenceRequest,
-  ) {
-    assertThat(releaseAt).isCloseTo(request.startTime, within(1, SECONDS))
-    assertThat(returnBy).isCloseTo(request.returnTime, within(1, SECONDS))
-    assertThat(accompaniedBy.code).isEqualTo(request.escort)
-    assertThat(transport.code).isEqualTo(request.transportType)
-    assertThat(location).isEqualTo(request.location.asLocation())
-    assertThat(notes).isEqualTo(request.comment)
-    assertThat(legacyId).isEqualTo(request.eventId)
-    assertThat(addedBy).isEqualTo(request.audit.createUsername)
-    assertThat(addedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
   }
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(
