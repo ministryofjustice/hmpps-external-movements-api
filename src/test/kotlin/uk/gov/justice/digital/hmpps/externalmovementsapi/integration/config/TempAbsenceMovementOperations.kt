@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config
 
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
@@ -18,9 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
 interface TempAbsenceMovementOperations {
@@ -59,22 +55,6 @@ interface TempAbsenceMovementOperations {
         legacyId = legacyId,
       )
     }
-  }
-
-  fun TemporaryAbsenceMovement.verifyAgainst(personIdentifier: String, request: TapMovementRequest) {
-    assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    assertThat(direction.name).isEqualTo(request.direction.name)
-    assertThat(occurrence?.id).isEqualTo(request.occurrenceId)
-    assertThat(occurredAt).isCloseTo(request.movementDateTime, within(1, SECONDS))
-    assertThat(absenceReason.code).isEqualTo(request.movementReason)
-    assertThat(accompaniedBy.code).isEqualTo(request.escortOrDefault())
-    assertThat(recordedByPrisonCode).isEqualTo(request.prisonCodeOrDefault())
-    assertThat(location).isEqualTo(request.location.asLocation())
-    assertThat(location.description).isEqualTo(request.location.description)
-    assertThat(notes).isEqualTo(request.commentText)
-    assertThat(recordedBy).isEqualTo(request.audit.createUsername)
-    assertThat(recordedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
-    assertThat(legacyId).isEqualTo(request.legacyId)
   }
 }
 

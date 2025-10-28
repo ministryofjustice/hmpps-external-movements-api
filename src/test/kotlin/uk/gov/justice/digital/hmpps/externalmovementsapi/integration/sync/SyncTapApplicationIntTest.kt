@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.NomisAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
 class SyncTapApplicationIntTest(
@@ -155,4 +157,25 @@ class SyncTapApplicationIntTest(
   companion object {
     const val SYN_TAP_APPLICATION_URL = "/sync/temporary-absence-application/{personIdentifier}"
   }
+}
+
+private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: TapApplicationRequest) {
+  assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+  assertThat(legacyId).isEqualTo(request.movementApplicationId)
+  assertThat(status.code).isEqualTo(request.tapAuthStatusCode.name)
+  assertThat(absenceType?.code).isEqualTo(request.temporaryAbsenceType)
+  assertThat(absenceSubType?.code).isEqualTo(request.temporaryAbsenceSubType)
+  assertThat(absenceReason?.code).isEqualTo(request.eventSubType)
+  assertThat(prisonCode).isEqualTo(request.prisonId)
+  assertThat(repeat).isEqualTo(request.isRepeating())
+  assertThat(notes).isEqualTo(request.comment)
+  assertThat(fromDate).isEqualTo(request.fromDate)
+  assertThat(toDate).isEqualTo(request.toDate)
+  assertThat(applicationDate).isEqualTo(request.applicationDate)
+  assertThat(submittedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
+  assertThat(submittedBy).isEqualTo(request.audit.createUsername)
+  approvedAt?.also {
+    assertThat(it).isCloseTo(request.approvedAt, within(1, SECONDS))
+  }
+  assertThat(approvedBy).isEqualTo(request.approvedBy)
 }
