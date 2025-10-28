@@ -136,6 +136,7 @@ class CreateTapAuthorisationIntTest(
       createTapAuthorisationRequest(
         absenceTypeCode = "PP",
         absenceSubTypeCode = null,
+        absenceReasonCategoryCode = null,
         absenceReasonCode = null,
         statusCode = TapAuthorisationStatus.Code.APPROVED,
       )
@@ -195,6 +196,7 @@ class CreateTapAuthorisationIntTest(
   private fun createTapAuthorisationRequest(
     absenceTypeCode: String = "SR",
     absenceSubTypeCode: String? = "RDR",
+    absenceReasonCategoryCode: String? = "PW",
     absenceReasonCode: String? = "R15",
     fromDate: LocalDate = LocalDate.now().minusDays(7),
     toDate: LocalDate = LocalDate.now().minusDays(1),
@@ -205,6 +207,7 @@ class CreateTapAuthorisationIntTest(
   ) = CreateTapAuthorisationRequest(
     absenceTypeCode,
     absenceSubTypeCode,
+    absenceReasonCategoryCode,
     absenceReasonCode,
     occurrences,
     statusCode,

@@ -11,6 +11,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.authorisationMat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.authorisationMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.authorisationMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.authorisationStatusCodeIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
@@ -54,9 +58,10 @@ class SearchTapAuthorisation(
     id = id,
     person = person,
     status.asCodedDescription(),
-    absenceType?.asCodedDescription(),
-    absenceSubType?.asCodedDescription(),
-    absenceReason?.asCodedDescription(),
+    absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
+    absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
+    absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }?.asCodedDescription(),
+    absenceReason = absenceReason?.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
     repeat,
     fromDate,
     toDate,

@@ -46,6 +46,12 @@ data class TapApplicationRequest(
     temporaryAbsenceSubType?.let { ABSENCE_SUB_TYPE of it },
   )
 
+  fun reasonPath() = listOfNotNull(
+    ABSENCE_REASON of eventSubType,
+    temporaryAbsenceType?.let { ABSENCE_TYPE of it },
+    temporaryAbsenceSubType?.let { ABSENCE_SUB_TYPE of it },
+  )
+
   @JsonIgnore
   val approvedAt = if (tapAuthStatusCode == APPROVED) {
     audit.modifyDatetime ?: audit.createDatetime

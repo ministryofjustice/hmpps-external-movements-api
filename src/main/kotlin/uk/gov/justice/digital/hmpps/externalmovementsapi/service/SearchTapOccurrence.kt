@@ -9,6 +9,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
@@ -57,9 +61,10 @@ private fun TemporaryAbsenceAuthorisation.asOccurrenceAuth(person: Person) = Tap
   id,
   person,
   status.asCodedDescription(),
-  absenceType?.asCodedDescription(),
-  absenceSubType?.asCodedDescription(),
-  absenceReason?.asCodedDescription(),
+  absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
+  absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
+  absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }?.asCodedDescription(),
+  absenceReason = absenceReason?.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
 )
 
 fun Page<TapOccurrenceResult>.asResponse() = TapOccurrenceSearchResponse(content, PageMetadata(totalElements))

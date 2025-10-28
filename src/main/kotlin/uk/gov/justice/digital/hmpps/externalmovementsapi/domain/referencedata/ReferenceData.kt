@@ -83,8 +83,6 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
 
   fun findByKeyIn(keys: Set<ReferenceDataKey>): List<ReferenceData>
 
-  fun findByKey(key: ReferenceDataKey): ReferenceData?
-
   @Query(
     """
     select rdl.rd2 as referenceData from ReferenceDataLink rdl

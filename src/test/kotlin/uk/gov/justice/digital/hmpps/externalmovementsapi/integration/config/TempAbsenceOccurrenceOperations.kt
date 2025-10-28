@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
@@ -84,7 +85,7 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
     assertThat(transport.code).isEqualTo(request.transportCode)
     assertThat(addedBy).isEqualTo(authRequest.submittedBy)
-    assertThat(addedAt).isCloseTo(LocalDateTime.now(), within(1, SECONDS))
+    assertThat(addedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(1, SECONDS))
     assertThat(contactInformation).isEqualTo(request.contactInformation)
     assertThat(scheduleReference).isEqualTo(request.scheduleReference)
   }

@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -52,6 +55,32 @@ class GetTapAuthorisationIntTest(
     manageUsers.findUser(auth.submittedBy, user)
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
+    auth.verifyAgainst(response)
+    assertThat(response.submitted.displayName).isEqualTo(user.name)
+    occurrence.verifyAgainst(response.occurrences.first())
+  }
+
+  @Test
+  fun `200 ok finds tap authorisation created with just type`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        absenceType = "PP",
+        absenceSubType = "PP",
+        absenceReasonCategory = null,
+        absenceReason = "PC",
+        reasonPath = ReasonPath(listOf(ABSENCE_TYPE of "PP")),
+      ),
+    )
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.personIdentifier))
+    val user = user(auth.submittedBy, "The submitting user")
+    manageUsers.findUser(auth.submittedBy, user)
+
+    val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
+    assertThat(response.absenceType?.code).isEqualTo("PP")
+    assertThat(response.absenceSubType).isNull()
+    assertThat(response.absenceReasonCategory).isNull()
+    assertThat(response.absenceReason).isNull()
     auth.verifyAgainst(response)
     assertThat(response.submitted.displayName).isEqualTo(user.name)
     occurrence.verifyAgainst(response.occurrences.first())

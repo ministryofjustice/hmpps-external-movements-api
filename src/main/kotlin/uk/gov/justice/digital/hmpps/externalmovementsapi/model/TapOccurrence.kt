@@ -27,6 +27,7 @@ data class TapOccurrence(
     val status: CodedDescription,
     val absenceType: CodedDescription?,
     val absenceSubType: CodedDescription?,
+    val absenceReasonCategory: CodedDescription?,
     val absenceReason: CodedDescription?,
     val notes: String?,
   )

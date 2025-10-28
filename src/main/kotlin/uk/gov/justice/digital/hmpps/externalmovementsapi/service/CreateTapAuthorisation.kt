@@ -2,17 +2,20 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
@@ -21,7 +24,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
@@ -39,11 +42,8 @@ class CreateTapAuthorisation(
 ) {
   fun tapAuthorisation(personIdentifier: String, request: CreateTapAuthorisationRequest): ReferenceId {
     val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
-    val rdMap =
-      referenceDataRepository.findByKeyIn(request.requiredReferenceData().map { it.first of it.second }.toSet())
-        .associateBy { it.key }
+    val rdProvider = referenceDataRepository.rdProvider(request)
     val linkProvider = { id: Long -> referenceDataRepository.findLinkedItems(id).single() }
-    val rdProvider = { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
     request.occurrences.mapNotNull {
       tapOccurrenceRepository.findByPersonIdentifierAndReleaseAtAndReturnBy(
         personIdentifier,
@@ -74,6 +74,9 @@ class CreateTapAuthorisation(
       absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) }
         ?: linkProvider(type.id)
       ) as AbsenceSubType
+    val reasonCategory = (
+      absenceReasonCategoryCode?.let { rdProvider(ABSENCE_REASON_CATEGORY, it) }
+      ) as AbsenceReasonCategory?
     val reason = (
       absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) }
         ?: linkProvider(subType.id)
@@ -83,6 +86,7 @@ class CreateTapAuthorisation(
       prisonCode = prisonCode,
       absenceType = type,
       absenceSubType = subType,
+      absenceReasonCategory = reasonCategory,
       absenceReason = reason,
       status = rdProvider(TAP_AUTHORISATION_STATUS, statusCode.name) as TapAuthorisationStatus,
       notes = notes,
@@ -94,6 +98,7 @@ class CreateTapAuthorisation(
       approvedAt = approvedAt,
       approvedBy = approvedBy,
       repeat = repeat,
+      reasonPath = ReasonPath(reasonPath()),
       schedule = schedule,
       legacyId = null,
     )

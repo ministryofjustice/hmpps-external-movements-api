@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.TO_DATE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
@@ -56,6 +57,7 @@ class TemporaryAbsenceAuthorisation(
   prisonCode: String,
   absenceType: AbsenceType?,
   absenceSubType: AbsenceSubType?,
+  absenceReasonCategory: AbsenceReasonCategory?,
   absenceReason: AbsenceReason?,
   repeat: Boolean,
   status: TapAuthorisationStatus,
@@ -67,6 +69,7 @@ class TemporaryAbsenceAuthorisation(
   submittedBy: String,
   approvedAt: LocalDateTime?,
   approvedBy: String?,
+  reasonPath: ReasonPath,
   schedule: JsonNode?,
   legacyId: Long?,
   @Id
@@ -96,6 +99,12 @@ class TemporaryAbsenceAuthorisation(
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "absence_sub_type_id")
   var absenceSubType: AbsenceSubType? = absenceSubType
+    private set
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "absence_reason_category_id")
+  var absenceReasonCategory: AbsenceReasonCategory? = absenceReasonCategory
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
@@ -150,6 +159,11 @@ class TemporaryAbsenceAuthorisation(
 
   @Column(name = "approved_by", nullable = false)
   var approvedBy: String? = approvedBy
+    private set
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "reason_path")
+  var reasonPath: ReasonPath = reasonPath
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
