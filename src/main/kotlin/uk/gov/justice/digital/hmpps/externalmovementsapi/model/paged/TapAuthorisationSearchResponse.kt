@@ -15,6 +15,7 @@ data class TapAuthorisationResult(
   val status: CodedDescription,
   val absenceType: CodedDescription?,
   val absenceSubType: CodedDescription?,
+  val absenceReasonCategory: CodedDescription?,
   val absenceReason: CodedDescription?,
   val repeat: Boolean,
   val fromDate: LocalDate,

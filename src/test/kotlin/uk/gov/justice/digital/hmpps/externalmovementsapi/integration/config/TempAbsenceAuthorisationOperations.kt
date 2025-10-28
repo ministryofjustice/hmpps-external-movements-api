@@ -5,14 +5,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
@@ -23,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -40,7 +45,8 @@ interface TempAbsenceAuthorisationOperations {
       status: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.APPROVED,
       absenceType: String? = "SR",
       absenceSubType: String? = "RDR",
-      absenceReason: String = "R15",
+      absenceReasonCategory: String? = "PW",
+      absenceReason: String? = "R15",
       repeat: Boolean = false,
       notes: String? = "Some notes on the original authorisation",
       fromDate: LocalDate = LocalDate.now().minusDays(7),
@@ -50,6 +56,14 @@ interface TempAbsenceAuthorisationOperations {
       submittedBy: String = "O7h3rU53r",
       approvedAt: LocalDateTime? = null,
       approvedBy: String? = null,
+      reasonPath: ReasonPath = ReasonPath(
+        buildList {
+          absenceType?.also { add(ABSENCE_TYPE of it) }
+          absenceSubType?.also { add(ABSENCE_SUB_TYPE of it) }
+          absenceReasonCategory?.also { add(ABSENCE_REASON_CATEGORY of it) }
+          absenceReason?.also { add(ABSENCE_REASON of it) }
+        },
+      ),
       schedule: JsonNode? = null,
       legacyId: Long? = null,
     ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation = { rdSupplier ->
@@ -58,7 +72,8 @@ interface TempAbsenceAuthorisationOperations {
         prisonCode,
         absenceType?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType },
         absenceSubType?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
-        rdSupplier(ABSENCE_REASON, absenceReason) as AbsenceReason,
+        absenceReasonCategory?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory },
+        absenceReason?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason },
         repeat,
         rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
         notes,
@@ -69,6 +84,7 @@ interface TempAbsenceAuthorisationOperations {
         submittedBy,
         approvedAt,
         approvedBy,
+        reasonPath,
         schedule,
         legacyId,
       )
@@ -98,10 +114,11 @@ interface TempAbsenceAuthorisationOperations {
 
   fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: CreateTapAuthorisationRequest) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    assertThat(submittedAt).isCloseTo(LocalDateTime.now(), within(1, SECONDS))
+    assertThat(submittedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(1, SECONDS))
     assertThat(status.code).isEqualTo(request.statusCode.name)
     assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+    assertThat(absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
     assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
     assertThat(notes).isEqualTo(request.notes)
     assertThat(repeat).isEqualTo(request.repeat)
@@ -120,9 +137,12 @@ interface TempAbsenceAuthorisationOperations {
   fun TemporaryAbsenceAuthorisation.verifyAgainst(authorisation: TapAuthorisation) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
     assertThat(status.code).isEqualTo(authorisation.status.code)
-    assertThat(absenceType?.code).isEqualTo(authorisation.absenceType?.code)
-    assertThat(absenceSubType?.code).isEqualTo(authorisation.absenceSubType?.code)
-    assertThat(absenceReason?.code).isEqualTo(authorisation.absenceReason?.code)
+    with(reasonPath) {
+      verify(ABSENCE_TYPE, absenceType, authorisation.absenceType)
+      verify(ABSENCE_SUB_TYPE, absenceSubType, authorisation.absenceSubType)
+      verify(ABSENCE_REASON_CATEGORY, absenceReasonCategory, authorisation.absenceReasonCategory)
+      verify(ABSENCE_REASON, absenceReason, authorisation.absenceReason)
+    }
     assertThat(repeat).isEqualTo(authorisation.repeat)
     assertThat(fromDate).isEqualTo(authorisation.fromDate)
     assertThat(toDate).isEqualTo(authorisation.toDate)
@@ -133,6 +153,14 @@ interface TempAbsenceAuthorisationOperations {
     }
     assertThat(approvedBy).isEqualTo(authorisation.approved?.by)
     assertThat(schedule).isEqualTo(authorisation.schedule)
+  }
+
+  private fun ReasonPath.verify(domain: ReferenceDataDomain.Code, ef: ReferenceData?, mf: CodedDescription?) {
+    if (has(domain)) {
+      assertThat(ef?.code).isEqualTo(mf?.code)
+    } else {
+      assertThat(mf).isNull()
+    }
   }
 }
 

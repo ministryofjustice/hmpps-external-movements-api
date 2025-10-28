@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
@@ -48,6 +49,7 @@ class SyncTapApplication(
     prisonCode = requireNotNull(prisonId),
     absenceType = temporaryAbsenceType?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType },
     absenceSubType = temporaryAbsenceSubType?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
+    absenceReasonCategory = null,
     absenceReason = rdProvider(ABSENCE_REASON, eventSubType) as AbsenceReason,
     repeat = isRepeating(),
     status = rdProvider(TAP_AUTHORISATION_STATUS, tapAuthStatusCode.name) as TapAuthorisationStatus,
@@ -60,6 +62,7 @@ class SyncTapApplication(
     approvedAt = approvedAt,
     approvedBy = approvedBy,
     schedule = null,
+    reasonPath = ReasonPath(reasonPath()),
     legacyId = movementApplicationId,
   )
 }
