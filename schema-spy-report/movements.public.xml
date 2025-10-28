@@ -51,11 +51,12 @@
             <column ascending="true" name="rev_id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data" numRows="158" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
             <child catalog="movements" column="id" foreignKey="fk_reference_data_domain_link_reference_data" implied="false" onDeleteCascade="false" schema="public" table="reference_data_domain_link"/>
             <child catalog="movements" column="reference_data_id_1" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data_link"/>
             <child catalog="movements" column="reference_data_id_2" foreignKey="fk_reference_data_two" implied="false" onDeleteCascade="false" schema="public" table="reference_data_link"/>
+            <child catalog="movements" column="absence_reason_category_id" foreignKey="fk_temporary_absence_authorisation_absence_reason_category_id" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation"/>
             <child catalog="movements" column="absence_reason_id" foreignKey="fk_temporary_absence_authorisation_absence_reason_id" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation"/>
             <child catalog="movements" column="absence_sub_type_id" foreignKey="fk_temporary_absence_authorisation_absence_sub_type_id" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation"/>
             <child catalog="movements" column="absence_type_id" foreignKey="fk_temporary_absence_authorisation_absence_type_id" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation"/>
@@ -109,7 +110,7 @@
             <column ascending="true" name="id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data_link" numRows="64" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data_link" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_link_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="reference_data_id_1" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
             <parent catalog="movements" column="id" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
@@ -157,6 +158,10 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="from_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="to_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="schedule" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="absence_reason_category_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5">
+            <parent catalog="movements" column="id" foreignKey="fk_temporary_absence_authorisation_absence_reason_category_id" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_temporary_absence_authorisation" unique="true">
             <column ascending="true" name="id"/>
@@ -195,6 +200,8 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="from_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="to_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="schedule" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="absence_reason_category_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <primaryKey column="rev_id" sequenceNumberInPK="2"/>
          <index name="pk_temporary_absence_authorisation_audit" unique="true">

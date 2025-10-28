@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>reference_data</h1><p><span id="recordNumber">158</span> rows</p><br />
+                    <h1>reference_data</h1><p><span id="recordNumber">-1</span> rows</p><br />
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -130,6 +130,11 @@
                                             <tr>
                                                 <td title="reference_data_link.reference_data_id_2 references reference_data.id via fk_reference_data_two"><a href='reference_data_link.html'>reference_data_link</a><span class='relatedKey'>.reference_data_id_2</span></td>
                                                 <td class="constraint detail">fk_reference_data_two</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="temporary_absence_authorisation.absence_reason_category_id references reference_data.id via fk_temporary_absence_authorisation_absence_reason_category_id"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.absence_reason_category_id</span></td>
+                                                <td class="constraint detail">fk_temporary_absence_authorisation_absence_reason_category_id</td>
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                             <tr>
