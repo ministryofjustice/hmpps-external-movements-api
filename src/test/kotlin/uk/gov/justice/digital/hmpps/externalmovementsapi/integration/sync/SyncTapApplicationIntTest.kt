@@ -11,7 +11,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -47,7 +50,7 @@ class SyncTapApplicationIntTest(
   }
 
   @Test
-  fun `200 ok application created successfully`() {
+  fun `200 ok application created successfully including full path`() {
     val pi = personIdentifier()
     val request = applicationRequest(
       applicationStatus = "PEN",
@@ -60,6 +63,12 @@ class SyncTapApplicationIntTest(
     saved.verifyAgainst(pi, request)
     assertThat(saved.approvedAt).isNull()
     assertThat(saved.approvedBy).isNull()
+    assertThat(saved.reasonPath.path).containsExactly(
+      ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
+      ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "RDR",
+      ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "PW",
+      ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
+    )
 
     verifyAudit(
       saved,
@@ -69,6 +78,124 @@ class SyncTapApplicationIntTest(
     )
 
     verifyEvents(saved, setOf())
+  }
+
+  @Test
+  fun `200 ok application created successfully without a category`() {
+    val pi = personIdentifier()
+    val request = applicationRequest(
+      applicationStatus = "PEN",
+      temporaryAbsenceSubType = "SPL",
+      eventSubType = "LTX",
+      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    )
+    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.approvedAt).isNull()
+    assertThat(saved.approvedBy).isNull()
+    assertThat(saved.reasonPath.path).containsExactly(
+      ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
+      ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "SPL",
+      ReferenceDataDomain.Code.ABSENCE_REASON of "LTX",
+    )
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf())
+  }
+
+  @Test
+  fun `200 ok application created successfully with type and subtype only`() {
+    val pi = personIdentifier()
+    val request = applicationRequest(
+      applicationStatus = "PEN",
+      temporaryAbsenceSubType = "CRL",
+      eventSubType = "3",
+      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    )
+    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.approvedAt).isNull()
+    assertThat(saved.approvedBy).isNull()
+    assertThat(saved.reasonPath.path).containsExactly(
+      ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
+      ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "CRL",
+    )
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf())
+  }
+
+  @Test
+  fun `200 ok application created for type only path`() {
+    val pi = personIdentifier()
+    val request = applicationRequest(
+      eventSubType = "PC",
+      temporaryAbsenceType = "PP",
+      temporaryAbsenceSubType = "PP",
+      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    )
+    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
+  }
+
+  @Test
+  fun `200 ok application created for security escort`() {
+    val pi = personIdentifier()
+    val request = applicationRequest(
+      eventSubType = "SE",
+      temporaryAbsenceType = "SE",
+      temporaryAbsenceSubType = null,
+      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    )
+    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.reasonPath.path).containsExactly(
+      ReferenceDataDomain.Code.ABSENCE_TYPE of "SE",
+      ReferenceDataDomain.Code.ABSENCE_REASON of "SE",
+    )
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -90,6 +217,8 @@ class SyncTapApplicationIntTest(
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
+
+    verifyEvents(saved, setOf())
   }
 
   @Test
@@ -109,6 +238,8 @@ class SyncTapApplicationIntTest(
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
   }
 
   private fun applicationRequest(
