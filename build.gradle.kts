@@ -10,10 +10,10 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
-val hmppsKotlinVersion = "1.7.0"
-val sentryVersion = "8.24.0"
+val hmppsKotlinVersion = "1.8.1"
+val sentryVersion = "8.25.0"
 val springDocVersion = "2.8.13"
-val sqsStarterVersion = "5.6.0"
+val sqsStarterVersion = "5.6.1"
 val testContainersVersion = "1.21.3"
 val uuidGeneratorVersion = "5.1.1"
 val wiremockVersion = "3.13.1"
