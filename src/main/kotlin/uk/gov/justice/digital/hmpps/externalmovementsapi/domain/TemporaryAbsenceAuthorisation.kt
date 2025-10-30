@@ -34,12 +34,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.KEY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
@@ -182,15 +183,20 @@ class TemporaryAbsenceAuthorisation(
   fun update(
     personIdentifier: String,
     request: TapApplicationRequest,
-    rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdPaths: ReferenceDataPaths,
   ) = apply {
     this.personIdentifier = personIdentifier.uppercase()
+    reasonPath = rdPaths.reasonPath()
     prisonCode = requireNotNull(request.prisonId)
-    absenceType = request.temporaryAbsenceType?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType }
-    absenceSubType = request.temporaryAbsenceSubType?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
-    absenceReason = rdProvider(ABSENCE_REASON, request.eventSubType) as AbsenceReason
+    absenceType = request.temporaryAbsenceType?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType }
+    absenceSubType = request.temporaryAbsenceSubType?.let { rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
+    absenceReasonCategory = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
+      rdPaths.getReferenceData(it.domain, it.code)
+    } as? AbsenceReasonCategory
+    absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, request.eventSubType) as AbsenceReason
     repeat = request.isRepeating()
-    status = rdProvider(TAP_AUTHORISATION_STATUS, request.tapAuthStatusCode.name) as TapAuthorisationStatus
+    status =
+      rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, request.tapAuthStatusCode.name) as TapAuthorisationStatus
     notes = request.comment
     submittedAt = request.audit.createDatetime
     submittedBy = request.audit.createUsername

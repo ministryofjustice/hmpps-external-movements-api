@@ -74,6 +74,16 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
     select rd as referenceData, rddl.domain as nextDomain
     from ReferenceData rd
     left join fetch ReferenceDataDomainLink rddl on rd.id = rddl.id
+    where rd.key in :keys
+    """,
+  )
+  fun findMatchingWithDomainLink(keys: Set<ReferenceDataKey>): List<RdWithDomainLink>
+
+  @Query(
+    """
+    select rd as referenceData, rddl.domain as nextDomain
+    from ReferenceData rd
+    left join fetch ReferenceDataDomainLink rddl on rd.id = rddl.id
     where rd.key.domain = :domain and rd.key.code = :code
     """,
   )
@@ -91,7 +101,18 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
     """,
   )
   fun findLinkedItems(id: Long): List<ReferenceData>
+
+  @Query(
+    """
+    select rdl.rd1 as referenceData from ReferenceDataLink rdl
+    left join ReferenceDataDomainLink dl on rdl.rd1.id = dl.id
+    where rdl.rd2.id = :id
+    """,
+  )
+  fun findLinkedFrom(id: Long): ReferenceData?
 }
+
+fun ReferenceDataRepository.findRdWithPaths(rdr: ReferenceDataRequired): ReferenceDataPaths = ReferenceDataPaths(findMatchingWithDomainLink(rdr.requiredReferenceData()), { id: Long -> findLinkedFrom(id) })
 
 fun ReferenceDataRepository.rdProvider(rdr: ReferenceDataRequired): (ReferenceDataDomain.Code, String) -> ReferenceData {
   val rdMap = findByKeyIn(rdr.requiredReferenceData()).associateBy { it.key }
@@ -103,6 +124,7 @@ fun ReferenceData.asCodedDescription() = CodedDescription(code, description, hin
 interface RdWithDomainLink {
   val referenceData: ReferenceData
   val nextDomain: ReferenceDataDomain.Code?
+  val domain: ReferenceDataDomain.Code get() = referenceData.domain
 }
 
 fun ReferenceDataRepository.getByDomainAndCodeWithDomainLink(
