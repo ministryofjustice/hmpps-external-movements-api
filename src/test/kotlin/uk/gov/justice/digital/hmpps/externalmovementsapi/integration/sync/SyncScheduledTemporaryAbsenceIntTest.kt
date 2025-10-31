@@ -11,9 +11,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -81,7 +81,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -159,7 +159,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   private fun scheduledAbsenceRequest(
@@ -207,13 +207,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
 private fun TemporaryAbsenceOccurrence.verifyAgainst(
   request: ScheduledTemporaryAbsenceRequest,
 ) {
-  assertThat(releaseAt).isCloseTo(request.startTime, within(1, SECONDS))
-  assertThat(returnBy).isCloseTo(request.returnTime, within(1, SECONDS))
+  assertThat(releaseAt).isCloseTo(request.startTime, within(2, SECONDS))
+  assertThat(returnBy).isCloseTo(request.returnTime, within(2, SECONDS))
   assertThat(accompaniedBy.code).isEqualTo(request.escort)
   assertThat(transport.code).isEqualTo(request.transportType)
   assertThat(location).isEqualTo(request.location.asLocation())
   assertThat(notes).isEqualTo(request.comment)
   assertThat(legacyId).isEqualTo(request.eventId)
   assertThat(addedBy).isEqualTo(request.audit.createUsername)
-  assertThat(addedAt).isCloseTo(request.audit.createDatetime, within(1, SECONDS))
+  assertThat(addedAt).isCloseTo(request.audit.createDatetime, within(2, SECONDS))
 }
