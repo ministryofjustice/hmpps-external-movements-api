@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
 
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapAp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapMovement
 import java.util.UUID
 
+@Tag(name = "Sync")
 @RestController
 @RequestMapping("sync")
 @PreAuthorize("hasRole('${Roles.NOMIS_SYNC}')")
