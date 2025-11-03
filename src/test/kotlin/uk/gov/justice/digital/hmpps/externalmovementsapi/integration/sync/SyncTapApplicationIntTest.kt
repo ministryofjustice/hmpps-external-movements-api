@@ -21,9 +21,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.NomisAudit
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.NomisAudit
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapApplicationRequest
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
@@ -302,7 +302,6 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   assertThat(notes).isEqualTo(request.comment)
   assertThat(fromDate).isEqualTo(request.fromDate)
   assertThat(toDate).isEqualTo(request.toDate)
-  assertThat(applicationDate).isEqualTo(request.applicationDate)
   assertThat(submittedAt).isCloseTo(request.audit.createDatetime, within(2, SECONDS))
   assertThat(submittedBy).isEqualTo(request.audit.createUsername)
   approvedAt?.also {

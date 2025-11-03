@@ -22,8 +22,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapApplicationRequest
 
 @Transactional
 @Service
@@ -66,7 +66,6 @@ class SyncTapApplication(
       notes = comment,
       fromDate = fromDate,
       toDate = toDate,
-      applicationDate = applicationDate,
       submittedAt = audit.createDatetime,
       submittedBy = audit.createUsername,
       approvedAt = approvedAt,

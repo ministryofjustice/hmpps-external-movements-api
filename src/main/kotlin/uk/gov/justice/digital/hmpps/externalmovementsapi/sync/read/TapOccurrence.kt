@@ -1,7 +1,8 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
+package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read
 
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -25,6 +26,6 @@ data class TapOccurrence(
     val absenceSubTypeCode: String?,
     val absenceReasonCode: String,
     val repeat: Boolean,
-    val submittedAt: LocalDateTime,
+    val submitted: AtAndBy,
   )
 }

@@ -35,7 +35,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.ScheduledTemporaryAbsenceRequest
 import java.time.LocalDateTime
 import java.util.UUID
 

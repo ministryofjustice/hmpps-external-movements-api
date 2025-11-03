@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
+package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read
 
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
@@ -10,6 +10,7 @@ import java.util.UUID
 data class TapMovement(
   val id: UUID,
   val occurrenceId: UUID?,
+  val personIdentifier: String,
   val occurredAt: LocalDateTime,
   val direction: TemporaryAbsenceMovement.Direction,
   val absenceReasonCode: String,

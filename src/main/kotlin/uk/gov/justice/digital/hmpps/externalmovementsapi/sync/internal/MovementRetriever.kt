@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapMovement
 import java.util.UUID
 
 @Service
@@ -15,6 +15,7 @@ class MovementRetriever(private val movementRepository: TemporaryAbsenceMovement
 private fun TemporaryAbsenceMovement.forSync() = TapMovement(
   id = id,
   occurrenceId = occurrence?.id,
+  personIdentifier = personIdentifier,
   occurredAt = occurredAt,
   direction = direction,
   absenceReasonCode = absenceReason.code,

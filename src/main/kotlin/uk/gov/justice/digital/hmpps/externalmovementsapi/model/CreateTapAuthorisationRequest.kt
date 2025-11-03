@@ -33,8 +33,6 @@ data class CreateTapAuthorisationRequest(
   val fromDate: LocalDate,
   val toDate: LocalDate,
   @JsonIgnore
-  val applicationDate: LocalDate = LocalDate.now(),
-  @JsonIgnore
   val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,
   @JsonIgnore
   val submittedBy: String = ExternalMovementContext.get().username,

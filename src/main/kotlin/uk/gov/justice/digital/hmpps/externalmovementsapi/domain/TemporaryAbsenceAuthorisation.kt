@@ -45,7 +45,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapApplicationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapApplicationRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -65,7 +65,6 @@ class TemporaryAbsenceAuthorisation(
   notes: String?,
   fromDate: LocalDate,
   toDate: LocalDate,
-  applicationDate: LocalDate,
   submittedAt: LocalDateTime,
   submittedBy: String,
   approvedAt: LocalDateTime?,
@@ -140,11 +139,6 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   @NotNull
-  @Column(name = "application_date", nullable = false)
-  var applicationDate: LocalDate = applicationDate
-    private set
-
-  @NotNull
   @Column(name = "submitted_at", nullable = false)
   var submittedAt: LocalDateTime = submittedAt
     private set
@@ -189,7 +183,8 @@ class TemporaryAbsenceAuthorisation(
     reasonPath = rdPaths.reasonPath()
     prisonCode = requireNotNull(request.prisonId)
     absenceType = request.temporaryAbsenceType?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType }
-    absenceSubType = request.temporaryAbsenceSubType?.let { rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
+    absenceSubType =
+      request.temporaryAbsenceSubType?.let { rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
     absenceReasonCategory = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
       rdPaths.getReferenceData(it.domain, it.code)
     } as? AbsenceReasonCategory
@@ -201,7 +196,6 @@ class TemporaryAbsenceAuthorisation(
     submittedAt = request.audit.createDatetime
     submittedBy = request.audit.createUsername
     legacyId = request.movementApplicationId
-    applicationDate = request.applicationDate
     approvedAt = request.approvedAt
     approvedBy = request.approvedBy
     fromDate = request.fromDate

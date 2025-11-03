@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapOccurrence
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
@@ -87,5 +87,5 @@ private fun TapOccurrence.Authorisation.verifyAgainst(authorisation: TemporaryAb
   assertThat(absenceSubTypeCode).isEqualTo(authorisation.absenceSubType?.code)
   assertThat(absenceReasonCode).isEqualTo(authorisation.absenceReason?.code)
   assertThat(repeat).isEqualTo(authorisation.repeat)
-  assertThat(submittedAt).isCloseTo(authorisation.submittedAt, within(2, SECONDS))
+  assertThat(submitted.at).isCloseTo(authorisation.submittedAt, within(2, SECONDS))
 }

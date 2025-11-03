@@ -18,8 +18,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.ScheduledTemporaryAbsenceRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.ScheduledTemporaryAbsenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import java.util.UUID
 
 @Transactional

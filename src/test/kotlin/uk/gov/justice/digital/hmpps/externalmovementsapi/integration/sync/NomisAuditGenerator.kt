@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest.Companion.DEFAULT_USERNAME
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.NomisAudit
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.NomisAudit
 import java.time.LocalDateTime
 
 object NomisAuditGenerator {

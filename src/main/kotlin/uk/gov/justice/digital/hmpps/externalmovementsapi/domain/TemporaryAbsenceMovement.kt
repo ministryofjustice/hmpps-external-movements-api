@@ -28,7 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovementRequest
 import java.time.LocalDateTime
 import java.util.UUID
 

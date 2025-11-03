@@ -19,8 +19,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovementRequest
 
 @Transactional
 @Service

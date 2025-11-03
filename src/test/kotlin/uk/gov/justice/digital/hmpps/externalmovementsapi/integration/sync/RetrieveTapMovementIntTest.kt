@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapMovement
 import java.util.UUID
 
 class RetrieveTapMovementIntTest(
@@ -80,6 +80,7 @@ class RetrieveTapMovementIntTest(
 private fun TapMovement.verifyAgainst(movement: TemporaryAbsenceMovement) {
   assertThat(id).isEqualTo(movement.id)
   assertThat(occurrenceId).isEqualTo(movement.occurrence?.id)
+  assertThat(personIdentifier).isEqualTo(movement.personIdentifier)
   assertThat(direction).isEqualTo(movement.direction)
   assertThat(absenceReasonCode).isEqualTo(movement.absenceReason.code)
   assertThat(location).isEqualTo(movement.location)

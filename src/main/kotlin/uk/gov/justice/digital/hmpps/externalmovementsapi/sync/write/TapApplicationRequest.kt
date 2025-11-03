@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
+package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON

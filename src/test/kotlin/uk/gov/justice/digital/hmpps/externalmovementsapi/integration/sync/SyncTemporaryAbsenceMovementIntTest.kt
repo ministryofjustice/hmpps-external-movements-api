@@ -24,11 +24,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.NomisAudit
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.SyncResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapLocation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapMovementRequest.Direction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.NomisAudit
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovementRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovementRequest.Direction
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID

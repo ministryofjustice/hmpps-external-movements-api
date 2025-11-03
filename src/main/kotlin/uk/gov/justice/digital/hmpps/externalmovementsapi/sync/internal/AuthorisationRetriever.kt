@@ -6,7 +6,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapAuthorisation
 import java.util.UUID
 
 @Service
@@ -34,7 +35,7 @@ private fun TemporaryAbsenceAuthorisation.with(
   repeat = repeat,
   fromDate = fromDate,
   toDate = toDate,
-  submittedAt = submittedAt,
+  submitted = AtAndBy(submittedAt, submittedBy),
   notes = notes,
   occurrences = occurrences,
 )

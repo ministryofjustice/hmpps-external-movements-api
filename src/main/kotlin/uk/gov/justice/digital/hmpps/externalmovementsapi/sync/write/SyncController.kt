@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
+package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write
 
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.access.prepost.PreAuthorize
@@ -8,12 +8,13 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncScheduledTemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapApplication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapMovement
 import java.util.UUID
 
-@Tag(name = "Sync")
+@Tag(name = OpenApiTags.SYNC)
 @RestController
 @RequestMapping("sync")
 @PreAuthorize("hasRole('${Roles.NOMIS_SYNC}')")
