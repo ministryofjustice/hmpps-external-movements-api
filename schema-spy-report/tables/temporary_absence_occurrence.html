@@ -117,6 +117,16 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="tap_occurrence_action.occurrence_id references temporary_absence_occurrence.id via fk_tap_occurrence_action_occurrence_id"><a href='tap_occurrence_action.html'>tap_occurrence_action</a><span class='relatedKey'>.occurrence_id</span></td>
+                                                <td class="constraint detail">fk_tap_occurrence_action_occurrence_id</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="temporary_absence_movement.occurrence_id references temporary_absence_occurrence.id via fk_temporary_absence_movement_occurrence_id"><a href='temporary_absence_movement.html'>temporary_absence_movement</a><span class='relatedKey'>.occurrence_id</span></td>
+                                                <td class="constraint detail">fk_temporary_absence_movement_occurrence_id</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>

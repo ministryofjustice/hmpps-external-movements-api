@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>reference_data - movements.public</title>
+        <title>tap_occurrence_action - movements.public</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>reference_data</h1><p><span id="recordNumber">-1</span> rows</p><br />
+                    <h1>tap_occurrence_action</h1><p><span id="recordNumber">-1</span> rows</p><br />
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -110,107 +110,8 @@
                                 <tbody>
                                 <tr>
                                     <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="id">id</span></td>
-                                    <td>bigserial</td>
-                                    <td>19</td>
-                                    <td title=''></td>
-                                    <td title='Automatically updated by the database'>√</td>
-                                    <td>nextval(&#39;reference_data_id_seq&#39;::regclass)</td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                            <tr>
-                                                <td title="reference_data_domain_link.id references reference_data.id via fk_reference_data_domain_link_reference_data"><a href='reference_data_domain_link.html'>reference_data_domain_link</a><span class='relatedKey'>.id</span></td>
-                                                <td class="constraint detail">fk_reference_data_domain_link_reference_data</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="reference_data_link.reference_data_id_1 references reference_data.id via fk_reference_data_one"><a href='reference_data_link.html'>reference_data_link</a><span class='relatedKey'>.reference_data_id_1</span></td>
-                                                <td class="constraint detail">fk_reference_data_one</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="reference_data_link.reference_data_id_2 references reference_data.id via fk_reference_data_two"><a href='reference_data_link.html'>reference_data_link</a><span class='relatedKey'>.reference_data_id_2</span></td>
-                                                <td class="constraint detail">fk_reference_data_two</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_authorisation.absence_reason_category_id references reference_data.id via fk_temporary_absence_authorisation_absence_reason_category_id"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.absence_reason_category_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_authorisation_absence_reason_category_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_authorisation.absence_reason_id references reference_data.id via fk_temporary_absence_authorisation_absence_reason_id"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.absence_reason_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_authorisation_absence_reason_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_authorisation.absence_sub_type_id references reference_data.id via fk_temporary_absence_authorisation_absence_sub_type_id"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.absence_sub_type_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_authorisation_absence_sub_type_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_authorisation.absence_type_id references reference_data.id via fk_temporary_absence_authorisation_absence_type_id"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.absence_type_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_authorisation_absence_type_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_authorisation.status_id references reference_data.id via fk_temporary_absence_authorisation_status_id"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.status_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_authorisation_status_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_movement.absence_reason_id references reference_data.id via fk_temporary_absence_movement_absence_reason_id"><a href='temporary_absence_movement.html'>temporary_absence_movement</a><span class='relatedKey'>.absence_reason_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_movement_absence_reason_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_movement.accompanied_by_id references reference_data.id via fk_temporary_absence_movement_accompanied_by_id"><a href='temporary_absence_movement.html'>temporary_absence_movement</a><span class='relatedKey'>.accompanied_by_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_movement_accompanied_by_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_occurrence.accompanied_by_id references reference_data.id via fk_temporary_absence_occurrence_accompanied_by_id"><a href='temporary_absence_occurrence.html'>temporary_absence_occurrence</a><span class='relatedKey'>.accompanied_by_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_occurrence_accompanied_by_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_occurrence.transport_id references reference_data.id via fk_temporary_absence_occurrence_transport_id"><a href='temporary_absence_occurrence.html'>temporary_absence_occurrence</a><span class='relatedKey'>.transport_id</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_occurrence_transport_id</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="domain">domain</span></td>
-                                    <td>varchar</td>
-                                    <td>32</td>
-                                    <td title=''></td>
-                                    <td title=''></td>
-                                    <td>null</td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                            <tr>
-                                                <td title="reference_data.domain references reference_data_domain.code via fk_reference_data_domain"><a href='reference_data_domain.html'>reference_data_domain</a><span class='relatedKey'>.code</span></td>
-                                                <td class="constraint detail">fk_reference_data_domain</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="code">code</span></td>
-                                    <td>varchar</td>
-                                    <td>16</td>
+                                    <td>uuid</td>
+                                    <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
@@ -225,9 +126,31 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="description">description</span></td>
-                                    <td>varchar</td>
-                                    <td>255</td>
+                                    <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="occurrence_id">occurrence_id</span></td>
+                                    <td>uuid</td>
+                                    <td>2147483647</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="tap_occurrence_action.occurrence_id references temporary_absence_occurrence.id via fk_tap_occurrence_action_occurrence_id"><a href='temporary_absence_occurrence.html'>temporary_absence_occurrence</a><span class='relatedKey'>.id</span></td>
+                                                <td class="constraint detail">fk_tap_occurrence_action_occurrence_id</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="type">type</span></td>
+                                    <td>text</td>
+                                    <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
@@ -242,44 +165,10 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="hint_text">hint_text</span></td>
-                                    <td>varchar</td>
-                                    <td>255</td>
+                                    <td><span id="reason">reason</span></td>
+                                    <td>text</td>
+                                    <td>2147483647</td>
                                     <td title='nullable'>√</td>
-                                    <td title=''></td>
-                                    <td>null</td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="sequence_number">sequence_number</span></td>
-                                    <td>int4</td>
-                                    <td>10</td>
-                                    <td title=''></td>
-                                    <td title=''></td>
-                                    <td>null</td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td><span id="active">active</span></td>
-                                    <td>bool</td>
-                                    <td>1</td>
-                                    <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
                                     <td>
@@ -323,22 +212,10 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> pk_reference_data</td>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> pk_tap_occurrence_action</td>
                                     <td>Primary key</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>id</td>
-                                </tr>
-                                <tr>
-                                    <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> uq_domain_code</td>
-                                    <td>Must be unique</td>
-                                    <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span></td>
-                                    <td>domain + code</td>
-                                </tr>
-                                <tr>
-                                    <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> uq_domain_sequence_number</td>
-                                    <td>Must be unique</td>
-                                    <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span></td>
-                                    <td>domain + sequence_number</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -363,11 +240,11 @@
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         
-                                        <a name='diagram'><object type="image/svg+xml" id="oneDegreeImg" data="../diagrams/tables/reference_data.1degree.svg" class="diagram" border="0" align="left"></object></a>
+                                        <a name='diagram'><object type="image/svg+xml" id="oneDegreeImg" data="../diagrams/tables/tap_occurrence_action.1degree.svg" class="diagram" border="0" align="left"></object></a>
                                     </div>
                                     <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         
-                                        <a name='diagram'><object type="image/svg+xml" id="twodegreesDegreeImg" data="../diagrams/tables/reference_data.2degrees.svg" class="diagram" border="0" align="left"></object></a>
+                                        <a name='diagram'><object type="image/svg+xml" id="twodegreesDegreeImg" data="../diagrams/tables/tap_occurrence_action.2degrees.svg" class="diagram" border="0" align="left"></object></a>
                                     </div>
                                 </div>
                             </div>

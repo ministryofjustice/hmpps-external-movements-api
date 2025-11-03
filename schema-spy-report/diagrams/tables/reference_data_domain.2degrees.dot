@@ -12,6 +12,7 @@ digraph "twoDegreesRelationshipsDiagram" {
   "temporary_absence_authorisation":"elipses":w -> "reference_data":"id":e [arrowhead=none dir=back arrowtail=crowodot];
   "temporary_absence_movement":"elipses":w -> "reference_data":"id":e [arrowhead=none dir=back arrowtail=crowodot];
   "temporary_absence_movement":"elipses":w -> "reference_data":"id":e [arrowhead=none dir=back arrowtail=crowodot];
+  "temporary_absence_movement":"elipses":w -> "temporary_absence_occurrence":"elipses":e [arrowhead=none dir=back arrowtail=crowodot];
   "temporary_absence_occurrence":"elipses":w -> "reference_data":"id":e [arrowhead=none dir=back arrowtail=crowodot];
   "temporary_absence_occurrence":"elipses":w -> "temporary_absence_authorisation":"elipses":e [arrowhead=none dir=back arrowtail=crowodot];
   "temporary_absence_occurrence":"elipses":w -> "reference_data":"id":e [arrowhead=none dir=back arrowtail=crowodot];
@@ -76,7 +77,7 @@ digraph "twoDegreesRelationshipsDiagram" {
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" BGCOLOR="#ffffff">
       <TR><TD COLSPAN="3"  BGCOLOR="#f5f5f5"><TABLE BORDER="0" CELLSPACING="0"><TR><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="210" HEIGHT="16"><B>temporary_absence_movement</B></TD><TD ALIGN="RIGHT">[table]</TD></TR></TABLE></TD></TR>
       <TR><TD PORT="elipses" COLSPAN="3" ALIGN="LEFT">...</TD></TR>
-      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 2</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD></TR>
+      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 3</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD></TR>
     </TABLE>>
     URL="../../tables/temporary_absence_movement.html"
     target="_top"
@@ -87,7 +88,7 @@ digraph "twoDegreesRelationshipsDiagram" {
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" BGCOLOR="#ffffff">
       <TR><TD COLSPAN="3"  BGCOLOR="#f5f5f5"><TABLE BORDER="0" CELLSPACING="0"><TR><TD ALIGN="LEFT" FIXEDSIZE="TRUE" WIDTH="213" HEIGHT="16"><B>temporary_absence_occurrence</B></TD><TD ALIGN="RIGHT">[table]</TD></TR></TABLE></TD></TR>
       <TR><TD PORT="elipses" COLSPAN="3" ALIGN="LEFT">...</TD></TR>
-      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 3</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD></TR>
+      <TR><TD ALIGN="LEFT" BGCOLOR="#ffffff">&lt; 3</TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">  </TD><TD ALIGN="RIGHT" BGCOLOR="#ffffff">2 &gt;</TD></TR>
     </TABLE>>
     URL="../../tables/temporary_absence_occurrence.html"
     target="_top"
