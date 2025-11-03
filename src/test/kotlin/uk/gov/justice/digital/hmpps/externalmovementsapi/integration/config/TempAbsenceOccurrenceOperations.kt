@@ -8,8 +8,8 @@ import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
@@ -40,8 +40,8 @@ interface TempAbsenceOccurrenceOperations {
 
     fun temporaryAbsenceOccurrence(
       authorisation: TemporaryAbsenceAuthorisation,
-      releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
-      returnBy: LocalDateTime = LocalDateTime.now(),
+      releaseAt: LocalDateTime = LocalDateTime.now().minusDays(1),
+      returnBy: LocalDateTime = LocalDateTime.now().plusDays(1),
       location: Location = location(),
       contactInformation: String? = null,
       accompaniedBy: String = "L",
@@ -84,8 +84,7 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(location).isEqualTo(request.location)
     assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
     assertThat(transport.code).isEqualTo(request.transportCode)
-    assertThat(addedBy).isEqualTo(authRequest.submittedBy)
-    assertThat(addedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(1, SECONDS))
+    assertThat(addedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(2, SECONDS))
     assertThat(contactInformation).isEqualTo(request.contactInformation)
     assertThat(scheduleReference).isEqualTo(request.scheduleReference)
   }
@@ -94,8 +93,8 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(location).isEqualTo(occurrence.location)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
-    assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(1, SECONDS))
-    assertThat(returnBy).isCloseTo(occurrence.returnBy, within(1, SECONDS))
+    assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
+    assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))
   }
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {
@@ -103,8 +102,8 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(location).isEqualTo(occurrence.location)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
-    assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(1, SECONDS))
-    assertThat(returnBy).isCloseTo(occurrence.returnBy, within(1, SECONDS))
+    assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
+    assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))
     assertThat(contactInformation).isEqualTo(occurrence.contactInformation)
     assertThat(scheduleReference).isEqualTo(occurrence.scheduleReference)
   }

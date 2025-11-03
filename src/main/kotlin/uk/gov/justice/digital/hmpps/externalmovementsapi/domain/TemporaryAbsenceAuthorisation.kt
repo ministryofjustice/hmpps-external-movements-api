@@ -74,7 +74,7 @@ class TemporaryAbsenceAuthorisation(
   schedule: JsonNode?,
   legacyId: Long?,
   @Id
-  @Column(name = "id", nullable = false)
+  @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
 ) : Identifiable,
   DomainEventProducer {

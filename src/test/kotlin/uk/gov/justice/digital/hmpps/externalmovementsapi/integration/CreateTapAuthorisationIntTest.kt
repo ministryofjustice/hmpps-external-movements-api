@@ -7,13 +7,13 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -52,7 +52,7 @@ class CreateTapAuthorisationIntTest(
     createTapAuthorisation(
       personIdentifier(),
       createTapAuthorisationRequest(),
-      "ROLE_ANY__OTHER_RW",
+      role = "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
@@ -105,15 +105,18 @@ class CreateTapAuthorisationIntTest(
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = createTapAuthorisationRequest()
-    val res = createTapAuthorisation(pi, request).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val username = name(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
     assertThat(saved.approvedAt).isNull()
     assertThat(saved.approvedBy).isNull()
-    val occurrences = findForAuthorisation(saved.id)
-    occurrences.first().verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(saved.submittedBy).isEqualTo(username)
+    val occurrence = findForAuthorisation(saved.id).first()
+    occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.addedBy).isEqualTo(username)
 
     verifyAudit(
       saved,
@@ -122,6 +125,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
       ),
+      ExternalMovementContext.get().copy(username = username),
     )
 
     verifyEvents(saved, setOf())
@@ -140,15 +144,18 @@ class CreateTapAuthorisationIntTest(
         absenceReasonCode = null,
         statusCode = TapAuthorisationStatus.Code.APPROVED,
       )
-    val res = createTapAuthorisation(pi, request).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val username = name(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request.copy(absenceSubTypeCode = "PP", absenceReasonCode = "PC"))
     assertThat(saved.approvedAt).isNotNull()
-    assertThat(saved.approvedBy).isNotNull()
-    val occurrences = findForAuthorisation(saved.id)
-    occurrences.first().verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(saved.approvedBy).isEqualTo(username)
+    assertThat(saved.submittedBy).isEqualTo(username)
+    val occurrence = findForAuthorisation(saved.id).first()
+    occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.addedBy).isEqualTo(username)
 
     verifyAudit(
       saved,
@@ -158,11 +165,12 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
+      ExternalMovementContext.get().copy(username = username),
     )
 
     verifyEvents(
       saved,
-      (occurrences.map { TemporaryAbsenceScheduled(pi, it.id) } + TemporaryAbsenceAuthorised(pi, saved.id)).toSet(),
+      listOf(TemporaryAbsenceRescheduled(pi, occurrence.id), TemporaryAbsenceAuthorised(pi, saved.id)).toSet(),
     )
   }
 
@@ -220,12 +228,13 @@ class CreateTapAuthorisationIntTest(
   private fun createTapAuthorisation(
     personIdentifier: String,
     request: CreateTapAuthorisationRequest,
+    username: String = DEFAULT_USERNAME,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .post()
     .uri(CREATE_TAP_AUTH_URL, personIdentifier)
     .bodyValue(request)
-    .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
+    .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {

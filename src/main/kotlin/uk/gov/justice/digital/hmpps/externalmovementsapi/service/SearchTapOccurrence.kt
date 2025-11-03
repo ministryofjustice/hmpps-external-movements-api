@@ -4,11 +4,11 @@ import org.springframework.data.domain.Page
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesDateRange
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesPersonIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.occurrenceMatchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesPersonIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE

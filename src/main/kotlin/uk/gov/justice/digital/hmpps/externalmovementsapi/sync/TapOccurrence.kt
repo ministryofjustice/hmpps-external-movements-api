@@ -1,9 +1,11 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
 
+import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Schema(name = "SyncReadTapOccurrence")
 data class TapOccurrence(
   val id: UUID,
   val authorisation: Authorisation,
@@ -15,6 +17,7 @@ data class TapOccurrence(
   val transportCode: String,
   val notes: String?,
 ) {
+  @Schema(name = "SyncReadTapOccurrenceAuthorisation")
   data class Authorisation(
     val id: UUID,
     val statusCode: String,

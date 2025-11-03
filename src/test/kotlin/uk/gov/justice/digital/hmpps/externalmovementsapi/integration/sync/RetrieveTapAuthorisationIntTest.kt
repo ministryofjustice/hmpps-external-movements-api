@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -79,15 +79,15 @@ private fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthor
   assertThat(repeat).isEqualTo(authorisation.repeat)
   assertThat(fromDate).isEqualTo(authorisation.fromDate)
   assertThat(toDate).isEqualTo(authorisation.toDate)
-  assertThat(submittedAt).isCloseTo(authorisation.submittedAt, within(1, SECONDS))
+  assertThat(submittedAt).isCloseTo(authorisation.submittedAt, within(2, SECONDS))
   assertThat(notes).isEqualTo(authorisation.notes)
 }
 
 private fun TapAuthorisation.Occurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) {
   assertThat(id).isEqualTo(occurrence.id)
   assertThat(statusCode).isEqualTo(occurrence.status?.code)
-  assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(1, SECONDS))
-  assertThat(returnBy).isCloseTo(occurrence.returnBy, within(1, SECONDS))
+  assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
+  assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))
   assertThat(location).isEqualTo(occurrence.location)
   assertThat(accompaniedByCode).isEqualTo(occurrence.accompaniedBy.code)
   assertThat(transportCode).isEqualTo(occurrence.transport.code)

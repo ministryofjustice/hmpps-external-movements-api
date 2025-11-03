@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement.Direction.valueOf
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
@@ -49,7 +50,7 @@ class TemporaryAbsenceMovement(
   recordedByPrisonCode: String,
   legacyId: String?,
   @Id
-  @Column(name = "id", nullable = false)
+  @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
 ) : Identifiable {
   @Size(max = 10)

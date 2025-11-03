@@ -4,15 +4,15 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import java.util.UUID
 
-data class TemporaryAbsenceScheduled(
-  override val additionalInformation: TemporaryAbsenceScheduledInformation,
+data class TemporaryAbsenceRescheduled(
+  override val additionalInformation: TemporaryAbsenceRescheduledInformation,
   override val personReference: PersonReference,
-) : DomainEvent<TemporaryAbsenceScheduledInformation> {
+) : DomainEvent<TemporaryAbsenceRescheduledInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence has been scheduled."
+  override val description: String = "A temporary absence has been rescheduled."
 
   companion object {
-    const val EVENT_TYPE: String = "person.temporary-absence.scheduled"
+    const val EVENT_TYPE: String = "person.temporary-absence.rescheduled"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -24,7 +24,7 @@ data class TemporaryAbsenceScheduled(
   }
 }
 
-data class TemporaryAbsenceScheduledInformation(
+data class TemporaryAbsenceRescheduledInformation(
   val id: UUID,
   override val source: DataSource,
 ) : AdditionalInformation
