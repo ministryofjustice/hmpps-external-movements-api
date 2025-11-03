@@ -52,7 +52,7 @@ class GetTapOccurrenceIntTest(
   }
 
   @Test
-  fun `can retrieve cancelled occurrence`() {
+  fun `can retrieve individually cancelled occurrence`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
@@ -125,9 +125,9 @@ class GetTapOccurrenceIntTest(
   }
 
   @Test
-  fun `can retrieve withdrawn occurrence`() {
+  fun `can retrieve cancelled occurrence from cancelled authorisation`() {
     val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.WITHDRAWN))
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.CANCELLED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
@@ -138,7 +138,7 @@ class GetTapOccurrenceIntTest(
     occurrence.verifyAgainst(response)
     assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
-    assertThat(response.status.code).isEqualTo("WITHDRAWN")
+    assertThat(response.status.code).isEqualTo("CANCELLED")
   }
 
   @Test

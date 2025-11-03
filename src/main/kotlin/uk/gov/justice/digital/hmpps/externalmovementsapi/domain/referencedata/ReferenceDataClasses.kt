@@ -86,7 +86,7 @@ class TapAuthorisationStatus(
   enum class Code {
     PENDING,
     APPROVED,
-    WITHDRAWN,
+    CANCELLED,
     DENIED,
   }
 }
