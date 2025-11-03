@@ -1,20 +1,20 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor
 
+import jakarta.persistence.EntityManager
 import org.hibernate.Interceptor
 import org.hibernate.type.Type
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEventRepository
 
 @Component
 class EntityInterceptor : Interceptor {
-  private lateinit var domainEvents: HmppsDomainEventRepository
+  private lateinit var em: EntityManager
 
   @Autowired
-  fun setDomainEventRepository(@Lazy domainEvents: HmppsDomainEventRepository) {
-    this.domainEvents = domainEvents
+  fun setDomainEventRepository(@Lazy entityManager: EntityManager) {
+    em = entityManager
   }
 
   override fun onFlushDirty(
@@ -25,10 +25,15 @@ class EntityInterceptor : Interceptor {
     propertyNames: Array<out String>,
     types: Array<out Type>,
   ): Boolean {
-    val getPreviousState = { name: String -> previousState[propertyNames.indexOf(name)] }
     if (entity is DomainEventProducer) {
-      entity.stateChangedEvent(getPreviousState)?.let { domainEvents.save(HmppsDomainEvent(it)) }
+      val getPreviousState = { name: String -> previousState[propertyNames.indexOf(name)] }
+      entity.stateChangedEvent(getPreviousState)?.let { em.persist(HmppsDomainEvent(it)) }
+      entity.domainEvents().forEach { em.persist(HmppsDomainEvent(it)) }
     }
+    if (entity is Actionable) {
+      entity.actions().forEach(em::persist)
+    }
+
     return super.onFlushDirty(entity, id, currentState, previousState, propertyNames, types)
   }
 
@@ -40,7 +45,7 @@ class EntityInterceptor : Interceptor {
     types: Array<out Type>,
   ): Boolean {
     if (entity is DomainEventProducer) {
-      entity.initialEvent()?.let { domainEvents.save(HmppsDomainEvent(it)) }
+      entity.initialEvent()?.let { em.persist(HmppsDomainEvent(it)) }
     }
     return super.onPersist(entity, id, state, propertyNames, types)
   }

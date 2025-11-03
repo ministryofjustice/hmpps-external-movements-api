@@ -10,7 +10,7 @@ import java.time.ZonedDateTime
 @JsonSubTypes(
   value = [
     Type(value = TemporaryAbsenceAuthorised::class, name = TemporaryAbsenceAuthorised.EVENT_TYPE),
-    Type(value = TemporaryAbsenceScheduled::class, name = TemporaryAbsenceScheduled.EVENT_TYPE),
+    Type(value = TemporaryAbsenceRescheduled::class, name = TemporaryAbsenceRescheduled.EVENT_TYPE),
   ],
 )
 sealed interface DomainEvent<T : AdditionalInformation> {
@@ -28,7 +28,6 @@ sealed interface DomainEvent<T : AdditionalInformation> {
 
 data class PersonReference(val identifiers: List<Identifier> = listOf()) {
   operator fun get(key: String): String? = identifiers.find { it.type == key }?.value
-  fun findNomsNumber(): String? = get(NOMS_NUMBER_TYPE)
 
   companion object {
     const val NOMS_NUMBER_TYPE = "NOMS"

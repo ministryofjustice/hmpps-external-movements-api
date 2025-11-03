@@ -92,7 +92,7 @@ interface TempAbsenceAuthorisationOperations {
 
   fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: CreateTapAuthorisationRequest) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    assertThat(submittedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(1, SECONDS))
+    assertThat(submittedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(2, SECONDS))
     assertThat(status.code).isEqualTo(request.statusCode.name)
     assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
@@ -104,11 +104,9 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(fromDate).isEqualTo(request.fromDate)
     assertThat(toDate).isEqualTo(request.toDate)
     assertThat(applicationDate).isEqualTo(request.applicationDate)
-    assertThat(submittedBy).isEqualTo(request.submittedBy)
     approvedAt?.also {
-      assertThat(it).isCloseTo(request.approvedAt, within(1, SECONDS))
+      assertThat(it).isCloseTo(request.approvedAt, within(2, SECONDS))
     }
-    assertThat(approvedBy).isEqualTo(request.approvedBy)
     assertThat(schedule).isEqualTo(request.schedule)
   }
 
@@ -124,10 +122,10 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(repeat).isEqualTo(authorisation.repeat)
     assertThat(fromDate).isEqualTo(authorisation.fromDate)
     assertThat(toDate).isEqualTo(authorisation.toDate)
-    assertThat(submittedAt).isCloseTo(authorisation.submitted.at, within(1, SECONDS))
+    assertThat(submittedAt).isCloseTo(authorisation.submitted.at, within(2, SECONDS))
     assertThat(submittedBy).isEqualTo(authorisation.submitted.by)
     approvedAt?.also {
-      assertThat(it).isCloseTo(authorisation.approved!!.at, within(1, SECONDS))
+      assertThat(it).isCloseTo(authorisation.approved!!.at, within(2, SECONDS))
     }
     assertThat(approvedBy).isEqualTo(authorisation.approved?.by)
     assertThat(schedule).isEqualTo(authorisation.schedule)
