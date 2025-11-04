@@ -1,12 +1,14 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapMovement
 import java.util.UUID
 
+@Transactional(readOnly = true)
 @Service
 class MovementRetriever(private val movementRepository: TemporaryAbsenceMovementRepository) {
   fun getById(id: UUID): TapMovement = movementRepository.getMovement(id).forSync()

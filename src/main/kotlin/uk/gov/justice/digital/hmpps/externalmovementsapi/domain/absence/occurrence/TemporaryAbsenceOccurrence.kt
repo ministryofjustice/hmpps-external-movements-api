@@ -3,10 +3,8 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurre
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
@@ -25,17 +23,17 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.Actionable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.CalculatedTapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.ScheduledTemporaryAbsenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -44,7 +42,7 @@ import java.util.UUID
 @Table(name = "temporary_absence_occurrence")
 class TemporaryAbsenceOccurrence(
   @Audited
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne
   @JoinColumn(name = "authorisation_id", updatable = false)
   val authorisation: TemporaryAbsenceAuthorisation,
   releaseAt: LocalDateTime,
@@ -73,13 +71,9 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @NotAudited
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinTable(
-    name = "temporary_absence_occurrence_status",
-    joinColumns = [JoinColumn(name = "occurrence_id", referencedColumnName = "id")],
-    inverseJoinColumns = [JoinColumn(name = "status_id", referencedColumnName = "id")],
-  )
-  var status: TapOccurrenceStatus? = null
+  @ManyToOne
+  @JoinColumn(name = "id", insertable = false, updatable = false)
+  var status: CalculatedTapOccurrenceStatus? = null
     private set
 
   @NotNull
@@ -93,13 +87,13 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "accompanied_by_id")
   var accompaniedBy: AccompaniedBy = accompaniedBy
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "transport_id")
   var transport: Transport = transport
     private set
@@ -149,21 +143,21 @@ class TemporaryAbsenceOccurrence(
     private set
 
   fun update(
-    request: ScheduledTemporaryAbsenceRequest,
+    request: TapOccurrence,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = apply {
-    releaseAt = request.startTime
-    returnBy = request.returnTime
-    contactInformation = request.contactPersonName
-    location = request.location.asLocation()
-    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.escortOrDefault()) as AccompaniedBy
-    transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, request.transportTypeOrDefault()) as Transport
-    notes = request.comment
-    addedAt = request.audit.createDatetime
-    addedBy = request.audit.createUsername
-    cancelledAt = request.cancelledAt
-    cancelledBy = request.cancelledBy
-    legacyId = request.eventId
+    releaseAt = request.releaseAt
+    returnBy = request.returnBy
+    contactInformation = null
+    location = request.location
+    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
+    transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, request.transportCode) as Transport
+    notes = request.notes
+    addedAt = request.added.at
+    addedBy = request.added.by
+    cancelledAt = request.cancelled?.at
+    cancelledBy = request.cancelled?.by
+    legacyId = request.legacyId
   }
 
   override fun initialEvent(): DomainEvent<*>? = if (authorisation.status.code == TapAuthorisationStatus.Code.APPROVED.name) {
@@ -180,11 +174,11 @@ class TemporaryAbsenceOccurrence(
     appliedActions = listOf()
   }
 
-  override fun actions(): List<TapOccurrenceAction> = appliedActions?.map {
+  override fun actions(): List<TapOccurrenceAction> = appliedActions.map {
     TapOccurrenceAction(this, it.type, it.reason)
-  } ?: emptyList()
+  }
 
-  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions?.map { it.domainEvent(this) }?.toSet() ?: emptySet()
+  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.map { it.domainEvent(this) }.toSet()
 
   fun reschedule(action: RescheduleOccurrence) {
     action.releaseAt?.also { releaseAt = it }

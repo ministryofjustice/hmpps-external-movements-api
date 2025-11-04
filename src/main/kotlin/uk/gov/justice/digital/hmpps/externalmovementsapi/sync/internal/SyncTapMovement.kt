@@ -3,9 +3,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement.Direction.valueOf
@@ -20,7 +17,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovementRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
+import java.util.UUID
 
 @Transactional
 @Service
@@ -29,8 +27,7 @@ class SyncTapMovement(
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
-  fun sync(personIdentifier: String, request: TapMovementRequest): SyncResponse {
-    ExternalMovementContext.get().copy(source = DataSource.NOMIS).set()
+  fun sync(personIdentifier: String, request: TapMovement): SyncResponse {
     val occurrence = request.occurrenceId?.let { occurrenceRepository.getOccurrence(it) }?.also {
       require(personIdentifier == it.personIdentifier) { "Person identifier does not match occurrence" }
     }
@@ -42,23 +39,27 @@ class SyncTapMovement(
     return SyncResponse(movement.id)
   }
 
-  private fun TapMovementRequest.asEntity(
+  fun deleteById(id: UUID) {
+    movementRepository.findByIdOrNull(id)?.also(movementRepository::delete)
+  }
+
+  private fun TapMovement.asEntity(
     personIdentifier: String,
     occurrence: TemporaryAbsenceOccurrence?,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = TemporaryAbsenceMovement(
     personIdentifier = personIdentifier,
     occurrence = occurrence,
-    occurredAt = movementDateTime,
+    occurredAt = occurredAt,
     direction = valueOf(direction.name),
-    absenceReason = rdProvider(ReferenceDataDomain.Code.ABSENCE_REASON, movementReason) as AbsenceReason,
-    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, escortOrDefault()) as AccompaniedBy,
-    accompaniedByNotes = escortText,
-    notes = commentText,
-    recordedAt = audit.createDatetime,
-    recordedBy = audit.createUsername,
-    recordedByPrisonCode = prisonCodeOrDefault(),
-    location = location.asLocation(),
+    absenceReason = rdProvider(ReferenceDataDomain.Code.ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
+    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
+    accompaniedByNotes = accompaniedByNotes,
+    notes = notes,
+    recordedAt = recorded.at,
+    recordedBy = recorded.by,
+    recordedByPrisonCode = recorded.prisonCode,
+    location = location,
     legacyId = legacyId,
     id = id ?: newUuid(),
   )

@@ -4,7 +4,6 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
@@ -28,7 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovementRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -77,14 +76,14 @@ class TemporaryAbsenceMovement(
 
   @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
   @NotNull
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "absence_reason_id", nullable = false)
   var absenceReason: AbsenceReason = absenceReason
     private set
 
   @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
   @NotNull
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)
   var accompaniedBy: AccompaniedBy = accompaniedBy
     private set
@@ -135,21 +134,21 @@ class TemporaryAbsenceMovement(
   fun update(
     personIdentifier: String,
     occurrence: TemporaryAbsenceOccurrence?,
-    request: TapMovementRequest,
+    request: TapMovement,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = apply {
     this.personIdentifier = personIdentifier
     this.occurrence = occurrence
-    occurredAt = request.movementDateTime
+    occurredAt = request.occurredAt
     direction = valueOf(request.direction.name)
-    absenceReason = rdProvider(ReferenceDataDomain.Code.ABSENCE_REASON, request.movementReason) as AbsenceReason
-    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.escortOrDefault()) as AccompaniedBy
-    accompaniedByNotes = request.escortText
-    notes = request.commentText
-    recordedAt = request.audit.createDatetime
-    recordedBy = request.audit.createUsername
-    recordedByPrisonCode = request.prisonCodeOrDefault()
-    location = request.location.asLocation()
+    absenceReason = rdProvider(ReferenceDataDomain.Code.ABSENCE_REASON, request.absenceReasonCode) as AbsenceReason
+    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
+    accompaniedByNotes = request.accompaniedByNotes
+    notes = request.notes
+    recordedAt = request.recorded.at
+    recordedBy = request.recorded.by
+    recordedByPrisonCode = request.recorded.prisonCode
+    location = request.location
     legacyId = request.legacyId
   }
 }
@@ -158,6 +157,9 @@ interface TemporaryAbsenceMovementRepository :
   JpaRepository<TemporaryAbsenceMovement, UUID>,
   JpaSpecificationExecutor<TemporaryAbsenceMovement> {
   fun findByLegacyId(legacyId: String): TemporaryAbsenceMovement?
+
+  fun findByOccurrenceId(occurrenceId: UUID): List<TemporaryAbsenceMovement>
+  fun findByOccurrenceIdIn(ids: Set<UUID>): List<TemporaryAbsenceMovement>
 }
 
 fun TemporaryAbsenceMovementRepository.getMovement(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence movement not found")

@@ -1,7 +1,13 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
 import jakarta.persistence.DiscriminatorValue
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import org.hibernate.annotations.Immutable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
+import java.util.UUID
 
 @Entity
 @DiscriminatorValue("ABSENCE_TYPE")
@@ -101,3 +107,16 @@ class TapOccurrenceStatus(
   active: Boolean,
   id: Long,
 ) : ReferenceData(key, description, hintText, sequenceNumber, active, id)
+
+@Immutable
+@Entity
+@Table(name = "tap_occurrence_status")
+class CalculatedTapOccurrenceStatus(
+  @Embedded
+  val key: ReferenceDataKey,
+  val description: String,
+  @Id
+  val id: UUID,
+) : ReferenceDataLookup by key {
+  fun asCodedDescription() = CodedDescription(code, description)
+}

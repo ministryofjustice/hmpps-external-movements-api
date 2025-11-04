@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
@@ -45,7 +44,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapApplicationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -90,25 +89,25 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne
   @JoinColumn(name = "absence_type_id")
   var absenceType: AbsenceType? = absenceType
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne
   @JoinColumn(name = "absence_sub_type_id")
   var absenceSubType: AbsenceSubType? = absenceSubType
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne
   @JoinColumn(name = "absence_reason_category_id")
   var absenceReasonCategory: AbsenceReasonCategory? = absenceReasonCategory
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne
   @JoinColumn(name = "absence_reason_id")
   var absenceReason: AbsenceReason? = absenceReason
     private set
@@ -119,7 +118,7 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "status_id", nullable = false)
   var status: TapAuthorisationStatus = status
     private set
@@ -176,28 +175,28 @@ class TemporaryAbsenceAuthorisation(
 
   fun update(
     personIdentifier: String,
-    request: TapApplicationRequest,
+    request: TapAuthorisation,
     rdPaths: ReferenceDataPaths,
   ) = apply {
     this.personIdentifier = personIdentifier.uppercase()
     reasonPath = rdPaths.reasonPath()
-    prisonCode = requireNotNull(request.prisonId)
-    absenceType = request.temporaryAbsenceType?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType }
+    prisonCode = request.prisonCode
+    absenceType = request.absenceTypeCode?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType }
     absenceSubType =
-      request.temporaryAbsenceSubType?.let { rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
+      request.absenceSubTypeCode?.let { rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
     absenceReasonCategory = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
       rdPaths.getReferenceData(it.domain, it.code)
     } as? AbsenceReasonCategory
-    absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, request.eventSubType) as AbsenceReason
-    repeat = request.isRepeating()
+    absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, request.absenceReasonCode) as AbsenceReason
+    repeat = request.repeat
     status =
-      rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, request.tapAuthStatusCode.name) as TapAuthorisationStatus
-    notes = request.comment
-    submittedAt = request.audit.createDatetime
-    submittedBy = request.audit.createUsername
-    legacyId = request.movementApplicationId
-    approvedAt = request.approvedAt
-    approvedBy = request.approvedBy
+      rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, request.statusCode) as TapAuthorisationStatus
+    notes = request.notes
+    submittedAt = request.submitted.at
+    submittedBy = request.submitted.by
+    legacyId = request.legacyId
+    approvedAt = request.approved?.at
+    approvedBy = request.approved?.by
     fromDate = request.fromDate
     toDate = request.toDate
   }

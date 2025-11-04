@@ -3,12 +3,12 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovementRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TapOccurrenceActionRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
@@ -23,27 +23,41 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapApplicationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
+import java.util.UUID
 
 @Transactional
 @Service
-class SyncTapApplication(
+class SyncTapAuthorisation(
   private val referenceDataRepository: ReferenceDataRepository,
-  private val tapAuthRepository: TemporaryAbsenceAuthorisationRepository,
+  private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
+  private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val occurrenceActionRepository: TapOccurrenceActionRepository,
+  private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
-  fun sync(personIdentifier: String, request: TapApplicationRequest): SyncResponse {
-    ExternalMovementContext.get().copy(source = DataSource.NOMIS).set()
+  fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
     val rdPaths = referenceDataRepository.findRdWithPaths(request)
     val application = (
-      request.id?.let { tapAuthRepository.findByIdOrNull(it) }
-        ?: tapAuthRepository.findByLegacyId(request.movementApplicationId)
+      request.id?.let { authorisationRepository.findByIdOrNull(it) }
+        ?: authorisationRepository.findByLegacyId(request.legacyId)
       )
       ?.update(personIdentifier, request, rdPaths)
-      ?: tapAuthRepository.save(request.asEntity(personIdentifier, rdPaths))
+      ?: authorisationRepository.save(request.asEntity(personIdentifier, rdPaths))
     return SyncResponse(application.id)
   }
 
-  private fun TapApplicationRequest.asEntity(
+  fun deleteById(id: UUID) {
+    authorisationRepository.findByIdOrNull(id)?.also { authorisation ->
+      val occurrences = occurrenceRepository.findByAuthorisationId(authorisation.id)
+      val occurrenceIds = occurrences.map { it.id }.toSet()
+      movementRepository.findByOccurrenceIdIn(occurrenceIds).also { movementRepository.deleteAll(it) }
+      occurrenceActionRepository.findByOccurrenceIdIn(occurrenceIds).also { occurrenceActionRepository.deleteAll(it) }
+      occurrenceRepository.deleteAll(occurrences)
+      authorisationRepository.delete(authorisation)
+    }
+  }
+
+  private fun TapAuthorisation.asEntity(
     personIdentifier: String,
     rdPaths: ReferenceDataPaths,
   ): TemporaryAbsenceAuthorisation {
@@ -54,25 +68,25 @@ class SyncTapApplication(
     return TemporaryAbsenceAuthorisation(
       id = id ?: newUuid(),
       personIdentifier = personIdentifier,
-      prisonCode = requireNotNull(prisonId),
-      absenceType = temporaryAbsenceType?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType },
-      absenceSubType = temporaryAbsenceSubType?.let {
+      prisonCode = prisonCode,
+      absenceType = absenceTypeCode?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType },
+      absenceSubType = absenceSubTypeCode?.let {
         rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType
       },
       absenceReasonCategory = category as? AbsenceReasonCategory,
-      absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, eventSubType) as AbsenceReason,
-      repeat = isRepeating(),
-      status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, tapAuthStatusCode.name) as TapAuthorisationStatus,
-      notes = comment,
+      absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
+      repeat = repeat,
+      status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus,
+      notes = notes,
       fromDate = fromDate,
       toDate = toDate,
-      submittedAt = audit.createDatetime,
-      submittedBy = audit.createUsername,
-      approvedAt = approvedAt,
-      approvedBy = approvedBy,
+      submittedAt = submitted.at,
+      submittedBy = submitted.by,
+      approvedAt = approved?.at,
+      approvedBy = approved?.by,
       schedule = null,
       reasonPath = reasonPath,
-      legacyId = movementApplicationId,
+      legacyId = legacyId,
     )
   }
 }

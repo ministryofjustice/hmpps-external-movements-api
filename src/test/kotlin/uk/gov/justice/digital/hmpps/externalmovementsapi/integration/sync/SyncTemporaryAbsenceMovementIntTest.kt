@@ -189,6 +189,7 @@ class SyncTemporaryAbsenceMovementIntTest(
       .returnResult()
       .responseBody!!
 
+    println("Movement id: ${res.id} ${request.id}")
     assertThat(res.id).isEqualTo(request.id)
     val saved = requireNotNull(findTemporaryAbsenceMovement(res.id))
     saved.verifyAgainst(personIdentifier, request)
