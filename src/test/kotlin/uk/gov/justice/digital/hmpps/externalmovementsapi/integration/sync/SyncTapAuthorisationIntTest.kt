@@ -301,8 +301,8 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   assertThat(toDate).isEqualTo(request.toDate)
   assertThat(submittedAt).isCloseTo(request.submitted.at, within(2, SECONDS))
   assertThat(submittedBy).isEqualTo(request.submitted.by)
-  approvedAt?.also {
-    assertThat(it).isCloseTo(request.approved?.at, within(2, SECONDS))
+  request.approved?.also {
+    assertThat(approvedAt).isCloseTo(it.at, within(2, SECONDS))
+    assertThat(approvedBy).isEqualTo(it.by)
   }
-  assertThat(approvedBy).isEqualTo(request.approved?.by)
 }
