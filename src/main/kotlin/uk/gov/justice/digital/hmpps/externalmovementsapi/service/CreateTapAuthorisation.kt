@@ -92,7 +92,6 @@ class CreateTapAuthorisation(
       notes = notes,
       fromDate = fromDate,
       toDate = toDate,
-      applicationDate = applicationDate,
       submittedAt = submittedAt,
       submittedBy = submittedBy,
       approvedAt = approvedAt,

@@ -9,6 +9,7 @@ import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 
@@ -38,7 +39,12 @@ class ExternalMovementContextInterceptor : HandlerInterceptor {
     response: HttpServletResponse,
     handler: Any,
   ): Boolean {
-    ExternalMovementContext(getUsername()).set()
+    val contextSource = if (request.requestURI.startsWith("/sync")) {
+      DataSource.NOMIS
+    } else {
+      DataSource.DPS
+    }
+    ExternalMovementContext(getUsername(), source = contextSource).set()
     return true
   }
 

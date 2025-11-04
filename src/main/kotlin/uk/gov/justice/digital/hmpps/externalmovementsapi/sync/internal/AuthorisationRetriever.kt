@@ -1,14 +1,17 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.TapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapAuthorisation
 import java.util.UUID
 
+@Transactional(readOnly = true)
 @Service
 class AuthorisationRetriever(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
@@ -34,7 +37,7 @@ private fun TemporaryAbsenceAuthorisation.with(
   repeat = repeat,
   fromDate = fromDate,
   toDate = toDate,
-  submittedAt = submittedAt,
+  submitted = AtAndBy(submittedAt, submittedBy),
   notes = notes,
   occurrences = occurrences,
 )

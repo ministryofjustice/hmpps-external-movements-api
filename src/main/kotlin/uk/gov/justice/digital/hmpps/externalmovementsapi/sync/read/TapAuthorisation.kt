@@ -1,7 +1,8 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.sync
+package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read
 
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -18,7 +19,7 @@ data class TapAuthorisation(
   val repeat: Boolean,
   val fromDate: LocalDate,
   val toDate: LocalDate,
-  val submittedAt: LocalDateTime,
+  val submitted: AtAndBy,
   val notes: String?,
   val occurrences: List<Occurrence>,
 ) {

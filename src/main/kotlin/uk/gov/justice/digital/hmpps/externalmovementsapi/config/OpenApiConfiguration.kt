@@ -9,6 +9,7 @@ import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
+import io.swagger.v3.oas.models.tags.Tag
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.ApplicationContext
@@ -20,6 +21,11 @@ import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.method.HandlerMethod
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags.SYNC
+
+object OpenApiTags {
+  const val SYNC = "Sync"
+}
 
 @Configuration
 class OpenApiConfiguration(buildProperties: BuildProperties, private val context: ApplicationContext) {
@@ -36,9 +42,6 @@ class OpenApiConfiguration(buildProperties: BuildProperties, private val context
         Server().url("http://localhost:8080").description("Local"),
       ),
     )
-    .tags(
-      listOf(),
-    )
     .info(
       Info().title("HMPPS External Movements Api").version(version)
         .contact(Contact().name("HMPPS Digital Studio").email("feedback@digital.justice.gov.uk")),
@@ -54,6 +57,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties, private val context
       ),
     )
     .addSecurityItem(SecurityRequirement().addList("bearer-jwt", listOf("read", "write")))
+    .addTagsItem(Tag().name(SYNC).description("Endpoints for sync only"))
     .also { PrimitiveType.enablePartialTime() }
 
   @Bean

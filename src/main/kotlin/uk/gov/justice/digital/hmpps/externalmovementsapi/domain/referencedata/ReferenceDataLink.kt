@@ -13,10 +13,10 @@ import org.springframework.data.jpa.repository.Query
 @Entity
 @Table(name = "reference_data_link")
 class ReferenceDataLink(
-  @ManyToOne
+  @ManyToOne(optional = false)
   @JoinColumn(name = "reference_data_id_1")
   val rd1: ReferenceData,
-  @ManyToOne
+  @ManyToOne(optional = false)
   @JoinColumn(name = "reference_data_id_2")
   val rd2: ReferenceData,
   val sequenceNumber: Int,

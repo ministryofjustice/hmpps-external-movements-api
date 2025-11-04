@@ -14,22 +14,22 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.NomisAudit
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.ScheduledTemporaryAbsenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
-class SyncScheduledTemporaryAbsenceIntTest(
+class SyncTapOccurrenceIntTest(
   @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -40,7 +40,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
   fun `401 unauthorised without a valid token`() {
     webTestClient
       .put()
-      .uri(SYNC_SCHEDULED_TAP_URL, newUuid())
+      .uri(SYNC_TAP_OCCUR_URL, newUuid())
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -48,9 +48,9 @@ class SyncScheduledTemporaryAbsenceIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    syncScheduledTemporaryAbsence(
+    syncTapOccurrence(
       newUuid(),
-      scheduledAbsenceRequest(),
+      tapOccurrence(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
@@ -58,11 +58,8 @@ class SyncScheduledTemporaryAbsenceIntTest(
   @Test
   fun `200 ok scheduled absence created successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val request = scheduledAbsenceRequest(
-      eventStatus = "PEN",
-      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
-    )
-    val res = syncScheduledTemporaryAbsence(authorisation.id, request)
+    val request = tapOccurrence(statusCode = "PENDING")
+    val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
       .returnResult()
@@ -88,8 +85,14 @@ class SyncScheduledTemporaryAbsenceIntTest(
   fun `200 ok scheduled absence updated successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
-    val request = scheduledAbsenceRequest(id = existing.id, eventId = existing.legacyId!!, eventStatus = "CANC")
-    val res = syncScheduledTemporaryAbsence(authorisation.id, request)
+    val request = tapOccurrence(
+      id = existing.id,
+      legacyId = existing.legacyId!!,
+      statusCode = "CANCELLED",
+      cancelled = AtAndBy(LocalDateTime.now().minusMinutes(20), SYSTEM_USERNAME),
+    )
+
+    val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
       .returnResult()
@@ -115,8 +118,8 @@ class SyncScheduledTemporaryAbsenceIntTest(
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
-    val request = scheduledAbsenceRequest(eventId = existing.legacyId!!, eventStatus = "DEN", escortCode = "U")
-    val res = syncScheduledTemporaryAbsence(authorisation.id, request)
+    val request = tapOccurrence(legacyId = existing.legacyId!!, accompaniedByCode = "U")
+    val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
       .returnResult()
@@ -125,8 +128,8 @@ class SyncScheduledTemporaryAbsenceIntTest(
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(existing.id))
     saved.verifyAgainst(request)
-    assertThat(saved.cancelledAt).isNotNull
-    assertThat(saved.cancelledBy).isNotNull
+    assertThat(saved.cancelledAt).isNull()
+    assertThat(saved.cancelledBy).isNull()
 
     verifyAudit(
       saved,
@@ -141,8 +144,8 @@ class SyncScheduledTemporaryAbsenceIntTest(
   @Test
   fun `200 ok scheduled absence created if one doesn't exist with the given uuid`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val request = scheduledAbsenceRequest(id = newUuid())
-    val res = syncScheduledTemporaryAbsence(authorisation.id, request)
+    val request = tapOccurrence(id = newUuid())
+    val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
       .returnResult()
@@ -162,58 +165,62 @@ class SyncScheduledTemporaryAbsenceIntTest(
     verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
-  private fun scheduledAbsenceRequest(
+  private fun tapOccurrence(
     id: UUID? = null,
-    eventStatus: String = "SCH",
-    startTime: LocalDateTime = LocalDateTime.now().minusDays(7),
-    returnTime: LocalDateTime = LocalDateTime.now(),
-    escortCode: String? = "L",
-    transportType: String? = "OD",
-    location: TapLocation = TapLocation(description = name(10)),
-    comment: String? = "Some notes about the absence",
-    contactPersonName: String? = null,
-    eventId: Long = newId(),
-    audit: NomisAudit = NomisAuditGenerator.generate(),
-  ) = ScheduledTemporaryAbsenceRequest(
+    statusCode: String = "SCHEDULED",
+    releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
+    returnBy: LocalDateTime = LocalDateTime.now(),
+    accompaniedByCode: String = "L",
+    transportCode: String = "OD",
+    location: Location = location(),
+    notes: String? = "Some notes about the absence",
+    added: AtAndBy = AtAndBy(LocalDateTime.now(), DEFAULT_USERNAME),
+    cancelled: AtAndBy? = null,
+    legacyId: Long = newId(),
+  ) = TapOccurrence(
     id,
-    eventId,
-    eventStatus,
-    startTime,
-    returnTime,
+    statusCode,
+    releaseAt,
+    returnBy,
     location,
-    contactPersonName,
-    escortCode,
-    comment,
-    transportType,
-    audit,
+    accompaniedByCode,
+    transportCode,
+    notes,
+    added,
+    cancelled,
+    legacyId,
   )
 
-  private fun syncScheduledTemporaryAbsence(
-    parentId: UUID,
-    request: ScheduledTemporaryAbsenceRequest,
+  private fun syncTapOccurrence(
+    authorisationId: UUID,
+    request: TapOccurrence,
     role: String? = Roles.NOMIS_SYNC,
   ) = webTestClient
     .put()
-    .uri(SYNC_SCHEDULED_TAP_URL, parentId)
+    .uri(SYNC_TAP_OCCUR_URL, authorisationId)
     .bodyValue(request)
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
-    const val SYNC_SCHEDULED_TAP_URL = "/sync/scheduled-temporary-absence/{parentId}"
+    const val SYNC_TAP_OCCUR_URL = "/sync/temporary-absence-authorisations/{authorisationId}/occurrences"
   }
 }
 
 private fun TemporaryAbsenceOccurrence.verifyAgainst(
-  request: ScheduledTemporaryAbsenceRequest,
+  request: TapOccurrence,
 ) {
-  assertThat(releaseAt).isCloseTo(request.startTime, within(2, SECONDS))
-  assertThat(returnBy).isCloseTo(request.returnTime, within(2, SECONDS))
-  assertThat(accompaniedBy.code).isEqualTo(request.escort)
-  assertThat(transport.code).isEqualTo(request.transportType)
-  assertThat(location).isEqualTo(request.location.asLocation())
-  assertThat(notes).isEqualTo(request.comment)
-  assertThat(legacyId).isEqualTo(request.eventId)
-  assertThat(addedBy).isEqualTo(request.audit.createUsername)
-  assertThat(addedAt).isCloseTo(request.audit.createDatetime, within(2, SECONDS))
+  assertThat(releaseAt).isCloseTo(request.releaseAt, within(2, SECONDS))
+  assertThat(returnBy).isCloseTo(request.returnBy, within(2, SECONDS))
+  assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
+  assertThat(transport.code).isEqualTo(request.transportCode)
+  assertThat(location).isEqualTo(request.location)
+  assertThat(notes).isEqualTo(request.notes)
+  assertThat(addedAt).isCloseTo(request.added.at, within(2, SECONDS))
+  assertThat(addedBy).isEqualTo(request.added.by)
+  request.cancelled?.also {
+    assertThat(cancelledAt).isCloseTo(it.at, within(2, SECONDS))
+    assertThat(cancelledBy).isEqualTo(it.by)
+  }
+  assertThat(legacyId).isEqualTo(request.legacyId)
 }

@@ -78,7 +78,6 @@ interface TempAbsenceAuthorisationOperations {
         notes,
         fromDate,
         toDate,
-        applicationDate,
         submittedAt,
         submittedBy,
         approvedAt,
@@ -103,7 +102,6 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(legacyId).isNull()
     assertThat(fromDate).isEqualTo(request.fromDate)
     assertThat(toDate).isEqualTo(request.toDate)
-    assertThat(applicationDate).isEqualTo(request.applicationDate)
     approvedAt?.also {
       assertThat(it).isCloseTo(request.approvedAt, within(2, SECONDS))
     }

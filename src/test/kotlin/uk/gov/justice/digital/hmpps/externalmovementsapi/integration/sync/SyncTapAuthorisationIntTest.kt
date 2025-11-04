@@ -21,14 +21,15 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.NomisAudit
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapApplicationRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
-class SyncTapApplicationIntTest(
+class SyncTapAuthorisationIntTest(
   @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
 ) : IntegrationTest(),
   TempAbsenceAuthorisationOperations by tasOperations {
@@ -37,7 +38,7 @@ class SyncTapApplicationIntTest(
   fun `401 unauthorised without a valid token`() {
     webTestClient
       .put()
-      .uri(SYNC_TAP_APPLICATION_URL, personIdentifier())
+      .uri(SYNC_TAP_AUTHORISATION_URL, personIdentifier())
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -45,18 +46,18 @@ class SyncTapApplicationIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    syncApplication(personIdentifier(), applicationRequest(), "ROLE_ANY__OTHER_RW")
+    syncAuthorisation(personIdentifier(), tapAuthorisation(), "ROLE_ANY__OTHER_RW")
       .expectStatus().isForbidden
   }
 
   @Test
   fun `200 ok application created successfully including full path`() {
     val pi = personIdentifier()
-    val request = applicationRequest(
-      applicationStatus = "PEN",
-      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    val request = tapAuthorisation(
+      statusCode = "PENDING",
+      approved = null,
     )
-    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -83,13 +84,13 @@ class SyncTapApplicationIntTest(
   @Test
   fun `200 ok application created successfully without a category`() {
     val pi = personIdentifier()
-    val request = applicationRequest(
-      applicationStatus = "PEN",
-      temporaryAbsenceSubType = "SPL",
-      eventSubType = "LTX",
-      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    val request = tapAuthorisation(
+      statusCode = "PENDING",
+      subTypeCode = "SPL",
+      reasonCode = "LTX",
+      approved = null,
     )
-    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -115,13 +116,13 @@ class SyncTapApplicationIntTest(
   @Test
   fun `200 ok application created successfully with type and subtype only`() {
     val pi = personIdentifier()
-    val request = applicationRequest(
-      applicationStatus = "PEN",
-      temporaryAbsenceSubType = "CRL",
-      eventSubType = "3",
-      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    val request = tapAuthorisation(
+      statusCode = "PENDING",
+      subTypeCode = "CRL",
+      reasonCode = "3",
+      approved = null,
     )
-    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -146,13 +147,12 @@ class SyncTapApplicationIntTest(
   @Test
   fun `200 ok application created for type only path`() {
     val pi = personIdentifier()
-    val request = applicationRequest(
-      eventSubType = "PC",
-      temporaryAbsenceType = "PP",
-      temporaryAbsenceSubType = "PP",
-      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    val request = tapAuthorisation(
+      reasonCode = "PC",
+      typeCode = "PP",
+      subTypeCode = "PP",
     )
-    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -172,13 +172,12 @@ class SyncTapApplicationIntTest(
   @Test
   fun `200 ok application created for security escort`() {
     val pi = personIdentifier()
-    val request = applicationRequest(
-      eventSubType = "SE",
-      temporaryAbsenceType = "SE",
-      temporaryAbsenceSubType = null,
-      audit = NomisAuditGenerator.generate(modifiedAt = null, modifiedBy = null),
+    val request = tapAuthorisation(
+      reasonCode = "SE",
+      typeCode = "SE",
+      subTypeCode = null,
     )
-    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -202,8 +201,8 @@ class SyncTapApplicationIntTest(
   fun `200 ok application updated successfully`() {
     val legacyId = newId()
     val existing = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = legacyId))
-    val request = applicationRequest(id = existing.id, existing.prisonCode, movementApplicationId = legacyId)
-    val res = syncApplication(existing.personIdentifier, request).successResponse<SyncResponse>()
+    val request = tapAuthorisation(id = existing.id, existing.prisonCode, legacyId = legacyId)
+    val res = syncAuthorisation(existing.personIdentifier, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
@@ -225,8 +224,8 @@ class SyncTapApplicationIntTest(
   fun `200 ok application created if authorisation with the given uuid does not exist`() {
     val pi = personIdentifier()
     val uuid = newUuid()
-    val request = applicationRequest(id = uuid)
-    val res = syncApplication(pi, request).successResponse<SyncResponse>()
+    val request = tapAuthorisation(id = uuid)
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(uuid)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -242,70 +241,68 @@ class SyncTapApplicationIntTest(
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
   }
 
-  private fun applicationRequest(
+  private fun tapAuthorisation(
     id: UUID? = null,
-    prisonId: String? = prisonCode(),
-    eventSubType: String = "R15",
-    temporaryAbsenceType: String? = "SR",
-    temporaryAbsenceSubType: String? = "RDR",
-    applicationStatus: String = "APP-SCH",
-    applicationDate: LocalDate = LocalDate.now().minusMonths(1),
-    comment: String? = "Some notes about the application",
-    movementApplicationId: Long = newId(),
-    contactPersonName: String? = null,
-    applicationType: String = "SINGLE",
+    prisonCode: String = prisonCode(),
+    reasonCode: String = "R15",
+    typeCode: String? = "SR",
+    subTypeCode: String? = "RDR",
+    statusCode: String = "APPROVED",
+    repeat: Boolean = false,
+    notes: String? = "Some notes about the application",
     fromDate: LocalDate = LocalDate.now().minusDays(7),
     toDate: LocalDate = LocalDate.now().minusDays(1),
-    audit: NomisAudit = NomisAuditGenerator.generate(),
-  ) = TapApplicationRequest(
+    submitted: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), DEFAULT_USERNAME),
+    approved: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), SYSTEM_USERNAME),
+    legacyId: Long = newId(),
+  ) = TapAuthorisation(
     id,
-    movementApplicationId,
-    eventSubType,
-    applicationDate,
-    applicationStatus,
-    comment,
-    prisonId,
-    contactPersonName,
-    applicationType,
-    temporaryAbsenceType,
-    temporaryAbsenceSubType,
+    prisonCode,
+    statusCode,
+    typeCode,
+    subTypeCode,
+    reasonCode,
+    repeat,
     fromDate,
     toDate,
-    audit,
+    notes,
+    submitted,
+    approved,
+    legacyId,
   )
 
-  private fun syncApplication(
+  private fun syncAuthorisation(
     personIdentifier: String,
-    request: TapApplicationRequest,
+    request: TapAuthorisation,
     role: String? = Roles.NOMIS_SYNC,
   ) = webTestClient
     .put()
-    .uri(SYNC_TAP_APPLICATION_URL, personIdentifier)
+    .uri(SYNC_TAP_AUTHORISATION_URL, personIdentifier)
     .bodyValue(request)
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
-    const val SYNC_TAP_APPLICATION_URL = "/sync/temporary-absence-application/{personIdentifier}"
+    const val SYNC_TAP_AUTHORISATION_URL = "/sync/temporary-absence-authorisations/{personIdentifier}"
   }
 }
 
-private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: TapApplicationRequest) {
+private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: TapAuthorisation) {
   assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-  assertThat(legacyId).isEqualTo(request.movementApplicationId)
-  assertThat(status.code).isEqualTo(request.tapAuthStatusCode.name)
-  assertThat(absenceType?.code).isEqualTo(request.temporaryAbsenceType)
-  assertThat(absenceSubType?.code).isEqualTo(request.temporaryAbsenceSubType)
-  assertThat(absenceReason?.code).isEqualTo(request.eventSubType)
-  assertThat(prisonCode).isEqualTo(request.prisonId)
-  assertThat(repeat).isEqualTo(request.isRepeating())
-  assertThat(notes).isEqualTo(request.comment)
+  assertThat(legacyId).isEqualTo(request.legacyId)
+  assertThat(status.code).isEqualTo(request.statusCode)
+  assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
+  assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+  assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
+  assertThat(prisonCode).isEqualTo(request.prisonCode)
+  assertThat(repeat).isEqualTo(request.repeat)
+  assertThat(notes).isEqualTo(request.notes)
   assertThat(fromDate).isEqualTo(request.fromDate)
   assertThat(toDate).isEqualTo(request.toDate)
-  assertThat(submittedAt).isCloseTo(request.audit.createDatetime, within(2, SECONDS))
-  assertThat(submittedBy).isEqualTo(request.audit.createUsername)
-  approvedAt?.also {
-    assertThat(it).isCloseTo(request.approvedAt, within(2, SECONDS))
+  assertThat(submittedAt).isCloseTo(request.submitted.at, within(2, SECONDS))
+  assertThat(submittedBy).isEqualTo(request.submitted.by)
+  request.approved?.also {
+    assertThat(approvedAt).isCloseTo(it.at, within(2, SECONDS))
+    assertThat(approvedBy).isEqualTo(it.by)
   }
-  assertThat(approvedBy).isEqualTo(request.approvedBy)
 }
