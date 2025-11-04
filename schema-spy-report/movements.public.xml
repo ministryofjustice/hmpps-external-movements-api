@@ -52,7 +52,7 @@
             <column ascending="true" name="rev_id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data" numRows="157" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
             <child catalog="movements" column="id" foreignKey="fk_reference_data_domain_link_reference_data" implied="false" onDeleteCascade="false" schema="public" table="reference_data_domain_link"/>
             <child catalog="movements" column="reference_data_id_1" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data_link"/>
@@ -111,7 +111,7 @@
             <column ascending="true" name="id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data_link" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data_link" numRows="64" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_link_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="reference_data_id_1" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
             <parent catalog="movements" column="id" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
@@ -157,6 +157,12 @@
             <column ascending="true" name="rev_id"/>
          </index>
       </table>
+      <table catalog="movements" name="tap_occurrence_status" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT taos.occurrence_id AS id,&#10;    rd.domain,&#10;    rd.code,&#10;    rd.description&#10;   FROM ((reference_data rd&#10;     JOIN temporary_absence_occurrence_status taos ON ((taos.status_id = rd.id)))&#10;     JOIN temporary_absence_occurrence tao ON ((tao.id = taos.occurrence_id)));">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="domain" nullable="true" remarks="" size="32" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="code" nullable="true" remarks="" size="16" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="description" nullable="true" remarks="" size="255" type="varchar" typeCode="12"/>
+      </table>
       <table catalog="movements" name="temporary_absence_authorisation" remarks="" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child catalog="movements" column="authorisation_id" foreignKey="fk_temporary_absence_occurrence_authorisation" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_occurrence"/>
@@ -178,19 +184,18 @@
             <parent catalog="movements" column="id" foreignKey="fk_temporary_absence_authorisation_status_id" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="notes" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="application_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
-         <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="submitted_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="submitted_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="6" id="13" name="approved_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="approved_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="from_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="to_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="schedule" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="absence_reason_category_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5">
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="submitted_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="submitted_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="12" name="approved_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="approved_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="from_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="to_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="schedule" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="absence_reason_category_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5">
             <parent catalog="movements" column="id" foreignKey="fk_temporary_absence_authorisation_absence_reason_category_id" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
          </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_temporary_absence_authorisation" unique="true">
             <column ascending="true" name="id"/>
@@ -220,17 +225,16 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="repeat" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="status_id" nullable="false" remarks="" size="19" type="int8" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="notes" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="application_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
-         <column autoUpdated="false" defaultValue="null" digits="6" id="12" name="submitted_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="submitted_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="6" id="14" name="approved_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="approved_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="from_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="to_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="schedule" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="absence_reason_category_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="submitted_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="submitted_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="13" name="approved_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="approved_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="from_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="to_date" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="schedule" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="absence_reason_category_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <primaryKey column="rev_id" sequenceNumberInPK="2"/>
          <index name="pk_temporary_absence_authorisation_audit" unique="true">
