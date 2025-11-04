@@ -47,18 +47,21 @@ class SyncController(
     @RequestBody request: TapMovementRequest,
   ): SyncResponse = movement.sync(personIdentifier, request.toNew())
 
+  @Operation(hidden = true)
   @PutMapping("/temporary-absence-authorisations/{personIdentifier}")
   fun syncTemporaryAbsenceAuthorisation(
     @PathVariable personIdentifier: String,
     @RequestBody request: TapAuthorisation,
   ): SyncResponse = authorisation.sync(personIdentifier, request)
 
+  @Operation(hidden = true)
   @PutMapping("/temporary-absence-authorisations/{authorisationId}/occurrences")
   fun syncTemporaryAbsenceOccurrence(
     @PathVariable authorisationId: UUID,
     @RequestBody request: TapOccurrence,
   ): SyncResponse = occurrence.sync(authorisationId, request)
 
+  @Operation(hidden = true)
   @PutMapping("/temporary-absence-movements/{personIdentifier}")
   fun syncTemporaryAbsenceMovement(
     @PathVariable personIdentifier: String,
