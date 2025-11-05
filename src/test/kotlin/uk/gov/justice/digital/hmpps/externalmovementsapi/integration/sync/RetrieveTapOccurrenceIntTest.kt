@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -87,5 +87,4 @@ private fun TapOccurrence.Authorisation.verifyAgainst(authorisation: TemporaryAb
   assertThat(absenceSubTypeCode).isEqualTo(authorisation.absenceSubType?.code)
   assertThat(absenceReasonCode).isEqualTo(authorisation.absenceReason?.code)
   assertThat(repeat).isEqualTo(authorisation.repeat)
-  assertThat(submitted.at).isCloseTo(authorisation.submittedAt, within(2, SECONDS))
 }

@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -87,5 +87,5 @@ private fun TapMovement.verifyAgainst(movement: TemporaryAbsenceMovement) {
   assertThat(accompaniedByCode).isEqualTo(movement.accompaniedBy.code)
   assertThat(accompaniedByNotes).isEqualTo(movement.accompaniedByNotes)
   assertThat(notes).isEqualTo(movement.notes)
-  assertThat(recordedByPrisonCode).isEqualTo(movement.recordedByPrisonCode)
+  assertThat(created.prisonCode).isEqualTo(movement.recordedByPrisonCode)
 }

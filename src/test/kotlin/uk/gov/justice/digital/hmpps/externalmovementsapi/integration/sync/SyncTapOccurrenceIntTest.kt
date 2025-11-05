@@ -75,7 +75,7 @@ class SyncTapOccurrenceIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
@@ -159,7 +159,7 @@ class SyncTapOccurrenceIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
@@ -216,9 +216,9 @@ private fun TemporaryAbsenceOccurrence.verifyAgainst(
   assertThat(transport.code).isEqualTo(request.transportCode)
   assertThat(location).isEqualTo(request.location)
   assertThat(notes).isEqualTo(request.notes)
-  assertThat(addedAt).isCloseTo(request.added.at, within(2, SECONDS))
-  assertThat(addedBy).isEqualTo(request.added.by)
-  request.cancelled?.also {
+  assertThat(addedAt).isCloseTo(request.created.at, within(2, SECONDS))
+  assertThat(addedBy).isEqualTo(request.created.by)
+  request.updated?.also {
     assertThat(cancelledAt).isCloseTo(it.at, within(2, SECONDS))
     assertThat(cancelledBy).isEqualTo(it.by)
   }

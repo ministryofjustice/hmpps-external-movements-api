@@ -20,8 +20,8 @@ data class TapOccurrence(
   val accompaniedByCode: String,
   val transportCode: String,
   val notes: String?,
-  val added: AtAndBy,
-  val cancelled: AtAndBy?,
+  val created: AtAndBy,
+  val updated: AtAndBy?,
   val legacyId: Long,
 ) : ReferenceDataRequired {
   override fun requiredReferenceData() = setOfNotNull(

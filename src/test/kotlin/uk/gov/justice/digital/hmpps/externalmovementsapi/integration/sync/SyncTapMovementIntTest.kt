@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -93,7 +93,7 @@ class SyncTapMovementIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
     verifyEvents(saved, setOf())
   }
@@ -193,7 +193,7 @@ class SyncTapMovementIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
     verifyEvents(saved, setOf())
   }
@@ -223,6 +223,7 @@ class SyncTapMovementIntTest(
     accompaniedByNotes,
     notes,
     TapMovement.AtAndByWithPrison(recordedAt, recordedBy, prisonCode),
+    null,
     legacyId,
   )
 
@@ -251,8 +252,8 @@ private fun TemporaryAbsenceMovement.verifyAgainst(personIdentifier: String, req
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
   assertThat(location).isEqualTo(request.location)
   assertThat(notes).isEqualTo(request.notes)
-  assertThat(recordedAt).isCloseTo(request.recorded.at, within(1, SECONDS))
-  assertThat(recordedBy).isEqualTo(request.recorded.by)
-  assertThat(recordedByPrisonCode).isEqualTo(request.recorded.prisonCode)
+  assertThat(recordedAt).isCloseTo(request.created.at, within(1, SECONDS))
+  assertThat(recordedBy).isEqualTo(request.created.by)
+  assertThat(recordedByPrisonCode).isEqualTo(request.created.prisonCode)
   assertThat(legacyId).isEqualTo(request.legacyId)
 }

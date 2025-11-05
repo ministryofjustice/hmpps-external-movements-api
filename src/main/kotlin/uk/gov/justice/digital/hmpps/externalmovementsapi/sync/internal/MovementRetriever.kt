@@ -2,19 +2,21 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovementRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.AuditedTapMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.AuditedTapMovementRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.getMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement.AtAndByWithPrison
 import java.util.UUID
 
 @Transactional(readOnly = true)
 @Service
-class MovementRetriever(private val movementRepository: TemporaryAbsenceMovementRepository) {
+class MovementRetriever(private val movementRepository: AuditedTapMovementRepository) {
   fun getById(id: UUID): TapMovement = movementRepository.getMovement(id).forSync()
 }
 
-private fun TemporaryAbsenceMovement.forSync() = TapMovement(
+private fun AuditedTapMovement.forSync() = TapMovement(
   id = id,
   occurrenceId = occurrence?.id,
   personIdentifier = personIdentifier,
@@ -25,5 +27,6 @@ private fun TemporaryAbsenceMovement.forSync() = TapMovement(
   accompaniedByCode = accompaniedBy.code,
   accompaniedByNotes = accompaniedByNotes,
   notes = notes,
-  recordedByPrisonCode = recordedByPrisonCode,
+  created = AtAndByWithPrison(createdAt, createdBy, recordedByPrisonCode),
+  updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
 )

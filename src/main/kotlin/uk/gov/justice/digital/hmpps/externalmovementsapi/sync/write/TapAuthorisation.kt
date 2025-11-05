@@ -23,8 +23,8 @@ data class TapAuthorisation(
   val fromDate: LocalDate,
   val toDate: LocalDate,
   val notes: String?,
-  val submitted: AtAndBy,
-  val approved: AtAndBy?,
+  val created: AtAndBy,
+  val updated: AtAndBy?,
   val legacyId: Long,
 ) : ReferenceDataRequired {
   override fun requiredReferenceData() = setOfNotNull(

@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
@@ -74,7 +74,7 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf())
@@ -106,7 +106,7 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf())
@@ -137,7 +137,7 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf())
@@ -163,7 +163,7 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
@@ -192,7 +192,7 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
@@ -236,7 +236,7 @@ class SyncTapApplicationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
@@ -304,8 +304,8 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   assertThat(toDate).isEqualTo(request.toDate)
   assertThat(submittedAt).isCloseTo(request.audit.createDatetime, within(2, SECONDS))
   assertThat(submittedBy).isEqualTo(request.audit.createUsername)
-  approvedAt?.also {
-    assertThat(it).isCloseTo(request.approvedAt, within(2, SECONDS))
+  request.approvedAt?.also {
+    assertThat(approvedAt).isCloseTo(it, within(2, SECONDS))
   }
   assertThat(approvedBy).isEqualTo(request.approvedBy)
 }

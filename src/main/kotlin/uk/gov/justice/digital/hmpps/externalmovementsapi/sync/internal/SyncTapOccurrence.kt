@@ -3,14 +3,15 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovementRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TapOccurrenceActionRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.getAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
@@ -27,7 +28,6 @@ class SyncTapOccurrence(
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
-  private val occurrenceActionRepository: TapOccurrenceActionRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
   fun sync(authorisationId: UUID, request: TapOccurrence): SyncResponse {
@@ -38,15 +38,20 @@ class SyncTapOccurrence(
         request.id?.let { occurrenceRepository.findByIdOrNull(it) }
           ?: occurrenceRepository.findByLegacyId(request.legacyId)
         )
+        ?.also {
+          request.updated?.also { ExternalMovementContext.get().copy(requestAt = it.at, username = it.by).set() }
+        }
         ?.update(request, rdProvider)
-        ?: occurrenceRepository.save(request.asEntity(authorisation, rdProvider))
+        ?: let {
+          ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
+          occurrenceRepository.save(request.asEntity(authorisation, rdProvider))
+        }
     return SyncResponse(occurrence.id)
   }
 
   fun deleteById(id: UUID) {
     occurrenceRepository.findByIdOrNull(id)?.also { occurrence ->
       movementRepository.findByOccurrenceId(occurrence.id).also { movementRepository.deleteAll(it) }
-      occurrenceActionRepository.findByOccurrenceId(occurrence.id).also { occurrenceActionRepository.deleteAll(it) }
       occurrenceRepository.delete(occurrence)
     }
   }
@@ -63,10 +68,10 @@ class SyncTapOccurrence(
     transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, transportCode) as Transport,
     location = location,
     notes = notes,
-    addedAt = added.at,
-    addedBy = added.by,
-    cancelledAt = cancelled?.at,
-    cancelledBy = cancelled?.by,
+    addedAt = created.at,
+    addedBy = created.by,
+    cancelledAt = updated?.at,
+    cancelledBy = updated?.by,
     legacyId = legacyId,
     scheduleReference = null,
     id = id ?: newUuid(),

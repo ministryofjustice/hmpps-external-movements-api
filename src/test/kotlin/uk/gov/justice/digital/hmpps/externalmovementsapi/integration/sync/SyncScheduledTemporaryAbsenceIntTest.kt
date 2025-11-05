@@ -78,7 +78,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
@@ -156,7 +156,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapMovement
@@ -113,5 +113,6 @@ private fun TapMovementRequest.toNew() = TapMovement(
   escortText,
   commentText,
   TapMovement.AtAndByWithPrison(audit.createDatetime, audit.createUsername, prisonCodeOrDefault()),
+  audit.modifyDatetime?.let { AtAndBy(it, audit.modifyUserId ?: audit.createUsername) },
   legacyId,
 )

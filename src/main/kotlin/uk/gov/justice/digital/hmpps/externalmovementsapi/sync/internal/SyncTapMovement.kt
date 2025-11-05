@@ -3,10 +3,12 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement.Direction.valueOf
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovementRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.valueOf
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.getOccurrence
@@ -34,8 +36,14 @@ class SyncTapMovement(
     val rdProvider = referenceDataRepository.rdProvider(request)
     val movement =
       (request.id?.let { movementRepository.findByIdOrNull(it) } ?: movementRepository.findByLegacyId(request.legacyId))
+        ?.also {
+          request.updated?.also { ExternalMovementContext.get().copy(requestAt = it.at, username = it.by).set() }
+        }
         ?.update(personIdentifier, occurrence, request, rdProvider)
-        ?: movementRepository.save(request.asEntity(personIdentifier, occurrence, rdProvider))
+        ?: let {
+          ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
+          movementRepository.save(request.asEntity(personIdentifier, occurrence, rdProvider))
+        }
     return SyncResponse(movement.id)
   }
 
@@ -56,9 +64,9 @@ class SyncTapMovement(
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
     accompaniedByNotes = accompaniedByNotes,
     notes = notes,
-    recordedAt = recorded.at,
-    recordedBy = recorded.by,
-    recordedByPrisonCode = recorded.prisonCode,
+    recordedAt = created.at,
+    recordedBy = created.by,
+    recordedByPrisonCode = created.prisonCode,
     location = location,
     legacyId = legacyId,
     id = id ?: newUuid(),

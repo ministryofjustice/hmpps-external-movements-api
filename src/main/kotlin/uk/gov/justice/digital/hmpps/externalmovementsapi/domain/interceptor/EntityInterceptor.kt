@@ -30,9 +30,6 @@ class EntityInterceptor : Interceptor {
       entity.stateChangedEvent(getPreviousState)?.let { em.persist(HmppsDomainEvent(it)) }
       entity.domainEvents().forEach { em.persist(HmppsDomainEvent(it)) }
     }
-    if (entity is Actionable) {
-      entity.actions().forEach(em::persist)
-    }
 
     return super.onFlushDirty(entity, id, currentState, previousState, propertyNames, types)
   }

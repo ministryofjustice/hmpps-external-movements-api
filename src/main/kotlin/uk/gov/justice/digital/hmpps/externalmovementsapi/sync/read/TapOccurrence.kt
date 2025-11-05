@@ -17,6 +17,8 @@ data class TapOccurrence(
   val accompaniedByCode: String,
   val transportCode: String,
   val notes: String?,
+  val created: AtAndBy,
+  val updated: AtAndBy?,
 ) {
   @Schema(name = "SyncReadTapOccurrenceAuthorisation")
   data class Authorisation(
@@ -26,6 +28,7 @@ data class TapOccurrence(
     val absenceSubTypeCode: String?,
     val absenceReasonCode: String,
     val repeat: Boolean,
-    val submitted: AtAndBy,
+    val created: AtAndBy,
+    val updated: AtAndBy?,
   )
 }
