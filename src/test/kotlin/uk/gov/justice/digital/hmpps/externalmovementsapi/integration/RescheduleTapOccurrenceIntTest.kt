@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TapOccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
@@ -81,7 +80,6 @@ class RescheduleTapOccurrenceIntTest(
       RevisionType.MOD,
       setOf(
         TemporaryAbsenceOccurrence::class.simpleName!!,
-        TapOccurrenceAction::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME),

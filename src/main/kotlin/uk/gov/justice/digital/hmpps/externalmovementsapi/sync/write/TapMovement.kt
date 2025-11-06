@@ -1,12 +1,13 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -21,7 +22,8 @@ data class TapMovement(
   val accompaniedByCode: String,
   val accompaniedByNotes: String?,
   val notes: String?,
-  val recorded: AtAndByWithPrison,
+  val created: AtAndByWithPrison,
+  val updated: AtAndBy?,
   val legacyId: String,
 ) : ReferenceDataRequired {
   @Schema(name = "SyncAtAndByWithPrison")

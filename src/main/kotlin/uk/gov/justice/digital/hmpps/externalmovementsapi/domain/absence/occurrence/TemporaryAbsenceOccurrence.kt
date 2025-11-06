@@ -19,8 +19,7 @@ import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.Actionable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.CalculatedTapOccurrenceStatus
@@ -62,7 +61,6 @@ class TemporaryAbsenceOccurrence(
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
 ) : Identifiable,
-  Actionable,
   DomainEventProducer {
   @Size(max = 10)
   @NotNull
@@ -88,13 +86,13 @@ class TemporaryAbsenceOccurrence(
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(optional = false)
-  @JoinColumn(name = "accompanied_by_id")
+  @JoinColumn(name = "accompanied_by_id", nullable = false)
   var accompaniedBy: AccompaniedBy = accompaniedBy
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(optional = false)
-  @JoinColumn(name = "transport_id")
+  @JoinColumn(name = "transport_id", nullable = false)
   var transport: Transport = transport
     private set
 
@@ -153,10 +151,10 @@ class TemporaryAbsenceOccurrence(
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
     transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, request.transportCode) as Transport
     notes = request.notes
-    addedAt = request.added.at
-    addedBy = request.added.by
-    cancelledAt = request.cancelled?.at
-    cancelledBy = request.cancelled?.by
+    addedAt = request.created.at
+    addedBy = request.created.by
+    cancelledAt = request.updated?.at
+    cancelledBy = request.updated?.by
     legacyId = request.legacyId
   }
 
@@ -172,10 +170,6 @@ class TemporaryAbsenceOccurrence(
   @PostLoad
   private fun load() {
     appliedActions = listOf()
-  }
-
-  override fun actions(): List<TapOccurrenceAction> = appliedActions.map {
-    TapOccurrenceAction(this, it.type, it.reason)
   }
 
   override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.map { it.domainEvent(this) }.toSet()

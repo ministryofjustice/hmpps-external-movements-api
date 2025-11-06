@@ -17,11 +17,14 @@ data class TapOccurrence(
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   val location: Location,
+  val absenceTypeCode: String?,
+  val absenceSubTypeCode: String?,
+  val absenceReasonCode: String,
   val accompaniedByCode: String,
   val transportCode: String,
   val notes: String?,
-  val added: AtAndBy,
-  val cancelled: AtAndBy?,
+  val created: AtAndBy,
+  val updated: AtAndBy?,
   val legacyId: Long,
 ) : ReferenceDataRequired {
   override fun requiredReferenceData() = setOfNotNull(

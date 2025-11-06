@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
@@ -75,7 +75,7 @@ class SyncTapAuthorisationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf())
@@ -107,7 +107,7 @@ class SyncTapAuthorisationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf())
@@ -138,7 +138,7 @@ class SyncTapAuthorisationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf())
@@ -163,7 +163,7 @@ class SyncTapAuthorisationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
@@ -191,7 +191,7 @@ class SyncTapAuthorisationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
@@ -235,7 +235,7 @@ class SyncTapAuthorisationIntTest(
       saved,
       RevisionType.ADD,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
@@ -248,6 +248,7 @@ class SyncTapAuthorisationIntTest(
     typeCode: String? = "SR",
     subTypeCode: String? = "RDR",
     statusCode: String = "APPROVED",
+    accompaniedByCode: String = "L",
     repeat: Boolean = false,
     notes: String? = "Some notes about the application",
     fromDate: LocalDate = LocalDate.now().minusDays(7),
@@ -262,6 +263,7 @@ class SyncTapAuthorisationIntTest(
     typeCode,
     subTypeCode,
     reasonCode,
+    accompaniedByCode,
     repeat,
     fromDate,
     toDate,
@@ -299,9 +301,9 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   assertThat(notes).isEqualTo(request.notes)
   assertThat(fromDate).isEqualTo(request.fromDate)
   assertThat(toDate).isEqualTo(request.toDate)
-  assertThat(submittedAt).isCloseTo(request.submitted.at, within(2, SECONDS))
-  assertThat(submittedBy).isEqualTo(request.submitted.by)
-  request.approved?.also {
+  assertThat(submittedAt).isCloseTo(request.created.at, within(2, SECONDS))
+  assertThat(submittedBy).isEqualTo(request.created.by)
+  request.updated?.also {
     assertThat(approvedAt).isCloseTo(it.at, within(2, SECONDS))
     assertThat(approvedBy).isEqualTo(it.by)
   }

@@ -2,11 +2,11 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.getAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.AuditedTapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.AuditedTapAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.getAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.AuditedTapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.AuditedTapOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapAuthorisation
 import java.util.UUID
@@ -14,17 +14,17 @@ import java.util.UUID
 @Transactional(readOnly = true)
 @Service
 class AuthorisationRetriever(
-  private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
-  private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val authorisationRepository: AuditedTapAuthorisationRepository,
+  private val occurrenceRepository: AuditedTapOccurrenceRepository,
 ) {
   fun getById(id: UUID): TapAuthorisation {
     val authorisation = authorisationRepository.getAuthorisation(id)
     val occurrences = occurrenceRepository.findByAuthorisationId(authorisation.id)
-    return authorisation.with(occurrences.map { o -> o.asOccurrence() })
+    return authorisation.with(occurrences.map { o -> o.asOccurrence(authorisation) })
   }
 }
 
-private fun TemporaryAbsenceAuthorisation.with(
+private fun AuditedTapAuthorisation.with(
   occurrences: List<TapAuthorisation.Occurrence>,
 ) = TapAuthorisation(
   id = id,
@@ -34,21 +34,28 @@ private fun TemporaryAbsenceAuthorisation.with(
   absenceTypeCode = absenceType?.code,
   absenceSubTypeCode = absenceSubType?.code,
   absenceReasonCode = requireNotNull(absenceReason).code,
+  accompaniedByCode = occurrences.first().accompaniedByCode,
   repeat = repeat,
   fromDate = fromDate,
   toDate = toDate,
-  submitted = AtAndBy(submittedAt, submittedBy),
   notes = notes,
   occurrences = occurrences,
+  created = AtAndBy(createdAt, createdBy),
+  updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
 )
 
-private fun TemporaryAbsenceOccurrence.asOccurrence() = TapAuthorisation.Occurrence(
+private fun AuditedTapOccurrence.asOccurrence(authorisation: AuditedTapAuthorisation) = TapAuthorisation.Occurrence(
   id = id,
-  statusCode = requireNotNull(status).code,
+  statusCode = status.code,
   releaseAt = releaseAt,
   returnBy = returnBy,
   location = location,
+  absenceTypeCode = authorisation.absenceType?.code,
+  absenceSubTypeCode = authorisation.absenceSubType?.code,
+  absenceReasonCode = requireNotNull(authorisation.absenceReason).code,
   accompaniedByCode = accompaniedBy.code,
   transportCode = transport.code,
   notes = notes,
+  created = AtAndBy(createdAt, createdBy),
+  updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
 )

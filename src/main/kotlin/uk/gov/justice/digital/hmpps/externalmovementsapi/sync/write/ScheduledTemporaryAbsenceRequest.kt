@@ -13,6 +13,7 @@ data class ScheduledTemporaryAbsenceRequest(
   val id: UUID?,
   val eventId: Long,
   val eventStatus: String,
+  val eventSubType: String,
   val startTime: LocalDateTime,
   val returnTime: LocalDateTime,
   val location: TapLocation,
