@@ -20,7 +20,7 @@ class AuthorisationRetriever(
   fun getById(id: UUID): TapAuthorisation {
     val authorisation = authorisationRepository.getAuthorisation(id)
     val occurrences = occurrenceRepository.findByAuthorisationId(authorisation.id)
-    return authorisation.with(occurrences.map { o -> o.asOccurrence() })
+    return authorisation.with(occurrences.map { o -> o.asOccurrence(authorisation) })
   }
 }
 
@@ -34,6 +34,7 @@ private fun AuditedTapAuthorisation.with(
   absenceTypeCode = absenceType?.code,
   absenceSubTypeCode = absenceSubType?.code,
   absenceReasonCode = requireNotNull(absenceReason).code,
+  accompaniedByCode = occurrences.first().accompaniedByCode,
   repeat = repeat,
   fromDate = fromDate,
   toDate = toDate,
@@ -43,12 +44,15 @@ private fun AuditedTapAuthorisation.with(
   updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
 )
 
-private fun AuditedTapOccurrence.asOccurrence() = TapAuthorisation.Occurrence(
+private fun AuditedTapOccurrence.asOccurrence(authorisation: AuditedTapAuthorisation) = TapAuthorisation.Occurrence(
   id = id,
   statusCode = status.code,
   releaseAt = releaseAt,
   returnBy = returnBy,
   location = location,
+  absenceTypeCode = authorisation.absenceType?.code,
+  absenceSubTypeCode = authorisation.absenceSubType?.code,
+  absenceReasonCode = requireNotNull(authorisation.absenceReason).code,
   accompaniedByCode = accompaniedBy.code,
   transportCode = transport.code,
   notes = notes,

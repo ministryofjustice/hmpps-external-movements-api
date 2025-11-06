@@ -25,6 +25,9 @@ private fun AuditedTapOccurrence.forSync() = TapOccurrence(
   releaseAt = releaseAt,
   returnBy = returnBy,
   location = location,
+  absenceTypeCode = authorisation.absenceType?.code,
+  absenceSubTypeCode = authorisation.absenceSubType?.code,
+  absenceReasonCode = requireNotNull(authorisation.absenceReason).code,
   accompaniedByCode = accompaniedBy.code,
   transportCode = transport.code,
   notes = notes,
@@ -32,13 +35,4 @@ private fun AuditedTapOccurrence.forSync() = TapOccurrence(
   updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
 )
 
-private fun AuditedTapAuthorisation.forOccurrence() = TapOccurrence.Authorisation(
-  id = id,
-  statusCode = status.code,
-  absenceTypeCode = absenceType?.code,
-  absenceSubTypeCode = absenceSubType?.code,
-  absenceReasonCode = requireNotNull(absenceReason).code,
-  repeat = repeat,
-  created = AtAndBy(createdAt, createdBy),
-  updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
-)
+private fun AuditedTapAuthorisation.forOccurrence() = TapOccurrence.Authorisation(id = id)

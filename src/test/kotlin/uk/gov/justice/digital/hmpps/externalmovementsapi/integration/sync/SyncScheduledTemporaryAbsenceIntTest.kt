@@ -165,6 +165,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
   private fun scheduledAbsenceRequest(
     id: UUID? = null,
     eventStatus: String = "SCH",
+    eventSubType: String = "R15",
     startTime: LocalDateTime = LocalDateTime.now().minusDays(7),
     returnTime: LocalDateTime = LocalDateTime.now(),
     escortCode: String? = "L",
@@ -178,6 +179,7 @@ class SyncScheduledTemporaryAbsenceIntTest(
     id,
     eventId,
     eventStatus,
+    eventSubType,
     startTime,
     returnTime,
     location,
