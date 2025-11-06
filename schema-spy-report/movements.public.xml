@@ -8,7 +8,6 @@
       <table catalog="movements" name="audit_revision" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('audit_revision_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
             <child catalog="movements" column="rev_id" foreignKey="hmpps_domain_event_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="hmpps_domain_event_audit"/>
-            <child catalog="movements" column="rev_id" foreignKey="tap_occurrence_action_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="tap_occurrence_action_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_authorisation_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_movement_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_movement_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_occurrence_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_occurrence_audit"/>
@@ -22,6 +21,79 @@
             <column ascending="true" name="id"/>
          </index>
          <checkConstraint constraint="((source)::text = ANY ((ARRAY['DPS'::character varying, 'NOMIS'::character varying])::text[]))" name="ch_audit_revision_source"/>
+      </table>
+      <table catalog="movements" name="audited_tap_authorisation" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    taa.id,&#10;    taa.version,&#10;    taa.person_identifier,&#10;    taa.prison_code,&#10;    taa.absence_type_id,&#10;    taa.absence_sub_type_id,&#10;    taa.absence_reason_id,&#10;    taa.repeat,&#10;    taa.status_id,&#10;    taa.notes,&#10;    taa.submitted_at,&#10;    taa.submitted_by,&#10;    taa.approved_at,&#10;    taa.approved_by,&#10;    taa.legacy_id,&#10;    taa.from_date,&#10;    taa.to_date,&#10;    taa.schedule,&#10;    taa.absence_reason_category_id,&#10;    taa.reason_path&#10;   FROM ((((temporary_absence_authorisation taa&#10;     JOIN temporary_absence_authorisation_audit created_audit ON (((created_audit.id = taa.id) AND (created_audit.rev_type = 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id = created_audit.rev_id)))&#10;     LEFT JOIN temporary_absence_authorisation_audit updated_audit ON (((updated_audit.id = taa.id) AND (updated_audit.rev_type = 1) AND (updated_audit.rev_id = ( SELECT max(audit.rev_id) AS max&#10;           FROM temporary_absence_authorisation_audit audit&#10;          WHERE ((audit.id = taa.id) AND (audit.rev_type = 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id = updated_audit.rev_id)));">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="created_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="created_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="updated_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="updated_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="rev_type" nullable="true" remarks="" size="5" type="int2" typeCode="5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="version" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="person_identifier" nullable="true" remarks="" size="10" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="prison_code" nullable="true" remarks="" size="6" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="absence_type_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="absence_sub_type_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="absence_reason_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="repeat" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="status_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="notes" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="submitted_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="submitted_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="17" name="approved_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="approved_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="from_date" nullable="true" remarks="" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="to_date" nullable="true" remarks="" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="schedule" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="23" name="absence_reason_category_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="24" name="reason_path" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+      </table>
+      <table catalog="movements" name="audited_tap_movement" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    tam.id,&#10;    tam.version,&#10;    tam.person_identifier,&#10;    tam.occurrence_id,&#10;    tam.occurred_at,&#10;    tam.direction,&#10;    tam.absence_reason_id,&#10;    tam.accompanied_by_id,&#10;    tam.accompanied_by_notes,&#10;    tam.notes,&#10;    tam.recorded_at,&#10;    tam.recorded_by,&#10;    tam.recorded_by_prison_code,&#10;    tam.legacy_id,&#10;    tam.location&#10;   FROM ((((temporary_absence_movement tam&#10;     JOIN temporary_absence_movement_audit created_audit ON (((created_audit.id = tam.id) AND (created_audit.rev_type = 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id = created_audit.rev_id)))&#10;     LEFT JOIN temporary_absence_movement_audit updated_audit ON (((updated_audit.id = tam.id) AND (updated_audit.rev_type = 1) AND (updated_audit.rev_id = ( SELECT max(audit.rev_id) AS max&#10;           FROM temporary_absence_movement_audit audit&#10;          WHERE ((audit.id = tam.id) AND (audit.rev_type = 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id = updated_audit.rev_id)));">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="created_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="created_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="updated_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="updated_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="rev_type" nullable="true" remarks="" size="5" type="int2" typeCode="5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="version" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="person_identifier" nullable="true" remarks="" size="10" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="occurrence_id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="occurred_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="direction" nullable="true" remarks="" size="3" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="absence_reason_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="accompanied_by_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="accompanied_by_notes" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="notes" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="recorded_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="recorded_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="recorded_by_prison_code" nullable="true" remarks="" size="6" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="legacy_id" nullable="true" remarks="" size="32" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="location" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+      </table>
+      <table catalog="movements" name="audited_tap_occurrence" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    tao.id,&#10;    tao.version,&#10;    tao.person_identifier,&#10;    tao.authorisation_id,&#10;    tao.release_at,&#10;    tao.return_by,&#10;    tao.accompanied_by_id,&#10;    tao.transport_id,&#10;    tao.contact_information,&#10;    tao.notes,&#10;    tao.added_at,&#10;    tao.added_by,&#10;    tao.cancelled_at,&#10;    tao.cancelled_by,&#10;    tao.legacy_id,&#10;    tao.location,&#10;    tao.schedule_reference&#10;   FROM ((((temporary_absence_occurrence tao&#10;     JOIN temporary_absence_occurrence_audit created_audit ON (((created_audit.id = tao.id) AND (created_audit.rev_type = 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id = created_audit.rev_id)))&#10;     LEFT JOIN temporary_absence_occurrence_audit updated_audit ON (((updated_audit.id = tao.id) AND (updated_audit.rev_type = 1) AND (updated_audit.rev_id = ( SELECT max(audit.rev_id) AS max&#10;           FROM temporary_absence_occurrence_audit audit&#10;          WHERE ((audit.id = tao.id) AND (audit.rev_type = 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id = updated_audit.rev_id)));">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="created_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="created_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="updated_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="updated_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="rev_type" nullable="true" remarks="" size="5" type="int2" typeCode="5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="version" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="person_identifier" nullable="true" remarks="" size="10" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="authorisation_id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="release_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="return_by" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="accompanied_by_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="transport_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="contact_information" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="notes" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="added_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="added_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="17" name="cancelled_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="cancelled_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="location" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="schedule_reference" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
       </table>
       <table catalog="movements" name="hmpps_domain_event" remarks="" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
@@ -52,7 +124,7 @@
             <column ascending="true" name="rev_id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data" numRows="157" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
             <child catalog="movements" column="id" foreignKey="fk_reference_data_domain_link_reference_data" implied="false" onDeleteCascade="false" schema="public" table="reference_data_domain_link"/>
             <child catalog="movements" column="reference_data_id_1" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data_link"/>
@@ -111,7 +183,7 @@
             <column ascending="true" name="id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data_link" numRows="64" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data_link" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_link_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="reference_data_id_1" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
             <parent catalog="movements" column="id" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
@@ -127,34 +199,6 @@
          <index name="uq_reference_data_link_sequence_number" unique="true">
             <column ascending="true" name="reference_data_id_1"/>
             <column ascending="true" name="sequence_number"/>
-         </index>
-      </table>
-      <table catalog="movements" name="tap_occurrence_action" remarks="" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="occurrence_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
-            <parent catalog="movements" column="id" foreignKey="fk_tap_occurrence_action_occurrence_id" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_occurrence"/>
-         </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="type" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="reason" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
-         <primaryKey column="id" sequenceNumberInPK="1"/>
-         <index name="pk_tap_occurrence_action" unique="true">
-            <column ascending="true" name="id"/>
-         </index>
-      </table>
-      <table catalog="movements" name="tap_occurrence_action_audit" remarks="" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="rev_id" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
-            <parent catalog="movements" column="id" foreignKey="tap_occurrence_action_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="audit_revision"/>
-         </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="rev_type" nullable="false" remarks="" size="5" type="int2" typeCode="5"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="occurrence_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="type" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="reason" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
-         <primaryKey column="id" sequenceNumberInPK="1"/>
-         <primaryKey column="rev_id" sequenceNumberInPK="2"/>
-         <index name="pk_tap_occurrence_action_audit" unique="true">
-            <column ascending="true" name="id"/>
-            <column ascending="true" name="rev_id"/>
          </index>
       </table>
       <table catalog="movements" name="tap_occurrence_status" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT taos.occurrence_id AS id,&#10;    rd.domain,&#10;    rd.code,&#10;    rd.description&#10;   FROM ((reference_data rd&#10;     JOIN temporary_absence_occurrence_status taos ON ((taos.status_id = rd.id)))&#10;     JOIN temporary_absence_occurrence tao ON ((tao.id = taos.occurrence_id)));">
@@ -304,7 +348,6 @@
       </table>
       <table catalog="movements" name="temporary_absence_occurrence" remarks="" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
-            <child catalog="movements" column="occurrence_id" foreignKey="fk_tap_occurrence_action_occurrence_id" implied="false" onDeleteCascade="false" schema="public" table="tap_occurrence_action"/>
             <child catalog="movements" column="occurrence_id" foreignKey="fk_temporary_absence_movement_occurrence_id" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_movement"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
