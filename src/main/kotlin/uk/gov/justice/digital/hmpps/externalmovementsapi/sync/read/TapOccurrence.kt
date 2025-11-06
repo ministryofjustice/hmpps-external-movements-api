@@ -24,5 +24,9 @@ data class TapOccurrence(
   val updated: AtAndBy?,
 ) {
   @Schema(name = "SyncReadTapOccurrenceAuthorisation")
-  data class Authorisation(val id: UUID)
+  data class Authorisation(
+    val id: UUID,
+    val personIdentifier: String,
+    val prisonCode: String,
+  )
 }

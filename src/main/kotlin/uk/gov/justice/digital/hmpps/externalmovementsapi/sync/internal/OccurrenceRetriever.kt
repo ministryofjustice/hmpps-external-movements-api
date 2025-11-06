@@ -35,4 +35,4 @@ private fun AuditedTapOccurrence.forSync() = TapOccurrence(
   updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
 )
 
-private fun AuditedTapAuthorisation.forOccurrence() = TapOccurrence.Authorisation(id = id)
+private fun AuditedTapAuthorisation.forOccurrence() = TapOccurrence.Authorisation(id = id, personIdentifier = personIdentifier, prisonCode = prisonCode)
