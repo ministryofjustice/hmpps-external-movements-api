@@ -31,4 +31,5 @@ data class TapOccurrenceAuthorisation(
   val absenceSubType: CodedDescription?,
   val absenceReasonCategory: CodedDescription?,
   val absenceReason: CodedDescription?,
+  val repeat: Boolean,
 )

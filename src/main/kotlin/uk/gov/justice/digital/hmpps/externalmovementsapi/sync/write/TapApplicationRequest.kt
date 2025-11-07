@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
@@ -19,6 +20,7 @@ data class TapApplicationRequest(
   val eventSubType: String,
   val applicationDate: LocalDate,
   val applicationStatus: String,
+  val escort: String?,
   val comment: String?,
   val prisonId: String?,
   val contactPersonName: String?,
@@ -44,6 +46,7 @@ data class TapApplicationRequest(
     ABSENCE_REASON of eventSubType,
     temporaryAbsenceType?.let { ABSENCE_TYPE of it },
     temporaryAbsenceSubType?.let { ABSENCE_SUB_TYPE of it },
+    ACCOMPANIED_BY of escortOrDefault(),
   )
 
   fun reasonPath() = listOfNotNull(
@@ -65,6 +68,8 @@ data class TapApplicationRequest(
   } else {
     null
   }
+
+  fun escortOrDefault(): String = escort ?: "U"
 }
 
 data class NomisAudit(

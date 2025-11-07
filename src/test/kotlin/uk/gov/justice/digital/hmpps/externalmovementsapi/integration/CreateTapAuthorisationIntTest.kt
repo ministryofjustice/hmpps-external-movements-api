@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
@@ -175,6 +175,10 @@ class CreateTapAuthorisationIntTest(
   }
 
   private fun createTapOccurrenceRequest(
+    absenceTypeCode: String = "SR",
+    absenceSubTypeCode: String? = "RDR",
+    absenceReasonCategoryCode: String? = "PW",
+    absenceReasonCode: String? = "R15",
     releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     returnBy: LocalDateTime = LocalDateTime.now(),
     accompaniedByCode: String = "L",
@@ -184,6 +188,10 @@ class CreateTapAuthorisationIntTest(
     location: Location = location(),
     scheduleReference: JsonNode? = null,
   ) = CreateTapOccurrenceRequest(
+    absenceTypeCode = absenceTypeCode,
+    absenceSubTypeCode = absenceSubTypeCode,
+    absenceReasonCategoryCode = absenceReasonCategoryCode,
+    absenceReasonCode = absenceReasonCode,
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedByCode = accompaniedByCode,
@@ -206,12 +214,14 @@ class CreateTapAuthorisationIntTest(
     absenceSubTypeCode: String? = "RDR",
     absenceReasonCategoryCode: String? = "PW",
     absenceReasonCode: String? = "R15",
+    accompaniedByCode: String = "L",
     fromDate: LocalDate = LocalDate.now().minusDays(7),
     toDate: LocalDate = LocalDate.now().minusDays(1),
     statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
     occurrences: List<CreateTapOccurrenceRequest> = listOf(createTapOccurrenceRequest()),
     notes: String? = null,
     repeat: Boolean = false,
+    contactInformation: String? = null,
   ) = CreateTapAuthorisationRequest(
     absenceTypeCode,
     absenceSubTypeCode,
@@ -219,10 +229,12 @@ class CreateTapAuthorisationIntTest(
     absenceReasonCode,
     occurrences,
     statusCode,
+    accompaniedByCode,
     notes,
     repeat,
     fromDate,
     toDate,
+    contactInformation,
   )
 
   private fun createTapAuthorisation(

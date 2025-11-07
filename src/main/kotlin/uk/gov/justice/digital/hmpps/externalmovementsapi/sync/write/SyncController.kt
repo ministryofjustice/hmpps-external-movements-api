@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapMovement
@@ -47,21 +47,18 @@ class SyncController(
     @RequestBody request: TapMovementRequest,
   ): SyncResponse = movement.sync(personIdentifier, request.toNew())
 
-  @Operation(hidden = true)
   @PutMapping("/temporary-absence-authorisations/{personIdentifier}")
   fun syncTemporaryAbsenceAuthorisation(
     @PathVariable personIdentifier: String,
     @RequestBody request: TapAuthorisation,
   ): SyncResponse = authorisation.sync(personIdentifier, request)
 
-  @Operation(hidden = true)
   @PutMapping("/temporary-absence-authorisations/{authorisationId}/occurrences")
   fun syncTemporaryAbsenceOccurrence(
     @PathVariable authorisationId: UUID,
     @RequestBody request: TapOccurrence,
   ): SyncResponse = occurrence.sync(authorisationId, request)
 
-  @Operation(hidden = true)
   @PutMapping("/temporary-absence-movements/{personIdentifier}")
   fun syncTemporaryAbsenceMovement(
     @PathVariable personIdentifier: String,
@@ -76,6 +73,7 @@ private fun TapApplicationRequest.toNew() = TapAuthorisation(
   temporaryAbsenceType,
   temporaryAbsenceSubType,
   eventSubType,
+  escortOrDefault(),
   isRepeating(),
   fromDate,
   toDate,
@@ -91,6 +89,9 @@ private fun ScheduledTemporaryAbsenceRequest.toNew() = TapOccurrence(
   startTime,
   returnTime,
   location.asLocation(),
+  null,
+  null,
+  eventSubType,
   escortOrDefault(),
   transportTypeOrDefault(),
   comment,
@@ -113,5 +114,6 @@ private fun TapMovementRequest.toNew() = TapMovement(
   escortText,
   commentText,
   TapMovement.AtAndByWithPrison(audit.createDatetime, audit.createUsername, prisonCodeOrDefault()),
+  audit.modifyDatetime?.let { AtAndBy(it, audit.modifyUserId ?: audit.createUsername) },
   legacyId,
 )

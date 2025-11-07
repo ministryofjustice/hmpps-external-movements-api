@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation
 
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.Column
@@ -21,16 +21,19 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.FROM_DATE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.PERSON_IDENTIFIER
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation.Companion.TO_DATE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.FROM_DATE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON_IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.TO_DATE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.KEY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
@@ -59,6 +62,7 @@ class TemporaryAbsenceAuthorisation(
   absenceSubType: AbsenceSubType?,
   absenceReasonCategory: AbsenceReasonCategory?,
   absenceReason: AbsenceReason?,
+  accompaniedBy: AccompaniedBy,
   repeat: Boolean,
   status: TapAuthorisationStatus,
   notes: String?,
@@ -110,6 +114,12 @@ class TemporaryAbsenceAuthorisation(
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
   var absenceReason: AbsenceReason? = absenceReason
+    private set
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "accompanied_by_id", nullable = false)
+  var accompaniedBy: AccompaniedBy = accompaniedBy
     private set
 
   @NotNull
@@ -192,11 +202,11 @@ class TemporaryAbsenceAuthorisation(
     status =
       rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, request.statusCode) as TapAuthorisationStatus
     notes = request.notes
-    submittedAt = request.submitted.at
-    submittedBy = request.submitted.by
+    submittedAt = request.created.at
+    submittedBy = request.created.by
     legacyId = request.legacyId
-    approvedAt = request.approved?.at
-    approvedBy = request.approved?.by
+    approvedAt = request.updated?.at
+    approvedBy = request.updated?.by
     fromDate = request.fromDate
     toDate = request.toDate
   }

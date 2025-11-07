@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.4"
@@ -12,7 +13,7 @@ configurations {
 
 val hmppsKotlinVersion = "1.8.1"
 val sentryVersion = "8.25.0"
-val springDocVersion = "2.8.13"
+val springDocVersion = "2.8.14"
 val sqsStarterVersion = "5.6.1"
 val testContainersVersion = "1.21.3"
 val uuidGeneratorVersion = "5.1.1"
@@ -42,7 +43,8 @@ dependencies {
 }
 
 dependencyCheck {
-  analyzers.ossIndex.enabled = false
+  suppressionFiles.addAll(listOf("suppressions.xml", ".dependency-check-ignore.xml"))
+  nvd.datafeedUrl = "file:///opt/vulnz/cache"
 }
 
 kotlin {
@@ -50,7 +52,7 @@ kotlin {
 }
 
 tasks {
-  withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+  withType<KotlinCompile> {
     compilerOptions {
       jvmTarget = JVM_21
       freeCompilerArgs.addAll(

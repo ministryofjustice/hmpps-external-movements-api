@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -72,6 +72,9 @@ class RetrieveTapOccurrenceIntTest(
 private fun TapOccurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) {
   assertThat(id).isEqualTo(occurrence.id)
   authorisation.verifyAgainst(occurrence.authorisation)
+  assertThat(absenceTypeCode).isEqualTo(occurrence.absenceType?.code)
+  assertThat(absenceSubTypeCode).isEqualTo(occurrence.absenceSubType?.code)
+  assertThat(absenceReasonCode).isEqualTo(occurrence.absenceReason?.code)
   assertThat(statusCode).isEqualTo(occurrence.status?.code)
   assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
   assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))
@@ -82,10 +85,7 @@ private fun TapOccurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) 
 }
 
 private fun TapOccurrence.Authorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
-  assertThat(statusCode).isEqualTo(authorisation.status.code)
-  assertThat(absenceTypeCode).isEqualTo(authorisation.absenceType?.code)
-  assertThat(absenceSubTypeCode).isEqualTo(authorisation.absenceSubType?.code)
-  assertThat(absenceReasonCode).isEqualTo(authorisation.absenceReason?.code)
-  assertThat(repeat).isEqualTo(authorisation.repeat)
-  assertThat(submitted.at).isCloseTo(authorisation.submittedAt, within(2, SECONDS))
+  assertThat(id).isEqualTo(authorisation.id)
+  assertThat(personIdentifier).isEqualTo(authorisation.personIdentifier)
+  assertThat(prisonCode).isEqualTo(authorisation.prisonCode)
 }
