@@ -175,6 +175,10 @@ class CreateTapAuthorisationIntTest(
   }
 
   private fun createTapOccurrenceRequest(
+    absenceTypeCode: String = "SR",
+    absenceSubTypeCode: String? = "RDR",
+    absenceReasonCategoryCode: String? = "PW",
+    absenceReasonCode: String? = "R15",
     releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     returnBy: LocalDateTime = LocalDateTime.now(),
     accompaniedByCode: String = "L",
@@ -184,6 +188,10 @@ class CreateTapAuthorisationIntTest(
     location: Location = location(),
     scheduleReference: JsonNode? = null,
   ) = CreateTapOccurrenceRequest(
+    absenceTypeCode = absenceTypeCode,
+    absenceSubTypeCode = absenceSubTypeCode,
+    absenceReasonCategoryCode = absenceReasonCategoryCode,
+    absenceReasonCode = absenceReasonCode,
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedByCode = accompaniedByCode,
@@ -206,6 +214,7 @@ class CreateTapAuthorisationIntTest(
     absenceSubTypeCode: String? = "RDR",
     absenceReasonCategoryCode: String? = "PW",
     absenceReasonCode: String? = "R15",
+    accompaniedByCode: String = "L",
     fromDate: LocalDate = LocalDate.now().minusDays(7),
     toDate: LocalDate = LocalDate.now().minusDays(1),
     statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
@@ -219,6 +228,7 @@ class CreateTapAuthorisationIntTest(
     absenceReasonCode,
     occurrences,
     statusCode,
+    accompaniedByCode,
     notes,
     repeat,
     fromDate,

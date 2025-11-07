@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import java.time.LocalDate
@@ -43,6 +44,9 @@ class AuditedTapAuthorisation(
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
   val absenceReason: AbsenceReason?,
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "accompanied_by_id", nullable = false)
+  val accompaniedBy: AccompaniedBy,
   val repeat: Boolean,
   val fromDate: LocalDate,
   val toDate: LocalDate,

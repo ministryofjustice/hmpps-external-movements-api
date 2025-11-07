@@ -12,12 +12,19 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
 import java.util.UUID
@@ -32,7 +39,7 @@ class SyncTapOccurrence(
 ) {
   fun sync(authorisationId: UUID, request: TapOccurrence): SyncResponse {
     val authorisation = authorisationRepository.getAuthorisation(authorisationId)
-    val rdProvider = referenceDataRepository.rdProvider(request)
+    val rdPaths = referenceDataRepository.findRdWithPaths(request)
     val occurrence =
       (
         request.id?.let { occurrenceRepository.findByIdOrNull(it) }
@@ -41,10 +48,10 @@ class SyncTapOccurrence(
         ?.also {
           request.updated?.also { ExternalMovementContext.get().copy(requestAt = it.at, username = it.by).set() }
         }
-        ?.update(request, rdProvider)
+        ?.update(request, rdPaths)
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
-          occurrenceRepository.save(request.asEntity(authorisation, rdProvider))
+          occurrenceRepository.save(request.asEntity(authorisation, rdPaths))
         }
     return SyncResponse(occurrence.id)
   }
@@ -58,22 +65,43 @@ class SyncTapOccurrence(
 
   private fun TapOccurrence.asEntity(
     authorisation: TemporaryAbsenceAuthorisation,
-    rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
-  ) = TemporaryAbsenceOccurrence(
-    authorisation = authorisation,
-    releaseAt = releaseAt,
-    returnBy = returnBy,
-    contactInformation = null,
-    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
-    transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, transportCode) as Transport,
-    location = location,
-    notes = notes,
-    addedAt = created.at,
-    addedBy = created.by,
-    cancelledAt = updated?.at,
-    cancelledBy = updated?.by,
-    legacyId = legacyId,
-    scheduleReference = null,
-    id = id ?: newUuid(),
-  )
+    rdPaths: ReferenceDataPaths,
+  ): TemporaryAbsenceOccurrence {
+    val reasonPath = rdPaths.reasonPath()
+    val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
+      rdPaths.getReferenceData(it.domain, it.code)
+    }
+    return TemporaryAbsenceOccurrence(
+      authorisation = authorisation,
+      absenceType = absenceTypeCode?.let {
+        rdPaths.getReferenceData(
+          ReferenceDataDomain.Code.ABSENCE_TYPE,
+          it,
+        ) as AbsenceType
+      },
+      absenceSubType = absenceSubTypeCode?.let {
+        rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType
+      },
+      absenceReasonCategory = category as? AbsenceReasonCategory,
+      absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
+      releaseAt = releaseAt,
+      returnBy = returnBy,
+      contactInformation = null,
+      accompaniedBy = rdPaths.getReferenceData(
+        ReferenceDataDomain.Code.ACCOMPANIED_BY,
+        accompaniedByCode,
+      ) as AccompaniedBy,
+      transport = rdPaths.getReferenceData(ReferenceDataDomain.Code.TRANSPORT, transportCode) as Transport,
+      location = location,
+      notes = notes,
+      addedAt = created.at,
+      addedBy = created.by,
+      cancelledAt = updated?.at,
+      cancelledBy = updated?.by,
+      legacyId = legacyId,
+      reasonPath = reasonPath,
+      scheduleReference = null,
+      id = id ?: newUuid(),
+    )
+  }
 }
