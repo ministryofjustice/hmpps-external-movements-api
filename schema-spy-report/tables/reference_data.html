@@ -153,6 +153,11 @@
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                             <tr>
+                                                <td title="temporary_absence_authorisation.accompanied_by_id references reference_data.id via fk_temporary_absence_authorisation_accompanied_by_id"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.accompanied_by_id</span></td>
+                                                <td class="constraint detail">fk_temporary_absence_authorisation_accompanied_by_id</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
                                                 <td title="temporary_absence_authorisation.status_id references reference_data.id via fk_temporary_absence_authorisation_status_id"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.status_id</span></td>
                                                 <td class="constraint detail">fk_temporary_absence_authorisation_status_id</td>
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
@@ -165,6 +170,26 @@
                                             <tr>
                                                 <td title="temporary_absence_movement.accompanied_by_id references reference_data.id via fk_temporary_absence_movement_accompanied_by_id"><a href='temporary_absence_movement.html'>temporary_absence_movement</a><span class='relatedKey'>.accompanied_by_id</span></td>
                                                 <td class="constraint detail">fk_temporary_absence_movement_accompanied_by_id</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="temporary_absence_occurrence.absence_reason_category_id references reference_data.id via fk_temporary_absence_occurrence_absence_reason_category_id"><a href='temporary_absence_occurrence.html'>temporary_absence_occurrence</a><span class='relatedKey'>.absence_reason_category_id</span></td>
+                                                <td class="constraint detail">fk_temporary_absence_occurrence_absence_reason_category_id</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="temporary_absence_occurrence.absence_reason_id references reference_data.id via fk_temporary_absence_occurrence_absence_reason_id"><a href='temporary_absence_occurrence.html'>temporary_absence_occurrence</a><span class='relatedKey'>.absence_reason_id</span></td>
+                                                <td class="constraint detail">fk_temporary_absence_occurrence_absence_reason_id</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="temporary_absence_occurrence.absence_sub_type_id references reference_data.id via fk_temporary_absence_occurrence_absence_sub_type_id"><a href='temporary_absence_occurrence.html'>temporary_absence_occurrence</a><span class='relatedKey'>.absence_sub_type_id</span></td>
+                                                <td class="constraint detail">fk_temporary_absence_occurrence_absence_sub_type_id</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="temporary_absence_occurrence.absence_type_id references reference_data.id via fk_temporary_absence_occurrence_absence_type_id"><a href='temporary_absence_occurrence.html'>temporary_absence_occurrence</a><span class='relatedKey'>.absence_type_id</span></td>
+                                                <td class="constraint detail">fk_temporary_absence_occurrence_absence_type_id</td>
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                             <tr>
