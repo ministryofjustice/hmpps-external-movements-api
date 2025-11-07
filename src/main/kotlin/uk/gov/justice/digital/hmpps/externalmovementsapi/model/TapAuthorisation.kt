@@ -15,6 +15,7 @@ data class TapAuthorisation(
   val absenceSubType: CodedDescription?,
   val absenceReasonCategory: CodedDescription?,
   val absenceReason: CodedDescription?,
+  val accompaniedBy: CodedDescription,
   val repeat: Boolean,
   val fromDate: LocalDate,
   val toDate: LocalDate,
@@ -27,6 +28,10 @@ data class TapAuthorisation(
   data class Occurrence(
     val id: UUID,
     val status: CodedDescription,
+    val absenceType: CodedDescription?,
+    val absenceSubType: CodedDescription?,
+    val absenceReasonCategory: CodedDescription?,
+    val absenceReason: CodedDescription?,
     val releaseAt: LocalDateTime,
     val returnBy: LocalDateTime,
     val location: Location,

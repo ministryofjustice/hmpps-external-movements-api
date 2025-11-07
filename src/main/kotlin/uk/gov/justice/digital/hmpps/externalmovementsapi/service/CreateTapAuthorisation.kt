@@ -3,8 +3,8 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
@@ -58,7 +58,7 @@ class CreateTapAuthorisation(
       request.asAuthorisation(personIdentifier, prisoner.lastPrisonId, rdProvider, linkProvider),
     )
     tapOccurrenceRepository.saveAll(
-      request.occurrences.map { it.asOccurrence(authorisation, rdProvider) },
+      request.occurrences.map { it.asOccurrence(authorisation, rdProvider, request.contactInformation) },
     )
     return ReferenceId(authorisation.id)
   }
@@ -99,6 +99,7 @@ class CreateTapAuthorisation(
       repeat = repeat,
       reasonPath = ReasonPath(reasonPath()),
       schedule = schedule,
+      accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
       legacyId = null,
     )
   }
@@ -106,8 +107,13 @@ class CreateTapAuthorisation(
   fun CreateTapOccurrenceRequest.asOccurrence(
     authorisation: TemporaryAbsenceAuthorisation,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    contactInformation: String?,
   ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
     authorisation,
+    absenceType = absenceTypeCode?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType } ?: authorisation.absenceType,
+    absenceSubType = absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType } ?: authorisation.absenceSubType,
+    absenceReasonCategory = absenceReasonCategoryCode?.let { rdProvider(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory } ?: authorisation.absenceReasonCategory,
+    absenceReason = absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) as AbsenceReason } ?: authorisation.absenceReason,
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
@@ -123,8 +129,9 @@ class CreateTapAuthorisation(
     addedBy = authorisation.submittedBy,
     cancelledAt = null,
     cancelledBy = null,
-    contactInformation = contactInformation,
+    contactInformation = contactInformation ?: this.contactInformation,
     notes = notes,
+    reasonPath = authorisation.reasonPath,
     scheduleReference = scheduleReference,
     legacyId = null,
   )

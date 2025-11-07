@@ -16,10 +16,12 @@ data class TapAuthorisation(
   val absenceTypeCode: String?,
   val absenceSubTypeCode: String?,
   val absenceReasonCode: String,
+  val accompaniedByCode: String,
   val repeat: Boolean,
   val fromDate: LocalDate,
   val toDate: LocalDate,
-  val submitted: AtAndBy,
+  val created: AtAndBy,
+  val updated: AtAndBy?,
   val notes: String?,
   val occurrences: List<Occurrence>,
 ) {
@@ -30,8 +32,13 @@ data class TapAuthorisation(
     val releaseAt: LocalDateTime,
     val returnBy: LocalDateTime,
     val location: Location,
+    val absenceTypeCode: String?,
+    val absenceSubTypeCode: String?,
+    val absenceReasonCode: String,
     val accompaniedByCode: String,
     val transportCode: String,
     val notes: String?,
+    val created: AtAndBy,
+    val updated: AtAndBy?,
   )
 }

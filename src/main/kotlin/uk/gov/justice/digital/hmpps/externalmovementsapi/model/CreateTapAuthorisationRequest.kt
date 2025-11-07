@@ -28,10 +28,12 @@ data class CreateTapAuthorisationRequest(
   @Valid
   val occurrences: List<CreateTapOccurrenceRequest>,
   val statusCode: TapAuthorisationStatus.Code,
+  val accompaniedByCode: String = occurrences.first().accompaniedByCode,
   val notes: String?,
   val repeat: Boolean,
   val fromDate: LocalDate,
   val toDate: LocalDate,
+  val contactInformation: String?,
   @JsonIgnore
   val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,
   @JsonIgnore
@@ -57,6 +59,10 @@ data class CreateTapAuthorisationRequest(
 }
 
 data class CreateTapOccurrenceRequest(
+  val absenceTypeCode: String?,
+  val absenceSubTypeCode: String?,
+  val absenceReasonCategoryCode: String?,
+  val absenceReasonCode: String?,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   val accompaniedByCode: String,
@@ -67,8 +73,12 @@ data class CreateTapOccurrenceRequest(
   val notes: String?,
   val scheduleReference: JsonNode?,
 ) : ReferenceDataRequired {
-  override fun requiredReferenceData() = setOf(
-    ACCOMPANIED_BY of accompaniedByCode,
-    TRANSPORT of transportCode,
-  )
+  override fun requiredReferenceData() = buildSet {
+    add(ACCOMPANIED_BY of accompaniedByCode)
+    add(TRANSPORT of transportCode)
+    absenceTypeCode?.also { add(ABSENCE_TYPE of it) }
+    absenceSubTypeCode?.also { add(ABSENCE_SUB_TYPE of it) }
+    absenceReasonCategoryCode?.also { add(ABSENCE_REASON_CATEGORY of it) }
+    absenceReasonCode?.also { add(ABSENCE_REASON of it) }
+  }
 }

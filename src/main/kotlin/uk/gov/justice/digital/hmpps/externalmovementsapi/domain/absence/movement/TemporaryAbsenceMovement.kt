@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -19,7 +19,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.TemporaryAbsenceMovement.Direction.valueOf
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.valueOf
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
@@ -145,9 +146,9 @@ class TemporaryAbsenceMovement(
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
     accompaniedByNotes = request.accompaniedByNotes
     notes = request.notes
-    recordedAt = request.recorded.at
-    recordedBy = request.recorded.by
-    recordedByPrisonCode = request.recorded.prisonCode
+    recordedAt = request.created.at
+    recordedBy = request.created.by
+    recordedByPrisonCode = request.created.prisonCode
     location = request.location
     legacyId = request.legacyId
   }
