@@ -52,12 +52,12 @@
 <text text-anchor="start" x="275" y="-293.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">active</text>
 <polygon fill="none" stroke="#000000" points="398,-286.7 398,-308.7 465,-308.7 465,-286.7 398,-286.7"/>
 <text text-anchor="start" x="401" y="-294.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">bool[1]</text>
-<polygon fill="#ffffff" stroke="transparent" points="255,-267.7 255,-286.7 331,-286.7 331,-267.7 255,-267.7"/>
-<polygon fill="none" stroke="#000000" points="255,-267.7 255,-286.7 331,-286.7 331,-267.7 255,-267.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="255,-267.7 255,-286.7 312,-286.7 312,-267.7 255,-267.7"/>
+<polygon fill="none" stroke="#000000" points="255,-267.7 255,-286.7 312,-286.7 312,-267.7 255,-267.7"/>
 <text text-anchor="start" x="258" y="-273.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
-<polygon fill="#ffffff" stroke="transparent" points="331,-267.7 331,-286.7 398,-286.7 398,-267.7 331,-267.7"/>
-<polygon fill="none" stroke="#000000" points="331,-267.7 331,-286.7 398,-286.7 398,-267.7 331,-267.7"/>
-<text text-anchor="start" x="388.8862" y="-273.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="312,-267.7 312,-286.7 398,-286.7 398,-267.7 312,-267.7"/>
+<polygon fill="none" stroke="#000000" points="312,-267.7 312,-286.7 398,-286.7 398,-267.7 312,-267.7"/>
+<text text-anchor="start" x="350.3807" y="-273.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">157 rows</text>
 <polygon fill="#ffffff" stroke="transparent" points="398,-267.7 398,-286.7 465,-286.7 465,-267.7 398,-267.7"/>
 <polygon fill="none" stroke="#000000" points="398,-267.7 398,-286.7 465,-286.7 465,-267.7 398,-267.7"/>
 <text text-anchor="start" x="440.2904" y="-273.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">17 &gt;</text>
@@ -162,14 +162,14 @@
 <polygon fill="#ffffff" stroke="transparent" points="565,-281.7 565,-303.7 736,-303.7 736,-281.7 565,-281.7"/>
 <polygon fill="none" stroke="#000000" points="565,-281.7 565,-303.7 736,-303.7 736,-281.7 565,-281.7"/>
 <text text-anchor="start" x="593" y="-288.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">sequence_number</text>
-<polygon fill="#ffffff" stroke="transparent" points="565,-262.7 565,-281.7 649,-281.7 649,-262.7 565,-262.7"/>
-<polygon fill="none" stroke="#000000" points="565,-262.7 565,-281.7 649,-281.7 649,-262.7 565,-262.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="565,-262.7 565,-281.7 633,-281.7 633,-262.7 565,-262.7"/>
+<polygon fill="none" stroke="#000000" points="565,-262.7 565,-281.7 633,-281.7 633,-262.7 565,-262.7"/>
 <text text-anchor="start" x="568" y="-268.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 2</text>
-<polygon fill="#ffffff" stroke="transparent" points="649,-262.7 649,-281.7 692,-281.7 692,-262.7 649,-262.7"/>
-<polygon fill="none" stroke="#000000" points="649,-262.7 649,-281.7 692,-281.7 692,-262.7 649,-262.7"/>
-<text text-anchor="start" x="682.8862" y="-268.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="692,-262.7 692,-281.7 736,-281.7 736,-262.7 692,-262.7"/>
-<polygon fill="none" stroke="#000000" points="692,-262.7 692,-281.7 736,-281.7 736,-262.7 692,-262.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="633,-262.7 633,-281.7 700,-281.7 700,-262.7 633,-262.7"/>
+<polygon fill="none" stroke="#000000" points="633,-262.7 633,-281.7 700,-281.7 700,-262.7 633,-262.7"/>
+<text text-anchor="start" x="658.4956" y="-268.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">64 rows</text>
+<polygon fill="#ffffff" stroke="transparent" points="700,-262.7 700,-281.7 736,-281.7 736,-262.7 700,-262.7"/>
+<polygon fill="none" stroke="#000000" points="700,-262.7 700,-281.7 736,-281.7 736,-262.7 700,-262.7"/>
 <text text-anchor="start" x="726.8862" y="-268.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
 </a>
 </g>
