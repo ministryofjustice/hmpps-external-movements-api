@@ -58,7 +58,7 @@ class CreateTapAuthorisation(
       request.asAuthorisation(personIdentifier, prisoner.lastPrisonId, rdProvider, linkProvider),
     )
     tapOccurrenceRepository.saveAll(
-      request.occurrences.map { it.asOccurrence(authorisation, rdProvider) },
+      request.occurrences.map { it.asOccurrence(authorisation, rdProvider, request.contactInformation) },
     )
     return ReferenceId(authorisation.id)
   }
@@ -107,6 +107,7 @@ class CreateTapAuthorisation(
   fun CreateTapOccurrenceRequest.asOccurrence(
     authorisation: TemporaryAbsenceAuthorisation,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    contactInformation: String?,
   ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
     authorisation,
     absenceType = absenceTypeCode?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType } ?: authorisation.absenceType,
@@ -128,7 +129,7 @@ class CreateTapAuthorisation(
     addedBy = authorisation.submittedBy,
     cancelledAt = null,
     cancelledBy = null,
-    contactInformation = contactInformation,
+    contactInformation = contactInformation ?: this.contactInformation,
     notes = notes,
     reasonPath = authorisation.reasonPath,
     scheduleReference = scheduleReference,
