@@ -221,6 +221,7 @@ class CreateTapAuthorisationIntTest(
     occurrences: List<CreateTapOccurrenceRequest> = listOf(createTapOccurrenceRequest()),
     notes: String? = null,
     repeat: Boolean = false,
+    contactInformation: String? = null,
   ) = CreateTapAuthorisationRequest(
     absenceTypeCode,
     absenceSubTypeCode,
@@ -233,6 +234,7 @@ class CreateTapAuthorisationIntTest(
     repeat,
     fromDate,
     toDate,
+    contactInformation,
   )
 
   private fun createTapAuthorisation(
