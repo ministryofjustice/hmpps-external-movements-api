@@ -34,7 +34,7 @@ private fun AuditedTapAuthorisation.with(
   absenceTypeCode = absenceType?.code,
   absenceSubTypeCode = absenceSubType?.code,
   absenceReasonCode = requireNotNull(absenceReason).code,
-  accompaniedByCode = occurrences.first().accompaniedByCode,
+  accompaniedByCode = accompaniedBy.code,
   repeat = repeat,
   fromDate = fromDate,
   toDate = toDate,

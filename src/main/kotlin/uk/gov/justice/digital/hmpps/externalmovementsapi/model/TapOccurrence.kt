@@ -9,6 +9,10 @@ import java.util.UUID
 data class TapOccurrence(
   val id: UUID,
   val authorisation: Authorisation,
+  val absenceType: CodedDescription?,
+  val absenceSubType: CodedDescription?,
+  val absenceReasonCategory: CodedDescription?,
+  val absenceReason: CodedDescription?,
   val status: CodedDescription,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
@@ -29,6 +33,8 @@ data class TapOccurrence(
     val absenceSubType: CodedDescription?,
     val absenceReasonCategory: CodedDescription?,
     val absenceReason: CodedDescription?,
+    val accompaniedBy: CodedDescription,
+    val repeat: Boolean,
     val notes: String?,
   )
 }

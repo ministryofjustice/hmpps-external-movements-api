@@ -72,6 +72,9 @@ class RetrieveTapOccurrenceIntTest(
 private fun TapOccurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) {
   assertThat(id).isEqualTo(occurrence.id)
   authorisation.verifyAgainst(occurrence.authorisation)
+  assertThat(absenceTypeCode).isEqualTo(occurrence.absenceType?.code)
+  assertThat(absenceSubTypeCode).isEqualTo(occurrence.absenceSubType?.code)
+  assertThat(absenceReasonCode).isEqualTo(occurrence.absenceReason?.code)
   assertThat(statusCode).isEqualTo(occurrence.status?.code)
   assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
   assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))

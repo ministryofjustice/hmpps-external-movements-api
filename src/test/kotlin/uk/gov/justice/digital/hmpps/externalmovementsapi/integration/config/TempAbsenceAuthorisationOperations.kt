@@ -13,12 +13,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
@@ -46,6 +48,7 @@ interface TempAbsenceAuthorisationOperations {
       absenceSubType: String? = "RDR",
       absenceReasonCategory: String? = "PW",
       absenceReason: String? = "R15",
+      accompaniedByCode: String = "L",
       repeat: Boolean = false,
       notes: String? = "Some notes on the original authorisation",
       fromDate: LocalDate = LocalDate.now().minusDays(7),
@@ -73,6 +76,7 @@ interface TempAbsenceAuthorisationOperations {
         absenceSubType?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
         absenceReasonCategory?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory },
         absenceReason?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason },
+        rdSupplier(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
         repeat,
         rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
         notes,
@@ -97,6 +101,7 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
     assertThat(absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
     assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
+    assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
     assertThat(notes).isEqualTo(request.notes)
     assertThat(repeat).isEqualTo(request.repeat)
     assertThat(legacyId).isNull()
@@ -117,6 +122,7 @@ interface TempAbsenceAuthorisationOperations {
       verify(ABSENCE_REASON_CATEGORY, absenceReasonCategory, authorisation.absenceReasonCategory)
       verify(ABSENCE_REASON, absenceReason, authorisation.absenceReason)
     }
+    assertThat(accompaniedBy.code).isEqualTo(authorisation.accompaniedBy.code)
     assertThat(repeat).isEqualTo(authorisation.repeat)
     assertThat(fromDate).isEqualTo(authorisation.fromDate)
     assertThat(toDate).isEqualTo(authorisation.toDate)

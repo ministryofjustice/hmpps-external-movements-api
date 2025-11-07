@@ -76,6 +76,7 @@ private fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthor
   assertThat(absenceTypeCode).isEqualTo(authorisation.absenceType?.code)
   assertThat(absenceSubTypeCode).isEqualTo(authorisation.absenceSubType?.code)
   assertThat(absenceReasonCode).isEqualTo(authorisation.absenceReason?.code)
+  assertThat(accompaniedByCode).isEqualTo(authorisation.accompaniedBy.code)
   assertThat(repeat).isEqualTo(authorisation.repeat)
   assertThat(fromDate).isEqualTo(authorisation.fromDate)
   assertThat(toDate).isEqualTo(authorisation.toDate)

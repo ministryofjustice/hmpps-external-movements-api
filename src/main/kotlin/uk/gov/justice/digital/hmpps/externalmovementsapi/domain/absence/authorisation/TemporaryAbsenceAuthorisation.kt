@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.KEY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
@@ -61,6 +62,7 @@ class TemporaryAbsenceAuthorisation(
   absenceSubType: AbsenceSubType?,
   absenceReasonCategory: AbsenceReasonCategory?,
   absenceReason: AbsenceReason?,
+  accompaniedBy: AccompaniedBy,
   repeat: Boolean,
   status: TapAuthorisationStatus,
   notes: String?,
@@ -112,6 +114,12 @@ class TemporaryAbsenceAuthorisation(
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
   var absenceReason: AbsenceReason? = absenceReason
+    private set
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "accompanied_by_id", nullable = false)
+  var accompaniedBy: AccompaniedBy = accompaniedBy
     private set
 
   @NotNull

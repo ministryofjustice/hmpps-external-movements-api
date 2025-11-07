@@ -13,6 +13,10 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.AuditedTapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.CalculatedTapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
@@ -32,6 +36,18 @@ class AuditedTapOccurrence(
   @ManyToOne(optional = false)
   @JoinColumn(name = "id", insertable = false, updatable = false)
   val status: CalculatedTapOccurrenceStatus,
+  @ManyToOne
+  @JoinColumn(name = "absence_type_id")
+  val absenceType: AbsenceType?,
+  @ManyToOne
+  @JoinColumn(name = "absence_sub_type_id")
+  val absenceSubType: AbsenceSubType?,
+  @ManyToOne
+  @JoinColumn(name = "absence_reason_category_id")
+  val absenceReasonCategory: AbsenceReasonCategory?,
+  @ManyToOne
+  @JoinColumn(name = "absence_reason_id")
+  val absenceReason: AbsenceReason?,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   @ManyToOne(optional = false)

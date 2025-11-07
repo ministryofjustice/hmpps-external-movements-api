@@ -99,6 +99,7 @@ class CreateTapAuthorisation(
       repeat = repeat,
       reasonPath = ReasonPath(reasonPath()),
       schedule = schedule,
+      accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
       legacyId = null,
     )
   }
@@ -108,6 +109,10 @@ class CreateTapAuthorisation(
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
     authorisation,
+    absenceType = absenceTypeCode?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType } ?: authorisation.absenceType,
+    absenceSubType = absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType } ?: authorisation.absenceSubType,
+    absenceReasonCategory = absenceReasonCategoryCode?.let { rdProvider(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory } ?: authorisation.absenceReasonCategory,
+    absenceReason = absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) as AbsenceReason } ?: authorisation.absenceReason,
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
@@ -125,6 +130,7 @@ class CreateTapAuthorisation(
     cancelledBy = null,
     contactInformation = contactInformation,
     notes = notes,
+    reasonPath = authorisation.reasonPath,
     scheduleReference = scheduleReference,
     legacyId = null,
   )

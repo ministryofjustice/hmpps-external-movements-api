@@ -19,12 +19,21 @@ import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.CalculatedTapOccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
@@ -44,6 +53,10 @@ class TemporaryAbsenceOccurrence(
   @ManyToOne
   @JoinColumn(name = "authorisation_id", updatable = false)
   val authorisation: TemporaryAbsenceAuthorisation,
+  absenceType: AbsenceType?,
+  absenceSubType: AbsenceSubType?,
+  absenceReasonCategory: AbsenceReasonCategory?,
+  absenceReason: AbsenceReason?,
   releaseAt: LocalDateTime,
   returnBy: LocalDateTime,
   accompaniedBy: AccompaniedBy,
@@ -55,6 +68,7 @@ class TemporaryAbsenceOccurrence(
   addedBy: String,
   cancelledAt: LocalDateTime?,
   cancelledBy: String?,
+  reasonPath: ReasonPath,
   scheduleReference: JsonNode?,
   legacyId: Long?,
   @Id
@@ -72,6 +86,30 @@ class TemporaryAbsenceOccurrence(
   @ManyToOne
   @JoinColumn(name = "id", insertable = false, updatable = false)
   var status: CalculatedTapOccurrenceStatus? = null
+    private set
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne
+  @JoinColumn(name = "absence_type_id")
+  var absenceType: AbsenceType? = absenceType
+    private set
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne
+  @JoinColumn(name = "absence_sub_type_id")
+  var absenceSubType: AbsenceSubType? = absenceSubType
+    private set
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne
+  @JoinColumn(name = "absence_reason_category_id")
+  var absenceReasonCategory: AbsenceReasonCategory? = absenceReasonCategory
+    private set
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne
+  @JoinColumn(name = "absence_reason_id")
+  var absenceReason: AbsenceReason? = absenceReason
     private set
 
   @NotNull
@@ -128,6 +166,11 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "reason_path")
+  var reasonPath: ReasonPath = reasonPath
+    private set
+
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "schedule_reference")
   var scheduleReference: JsonNode? = scheduleReference
     private set
@@ -142,14 +185,22 @@ class TemporaryAbsenceOccurrence(
 
   fun update(
     request: TapOccurrence,
-    rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdPaths: ReferenceDataPaths,
   ) = apply {
+    reasonPath = rdPaths.reasonPath()
+    absenceType = request.absenceTypeCode?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType }
+    absenceSubType =
+      request.absenceSubTypeCode?.let { rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
+    absenceReasonCategory = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
+      rdPaths.getReferenceData(it.domain, it.code)
+    } as? AbsenceReasonCategory
+    absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, request.absenceReasonCode) as AbsenceReason
     releaseAt = request.releaseAt
     returnBy = request.returnBy
     contactInformation = null
     location = request.location
-    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
-    transport = rdProvider(ReferenceDataDomain.Code.TRANSPORT, request.transportCode) as Transport
+    accompaniedBy = rdPaths.getReferenceData(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
+    transport = rdPaths.getReferenceData(ReferenceDataDomain.Code.TRANSPORT, request.transportCode) as Transport
     notes = request.notes
     addedAt = request.created.at
     addedBy = request.created.by
