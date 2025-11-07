@@ -58,7 +58,7 @@ class CreateTapAuthorisation(
       request.asAuthorisation(personIdentifier, prisoner.lastPrisonId, rdProvider, linkProvider),
     )
     tapOccurrenceRepository.saveAll(
-      request.occurrences.map { it.asOccurrence(authorisation, rdProvider, request.contactInformation) },
+      request.occurrences.map { it.asOccurrence(authorisation, rdProvider, request) },
     )
     return ReferenceId(authorisation.id)
   }
@@ -107,17 +107,24 @@ class CreateTapAuthorisation(
   fun CreateTapOccurrenceRequest.asOccurrence(
     authorisation: TemporaryAbsenceAuthorisation,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
-    contactInformation: String?,
+    authRequest: CreateTapAuthorisationRequest,
   ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
     authorisation,
     absenceType = absenceTypeCode?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType } ?: authorisation.absenceType,
-    absenceSubType = absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType } ?: authorisation.absenceSubType,
-    absenceReasonCategory = absenceReasonCategoryCode?.let { rdProvider(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory } ?: authorisation.absenceReasonCategory,
-    absenceReason = absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) as AbsenceReason } ?: authorisation.absenceReason,
+    absenceSubType = absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
+      ?: authorisation.absenceSubType,
+    absenceReasonCategory = absenceReasonCategoryCode?.let {
+      rdProvider(
+        ABSENCE_REASON_CATEGORY,
+        it,
+      ) as AbsenceReasonCategory
+    } ?: authorisation.absenceReasonCategory,
+    absenceReason = absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) as AbsenceReason }
+      ?: authorisation.absenceReason,
     releaseAt = releaseAt,
     returnBy = returnBy,
-    accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
-    transport = rdProvider(TRANSPORT, transportCode) as Transport,
+    accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode ?: authRequest.accompaniedByCode) as AccompaniedBy,
+    transport = rdProvider(TRANSPORT, transportCode ?: authRequest.transportCode) as Transport,
     location = location.let {
       if (it.address?.isEmpty() == true) {
         it.copy(address = null)
@@ -129,7 +136,7 @@ class CreateTapAuthorisation(
     addedBy = authorisation.submittedBy,
     cancelledAt = null,
     cancelledBy = null,
-    contactInformation = contactInformation ?: this.contactInformation,
+    contactInformation = authRequest.contactInformation ?: this.contactInformation,
     notes = notes,
     reasonPath = authorisation.reasonPath,
     scheduleReference = scheduleReference,
