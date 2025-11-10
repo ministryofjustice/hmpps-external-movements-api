@@ -62,7 +62,7 @@ class TemporaryAbsenceMovement(
   @ManyToOne
   @JoinColumn(name = "occurrence_id")
   var occurrence: TemporaryAbsenceOccurrence? = occurrence
-    private set
+    internal set
 
   @NotNull
   @Column(name = "occurred_at", nullable = false)

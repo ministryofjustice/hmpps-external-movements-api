@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.CalculatedTapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -30,12 +30,12 @@ import java.util.UUID
 @Table(name = "audited_tap_occurrence")
 class AuditedTapOccurrence(
   @ManyToOne
-  @JoinColumn(name = "authorisation_id", updatable = false)
+  @JoinColumn(name = "authorisation_id", updatable = false, nullable = false)
   val authorisation: AuditedTapAuthorisation,
   val personIdentifier: String,
   @ManyToOne(optional = false)
-  @JoinColumn(name = "id", insertable = false, updatable = false)
-  val status: CalculatedTapOccurrenceStatus,
+  @JoinColumn(name = "status_id", nullable = false)
+  val status: TapOccurrenceStatus,
   @ManyToOne
   @JoinColumn(name = "absence_type_id")
   val absenceType: AbsenceType?,

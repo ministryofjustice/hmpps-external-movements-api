@@ -47,7 +47,11 @@ class SearchTapOccurrence(
   private fun TemporaryAbsenceOccurrence.with(person: Person) = TapOccurrenceResult(
     id = id,
     authorisation = authorisation.asOccurrenceAuth(person),
-    status = requireNotNull(status).asCodedDescription(),
+    status = status.asCodedDescription(),
+    absenceType = absenceType?.asCodedDescription(),
+    absenceSubType = absenceSubType?.asCodedDescription(),
+    absenceReasonCategory = absenceReasonCategory?.asCodedDescription(),
+    absenceReason = absenceReason?.asCodedDescription(),
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedBy = accompaniedBy.asCodedDescription(),

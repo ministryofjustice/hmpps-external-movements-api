@@ -16,7 +16,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
@@ -48,7 +53,12 @@ class SyncTapMovement(
   }
 
   fun deleteById(id: UUID) {
-    movementRepository.findByIdOrNull(id)?.also(movementRepository::delete)
+    movementRepository.findByIdOrNull(id)?.also {
+      it.occurrence?.removeMovement(it) { statusCode ->
+        referenceDataRepository.findByKey(TAP_OCCURRENCE_STATUS of statusCode) as TapOccurrenceStatus
+      }
+      movementRepository.delete(it)
+    }
   }
 
   private fun TapMovement.asEntity(
@@ -57,11 +67,13 @@ class SyncTapMovement(
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = TemporaryAbsenceMovement(
     personIdentifier = personIdentifier,
-    occurrence = occurrence,
+    occurrence = occurrence?.calculateStatus {
+      referenceDataRepository.findByKey(TAP_OCCURRENCE_STATUS of it) as TapOccurrenceStatus
+    },
     occurredAt = occurredAt,
     direction = valueOf(direction.name),
-    absenceReason = rdProvider(ReferenceDataDomain.Code.ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
-    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
+    absenceReason = rdProvider(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
+    accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
     accompaniedByNotes = accompaniedByNotes,
     notes = notes,
     recordedAt = created.at,

@@ -10,11 +10,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDate
@@ -45,12 +47,14 @@ data class CreateTapAuthorisationRequest(
   val approvedBy: String? = if (statusCode == APPROVED) ExternalMovementContext.get().username else null,
   val schedule: JsonNode? = null,
 ) : ReferenceDataRequired {
+
   override fun requiredReferenceData() = buildSet {
     addAll(reasonPath())
     add(TAP_AUTHORISATION_STATUS of statusCode.name)
     add(ACCOMPANIED_BY of accompaniedByCode)
     add(TRANSPORT of transportCode)
     addAll(occurrences.flatMap(CreateTapOccurrenceRequest::requiredReferenceData))
+    addAll(TapOccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name })
   }
 
   fun reasonPath(): List<ReferenceDataKey> = buildList {

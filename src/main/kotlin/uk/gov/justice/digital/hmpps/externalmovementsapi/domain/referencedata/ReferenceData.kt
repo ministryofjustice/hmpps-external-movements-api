@@ -93,6 +93,8 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
 
   fun findByKeyIn(keys: Set<ReferenceDataKey>): List<ReferenceData>
 
+  fun findByKey(key: ReferenceDataKey): ReferenceData?
+
   @Query(
     """
     select rdl.rd2 as referenceData from ReferenceDataLink rdl
@@ -111,6 +113,8 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
   )
   fun findLinkedFrom(id: Long): ReferenceData?
 }
+
+fun ReferenceDataRepository.getByKey(key: ReferenceDataKey): ReferenceData = findByKey(key) ?: throw NotFoundException("${key.domain} not found")
 
 fun ReferenceDataRepository.findRdWithPaths(rdr: ReferenceDataRequired): ReferenceDataPaths = ReferenceDataPaths(findMatchingWithDomainLink(rdr.requiredReferenceData()), { id: Long -> findLinkedFrom(id) })
 
