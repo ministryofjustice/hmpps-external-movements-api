@@ -7,4 +7,4 @@ integration:
     url: "https://prisoner-search-dev.prison.service.justice.gov.uk"
 
 service:
-  active-prisons: "MDI"
+  active-prisons: "LEI,MDI"
