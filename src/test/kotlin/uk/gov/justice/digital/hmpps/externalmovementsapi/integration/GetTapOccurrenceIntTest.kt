@@ -162,8 +162,13 @@ class GetTapOccurrenceIntTest(
   fun `can retrieve overdue occurrence`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().minusHours(2)))
-    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(OUT, occurrence = occurrence))
+      givenTemporaryAbsenceOccurrence(
+        temporaryAbsenceOccurrence(
+          auth,
+          returnBy = LocalDateTime.now().minusHours(2),
+          movements = listOf(temporaryAbsenceMovement(OUT)),
+        ),
+      )
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
@@ -179,8 +184,13 @@ class GetTapOccurrenceIntTest(
   fun `can retrieve in progress occurrence`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().plusHours(2)))
-    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(OUT, occurrence = occurrence))
+      givenTemporaryAbsenceOccurrence(
+        temporaryAbsenceOccurrence(
+          auth,
+          returnBy = LocalDateTime.now().plusHours(2),
+          movements = listOf(temporaryAbsenceMovement(OUT)),
+        ),
+      )
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
@@ -200,22 +210,19 @@ class GetTapOccurrenceIntTest(
         auth,
         releaseAt = LocalDateTime.now().minusHours(4),
         returnBy = LocalDateTime.now().plusHours(2),
+        movements = listOf(
+          temporaryAbsenceMovement(
+            OUT,
+            occurredAt = LocalDateTime.now().minusHours(4),
+          ),
+          temporaryAbsenceMovement(
+            IN,
+            occurredAt = LocalDateTime.now(),
+          ),
+        ),
       ),
     )
-    givenTemporaryAbsenceMovement(
-      temporaryAbsenceMovement(
-        OUT,
-        occurrence = occurrence,
-        occurredAt = LocalDateTime.now().minusHours(4),
-      ),
-    )
-    givenTemporaryAbsenceMovement(
-      temporaryAbsenceMovement(
-        IN,
-        occurrence = occurrence,
-        occurredAt = LocalDateTime.now(),
-      ),
-    )
+
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)

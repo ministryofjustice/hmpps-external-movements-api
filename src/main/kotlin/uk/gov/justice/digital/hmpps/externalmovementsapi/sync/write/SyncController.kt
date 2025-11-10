@@ -85,7 +85,15 @@ private fun TapApplicationRequest.toNew() = TapAuthorisation(
 
 private fun ScheduledTemporaryAbsenceRequest.toNew() = TapOccurrence(
   id,
-  eventStatus,
+  when (eventStatus) {
+    "PEN" -> "PENDING"
+    "SCH" -> "SCHEDULED"
+    "COMP" -> "COMPLETED"
+    "EXP" -> "EXPIRED"
+    "CANC" -> "CANCELLED"
+    "DEN" -> "DENIED"
+    else -> throw IllegalArgumentException("Unexpected event status")
+  },
   startTime,
   returnTime,
   location.asLocation(),

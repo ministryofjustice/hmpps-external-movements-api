@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
@@ -23,8 +24,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
@@ -45,7 +48,12 @@ interface TempAbsenceOccurrenceOperations {
 
   companion object {
 
-    fun location(description: String? = name(10), address: String? = null, postcode: String? = postcode(), uprn: String? = "${newUuid()}") = Location(description, address, postcode, uprn)
+    fun location(
+      description: String? = name(10),
+      address: String? = null,
+      postcode: String? = postcode(),
+      uprn: String? = "${newUuid()}",
+    ) = Location(description, address, postcode, uprn)
 
     fun temporaryAbsenceOccurrence(
       authorisation: TemporaryAbsenceAuthorisation,
@@ -74,13 +82,19 @@ interface TempAbsenceOccurrenceOperations {
       ),
       scheduleReference: JsonNode? = null,
       legacyId: Long? = null,
+      movements: List<((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceMovement> = listOf(),
     ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceOccurrence = { rdSupplier ->
-      TemporaryAbsenceOccurrence(
+      val occurrence = TemporaryAbsenceOccurrence(
         authorisation = authorisation,
-        absenceType?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType },
-        absenceSubType?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
-        absenceReasonCategory?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory },
-        absenceReason?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason },
+        absenceType = absenceType?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType },
+        absenceSubType = absenceSubType?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
+        absenceReasonCategory = absenceReasonCategory?.let {
+          rdSupplier(
+            ABSENCE_REASON_CATEGORY,
+            it,
+          ) as AbsenceReasonCategory
+        },
+        absenceReason = absenceReason?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason },
         releaseAt = releaseAt,
         returnBy = returnBy,
         location = location,
@@ -96,6 +110,16 @@ interface TempAbsenceOccurrenceOperations {
         scheduleReference = scheduleReference,
         legacyId = legacyId,
       )
+      movements.forEach {
+        occurrence.addMovement(it(rdSupplier)) { statusCode ->
+          rdSupplier(TAP_OCCURRENCE_STATUS, statusCode) as TapOccurrenceStatus
+        }
+      }
+      if (movements.isEmpty()) {
+        occurrence.calculateStatus { rdSupplier(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus }
+      } else {
+        occurrence
+      }
     }
   }
 

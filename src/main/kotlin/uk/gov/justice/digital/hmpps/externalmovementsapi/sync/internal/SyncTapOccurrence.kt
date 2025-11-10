@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
@@ -51,7 +52,11 @@ class SyncTapOccurrence(
         ?.update(request, rdPaths)
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
-          occurrenceRepository.save(request.asEntity(authorisation, rdPaths))
+          occurrenceRepository.save(
+            request.asEntity(authorisation, rdPaths).calculateStatus {
+              rdPaths.getReferenceData(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
+            },
+          )
         }
     return SyncResponse(occurrence.id)
   }
