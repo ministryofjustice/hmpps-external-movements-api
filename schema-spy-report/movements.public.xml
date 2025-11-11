@@ -131,7 +131,7 @@
             <column ascending="true" name="rev_id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data" numRows="157" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
             <child catalog="movements" column="id" foreignKey="fk_reference_data_domain_link_reference_data" implied="false" onDeleteCascade="false" schema="public" table="reference_data_domain_link"/>
             <child catalog="movements" column="reference_data_id_1" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data_link"/>
@@ -196,7 +196,7 @@
             <column ascending="true" name="id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data_link" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data_link" numRows="64" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_link_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="reference_data_id_1" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
             <parent catalog="movements" column="id" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
@@ -213,12 +213,6 @@
             <column ascending="true" name="reference_data_id_1"/>
             <column ascending="true" name="sequence_number"/>
          </index>
-      </table>
-      <table catalog="movements" name="tap_occurrence_status" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT taos.occurrence_id AS id,&#10;    rd.domain,&#10;    rd.code,&#10;    rd.description&#10;   FROM ((reference_data rd&#10;     JOIN temporary_absence_occurrence_status taos ON ((taos.status_id = rd.id)))&#10;     JOIN temporary_absence_occurrence tao ON ((tao.id = taos.occurrence_id)));">
-         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="domain" nullable="true" remarks="" size="32" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="code" nullable="true" remarks="" size="16" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="description" nullable="true" remarks="" size="255" type="varchar" typeCode="12"/>
       </table>
       <table catalog="movements" name="temporary_absence_authorisation" remarks="" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
@@ -455,10 +449,6 @@
             <column ascending="true" name="id"/>
             <column ascending="true" name="rev_id"/>
          </index>
-      </table>
-      <table catalog="movements" name="temporary_absence_occurrence_status" numRows="0" remarks="" schema="public" type="VIEW" viewSql=" SELECT id AS occurrence_id,&#10;    ( SELECT reference_data.id&#10;           FROM reference_data&#10;          WHERE (((reference_data.domain)::text = 'TAP_OCCURRENCE_STATUS'::text) AND ((reference_data.code)::text = (get_occurrence_status_code(tao.id))::text))) AS status_id&#10;   FROM temporary_absence_occurrence tao;">
-         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="occurrence_id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="status_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
       </table>
    </tables>
 </database>
