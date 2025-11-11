@@ -85,7 +85,7 @@ class SyncTapOccurrenceIntTest(
   @Test
   fun `200 ok scheduled absence updated successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
+    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId(), addedBy = DEFAULT_USERNAME))
     val request = tapOccurrence(
       id = existing.id,
       legacyId = existing.legacyId!!,
@@ -124,7 +124,7 @@ class SyncTapOccurrenceIntTest(
   @Test
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
+    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId(), addedBy = DEFAULT_USERNAME))
     val request = tapOccurrence(legacyId = existing.legacyId!!, accompaniedByCode = "U")
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
@@ -184,7 +184,7 @@ class SyncTapOccurrenceIntTest(
     transportCode: String = "OD",
     location: Location = location(),
     notes: String? = "Some notes about the absence",
-    added: AtAndBy = AtAndBy(LocalDateTime.now(), DEFAULT_USERNAME),
+    added: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), DEFAULT_USERNAME),
     cancelled: AtAndBy? = null,
     legacyId: Long = newId(),
   ) = TapOccurrence(

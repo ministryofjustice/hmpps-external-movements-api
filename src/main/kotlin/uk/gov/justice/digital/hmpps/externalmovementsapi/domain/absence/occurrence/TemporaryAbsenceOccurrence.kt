@@ -29,28 +29,30 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ExpireOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.MarkOccurrenceOverdue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
-import java.time.temporal.ChronoUnit
 import java.util.Collections.unmodifiableList
 import java.util.UUID
 
@@ -207,49 +209,6 @@ class TemporaryAbsenceOccurrence(
     calculateStatus(statusProvider)
   }
 
-  fun update(
-    request: TapOccurrence,
-    rdPaths: ReferenceDataPaths,
-  ) = apply {
-    reasonPath = rdPaths.reasonPath()
-    absenceType = request.absenceTypeCode?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType }
-    absenceSubType =
-      request.absenceSubTypeCode?.let { rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
-    absenceReasonCategory = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
-      rdPaths.getReferenceData(it.domain, it.code)
-    } as? AbsenceReasonCategory
-    absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, request.absenceReasonCode) as AbsenceReason
-    if (!request.releaseAt.truncatedTo(ChronoUnit.SECONDS).isEqual(releaseAt.truncatedTo(ChronoUnit.SECONDS)) ||
-      !request.returnBy.truncatedTo(ChronoUnit.SECONDS).isEqual(returnBy.truncatedTo(ChronoUnit.SECONDS))
-    ) {
-      releaseAt = request.releaseAt
-      returnBy = request.returnBy
-      appliedActions += RescheduleOccurrence(releaseAt, returnBy, null)
-    }
-    contactInformation = null
-    location = request.location
-    accompaniedBy =
-      rdPaths.getReferenceData(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
-    transport = rdPaths.getReferenceData(ReferenceDataDomain.Code.TRANSPORT, request.transportCode) as Transport
-    notes = request.notes
-    addedAt = request.created.at
-    addedBy = request.created.by
-    if (request.statusCode in listOf(
-        TapOccurrenceStatus.Code.CANCELLED.name,
-        TapOccurrenceStatus.Code.DENIED.name,
-      ) &&
-      request.updated != null
-    ) {
-      cancelledAt = request.updated.at
-      cancelledBy = request.updated.by
-      appliedActions += CancelOccurrence()
-    }
-    legacyId = request.legacyId
-    calculateStatus {
-      rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
-    }
-  }
-
   override fun initialEvent(): DomainEvent<*>? = if (authorisation.status.code == TapAuthorisationStatus.Code.APPROVED.name) {
     TemporaryAbsenceScheduled(personIdentifier, id)
   } else {
@@ -264,11 +223,53 @@ class TemporaryAbsenceOccurrence(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.map { it.domainEvent(this) }.toSet()
+  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+
+  fun changeReason(action: ChangeOccurrenceReason, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+    absenceType = action.absenceTypeCode?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType }
+    absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
+    absenceReasonCategory =
+      action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
+    absenceReason = action.absenceReasonCode?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason }
+    reasonPath = action.reasonPath
+    appliedActions += action
+  }
 
   fun reschedule(action: RescheduleOccurrence) {
     action.releaseAt?.also { releaseAt = it }
     action.returnBy?.also { returnBy = it }
+    appliedActions += action
+  }
+
+  fun changeLocation(action: ChangeOccurrenceLocation) {
+    location = action.location
+    appliedActions += action
+  }
+
+  fun changeAccompaniment(
+    action: ChangeOccurrenceAccompaniment,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) {
+    accompaniedBy = rdSupplier(ReferenceDataDomain.Code.ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
+    appliedActions += action
+  }
+
+  fun changeTransport(
+    action: ChangeOccurrenceTransport,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) {
+    transport = rdSupplier(ReferenceDataDomain.Code.TRANSPORT, action.transportCode) as Transport
+    appliedActions += action
+  }
+
+  fun amendNotes(action: AmendOccurrenceNotes) {
+    notes = action.notes
+    appliedActions += action
+  }
+
+  fun cancel(action: CancelOccurrence) {
+    cancelledAt = action.at
+    cancelledBy = action.by
     appliedActions += action
   }
 

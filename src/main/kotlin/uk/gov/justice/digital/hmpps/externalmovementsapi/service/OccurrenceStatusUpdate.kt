@@ -5,6 +5,7 @@ import org.springframework.context.annotation.ConditionContext
 import org.springframework.context.annotation.Conditional
 import org.springframework.core.env.getProperty
 import org.springframework.core.type.AnnotatedTypeMetadata
+import org.springframework.data.domain.PageRequest
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -23,7 +24,7 @@ class OccurrenceStatusUpdate(
 ) {
   fun pastOccurrencesOfInterest() {
     val rd = referenceDataRepository.findByKeyDomainAndActiveTrue(TAP_OCCURRENCE_STATUS).associateBy { it.key.code }
-    occurrenceRepository.findPastOccurrences(statusKeys).forEach {
+    occurrenceRepository.findPastOccurrences(statusKeys, PageRequest.ofSize(100)).forEach {
       it.calculateStatus { statusCode -> rd[statusCode] as TapOccurrenceStatus }
     }
   }

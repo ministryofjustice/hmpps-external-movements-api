@@ -21,13 +21,23 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Transactional
@@ -54,7 +64,7 @@ class SyncTapOccurrence(
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
           occurrenceRepository.save(
             request.asEntity(authorisation, rdPaths).calculateStatus {
-              rdPaths.getReferenceData(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
+              rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
             },
           )
         }
@@ -80,7 +90,7 @@ class SyncTapOccurrence(
       authorisation = authorisation,
       absenceType = absenceTypeCode?.let {
         rdPaths.getReferenceData(
-          ReferenceDataDomain.Code.ABSENCE_TYPE,
+          ABSENCE_TYPE,
           it,
         ) as AbsenceType
       },
@@ -108,5 +118,68 @@ class SyncTapOccurrence(
       scheduleReference = null,
       id = id ?: newUuid(),
     )
+  }
+
+  private fun TemporaryAbsenceOccurrence.update(
+    request: TapOccurrence,
+    rdPaths: ReferenceDataPaths,
+  ) = apply {
+    checkReason(request, rdPaths)
+    checkSchedule(request)
+    checkLogistics(request, rdPaths)
+    if (notes != request.notes) {
+      request.notes?.let { amendNotes(AmendOccurrenceNotes(it)) }
+    }
+    checkCancellation(request)
+    calculateStatus {
+      rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
+    }
+  }
+
+  private fun TemporaryAbsenceOccurrence.checkReason(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
+    val categoryCode = rdPaths.reasonPath().path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.code
+    if (absenceType?.code != request.absenceTypeCode || absenceSubType?.code != request.absenceSubTypeCode || absenceReasonCategory?.code != categoryCode || absenceReason?.code != request.absenceReasonCode) {
+      changeReason(
+        ChangeOccurrenceReason(
+          request.absenceTypeCode,
+          request.absenceSubTypeCode,
+          categoryCode,
+          request.absenceReasonCode,
+          rdPaths.reasonPath(),
+        ),
+        rdPaths::getReferenceData,
+      )
+    }
+  }
+
+  private fun TemporaryAbsenceOccurrence.checkSchedule(request: TapOccurrence) {
+    if (!request.releaseAt.truncatedTo(ChronoUnit.SECONDS).isEqual(releaseAt.truncatedTo(ChronoUnit.SECONDS)) ||
+      !request.returnBy.truncatedTo(ChronoUnit.SECONDS).isEqual(returnBy.truncatedTo(ChronoUnit.SECONDS))
+    ) {
+      reschedule(RescheduleOccurrence(request.releaseAt, request.returnBy))
+    }
+  }
+
+  private fun TemporaryAbsenceOccurrence.checkLogistics(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
+    if (location != request.location) {
+      changeLocation(ChangeOccurrenceLocation(request.location))
+    }
+    if (accompaniedBy.code != request.accompaniedByCode) {
+      changeAccompaniment(ChangeOccurrenceAccompaniment(request.accompaniedByCode), rdPaths::getReferenceData)
+    }
+    if (transport.code != request.transportCode) {
+      changeTransport(ChangeOccurrenceTransport(request.transportCode), rdPaths::getReferenceData)
+    }
+  }
+
+  private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence) {
+    if (request.statusCode in listOf(
+        TapOccurrenceStatus.Code.CANCELLED.name,
+        TapOccurrenceStatus.Code.DENIED.name,
+      ) &&
+      request.updated != null
+    ) {
+      cancel(CancelOccurrence(request.updated.at, request.updated.by))
+    }
   }
 }

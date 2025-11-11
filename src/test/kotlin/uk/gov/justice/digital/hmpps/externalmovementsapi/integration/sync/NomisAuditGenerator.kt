@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 
 object NomisAuditGenerator {
   fun generate(
-    createdAt: LocalDateTime = LocalDateTime.now().minusHours(1),
+    createdAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
     createdBy: String = DEFAULT_USERNAME,
     modifiedBy: String? = SYSTEM_USERNAME,
     modifiedAt: LocalDateTime? = LocalDateTime.now(),
