@@ -35,4 +35,6 @@ hmpps.sqs:
 
 service:
   domain-events:
-    poll-interval: 0
+    poll-interval: PT0s
+  occurrence-status:
+    poll-interval: PT0s

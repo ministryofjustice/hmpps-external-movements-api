@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -107,11 +108,17 @@ class SyncTapOccurrenceIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceRescheduled(saved.personIdentifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceCancelled(saved.personIdentifier, saved.id, DataSource.NOMIS),
+      ),
+    )
   }
 
   @Test
@@ -134,11 +141,11 @@ class SyncTapOccurrenceIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(saved.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -171,8 +178,8 @@ class SyncTapOccurrenceIntTest(
     reasonCode: String = "R15",
     typeCode: String? = "SR",
     subTypeCode: String? = "RDR",
-    releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
-    returnBy: LocalDateTime = LocalDateTime.now(),
+    releaseAt: LocalDateTime = LocalDateTime.now().minusHours(7),
+    returnBy: LocalDateTime = LocalDateTime.now().plusHours(1),
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     location: Location = location(),

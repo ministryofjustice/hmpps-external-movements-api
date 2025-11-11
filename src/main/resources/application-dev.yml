@@ -8,3 +8,5 @@ integration:
 
 service:
   active-prisons: "LEI,MDI"
+  occurrence-status:
+    poll-interval: PT60s

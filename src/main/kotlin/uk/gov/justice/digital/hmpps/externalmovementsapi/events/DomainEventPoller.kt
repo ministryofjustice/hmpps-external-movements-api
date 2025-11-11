@@ -7,6 +7,7 @@ import org.springframework.core.env.getProperty
 import org.springframework.core.type.AnnotatedTypeMetadata
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import java.time.Duration
 
 @Conditional(PollIntervalCondition::class)
 @Service
@@ -18,5 +19,5 @@ class DomainEventPoller(private val domainEventPublisher: DomainEventPublisher) 
 }
 
 class PollIntervalCondition : Condition {
-  override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean = context.environment.getProperty<Int>("service.domain-events.poll-interval", 0) > 0
+  override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean = context.environment.getProperty<Duration>("service.domain-events.poll-interval", Duration.ZERO).isPositive
 }

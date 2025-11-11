@@ -4,6 +4,7 @@ import org.springframework.boot.actuate.info.Info
 import org.springframework.boot.actuate.info.InfoContributor
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
+import java.time.Duration
 
 @Component
 class ServiceConfigInfo(
@@ -18,6 +19,8 @@ class ServiceConfigInfo(
 data class ServiceConfig(
   val activePrisons: Set<String>,
   val domainEvents: DomainEventConfig,
+  val occurrenceStatus: OccurrenceStatusConfig,
 ) {
-  data class DomainEventConfig(val pollInterval: Int)
+  data class DomainEventConfig(val pollInterval: Duration)
+  data class OccurrenceStatusConfig(val pollInterval: Duration)
 }

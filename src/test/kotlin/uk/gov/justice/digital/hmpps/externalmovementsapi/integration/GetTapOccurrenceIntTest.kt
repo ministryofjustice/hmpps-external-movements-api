@@ -166,7 +166,7 @@ class GetTapOccurrenceIntTest(
         temporaryAbsenceOccurrence(
           auth,
           returnBy = LocalDateTime.now().minusHours(2),
-          movements = listOf(temporaryAbsenceMovement(OUT)),
+          movements = listOf(temporaryAbsenceMovement(OUT, auth.personIdentifier)),
         ),
       )
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
@@ -188,7 +188,7 @@ class GetTapOccurrenceIntTest(
         temporaryAbsenceOccurrence(
           auth,
           returnBy = LocalDateTime.now().plusHours(2),
-          movements = listOf(temporaryAbsenceMovement(OUT)),
+          movements = listOf(temporaryAbsenceMovement(OUT, auth.personIdentifier)),
         ),
       )
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
@@ -213,10 +213,12 @@ class GetTapOccurrenceIntTest(
         movements = listOf(
           temporaryAbsenceMovement(
             OUT,
+            auth.personIdentifier,
             occurredAt = LocalDateTime.now().minusHours(4),
           ),
           temporaryAbsenceMovement(
             IN,
+            auth.personIdentifier,
             occurredAt = LocalDateTime.now(),
           ),
         ),
