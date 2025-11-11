@@ -88,7 +88,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
   @Test
   fun `200 ok scheduled absence updated successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
+    val existing = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authorisation,
+        legacyId = newId(),
+        addedBy = DEFAULT_USERNAME,
+      ),
+    )
     val request = scheduledAbsenceRequest(id = existing.id, eventId = existing.legacyId!!, eventStatus = "CANC")
     val res = syncScheduledTemporaryAbsence(authorisation.id, request)
       .expectStatus().isOk
@@ -121,7 +127,13 @@ class SyncScheduledTemporaryAbsenceIntTest(
   @Test
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
+    val existing = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authorisation,
+        legacyId = newId(),
+        addedBy = DEFAULT_USERNAME,
+      ),
+    )
     val request = scheduledAbsenceRequest(eventId = existing.legacyId!!, eventStatus = "DEN", escortCode = "U")
     val res = syncScheduledTemporaryAbsence(authorisation.id, request)
       .expectStatus().isOk

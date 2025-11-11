@@ -1,10 +1,14 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence
 
+import jakarta.persistence.QueryHint
 import jakarta.persistence.criteria.JoinType
+import org.hibernate.jpa.HibernateHints
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
@@ -39,7 +43,8 @@ interface TemporaryAbsenceOccurrenceRepository :
         and tao.status.key in :statuses
     """,
   )
-  fun findPastOccurrences(statuses: Set<ReferenceDataKey>): List<TemporaryAbsenceOccurrence>
+  @QueryHints(value = [QueryHint(name = HibernateHints.HINT_NATIVE_LOCK_MODE, value = "UPGRADE-SKIPLOCKED")])
+  fun findPastOccurrences(statuses: Set<ReferenceDataKey>, pageable: Pageable): List<TemporaryAbsenceOccurrence>
 
   @Query(
     """
