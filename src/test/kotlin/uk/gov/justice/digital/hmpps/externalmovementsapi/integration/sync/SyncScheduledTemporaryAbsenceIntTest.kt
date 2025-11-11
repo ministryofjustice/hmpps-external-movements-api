@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -104,11 +105,17 @@ class SyncScheduledTemporaryAbsenceIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceRescheduled(saved.personIdentifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceCancelled(saved.personIdentifier, saved.id, DataSource.NOMIS),
+      ),
+    )
   }
 
   @Test
@@ -131,11 +138,17 @@ class SyncScheduledTemporaryAbsenceIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceRescheduled(saved.personIdentifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceCancelled(saved.personIdentifier, saved.id, DataSource.NOMIS),
+      ),
+    )
   }
 
   @Test
@@ -166,8 +179,8 @@ class SyncScheduledTemporaryAbsenceIntTest(
     id: UUID? = null,
     eventStatus: String = "SCH",
     eventSubType: String = "R15",
-    startTime: LocalDateTime = LocalDateTime.now().minusDays(7),
-    returnTime: LocalDateTime = LocalDateTime.now(),
+    startTime: LocalDateTime = LocalDateTime.now().minusHours(4),
+    returnTime: LocalDateTime = LocalDateTime.now().plusHours(1),
     escortCode: String? = "L",
     transportType: String? = "OD",
     location: TapLocation = TapLocation(description = name(10)),

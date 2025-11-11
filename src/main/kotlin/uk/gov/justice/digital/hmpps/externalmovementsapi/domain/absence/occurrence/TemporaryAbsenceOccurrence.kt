@@ -41,12 +41,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ExpireOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.MarkOccurrenceOverdue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
+import java.time.temporal.ChronoUnit
 import java.util.Collections.unmodifiableList
 import java.util.UUID
 
@@ -215,8 +219,13 @@ class TemporaryAbsenceOccurrence(
       rdPaths.getReferenceData(it.domain, it.code)
     } as? AbsenceReasonCategory
     absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, request.absenceReasonCode) as AbsenceReason
-    releaseAt = request.releaseAt
-    returnBy = request.returnBy
+    if (!request.releaseAt.truncatedTo(ChronoUnit.SECONDS).isEqual(releaseAt.truncatedTo(ChronoUnit.SECONDS)) ||
+      !request.returnBy.truncatedTo(ChronoUnit.SECONDS).isEqual(returnBy.truncatedTo(ChronoUnit.SECONDS))
+    ) {
+      releaseAt = request.releaseAt
+      returnBy = request.returnBy
+      appliedActions += RescheduleOccurrence(releaseAt, returnBy, null)
+    }
     contactInformation = null
     location = request.location
     accompaniedBy =
@@ -225,8 +234,16 @@ class TemporaryAbsenceOccurrence(
     notes = request.notes
     addedAt = request.created.at
     addedBy = request.created.by
-    cancelledAt = request.updated?.at
-    cancelledBy = request.updated?.by
+    if (request.statusCode in listOf(
+        TapOccurrenceStatus.Code.CANCELLED.name,
+        TapOccurrenceStatus.Code.DENIED.name,
+      ) &&
+      request.updated != null
+    ) {
+      cancelledAt = request.updated.at
+      cancelledBy = request.updated.by
+      appliedActions += CancelOccurrence()
+    }
     legacyId = request.legacyId
     calculateStatus {
       rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
@@ -269,12 +286,14 @@ class TemporaryAbsenceOccurrence(
       } else if (returnBy.isAfter(now())) {
         TapOccurrenceStatus.Code.IN_PROGRESS
       } else {
+        appliedActions += MarkOccurrenceOverdue()
         TapOccurrenceStatus.Code.OVERDUE
       }
     }
 
   private fun authorisationStatus(): TapOccurrenceStatus.Code = if (authorisation.status.code == TapAuthorisationStatus.Code.APPROVED.name) {
-    if (returnBy.isBefore(now())) {
+    if (movements.isEmpty() && returnBy.isBefore(now())) {
+      appliedActions += ExpireOccurrence()
       TapOccurrenceStatus.Code.EXPIRED
     } else {
       TapOccurrenceStatus.Code.SCHEDULED

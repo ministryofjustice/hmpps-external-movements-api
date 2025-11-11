@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.PERSON_IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RETURN_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -30,6 +31,15 @@ interface TemporaryAbsenceOccurrenceRepository :
 
   fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
   fun findByAuthorisationIdIn(authorisationIds: Set<UUID>): List<TemporaryAbsenceOccurrence>
+
+  @Query(
+    """
+      select tao from TemporaryAbsenceOccurrence tao
+      where tao.returnBy < current_timestamp 
+        and tao.status.key in :statuses
+    """,
+  )
+  fun findPastOccurrences(statuses: Set<ReferenceDataKey>): List<TemporaryAbsenceOccurrence>
 
   @Query(
     """
