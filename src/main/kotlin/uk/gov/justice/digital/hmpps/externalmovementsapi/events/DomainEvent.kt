@@ -10,6 +10,7 @@ import java.time.ZonedDateTime
 @JsonSubTypes(
   value = [
     Type(value = TemporaryAbsenceAuthorised::class, name = TemporaryAbsenceAuthorised.EVENT_TYPE),
+    Type(value = TemporaryAbsenceScheduled::class, name = TemporaryAbsenceScheduled.EVENT_TYPE),
     Type(value = TemporaryAbsenceRescheduled::class, name = TemporaryAbsenceRescheduled.EVENT_TYPE),
     Type(value = TemporaryAbsenceCancelled::class, name = TemporaryAbsenceCancelled.EVENT_TYPE),
     Type(value = TemporaryAbsenceExpired::class, name = TemporaryAbsenceExpired.EVENT_TYPE),
