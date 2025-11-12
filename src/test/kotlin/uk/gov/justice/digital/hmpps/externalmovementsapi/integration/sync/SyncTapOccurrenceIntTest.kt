@@ -11,10 +11,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -170,6 +174,31 @@ class SyncTapOccurrenceIntTest(
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+  }
+
+  @Test
+  fun `200 ok absence with path for reason only`() {
+    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val request = tapOccurrence(typeCode = null, subTypeCode = null, reasonCode = "PC")
+    val res = syncTapOccurrence(authorisation.id, request)
+      .expectStatus().isOk
+      .expectBody<SyncResponse>()
+      .returnResult()
+      .responseBody!!
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceOccurrence(res.id))
+    saved.verifyAgainst(request)
+    assertThat(saved.reasonPath).isEqualTo(ReasonPath(listOf(ReferenceDataDomain.Code.ABSENCE_REASON of "PC")))
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   private fun tapOccurrence(
