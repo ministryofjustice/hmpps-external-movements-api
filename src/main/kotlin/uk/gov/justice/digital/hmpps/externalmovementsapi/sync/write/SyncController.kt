@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write
 
-import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PathVariable
@@ -10,8 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapOccurrence
@@ -26,27 +23,6 @@ class SyncController(
   private val occurrence: SyncTapOccurrence,
   private val movement: SyncTapMovement,
 ) {
-  @Operation(deprecated = true)
-  @PutMapping("/temporary-absence-application/{personIdentifier}")
-  fun syncTemporaryAbsenceApplication(
-    @PathVariable personIdentifier: String,
-    @RequestBody request: TapApplicationRequest,
-  ): SyncResponse = authorisation.sync(personIdentifier, request.toNew())
-
-  @Operation(deprecated = true)
-  @PutMapping("/scheduled-temporary-absence/{parentId}")
-  fun syncScheduledTemporaryAbsence(
-    @PathVariable parentId: UUID,
-    @RequestBody request: ScheduledTemporaryAbsenceRequest,
-  ): SyncResponse = occurrence.sync(parentId, request.toNew())
-
-  @Operation(deprecated = true)
-  @PutMapping("/temporary-absence-movement/{personIdentifier}")
-  fun syncTapMovement(
-    @PathVariable personIdentifier: String,
-    @RequestBody request: TapMovementRequest,
-  ): SyncResponse = movement.sync(personIdentifier, request.toNew())
-
   @PutMapping("/temporary-absence-authorisations/{personIdentifier}")
   fun syncTemporaryAbsenceAuthorisation(
     @PathVariable personIdentifier: String,
@@ -65,63 +41,3 @@ class SyncController(
     @RequestBody request: TapMovement,
   ): SyncResponse = movement.sync(personIdentifier, request)
 }
-
-private fun TapApplicationRequest.toNew() = TapAuthorisation(
-  id,
-  requireNotNull(prisonId),
-  tapAuthStatusCode.name,
-  temporaryAbsenceType,
-  temporaryAbsenceSubType,
-  eventSubType,
-  escortOrDefault(),
-  isRepeating(),
-  fromDate,
-  toDate,
-  comment,
-  AtAndBy(audit.createDatetime, audit.createUsername),
-  approvedAt?.let { AtAndBy(it, requireNotNull(approvedBy)) },
-  movementApplicationId,
-)
-
-private fun ScheduledTemporaryAbsenceRequest.toNew() = TapOccurrence(
-  id,
-  when (eventStatus) {
-    "PEN" -> "PENDING"
-    "SCH" -> "SCHEDULED"
-    "COMP" -> "COMPLETED"
-    "EXP" -> "EXPIRED"
-    "CANC" -> "CANCELLED"
-    "DEN" -> "DENIED"
-    else -> throw IllegalArgumentException("Unexpected event status")
-  },
-  startTime,
-  returnTime,
-  location.asLocation(),
-  null,
-  null,
-  eventSubType,
-  escortOrDefault(),
-  transportTypeOrDefault(),
-  comment,
-  AtAndBy(audit.createDatetime, audit.createUsername),
-  if (cancelled) AtAndBy(cancelledAt!!, cancelledBy!!) else null,
-  eventId,
-)
-
-private fun TapMovementRequest.toNew() = TapMovement(
-  id,
-  occurrenceId,
-  movementDateTime,
-  when (direction) {
-    TapMovementRequest.Direction.IN -> TemporaryAbsenceMovement.Direction.IN
-    TapMovementRequest.Direction.OUT -> TemporaryAbsenceMovement.Direction.OUT
-  },
-  movementReason,
-  location.asLocation(),
-  escortOrDefault(),
-  escortText,
-  commentText,
-  TapMovement.AtAndByWithPrison(audit.createDatetime, audit.createUsername, prisonCodeOrDefault()),
-  audit.modifyDatetime?.let { AtAndBy(it, audit.modifyUserId ?: audit.createUsername) },
-  legacyId,
-)
