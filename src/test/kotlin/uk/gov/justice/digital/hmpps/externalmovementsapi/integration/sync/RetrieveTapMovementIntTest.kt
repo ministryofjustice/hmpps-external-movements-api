@@ -54,7 +54,7 @@ class RetrieveTapMovementIntTest(
     val movement = givenTemporaryAbsenceMovement(
       temporaryAbsenceMovement(
         direction = TemporaryAbsenceMovement.Direction.OUT,
-        personIdentifier = occurrence.personIdentifier,
+        personIdentifier = occurrence.authorisation.personIdentifier,
         occurrence = occurrence,
       ),
     )

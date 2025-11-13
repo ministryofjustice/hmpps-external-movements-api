@@ -11,9 +11,9 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON_IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.PERSON_IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RETURN_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
@@ -25,7 +25,7 @@ import java.util.UUID
 interface TemporaryAbsenceOccurrenceRepository :
   JpaRepository<TemporaryAbsenceOccurrence, UUID>,
   JpaSpecificationExecutor<TemporaryAbsenceOccurrence> {
-  fun findByPersonIdentifierAndReleaseAtAndReturnBy(
+  fun findByAuthorisationPersonIdentifierAndReleaseAtAndReturnBy(
     personIdentifier: String,
     releaseAt: LocalDateTime,
     returnBy: LocalDateTime,
@@ -96,7 +96,8 @@ fun occurrenceMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbs
 }
 
 fun occurrenceMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.equal(tao.get<String>(PERSON_IDENTIFIER), personIdentifier)
+  val authorisation = tao.join<TemporaryAbsenceOccurrence, TemporaryAbsenceAuthorisation>(AUTHORISATION, JoinType.INNER)
+  cb.equal(authorisation.get<String>(PERSON_IDENTIFIER), personIdentifier)
 }
 
 fun occurrenceMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->

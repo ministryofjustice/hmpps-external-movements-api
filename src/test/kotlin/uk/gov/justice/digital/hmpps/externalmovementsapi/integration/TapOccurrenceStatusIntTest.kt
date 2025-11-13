@@ -54,7 +54,7 @@ class TapOccurrenceStatusIntTest(
     assertThat(updated.status.code).isEqualTo(TapOccurrenceStatus.Code.OVERDUE.name)
 
     verifyAudit(updated, RevisionType.MOD, setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!))
-    verifyEvents(updated, setOf(TemporaryAbsenceOverdue(occurrence.personIdentifier, occurrence.id)))
+    verifyEvents(updated, setOf(TemporaryAbsenceOverdue(occurrence.authorisation.personIdentifier, occurrence.id)))
   }
 
   @Test
@@ -77,6 +77,6 @@ class TapOccurrenceStatusIntTest(
     assertThat(updated.status.code).isEqualTo(TapOccurrenceStatus.Code.EXPIRED.name)
 
     verifyAudit(updated, RevisionType.MOD, setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!))
-    verifyEvents(updated, setOf(TemporaryAbsenceExpired(occurrence.personIdentifier, occurrence.id)))
+    verifyEvents(updated, setOf(TemporaryAbsenceExpired(occurrence.authorisation.personIdentifier, occurrence.id)))
   }
 }

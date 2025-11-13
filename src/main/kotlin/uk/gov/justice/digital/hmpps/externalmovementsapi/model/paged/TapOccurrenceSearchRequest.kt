@@ -5,7 +5,8 @@ import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Sort
 import org.springframework.data.domain.Sort.Direction
 import org.springframework.data.domain.Sort.by
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.PERSON_IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON_IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RETURN_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.removeNullChar
@@ -23,7 +24,7 @@ data class TapOccurrenceSearchRequest(
 ) : PagedRequest {
   override fun validSortFields(): Set<String> = setOf(DATE_RANGE)
 
-  private fun sortByDate(direction: Direction) = by(direction, RELEASE_AT, RETURN_BY, PERSON_IDENTIFIER)
+  private fun sortByDate(direction: Direction) = by(direction, RELEASE_AT, RETURN_BY, "${AUTHORISATION}_${PERSON_IDENTIFIER}")
 
   @JsonIgnore
   val queryString: String? = query?.removeNullChar()?.takeIf { it.isNotBlank() }

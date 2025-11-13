@@ -13,7 +13,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsencePending
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -116,6 +117,10 @@ class CreateTapAuthorisationIntTest(
     assertThat(saved.submittedBy).isEqualTo(username)
     val occurrence = findForAuthorisation(saved.id).first()
     occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
+    assertThat(occurrence.absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+    assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
+    assertThat(occurrence.absenceReason?.code).isEqualTo(request.absenceReasonCode)
     assertThat(occurrence.addedBy).isEqualTo(username)
 
     verifyAudit(
@@ -124,11 +129,12 @@ class CreateTapAuthorisationIntTest(
       setOf(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(username = username),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TemporaryAbsencePending(pi, saved.id)))
   }
 
   @Test
@@ -155,6 +161,10 @@ class CreateTapAuthorisationIntTest(
     assertThat(saved.submittedBy).isEqualTo(username)
     val occurrence = findForAuthorisation(saved.id).first()
     occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.absenceType?.code).isEqualTo("PP")
+    assertThat(occurrence.absenceSubType?.code).isEqualTo("PP")
+    assertThat(occurrence.absenceReasonCategory?.code).isNull()
+    assertThat(occurrence.absenceReason?.code).isEqualTo("PC")
     assertThat(occurrence.addedBy).isEqualTo(username)
 
     verifyAudit(
@@ -170,34 +180,18 @@ class CreateTapAuthorisationIntTest(
 
     verifyEvents(
       saved,
-      listOf(TemporaryAbsenceRescheduled(pi, occurrence.id), TemporaryAbsenceAuthorised(pi, saved.id)).toSet(),
+      listOf(TemporaryAbsenceScheduled(pi, occurrence.id), TemporaryAbsenceAuthorised(pi, saved.id)).toSet(),
     )
   }
 
   private fun createTapOccurrenceRequest(
-    absenceTypeCode: String = "SR",
-    absenceSubTypeCode: String? = "RDR",
-    absenceReasonCategoryCode: String? = "PW",
-    absenceReasonCode: String? = "R15",
     releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     returnBy: LocalDateTime = LocalDateTime.now(),
-    accompaniedByCode: String = "L",
-    transportCode: String = "OD",
-    contactInformation: String? = null,
-    notes: String? = "Some notes about the authorisation",
     location: Location = location(),
     scheduleReference: JsonNode? = null,
   ) = CreateTapOccurrenceRequest(
-    absenceTypeCode = absenceTypeCode,
-    absenceSubTypeCode = absenceSubTypeCode,
-    absenceReasonCategoryCode = absenceReasonCategoryCode,
-    absenceReasonCode = absenceReasonCode,
     releaseAt = releaseAt,
     returnBy = returnBy,
-    accompaniedByCode = accompaniedByCode,
-    transportCode = transportCode,
-    contactInformation = contactInformation,
-    notes = notes,
     location = location,
     scheduleReference = scheduleReference,
   )

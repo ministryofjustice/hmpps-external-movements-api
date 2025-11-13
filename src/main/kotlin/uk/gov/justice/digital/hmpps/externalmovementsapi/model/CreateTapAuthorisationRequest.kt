@@ -30,8 +30,8 @@ data class CreateTapAuthorisationRequest(
   @Valid
   val occurrences: List<CreateTapOccurrenceRequest>,
   val statusCode: TapAuthorisationStatus.Code,
-  val accompaniedByCode: String = occurrences.firstOrNull()?.accompaniedByCode ?: "U",
-  val transportCode: String = occurrences.firstOrNull()?.transportCode ?: "TNR",
+  val accompaniedByCode: String,
+  val transportCode: String,
   val notes: String?,
   val repeat: Boolean,
   val fromDate: LocalDate,
@@ -53,7 +53,6 @@ data class CreateTapAuthorisationRequest(
     add(TAP_AUTHORISATION_STATUS of statusCode.name)
     add(ACCOMPANIED_BY of accompaniedByCode)
     add(TRANSPORT of transportCode)
-    addAll(occurrences.flatMap(CreateTapOccurrenceRequest::requiredReferenceData))
     addAll(TapOccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name })
   }
 
@@ -66,26 +65,9 @@ data class CreateTapAuthorisationRequest(
 }
 
 data class CreateTapOccurrenceRequest(
-  val absenceTypeCode: String?,
-  val absenceSubTypeCode: String?,
-  val absenceReasonCategoryCode: String?,
-  val absenceReasonCode: String?,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
-  val accompaniedByCode: String?,
-  val transportCode: String?,
   @Valid
   val location: Location,
-  val contactInformation: String?,
-  val notes: String?,
   val scheduleReference: JsonNode?,
-) : ReferenceDataRequired {
-  override fun requiredReferenceData() = buildSet {
-    accompaniedByCode?.also { add(ACCOMPANIED_BY of it) }
-    transportCode?.also { add(TRANSPORT of it) }
-    absenceTypeCode?.also { add(ABSENCE_TYPE of it) }
-    absenceSubTypeCode?.also { add(ABSENCE_SUB_TYPE of it) }
-    absenceReasonCategoryCode?.also { add(ABSENCE_REASON_CATEGORY of it) }
-    absenceReasonCode?.also { add(ABSENCE_REASON of it) }
-  }
-}
+)

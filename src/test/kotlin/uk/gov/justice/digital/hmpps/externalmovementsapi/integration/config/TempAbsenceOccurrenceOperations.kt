@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
@@ -128,18 +129,14 @@ interface TempAbsenceOccurrenceOperations {
     request: CreateTapOccurrenceRequest,
     authRequest: CreateTapAuthorisationRequest,
   ) {
-    assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
-    assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
-    assertThat(absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
-    assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
-    assertThat(notes).isEqualTo(request.notes)
+    assertThat(authorisation.personIdentifier).isEqualTo(personIdentifier)
+    assertThat(notes).isEqualTo(authRequest.notes)
     assertThat(legacyId).isNull()
     assertThat(location).isEqualTo(request.location)
-    assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
-    assertThat(transport.code).isEqualTo(request.transportCode)
+    assertThat(accompaniedBy.code).isEqualTo(authRequest.accompaniedByCode)
+    assertThat(transport.code).isEqualTo(authRequest.transportCode)
     assertThat(addedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(2, SECONDS))
-    assertThat(contactInformation).isEqualTo(request.contactInformation)
+    assertThat(contactInformation).isEqualTo(authRequest.contactInformation)
     assertThat(scheduleReference).isEqualTo(request.scheduleReference)
   }
 
@@ -156,7 +153,7 @@ interface TempAbsenceOccurrenceOperations {
   }
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {
-    assertThat(personIdentifier).isEqualTo(occurrence.authorisation.person.personIdentifier)
+    assertThat(authorisation.personIdentifier).isEqualTo(occurrence.authorisation.person.personIdentifier)
     assertThat(absenceType?.code).isEqualTo(occurrence.absenceType?.code)
     assertThat(absenceSubType?.code).isEqualTo(occurrence.absenceSubType?.code)
     assertThat(absenceReasonCategory?.code).isEqualTo(occurrence.absenceReasonCategory?.code)

@@ -30,12 +30,12 @@ class SearchTapOccurrence(
 ) {
   fun find(request: TapOccurrenceSearchRequest): TapOccurrenceSearchResponse {
     val page = occurrenceRepository.findAll(request.asSpecification(), request.pageable())
-    val prisoners = prisonerSearch.getPrisoners(page.map { it.personIdentifier }.toSet())
+    val prisoners = prisonerSearch.getPrisoners(page.map { it.authorisation.personIdentifier }.toSet())
       .associateBy { it.prisonerNumber }
     val getPerson = { personIdentifier: String ->
       prisoners[personIdentifier]?.asPerson() ?: Person.unknown(personIdentifier)
     }
-    return page.map { it.with(getPerson(it.personIdentifier)) }.asResponse()
+    return page.map { it.with(getPerson(it.authorisation.personIdentifier)) }.asResponse()
   }
 
   private fun TapOccurrenceSearchRequest.asSpecification(): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(

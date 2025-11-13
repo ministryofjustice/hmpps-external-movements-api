@@ -32,7 +32,6 @@ class AuditedTapOccurrence(
   @ManyToOne
   @JoinColumn(name = "authorisation_id", updatable = false, nullable = false)
   val authorisation: AuditedTapAuthorisation,
-  val personIdentifier: String,
   @ManyToOne(optional = false)
   @JoinColumn(name = "status_id", nullable = false)
   val status: TapOccurrenceStatus,

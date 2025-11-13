@@ -46,7 +46,7 @@ class CreateTapAuthorisation(
     val rdProvider = referenceDataRepository.rdProvider(request)
     val linkProvider = { id: Long -> referenceDataRepository.findLinkedItems(id).single() }
     request.occurrences.mapNotNull {
-      tapOccurrenceRepository.findByPersonIdentifierAndReleaseAtAndReturnBy(
+      tapOccurrenceRepository.findByAuthorisationPersonIdentifierAndReleaseAtAndReturnBy(
         personIdentifier,
         it.releaseAt,
         it.returnBy,
@@ -111,21 +111,14 @@ class CreateTapAuthorisation(
     authRequest: CreateTapAuthorisationRequest,
   ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
     authorisation,
-    absenceType = absenceTypeCode?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType } ?: authorisation.absenceType,
-    absenceSubType = absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
-      ?: authorisation.absenceSubType,
-    absenceReasonCategory = absenceReasonCategoryCode?.let {
-      rdProvider(
-        ABSENCE_REASON_CATEGORY,
-        it,
-      ) as AbsenceReasonCategory
-    } ?: authorisation.absenceReasonCategory,
-    absenceReason = absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) as AbsenceReason }
-      ?: authorisation.absenceReason,
+    absenceType = authorisation.absenceType,
+    absenceSubType = authorisation.absenceSubType,
+    absenceReasonCategory = authorisation.absenceReasonCategory,
+    absenceReason = authorisation.absenceReason,
     releaseAt = releaseAt,
     returnBy = returnBy,
-    accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode ?: authRequest.accompaniedByCode) as AccompaniedBy,
-    transport = rdProvider(TRANSPORT, transportCode ?: authRequest.transportCode) as Transport,
+    accompaniedBy = authorisation.accompaniedBy,
+    transport = rdProvider(TRANSPORT, authRequest.transportCode) as Transport,
     location = location.let {
       if (it.address?.isEmpty() == true) {
         it.copy(address = null)
@@ -137,8 +130,8 @@ class CreateTapAuthorisation(
     addedBy = authorisation.submittedBy,
     cancelledAt = null,
     cancelledBy = null,
-    contactInformation = authRequest.contactInformation ?: this.contactInformation,
-    notes = notes,
+    contactInformation = authRequest.contactInformation,
+    notes = authorisation.notes,
     reasonPath = authorisation.reasonPath,
     scheduleReference = scheduleReference,
     legacyId = null,

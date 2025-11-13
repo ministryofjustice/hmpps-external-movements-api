@@ -13,7 +13,6 @@ import jakarta.persistence.Table
 import jakarta.persistence.Transient
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
-import jakarta.validation.constraints.Size
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
@@ -87,12 +86,6 @@ class TemporaryAbsenceOccurrence(
   override val id: UUID = newUuid(),
 ) : Identifiable,
   DomainEventProducer {
-  @Size(max = 10)
-  @NotNull
-  @Column(name = "person_identifier", nullable = false, length = 10)
-  var personIdentifier: String = authorisation.personIdentifier
-    private set
-
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(optional = false)
   @JoinColumn(name = "status_id", nullable = false)
@@ -210,7 +203,7 @@ class TemporaryAbsenceOccurrence(
   }
 
   override fun initialEvent(): DomainEvent<*>? = if (authorisation.status.code == TapAuthorisationStatus.Code.APPROVED.name) {
-    TemporaryAbsenceScheduled(personIdentifier, id)
+    TemporaryAbsenceScheduled(authorisation.personIdentifier, id)
   } else {
     null
   }
@@ -305,7 +298,6 @@ class TemporaryAbsenceOccurrence(
 
   companion object {
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
-    val PERSON_IDENTIFIER = TemporaryAbsenceOccurrence::personIdentifier.name
     val RELEASE_AT = TemporaryAbsenceOccurrence::releaseAt.name
     val RETURN_BY = TemporaryAbsenceOccurrence::returnBy.name
   }
