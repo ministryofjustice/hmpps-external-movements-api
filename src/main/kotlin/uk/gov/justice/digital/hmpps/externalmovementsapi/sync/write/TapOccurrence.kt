@@ -18,7 +18,7 @@ import java.util.UUID
 @Schema(name = "SyncWriteTapOccurrence")
 data class TapOccurrence(
   val id: UUID?,
-  val statusCode: String,
+  val isCancelled: Boolean,
   val releaseAt: LocalDateTime,
   val returnBy: LocalDateTime,
   val location: Location,

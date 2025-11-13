@@ -173,13 +173,9 @@ class SyncTapOccurrence(
   }
 
   private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence) {
-    if (request.statusCode in listOf(
-        TapOccurrenceStatus.Code.CANCELLED.name,
-        TapOccurrenceStatus.Code.DENIED.name,
-      ) &&
-      request.updated != null
-    ) {
-      cancel(CancelOccurrence(request.updated.at, request.updated.by))
+    if (request.isCancelled) {
+      val context = ExternalMovementContext.get()
+      cancel(CancelOccurrence(request.updated?.at ?: context.requestAt, request.updated?.by ?: context.username))
     }
   }
 }
