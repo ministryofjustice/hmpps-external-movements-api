@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.CANCELLED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
@@ -173,13 +174,9 @@ class SyncTapOccurrence(
   }
 
   private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence) {
-    if (request.statusCode in listOf(
-        TapOccurrenceStatus.Code.CANCELLED.name,
-        TapOccurrenceStatus.Code.DENIED.name,
-      ) &&
-      request.updated != null
-    ) {
-      cancel(CancelOccurrence(request.updated.at, request.updated.by))
+    if (request.isCancelled && status.code != CANCELLED.name) {
+      val context = ExternalMovementContext.get()
+      cancel(CancelOccurrence(request.updated?.at ?: context.requestAt, request.updated?.by ?: context.username))
     }
   }
 }

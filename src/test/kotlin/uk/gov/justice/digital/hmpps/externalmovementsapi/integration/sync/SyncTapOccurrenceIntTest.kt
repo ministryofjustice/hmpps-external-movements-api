@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
@@ -63,7 +64,7 @@ class SyncTapOccurrenceIntTest(
   @Test
   fun `200 ok scheduled absence created successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val request = tapOccurrence(statusCode = "PENDING")
+    val request = tapOccurrence()
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -92,8 +93,8 @@ class SyncTapOccurrenceIntTest(
     val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId(), addedBy = DEFAULT_USERNAME))
     val request = tapOccurrence(
       id = existing.id,
+      isCancelled = true,
       legacyId = existing.legacyId!!,
-      statusCode = "CANCELLED",
       cancelled = AtAndBy(LocalDateTime.now().minusMinutes(20), SYSTEM_USERNAME),
     )
 
@@ -106,6 +107,7 @@ class SyncTapOccurrenceIntTest(
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(existing.id))
     saved.verifyAgainst(request)
+    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
     assertThat(saved.cancelledAt).isNotNull
     assertThat(saved.cancelledBy).isNotNull
 
@@ -203,7 +205,7 @@ class SyncTapOccurrenceIntTest(
 
   private fun tapOccurrence(
     id: UUID? = null,
-    statusCode: String = "SCHEDULED",
+    isCancelled: Boolean = false,
     reasonCode: String = "R15",
     typeCode: String? = "SR",
     subTypeCode: String? = "RDR",
@@ -218,7 +220,7 @@ class SyncTapOccurrenceIntTest(
     legacyId: Long = newId(),
   ) = TapOccurrence(
     id,
-    statusCode,
+    isCancelled,
     releaseAt,
     returnBy,
     location,
