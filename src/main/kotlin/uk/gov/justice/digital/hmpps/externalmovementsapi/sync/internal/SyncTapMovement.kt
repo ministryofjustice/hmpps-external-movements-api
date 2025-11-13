@@ -47,7 +47,11 @@ class SyncTapMovement(
         ?.update(personIdentifier, occurrence, request, rdProvider)
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
-          movementRepository.save(request.asEntity(personIdentifier, occurrence, rdProvider))
+          val movement = request.asEntity(personIdentifier, occurrence, rdProvider)
+          occurrence?.addMovement(movement) {
+            rdProvider(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
+          }
+          movementRepository.save(movement)
         }
     return SyncResponse(movement.id)
   }
