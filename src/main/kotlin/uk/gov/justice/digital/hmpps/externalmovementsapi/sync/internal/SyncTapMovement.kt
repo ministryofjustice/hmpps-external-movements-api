@@ -36,7 +36,7 @@ class SyncTapMovement(
 ) {
   fun sync(personIdentifier: String, request: TapMovement): SyncResponse {
     val occurrence = request.occurrenceId?.let { occurrenceRepository.getOccurrence(it) }?.also {
-      require(personIdentifier == it.personIdentifier) { "Person identifier does not match occurrence" }
+      require(personIdentifier == it.authorisation.personIdentifier) { "Person identifier does not match occurrence" }
     }
     val rdProvider = referenceDataRepository.rdProvider(request)
     val movement =
@@ -47,7 +47,11 @@ class SyncTapMovement(
         ?.update(personIdentifier, occurrence, request, rdProvider)
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
-          movementRepository.save(request.asEntity(personIdentifier, occurrence, rdProvider))
+          val movement = request.asEntity(personIdentifier, occurrence, rdProvider)
+          occurrence?.addMovement(movement) {
+            rdProvider(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
+          }
+          movementRepository.save(movement)
         }
     return SyncResponse(movement.id)
   }

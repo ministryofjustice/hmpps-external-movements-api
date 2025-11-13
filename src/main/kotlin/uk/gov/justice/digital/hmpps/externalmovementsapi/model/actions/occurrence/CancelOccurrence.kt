@@ -10,5 +10,5 @@ data class CancelOccurrence(
   val by: String,
   override val reason: String? = null,
 ) : OccurrenceAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceCancelled(tao.personIdentifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceCancelled(tao.authorisation.personIdentifier, tao.id)
 }

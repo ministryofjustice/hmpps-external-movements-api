@@ -61,7 +61,7 @@ class GetTapOccurrenceIntTest(
         cancelledBy = "C4nc3113d",
       ),
     )
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val addingUser = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, addingUser)
     val cancellingUser = user(occurrence.cancelledBy!!, "The cancelling user")
@@ -80,7 +80,7 @@ class GetTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().plusHours(2)))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
 
@@ -96,7 +96,7 @@ class GetTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().minusHours(2)))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
 
@@ -113,7 +113,7 @@ class GetTapOccurrenceIntTest(
       givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.PENDING))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
 
@@ -130,7 +130,7 @@ class GetTapOccurrenceIntTest(
       givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.CANCELLED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
 
@@ -147,7 +147,7 @@ class GetTapOccurrenceIntTest(
       givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.DENIED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
 
@@ -169,7 +169,7 @@ class GetTapOccurrenceIntTest(
           movements = listOf(temporaryAbsenceMovement(OUT, auth.personIdentifier)),
         ),
       )
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
 
@@ -191,7 +191,7 @@ class GetTapOccurrenceIntTest(
           movements = listOf(temporaryAbsenceMovement(OUT, auth.personIdentifier)),
         ),
       )
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
 
@@ -225,7 +225,7 @@ class GetTapOccurrenceIntTest(
       ),
     )
 
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
     val user = user(occurrence.addedBy, "The adding user")
     manageUsers.findUser(occurrence.addedBy, user)
 

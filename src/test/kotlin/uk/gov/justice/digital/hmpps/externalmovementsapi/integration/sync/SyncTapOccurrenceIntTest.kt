@@ -119,8 +119,8 @@ class SyncTapOccurrenceIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceRescheduled(saved.personIdentifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceCancelled(saved.personIdentifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceRescheduled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceCancelled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
       ),
     )
   }
@@ -149,7 +149,7 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(saved.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test

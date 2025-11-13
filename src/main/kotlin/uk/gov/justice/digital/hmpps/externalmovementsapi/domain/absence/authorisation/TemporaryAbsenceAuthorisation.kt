@@ -46,6 +46,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsencePending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate
@@ -214,7 +215,7 @@ class TemporaryAbsenceAuthorisation(
   override fun initialEvent(): DomainEvent<*>? = if (status.code == TapAuthorisationStatus.Code.APPROVED.name) {
     TemporaryAbsenceAuthorised(personIdentifier, id)
   } else {
-    null
+    TemporaryAbsencePending(personIdentifier, id)
   }
 
   override fun stateChangedEvent(previousState: (String) -> Any?): DomainEvent<*>? {

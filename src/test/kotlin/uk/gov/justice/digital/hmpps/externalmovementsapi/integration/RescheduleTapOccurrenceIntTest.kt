@@ -85,7 +85,7 @@ class RescheduleTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(occurrence.personIdentifier, occurrence.id)))
+    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(occurrence.authorisation.personIdentifier, occurrence.id)))
   }
 
   private fun rescheduleOccurrenceRequest(

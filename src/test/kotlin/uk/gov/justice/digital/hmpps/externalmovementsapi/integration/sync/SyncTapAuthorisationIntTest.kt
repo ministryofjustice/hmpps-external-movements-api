@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsencePending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -74,11 +75,11 @@ class SyncTapAuthorisationIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TemporaryAbsencePending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -106,11 +107,11 @@ class SyncTapAuthorisationIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TemporaryAbsencePending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -137,11 +138,11 @@ class SyncTapAuthorisationIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TemporaryAbsencePending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
