@@ -28,12 +28,10 @@ class TapOccurrenceModifications(
     when (action) {
       is RescheduleOccurrence -> occurrence.reschedule(action)
       is CancelOccurrence -> {
-        if (occurrence.status.code == TapOccurrenceStatus.Code.SCHEDULED.name) {
-          occurrence.cancel(action) { domain, code ->
-            referenceDataRepository.getByKey(domain of code)
-          }
-        } else {
+        if (occurrence.status.code !in listOf(TapOccurrenceStatus.Code.SCHEDULED.name, TapOccurrenceStatus.Code.CANCELLED.name)) {
           throw ConflictException("Temporary absence not currently scheduled")
+        } else {
+          occurrence.cancel(action) { domain, code -> referenceDataRepository.getByKey(domain of code) }
         }
       }
     }

@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.CANCELLED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
@@ -38,7 +37,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Transactional
@@ -155,11 +153,7 @@ class SyncTapOccurrence(
   }
 
   private fun TemporaryAbsenceOccurrence.checkSchedule(request: TapOccurrence) {
-    if (!request.releaseAt.truncatedTo(ChronoUnit.SECONDS).isEqual(releaseAt.truncatedTo(ChronoUnit.SECONDS)) ||
-      !request.returnBy.truncatedTo(ChronoUnit.SECONDS).isEqual(returnBy.truncatedTo(ChronoUnit.SECONDS))
-    ) {
-      reschedule(RescheduleOccurrence(request.releaseAt, request.returnBy))
-    }
+    reschedule(RescheduleOccurrence(request.releaseAt, request.returnBy))
   }
 
   private fun TemporaryAbsenceOccurrence.checkLogistics(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
@@ -175,7 +169,7 @@ class SyncTapOccurrence(
   }
 
   private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
-    if (request.isCancelled && status.code != CANCELLED.name) {
+    if (request.isCancelled) {
       cancel(CancelOccurrence(), rdPaths::getReferenceData)
     }
   }

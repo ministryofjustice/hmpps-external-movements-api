@@ -61,8 +61,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
+import java.time.temporal.ChronoUnit.SECONDS
 import java.util.Collections.unmodifiableList
 import java.util.UUID
+import kotlin.reflect.KMutableProperty0
 
 @Audited
 @Entity
@@ -215,9 +217,11 @@ class TemporaryAbsenceOccurrence(
   }
 
   fun reschedule(action: RescheduleOccurrence) {
-    action.releaseAt?.also { releaseAt = it }
-    action.returnBy?.also { returnBy = it }
-    appliedActions += action
+    val rel = action.releaseAt.ifChanges(::releaseAt)
+    val ret = action.returnBy.ifChanges(::returnBy)
+    if (rel || ret) {
+      appliedActions += action
+    }
   }
 
   fun changeLocation(action: ChangeOccurrenceLocation) {
@@ -247,8 +251,10 @@ class TemporaryAbsenceOccurrence(
   }
 
   fun cancel(action: CancelOccurrence, statusProvider: (ReferenceDataDomain.Code, String) -> ReferenceData) {
-    status = statusProvider(TAP_OCCURRENCE_STATUS, CANCELLED.name) as TapOccurrenceStatus
-    appliedActions += action
+    if (!::status.isInitialized || status.code != CANCELLED.name) {
+      status = statusProvider(TAP_OCCURRENCE_STATUS, CANCELLED.name) as TapOccurrenceStatus
+      appliedActions += action
+    }
   }
 
   fun calculateStatus(statusProvider: (String) -> TapOccurrenceStatus) = apply {
@@ -290,4 +296,11 @@ class TemporaryAbsenceOccurrence(
     val RELEASE_AT = TemporaryAbsenceOccurrence::releaseAt.name
     val RETURN_BY = TemporaryAbsenceOccurrence::returnBy.name
   }
+}
+
+private fun LocalDateTime?.ifChanges(property: KMutableProperty0<LocalDateTime>): Boolean = if (this == null || truncatedTo(SECONDS).isEqual(property.get().truncatedTo(SECONDS))) {
+  false
+} else {
+  property.set(this)
+  true
 }
