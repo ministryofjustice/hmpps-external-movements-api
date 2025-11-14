@@ -2,10 +2,8 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config
 
 import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
@@ -31,8 +29,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
 interface TempAbsenceAuthorisationOperations {
@@ -54,10 +50,6 @@ interface TempAbsenceAuthorisationOperations {
       fromDate: LocalDate = LocalDate.now().minusDays(7),
       toDate: LocalDate = LocalDate.now().minusDays(1),
       applicationDate: LocalDate = LocalDate.now().minusMonths(1),
-      submittedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
-      submittedBy: String = "O7h3rU53r",
-      approvedAt: LocalDateTime? = null,
-      approvedBy: String? = null,
       reasonPath: ReasonPath = ReasonPath(
         buildList {
           absenceType?.also { add(ABSENCE_TYPE of it) }
@@ -82,10 +74,6 @@ interface TempAbsenceAuthorisationOperations {
         notes,
         fromDate,
         toDate,
-        submittedAt,
-        submittedBy,
-        approvedAt,
-        approvedBy,
         reasonPath,
         schedule,
         legacyId,
@@ -95,7 +83,6 @@ interface TempAbsenceAuthorisationOperations {
 
   fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: CreateTapAuthorisationRequest) {
     assertThat(this.personIdentifier).isEqualTo(personIdentifier)
-    assertThat(submittedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(2, SECONDS))
     assertThat(status.code).isEqualTo(request.statusCode.name)
     assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
@@ -107,9 +94,6 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(legacyId).isNull()
     assertThat(fromDate).isEqualTo(request.fromDate)
     assertThat(toDate).isEqualTo(request.toDate)
-    approvedAt?.also {
-      assertThat(it).isCloseTo(request.approvedAt, within(2, SECONDS))
-    }
     assertThat(schedule).isEqualTo(request.schedule)
   }
 
@@ -126,12 +110,6 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(repeat).isEqualTo(authorisation.repeat)
     assertThat(fromDate).isEqualTo(authorisation.fromDate)
     assertThat(toDate).isEqualTo(authorisation.toDate)
-    assertThat(submittedAt).isCloseTo(authorisation.submitted.at, within(2, SECONDS))
-    assertThat(submittedBy).isEqualTo(authorisation.submitted.by)
-    approvedAt?.also {
-      assertThat(it).isCloseTo(authorisation.approved!!.at, within(2, SECONDS))
-    }
-    assertThat(approvedBy).isEqualTo(authorisation.approved?.by)
     assertThat(schedule).isEqualTo(authorisation.schedule)
   }
 

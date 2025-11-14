@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
-import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
@@ -31,12 +30,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
@@ -69,8 +68,6 @@ interface TempAbsenceOccurrenceOperations {
       accompaniedBy: String = "L",
       transport: String = "OD",
       notes: String? = "Some notes on the occurrence",
-      addedAt: LocalDateTime = LocalDateTime.now().minusMonths(1),
-      addedBy: String = "O7h3rU53r",
       cancelledAt: LocalDateTime? = null,
       cancelledBy: String? = null,
       reasonPath: ReasonPath = ReasonPath(
@@ -103,10 +100,6 @@ interface TempAbsenceOccurrenceOperations {
         accompaniedBy = rdSupplier(ACCOMPANIED_BY, accompaniedBy) as AccompaniedBy,
         transport = rdSupplier(TRANSPORT, transport) as Transport,
         notes = notes,
-        addedAt = addedAt,
-        addedBy = addedBy,
-        cancelledAt = cancelledAt,
-        cancelledBy = cancelledBy,
         reasonPath = reasonPath,
         scheduleReference = scheduleReference,
         legacyId = legacyId,
@@ -115,6 +108,9 @@ interface TempAbsenceOccurrenceOperations {
         occurrence.addMovement(it(rdSupplier)) { statusCode ->
           rdSupplier(TAP_OCCURRENCE_STATUS, statusCode) as TapOccurrenceStatus
         }
+      }
+      if (cancelledAt != null && cancelledBy != null) {
+        occurrence.cancel(CancelOccurrence(cancelledAt, cancelledBy), rdSupplier)
       }
       if (movements.isEmpty()) {
         occurrence.calculateStatus { rdSupplier(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus }
@@ -135,7 +131,6 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(location).isEqualTo(request.location)
     assertThat(accompaniedBy.code).isEqualTo(authRequest.accompaniedByCode)
     assertThat(transport.code).isEqualTo(authRequest.transportCode)
-    assertThat(addedAt).isCloseTo(ExternalMovementContext.get().requestAt, within(2, SECONDS))
     assertThat(contactInformation).isEqualTo(authRequest.contactInformation)
     assertThat(scheduleReference).isEqualTo(request.scheduleReference)
   }

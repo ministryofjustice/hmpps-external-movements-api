@@ -19,8 +19,6 @@ data class TapOccurrence(
   val location: Location,
   val accompaniedBy: CodedDescription,
   val transport: CodedDescription,
-  val added: AtAndBy,
-  val cancelled: AtAndBy?,
   val contactInformation: String?,
   val scheduleReference: JsonNode?,
   val notes: String?,

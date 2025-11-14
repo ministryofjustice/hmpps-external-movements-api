@@ -110,10 +110,6 @@ class SyncTapOccurrence(
       transport = rdPaths.getReferenceData(ReferenceDataDomain.Code.TRANSPORT, transportCode) as Transport,
       location = location,
       notes = notes,
-      addedAt = created.at,
-      addedBy = created.by,
-      cancelledAt = updated?.at,
-      cancelledBy = updated?.by,
       legacyId = legacyId,
       reasonPath = reasonPath,
       scheduleReference = null,
@@ -131,7 +127,7 @@ class SyncTapOccurrence(
     if (notes != request.notes) {
       request.notes?.let { amendNotes(AmendOccurrenceNotes(it)) }
     }
-    checkCancellation(request)
+    checkCancellation(request, rdPaths)
     calculateStatus {
       rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
     }
@@ -173,10 +169,10 @@ class SyncTapOccurrence(
     }
   }
 
-  private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence) {
+  private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
     if (request.isCancelled && status.code != CANCELLED.name) {
       val context = ExternalMovementContext.get()
-      cancel(CancelOccurrence(request.updated?.at ?: context.requestAt, request.updated?.by ?: context.username))
+      cancel(CancelOccurrence(request.updated?.at ?: context.requestAt, request.updated?.by ?: context.username), rdPaths::getReferenceData)
     }
   }
 }

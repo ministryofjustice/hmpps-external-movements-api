@@ -257,8 +257,6 @@ private fun TemporaryAbsenceMovement.verifyAgainst(personIdentifier: String, req
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
   assertThat(location).isEqualTo(request.location)
   assertThat(notes).isEqualTo(request.notes)
-  assertThat(recordedAt).isCloseTo(request.created.at, within(1, SECONDS))
-  assertThat(recordedBy).isEqualTo(request.created.by)
   assertThat(recordedByPrisonCode).isEqualTo(request.created.prisonCode)
   assertThat(legacyId).isEqualTo(request.legacyId)
 }

@@ -112,16 +112,12 @@ class CreateTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
-    assertThat(saved.approvedAt).isNull()
-    assertThat(saved.approvedBy).isNull()
-    assertThat(saved.submittedBy).isEqualTo(username)
     val occurrence = findForAuthorisation(saved.id).first()
     occurrence.verifyAgainst(pi, request.occurrences.first(), request)
     assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(occurrence.absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
     assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
     assertThat(occurrence.absenceReason?.code).isEqualTo(request.absenceReasonCode)
-    assertThat(occurrence.addedBy).isEqualTo(username)
 
     verifyAudit(
       saved,
@@ -156,16 +152,13 @@ class CreateTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request.copy(absenceSubTypeCode = "PP", absenceReasonCode = "PC"))
-    assertThat(saved.approvedAt).isNotNull()
-    assertThat(saved.approvedBy).isEqualTo(username)
-    assertThat(saved.submittedBy).isEqualTo(username)
+
     val occurrence = findForAuthorisation(saved.id).first()
     occurrence.verifyAgainst(pi, request.occurrences.first(), request)
     assertThat(occurrence.absenceType?.code).isEqualTo("PP")
     assertThat(occurrence.absenceSubType?.code).isEqualTo("PP")
     assertThat(occurrence.absenceReasonCategory?.code).isNull()
     assertThat(occurrence.absenceReason?.code).isEqualTo("PC")
-    assertThat(occurrence.addedBy).isEqualTo(username)
 
     verifyAudit(
       saved,

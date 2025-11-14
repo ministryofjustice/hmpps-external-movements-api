@@ -20,8 +20,6 @@ data class TapAuthorisation(
   val fromDate: LocalDate,
   val toDate: LocalDate,
   val occurrences: List<Occurrence>,
-  val submitted: AtAndBy,
-  val approved: AtAndBy?,
   val schedule: JsonNode?,
   val notes: String?,
 ) {

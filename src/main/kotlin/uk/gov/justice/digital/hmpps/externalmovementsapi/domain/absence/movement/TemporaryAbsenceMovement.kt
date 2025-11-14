@@ -17,7 +17,6 @@ import org.hibernate.envers.RelationTargetAuditMode
 import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.valueOf
@@ -26,7 +25,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
 import java.time.LocalDateTime
@@ -45,8 +43,6 @@ class TemporaryAbsenceMovement(
   accompaniedByNotes: String?,
   notes: String?,
   location: Location,
-  recordedAt: LocalDateTime,
-  recordedBy: String,
   recordedByPrisonCode: String,
   legacyId: String?,
   @Id
@@ -102,17 +98,6 @@ class TemporaryAbsenceMovement(
   var location: Location = location
     private set
 
-  @NotNull
-  @Column(name = "recorded_at", nullable = false)
-  var recordedAt: LocalDateTime = recordedAt
-    private set
-
-  @Size(max = 64)
-  @NotNull
-  @Column(name = "recorded_by", nullable = false, length = 64)
-  var recordedBy: String = recordedBy
-    private set
-
   @Size(max = 6)
   @NotNull
   @Column(name = "recorded_by_prison_code", nullable = false, length = 6)
@@ -146,8 +131,6 @@ class TemporaryAbsenceMovement(
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
     accompaniedByNotes = request.accompaniedByNotes
     notes = request.notes
-    recordedAt = request.created.at
-    recordedBy = request.created.by
     recordedByPrisonCode = request.created.prisonCode
     location = request.location
     legacyId = request.legacyId
@@ -162,5 +145,3 @@ interface TemporaryAbsenceMovementRepository :
   fun findByOccurrenceId(occurrenceId: UUID): List<TemporaryAbsenceMovement>
   fun findByOccurrenceIdIn(ids: Set<UUID>): List<TemporaryAbsenceMovement>
 }
-
-fun TemporaryAbsenceMovementRepository.getMovement(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence movement not found")

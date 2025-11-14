@@ -60,14 +60,14 @@ class SearchTapAuthorisation(
     status.asCodedDescription(),
     absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
     absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
-    absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }?.asCodedDescription(),
+    absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
+      ?.asCodedDescription(),
     absenceReason = absenceReason?.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
     repeat,
     fromDate,
     toDate,
     occurrences.map { it.location }.distinct(),
     occurrences.size,
-    submittedAt,
   )
 }
 
