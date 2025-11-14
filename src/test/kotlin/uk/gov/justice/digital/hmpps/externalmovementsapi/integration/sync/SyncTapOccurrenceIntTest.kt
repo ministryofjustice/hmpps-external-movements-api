@@ -82,7 +82,7 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -121,6 +121,31 @@ class SyncTapOccurrenceIntTest(
         TemporaryAbsenceCancelled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
       ),
     )
+  }
+
+  @Test
+  fun `200 ok can create occurrence if cancelled`() {
+    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val request = tapOccurrence(isCancelled = true)
+    val res = syncTapOccurrence(authorisation.id, request)
+      .expectStatus().isOk
+      .expectBody<SyncResponse>()
+      .returnResult()
+      .responseBody!!
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceOccurrence(res.id))
+    saved.verifyAgainst(request)
+    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf())
   }
 
   @Test
@@ -169,7 +194,7 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test

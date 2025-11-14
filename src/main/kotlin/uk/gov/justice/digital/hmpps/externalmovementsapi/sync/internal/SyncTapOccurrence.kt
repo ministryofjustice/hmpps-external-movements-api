@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.CANCELLED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
@@ -38,7 +37,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Transactional
@@ -64,7 +62,7 @@ class SyncTapOccurrence(
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
           occurrenceRepository.save(
-            request.asEntity(authorisation, rdPaths).calculateStatus {
+            request.asEntity(authorisation, rdPaths, request.isCancelled).calculateStatus {
               rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
             },
           )
@@ -82,6 +80,7 @@ class SyncTapOccurrence(
   private fun TapOccurrence.asEntity(
     authorisation: TemporaryAbsenceAuthorisation,
     rdPaths: ReferenceDataPaths,
+    isCancelled: Boolean,
   ): TemporaryAbsenceOccurrence {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
@@ -114,7 +113,11 @@ class SyncTapOccurrence(
       reasonPath = reasonPath,
       scheduleReference = null,
       id = id ?: newUuid(),
-    )
+    ).apply {
+      if (isCancelled) {
+        cancel(CancelOccurrence(), rdPaths::getReferenceData)
+      }
+    }
   }
 
   private fun TemporaryAbsenceOccurrence.update(
@@ -150,11 +153,7 @@ class SyncTapOccurrence(
   }
 
   private fun TemporaryAbsenceOccurrence.checkSchedule(request: TapOccurrence) {
-    if (!request.releaseAt.truncatedTo(ChronoUnit.SECONDS).isEqual(releaseAt.truncatedTo(ChronoUnit.SECONDS)) ||
-      !request.returnBy.truncatedTo(ChronoUnit.SECONDS).isEqual(returnBy.truncatedTo(ChronoUnit.SECONDS))
-    ) {
-      reschedule(RescheduleOccurrence(request.releaseAt, request.returnBy))
-    }
+    reschedule(RescheduleOccurrence(request.releaseAt, request.returnBy))
   }
 
   private fun TemporaryAbsenceOccurrence.checkLogistics(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
@@ -170,9 +169,8 @@ class SyncTapOccurrence(
   }
 
   private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
-    if (request.isCancelled && status.code != CANCELLED.name) {
-      val context = ExternalMovementContext.get()
-      cancel(CancelOccurrence(request.updated?.at ?: context.requestAt, request.updated?.by ?: context.username), rdPaths::getReferenceData)
+    if (request.isCancelled) {
+      cancel(CancelOccurrence(), rdPaths::getReferenceData)
     }
   }
 }

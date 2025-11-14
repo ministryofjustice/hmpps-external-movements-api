@@ -38,6 +38,8 @@ class AuditRevision {
   @Enumerated(EnumType.STRING)
   var source: DataSource? = null
 
+  var reason: String? = null
+
   @JdbcTypeCode(SqlTypes.ARRAY)
   var affectedEntities: MutableSet<String> = sortedSetOf(String.CASE_INSENSITIVE_ORDER)
 }
@@ -49,6 +51,7 @@ class AuditRevisionEntityListener : EntityTrackingRevisionListener {
       timestamp = context.requestAt
       username = context.username
       source = context.source
+      reason = context.reason
     }
   }
 

@@ -17,8 +17,8 @@ data class TemporaryAbsenceScheduled(
       personIdentifier: String,
       id: UUID,
       dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = TemporaryAbsenceRescheduled(
-      TemporaryAbsenceRescheduledInformation(id, dataSource),
+    ) = TemporaryAbsenceScheduled(
+      TemporaryAbsenceScheduledInformation(id, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
   }

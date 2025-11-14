@@ -110,7 +110,7 @@ interface TempAbsenceOccurrenceOperations {
         }
       }
       if (cancelledAt != null && cancelledBy != null) {
-        occurrence.cancel(CancelOccurrence(cancelledAt, cancelledBy), rdSupplier)
+        occurrence.cancel(CancelOccurrence(), rdSupplier)
       }
       if (movements.isEmpty()) {
         occurrence.calculateStatus { rdSupplier(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus }

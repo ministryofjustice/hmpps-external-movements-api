@@ -29,7 +29,7 @@ class ExternalMovementsApiExceptionHandler {
     .body(
       ErrorResponse(
         status = CONFLICT,
-        userMessage = "Validation failure: ${e.message}",
+        userMessage = e.message,
         developerMessage = e.devMessage(),
       ),
     )

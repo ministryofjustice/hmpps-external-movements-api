@@ -178,8 +178,8 @@ class CreateTapAuthorisationIntTest(
   }
 
   private fun createTapOccurrenceRequest(
-    releaseAt: LocalDateTime = LocalDateTime.now().minusDays(7),
-    returnBy: LocalDateTime = LocalDateTime.now(),
+    releaseAt: LocalDateTime = LocalDateTime.now().minusHours(3),
+    returnBy: LocalDateTime = LocalDateTime.now().plusHours(3),
     location: Location = location(),
     scheduleReference: JsonNode? = null,
   ) = CreateTapOccurrenceRequest(
@@ -203,8 +203,8 @@ class CreateTapAuthorisationIntTest(
     absenceReasonCode: String? = "R15",
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
-    fromDate: LocalDate = LocalDate.now().minusDays(7),
-    toDate: LocalDate = LocalDate.now().minusDays(1),
+    fromDate: LocalDate = LocalDate.now().minusDays(3),
+    toDate: LocalDate = LocalDate.now().plusDays(1),
     statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
     occurrences: List<CreateTapOccurrenceRequest> = listOf(createTapOccurrenceRequest()),
     notes: String? = null,
