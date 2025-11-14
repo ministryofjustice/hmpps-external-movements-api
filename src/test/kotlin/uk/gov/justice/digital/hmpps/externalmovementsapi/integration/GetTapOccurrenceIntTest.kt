@@ -15,8 +15,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension.Companion.manageUsers
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersServer.Companion.user
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import java.time.LocalDateTime
@@ -62,15 +60,9 @@ class GetTapOccurrenceIntTest(
       ),
     )
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val addingUser = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, addingUser)
-    val cancellingUser = user(occurrence.cancelledBy!!, "The cancelling user")
-    manageUsers.findUser(occurrence.cancelledBy!!, cancellingUser)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(addingUser.name)
-    assertThat(response.cancelled!!.displayName).isEqualTo(cancellingUser.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("CANCELLED")
   }
@@ -81,12 +73,9 @@ class GetTapOccurrenceIntTest(
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().plusHours(2)))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val user = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, user)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("SCHEDULED")
   }
@@ -97,12 +86,9 @@ class GetTapOccurrenceIntTest(
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().minusHours(2)))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val user = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, user)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("EXPIRED")
   }
@@ -114,12 +100,9 @@ class GetTapOccurrenceIntTest(
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val user = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, user)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("PENDING")
   }
@@ -131,12 +114,9 @@ class GetTapOccurrenceIntTest(
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val user = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, user)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("CANCELLED")
   }
@@ -148,12 +128,9 @@ class GetTapOccurrenceIntTest(
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val user = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, user)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("DENIED")
   }
@@ -170,12 +147,9 @@ class GetTapOccurrenceIntTest(
         ),
       )
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val user = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, user)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("OVERDUE")
   }
@@ -192,12 +166,9 @@ class GetTapOccurrenceIntTest(
         ),
       )
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val user = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, user)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("IN_PROGRESS")
   }
@@ -226,12 +197,9 @@ class GetTapOccurrenceIntTest(
     )
 
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.personIdentifier))
-    val user = user(occurrence.addedBy, "The adding user")
-    manageUsers.findUser(occurrence.addedBy, user)
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
-    assertThat(response.added.displayName).isEqualTo(user.name)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("COMPLETED")
   }

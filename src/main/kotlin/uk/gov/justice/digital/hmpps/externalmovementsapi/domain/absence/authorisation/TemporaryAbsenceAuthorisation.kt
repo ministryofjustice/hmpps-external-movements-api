@@ -50,7 +50,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Audited
@@ -69,10 +68,6 @@ class TemporaryAbsenceAuthorisation(
   notes: String?,
   fromDate: LocalDate,
   toDate: LocalDate,
-  submittedAt: LocalDateTime,
-  submittedBy: String,
-  approvedAt: LocalDateTime?,
-  approvedBy: String?,
   reasonPath: ReasonPath,
   schedule: JsonNode?,
   legacyId: Long?,
@@ -148,24 +143,6 @@ class TemporaryAbsenceAuthorisation(
   var toDate: LocalDate = toDate
     private set
 
-  @NotNull
-  @Column(name = "submitted_at", nullable = false)
-  var submittedAt: LocalDateTime = submittedAt
-    private set
-
-  @NotNull
-  @Column(name = "submitted_by", nullable = false)
-  var submittedBy: String = submittedBy
-    private set
-
-  @Column(name = "approved_at")
-  var approvedAt: LocalDateTime? = approvedAt
-    private set
-
-  @Column(name = "approved_by", nullable = false)
-  var approvedBy: String? = approvedBy
-    private set
-
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "reason_path")
   var reasonPath: ReasonPath = reasonPath
@@ -203,11 +180,7 @@ class TemporaryAbsenceAuthorisation(
     status =
       rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, request.statusCode) as TapAuthorisationStatus
     notes = request.notes
-    submittedAt = request.created.at
-    submittedBy = request.created.by
     legacyId = request.legacyId
-    approvedAt = request.updated?.at
-    approvedBy = request.updated?.by
     fromDate = request.fromDate
     toDate = request.toDate
   }

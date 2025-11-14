@@ -74,8 +74,6 @@ class SyncTapOccurrenceIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(res.id))
     saved.verifyAgainst(request)
-    assertThat(saved.cancelledAt).isNull()
-    assertThat(saved.cancelledBy).isNull()
 
     verifyAudit(
       saved,
@@ -90,7 +88,7 @@ class SyncTapOccurrenceIntTest(
   @Test
   fun `200 ok scheduled absence updated successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId(), addedBy = DEFAULT_USERNAME))
+    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
     val request = tapOccurrence(
       id = existing.id,
       isCancelled = true,
@@ -108,8 +106,6 @@ class SyncTapOccurrenceIntTest(
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(existing.id))
     saved.verifyAgainst(request)
     assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
-    assertThat(saved.cancelledAt).isNotNull
-    assertThat(saved.cancelledBy).isNotNull
 
     verifyAudit(
       saved,
@@ -130,7 +126,7 @@ class SyncTapOccurrenceIntTest(
   @Test
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId(), addedBy = DEFAULT_USERNAME))
+    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
     val request = tapOccurrence(legacyId = existing.legacyId!!, accompaniedByCode = "U")
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
@@ -141,8 +137,6 @@ class SyncTapOccurrenceIntTest(
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(existing.id))
     saved.verifyAgainst(request)
-    assertThat(saved.cancelledAt).isNull()
-    assertThat(saved.cancelledBy).isNull()
 
     verifyAudit(
       saved,
@@ -260,11 +254,5 @@ private fun TemporaryAbsenceOccurrence.verifyAgainst(
   assertThat(transport.code).isEqualTo(request.transportCode)
   assertThat(location).isEqualTo(request.location)
   assertThat(notes).isEqualTo(request.notes)
-  assertThat(addedAt).isCloseTo(request.created.at, within(2, SECONDS))
-  assertThat(addedBy).isEqualTo(request.created.by)
-  request.updated?.also {
-    assertThat(cancelledAt).isCloseTo(it.at, within(2, SECONDS))
-    assertThat(cancelledBy).isEqualTo(it.by)
-  }
   assertThat(legacyId).isEqualTo(request.legacyId)
 }

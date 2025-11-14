@@ -13,6 +13,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.retryOnTran
 @Component
 class ManageUsersClient(@Qualifier("manageUsersWebClient") private val webClient: WebClient) {
 
+  fun getUserDetails(username: String): UserDetails = findUserDetails(username).block()!!
+
   fun getUsersDetails(usernames: Set<String>): List<UserDetails> = if (usernames.isEmpty()) {
     emptyList()
   } else {

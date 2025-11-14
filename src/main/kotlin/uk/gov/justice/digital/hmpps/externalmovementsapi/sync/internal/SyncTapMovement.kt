@@ -80,8 +80,6 @@ class SyncTapMovement(
     accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
     accompaniedByNotes = accompaniedByNotes,
     notes = notes,
-    recordedAt = created.at,
-    recordedBy = created.by,
     recordedByPrisonCode = created.prisonCode,
     location = location,
     legacyId = legacyId,

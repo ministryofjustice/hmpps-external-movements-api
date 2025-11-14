@@ -13,8 +13,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension.Companion.manageUsers
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersServer.Companion.user
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import java.util.UUID
@@ -51,12 +49,9 @@ class GetTapAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.personIdentifier))
-    val user = user(auth.submittedBy, "The submitting user")
-    manageUsers.findUser(auth.submittedBy, user)
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
     auth.verifyAgainst(response)
-    assertThat(response.submitted.displayName).isEqualTo(user.name)
     occurrence.verifyAgainst(response.occurrences.first())
   }
 
@@ -73,8 +68,6 @@ class GetTapAuthorisationIntTest(
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.personIdentifier))
-    val user = user(auth.submittedBy, "The submitting user")
-    manageUsers.findUser(auth.submittedBy, user)
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
     assertThat(response.absenceType?.code).isEqualTo("PP")
@@ -82,7 +75,6 @@ class GetTapAuthorisationIntTest(
     assertThat(response.absenceReasonCategory).isNull()
     assertThat(response.absenceReason).isNull()
     auth.verifyAgainst(response)
-    assertThat(response.submitted.displayName).isEqualTo(user.name)
     occurrence.verifyAgainst(response.occurrences.first())
   }
 

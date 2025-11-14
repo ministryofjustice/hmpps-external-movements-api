@@ -34,8 +34,17 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.COMPLETED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.IN_PROGRESS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.OVERDUE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.SCHEDULED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
@@ -74,10 +83,6 @@ class TemporaryAbsenceOccurrence(
   location: Location,
   contactInformation: String?,
   notes: String?,
-  addedAt: LocalDateTime,
-  addedBy: String,
-  cancelledAt: LocalDateTime?,
-  cancelledBy: String?,
   reasonPath: ReasonPath,
   scheduleReference: JsonNode?,
   legacyId: Long?,
@@ -151,24 +156,6 @@ class TemporaryAbsenceOccurrence(
   var notes: String? = notes
     private set
 
-  @NotNull
-  @Column(name = "added_at", nullable = false)
-  var addedAt: LocalDateTime = addedAt
-    private set
-
-  @NotNull
-  @Column(name = "added_by", nullable = false)
-  var addedBy: String = addedBy
-    private set
-
-  @Column(name = "cancelled_at")
-  var cancelledAt: LocalDateTime? = cancelledAt
-    private set
-
-  @Column(name = "cancelled_by", nullable = false)
-  var cancelledBy: String? = cancelledBy
-    private set
-
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "reason_path")
   var reasonPath: ReasonPath = reasonPath
@@ -202,7 +189,7 @@ class TemporaryAbsenceOccurrence(
     calculateStatus(statusProvider)
   }
 
-  override fun initialEvent(): DomainEvent<*>? = if (authorisation.status.code == TapAuthorisationStatus.Code.APPROVED.name) {
+  override fun initialEvent(): DomainEvent<*>? = if (authorisation.status.code == APPROVED.name) {
     TemporaryAbsenceScheduled(authorisation.personIdentifier, id)
   } else {
     null
@@ -243,7 +230,7 @@ class TemporaryAbsenceOccurrence(
     action: ChangeOccurrenceAccompaniment,
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
-    accompaniedBy = rdSupplier(ReferenceDataDomain.Code.ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
+    accompaniedBy = rdSupplier(ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
     appliedActions += action
   }
 
@@ -251,7 +238,7 @@ class TemporaryAbsenceOccurrence(
     action: ChangeOccurrenceTransport,
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
-    transport = rdSupplier(ReferenceDataDomain.Code.TRANSPORT, action.transportCode) as Transport
+    transport = rdSupplier(TRANSPORT, action.transportCode) as Transport
     appliedActions += action
   }
 
@@ -260,9 +247,8 @@ class TemporaryAbsenceOccurrence(
     appliedActions += action
   }
 
-  fun cancel(action: CancelOccurrence) {
-    cancelledAt = action.at
-    cancelledBy = action.by
+  fun cancel(action: CancelOccurrence, statusProvider: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+    status = statusProvider(TAP_OCCURRENCE_STATUS, CANCELLED.name) as TapOccurrenceStatus
     appliedActions += action
   }
 
@@ -271,26 +257,30 @@ class TemporaryAbsenceOccurrence(
       statusProvider(listOfNotNull(movementStatus(), isCancelledStatus(), authorisationStatus()).first().name)
   }
 
-  private fun isCancelledStatus(): TapOccurrenceStatus.Code? = cancelledAt?.let { TapOccurrenceStatus.Code.CANCELLED }
+  private fun isCancelledStatus(): TapOccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
+    CANCELLED
+  } else {
+    null
+  }
 
   private fun movementStatus(): TapOccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
     ?.map { it.direction }?.let {
       if (it.contains(TemporaryAbsenceMovement.Direction.IN)) {
-        TapOccurrenceStatus.Code.COMPLETED
+        COMPLETED
       } else if (returnBy.isAfter(now())) {
-        TapOccurrenceStatus.Code.IN_PROGRESS
+        IN_PROGRESS
       } else {
         appliedActions += MarkOccurrenceOverdue()
-        TapOccurrenceStatus.Code.OVERDUE
+        OVERDUE
       }
     }
 
-  private fun authorisationStatus(): TapOccurrenceStatus.Code = if (authorisation.status.code == TapAuthorisationStatus.Code.APPROVED.name) {
+  private fun authorisationStatus(): TapOccurrenceStatus.Code = if (authorisation.status.code == APPROVED.name) {
     if (movements.isEmpty() && returnBy.isBefore(now())) {
       appliedActions += ExpireOccurrence()
-      TapOccurrenceStatus.Code.EXPIRED
+      EXPIRED
     } else {
-      TapOccurrenceStatus.Code.SCHEDULED
+      SCHEDULED
     }
   } else {
     TapOccurrenceStatus.Code.valueOf(authorisation.status.code)

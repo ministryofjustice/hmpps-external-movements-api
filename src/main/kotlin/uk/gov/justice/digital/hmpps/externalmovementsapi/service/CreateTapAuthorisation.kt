@@ -93,10 +93,6 @@ class CreateTapAuthorisation(
       notes = notes,
       fromDate = fromDate,
       toDate = toDate,
-      submittedAt = submittedAt,
-      submittedBy = submittedBy,
-      approvedAt = approvedAt,
-      approvedBy = approvedBy,
       repeat = repeat,
       reasonPath = ReasonPath(reasonPath()),
       schedule = schedule,
@@ -126,10 +122,6 @@ class CreateTapAuthorisation(
         it
       }
     },
-    addedAt = authorisation.submittedAt,
-    addedBy = authorisation.submittedBy,
-    cancelledAt = null,
-    cancelledBy = null,
     contactInformation = authRequest.contactInformation,
     notes = authorisation.notes,
     reasonPath = authorisation.reasonPath,

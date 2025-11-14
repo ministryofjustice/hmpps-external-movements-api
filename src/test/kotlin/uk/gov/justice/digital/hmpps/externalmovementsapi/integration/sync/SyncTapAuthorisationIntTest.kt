@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,7 +26,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
 class SyncTapAuthorisationIntTest(
@@ -63,8 +61,6 @@ class SyncTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
-    assertThat(saved.approvedAt).isNull()
-    assertThat(saved.approvedBy).isNull()
     assertThat(saved.reasonPath.path).containsExactly(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
       ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "RDR",
@@ -96,8 +92,6 @@ class SyncTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
-    assertThat(saved.approvedAt).isNull()
-    assertThat(saved.approvedBy).isNull()
     assertThat(saved.reasonPath.path).containsExactly(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
       ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "SPL",
@@ -128,8 +122,6 @@ class SyncTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
-    assertThat(saved.approvedAt).isNull()
-    assertThat(saved.approvedBy).isNull()
     assertThat(saved.reasonPath.path).containsExactly(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
       ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "CRL",
@@ -208,8 +200,6 @@ class SyncTapAuthorisationIntTest(
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
     saved.verifyAgainst(existing.personIdentifier, request)
-    assertThat(saved.approvedAt).isNotNull
-    assertThat(saved.approvedBy).isNotNull
 
     verifyAudit(
       saved,
@@ -303,10 +293,4 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   assertThat(notes).isEqualTo(request.notes)
   assertThat(fromDate).isEqualTo(request.fromDate)
   assertThat(toDate).isEqualTo(request.toDate)
-  assertThat(submittedAt).isCloseTo(request.created.at, within(2, SECONDS))
-  assertThat(submittedBy).isEqualTo(request.created.by)
-  request.updated?.also {
-    assertThat(approvedAt).isCloseTo(it.at, within(2, SECONDS))
-    assertThat(approvedBy).isEqualTo(it.by)
-  }
 }
