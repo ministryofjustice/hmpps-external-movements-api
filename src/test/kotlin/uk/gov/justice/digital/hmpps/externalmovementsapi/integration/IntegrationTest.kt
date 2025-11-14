@@ -119,9 +119,10 @@ abstract class IntegrationTest {
 
       val auditRevision = entityRevision[1] as AuditRevision
       with(auditRevision) {
-        assertThat(username).isEqualTo(context.username)
         assertThat(this.affectedEntities).containsExactlyInAnyOrderElementsOf(affectedEntities)
-        assertThat(this.source).isEqualTo(context.source)
+        assertThat(username).isEqualTo(context.username)
+        assertThat(source).isEqualTo(context.source)
+        assertThat(reason).isEqualTo(context.reason)
       }
     }
   }

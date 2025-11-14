@@ -7,6 +7,7 @@ import java.time.LocalDateTime
 data class ExternalMovementContext(
   val username: String,
   val requestAt: LocalDateTime = LocalDateTime.now(),
+  val reason: String? = null,
   val source: DataSource = DataSource.DPS,
 ) {
   companion object {

@@ -64,7 +64,7 @@ class SyncTapOccurrence(
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
           occurrenceRepository.save(
-            request.asEntity(authorisation, rdPaths).calculateStatus {
+            request.asEntity(authorisation, rdPaths, request.isCancelled).calculateStatus {
               rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
             },
           )
@@ -82,6 +82,7 @@ class SyncTapOccurrence(
   private fun TapOccurrence.asEntity(
     authorisation: TemporaryAbsenceAuthorisation,
     rdPaths: ReferenceDataPaths,
+    isCancelled: Boolean,
   ): TemporaryAbsenceOccurrence {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
@@ -114,7 +115,11 @@ class SyncTapOccurrence(
       reasonPath = reasonPath,
       scheduleReference = null,
       id = id ?: newUuid(),
-    )
+    ).apply {
+      if (isCancelled) {
+        cancel(CancelOccurrence(), rdPaths::getReferenceData)
+      }
+    }
   }
 
   private fun TemporaryAbsenceOccurrence.update(
@@ -171,8 +176,7 @@ class SyncTapOccurrence(
 
   private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
     if (request.isCancelled && status.code != CANCELLED.name) {
-      val context = ExternalMovementContext.get()
-      cancel(CancelOccurrence(request.updated?.at ?: context.requestAt, request.updated?.by ?: context.username), rdPaths::getReferenceData)
+      cancel(CancelOccurrence(), rdPaths::getReferenceData)
     }
   }
 }

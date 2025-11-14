@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,19 +9,19 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
-class RescheduleTapOccurrenceIntTest(
+class CancelTapOccurrenceIntTest(
   @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -41,38 +40,36 @@ class RescheduleTapOccurrenceIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    rescheduleOccurrence(
+    cancelOccurrence(
       newUuid(),
-      rescheduleOccurrenceRequest(),
+      cancelOccurrenceRequest(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 occurrence does not exist`() {
-    rescheduleOccurrence(newUuid(), rescheduleOccurrenceRequest()).expectStatus().isNotFound
+    cancelOccurrence(newUuid(), cancelOccurrenceRequest()).expectStatus().isNotFound
   }
 
   @Test
-  fun `400 at least one date must be provided`() {
+  fun `409 - occurrence not scheduled cannot be cancelled`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = rescheduleOccurrenceRequest(null, null)
-    val res = rescheduleOccurrence(occurrence.id, request).errorResponse(HttpStatus.BAD_REQUEST)
-    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Either release or return date must be provided.")
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().minusHours(4)))
+    val res = cancelOccurrence(occurrence.id, cancelOccurrenceRequest()).errorResponse(HttpStatus.CONFLICT)
+    assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
+    assertThat(res.userMessage).isEqualTo("Temporary absence not currently scheduled")
   }
 
   @Test
   fun `200 ok tap occurrence rescheduled successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = rescheduleOccurrenceRequest(LocalDateTime.now().plusDays(7), LocalDateTime.now().plusDays(8))
-    rescheduleOccurrence(occurrence.id, request).expectStatus().isOk
+    val request = cancelOccurrenceRequest()
+    cancelOccurrence(occurrence.id, request).expectStatus().isOk
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.releaseAt).isCloseTo(request.releaseAt, within(2, ChronoUnit.SECONDS))
-    assertThat(saved.returnBy).isCloseTo(request.returnBy, within(2, ChronoUnit.SECONDS))
+    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
 
     verifyAudit(
       saved,
@@ -84,18 +81,16 @@ class RescheduleTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(occurrence.authorisation.personIdentifier, occurrence.id)))
+    verifyEvents(saved, setOf(TemporaryAbsenceCancelled(occurrence.authorisation.personIdentifier, occurrence.id)))
   }
 
-  private fun rescheduleOccurrenceRequest(
-    releaseAt: LocalDateTime? = LocalDateTime.now().minusHours(2),
-    returnBy: LocalDateTime? = LocalDateTime.now().plusHours(2),
-    reason: String? = "A reason for the reschedule",
-  ) = RescheduleOccurrence(releaseAt, returnBy, reason)
+  private fun cancelOccurrenceRequest(
+    reason: String? = "A reason for the cancellation",
+  ) = CancelOccurrence(reason)
 
-  private fun rescheduleOccurrence(
+  private fun cancelOccurrence(
     id: UUID,
-    request: RescheduleOccurrence,
+    request: CancelOccurrence,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

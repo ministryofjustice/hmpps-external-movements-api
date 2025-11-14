@@ -59,7 +59,7 @@ class TapOccurrenceStatusIntTest(
 
   @Test
   fun `occurrence status updated to expired when scheduled`() {
-    val durationAhead = Duration.ofMillis(250)
+    val durationAhead = Duration.ofMillis(100)
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
