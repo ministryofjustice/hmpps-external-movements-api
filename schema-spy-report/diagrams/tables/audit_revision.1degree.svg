@@ -43,7 +43,7 @@
 <g id="node2" class="node">
 <title>audit_revision</title>
 <g id="a_node2"><a xlink:href="../../tables/audit_revision.html" xlink:title="audit_revision" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="8,-177.7 8,-333.7 262,-333.7 262,-177.7 8,-177.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="8,-155.7 8,-333.7 262,-333.7 262,-155.7 8,-155.7"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="10,-308.7 10,-331.7 260,-331.7 260,-308.7 10,-308.7"/>
 <polygon fill="none" stroke="#000000" points="10,-308.7 10,-331.7 260,-331.7 260,-308.7 10,-308.7"/>
 <text text-anchor="start" x="15" y="-317.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">audit_revision</text>
@@ -69,16 +69,20 @@
 <text text-anchor="start" x="30" y="-205.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">affected_entities</text>
 <polygon fill="none" stroke="#000000" points="144,-198.7 144,-220.7 260,-220.7 260,-198.7 144,-198.7"/>
 <text text-anchor="start" x="146.9769" y="-206.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">_varchar[2147483647]</text>
-<polygon fill="#ffffff" stroke="transparent" points="10,-179.7 10,-198.7 81,-198.7 81,-179.7 10,-179.7"/>
-<polygon fill="none" stroke="#000000" points="10,-179.7 10,-198.7 81,-198.7 81,-179.7 10,-179.7"/>
-<text text-anchor="start" x="13" y="-185.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 0</text>
-<polygon fill="#ffffff" stroke="transparent" points="81,-179.7 81,-198.7 144,-198.7 144,-179.7 81,-179.7"/>
-<polygon fill="none" stroke="#000000" points="81,-179.7 81,-198.7 144,-198.7 144,-179.7 81,-179.7"/>
-<text text-anchor="start" x="134.8862" y="-185.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="144,-179.7 144,-198.7 260,-198.7 260,-179.7 144,-179.7"/>
-<polygon fill="none" stroke="#000000" points="144,-179.7 144,-198.7 260,-198.7 260,-179.7 144,-179.7"/>
-<text text-anchor="start" x="241.4053" y="-185.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">4 &gt;</text>
-<polygon fill="none" stroke="#000000" stroke-width="2" points="9,-178.7 9,-332.7 261,-332.7 261,-178.7 9,-178.7"/>
+<polygon fill="none" stroke="#000000" points="10,-176.7 10,-198.7 144,-198.7 144,-176.7 10,-176.7"/>
+<text text-anchor="start" x="30" y="-183.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">reason</text>
+<polygon fill="none" stroke="#000000" points="144,-176.7 144,-198.7 260,-198.7 260,-176.7 144,-176.7"/>
+<text text-anchor="start" x="147" y="-184.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">text[2147483647]</text>
+<polygon fill="#ffffff" stroke="transparent" points="10,-157.7 10,-176.7 81,-176.7 81,-157.7 10,-157.7"/>
+<polygon fill="none" stroke="#000000" points="10,-157.7 10,-176.7 81,-176.7 81,-157.7 10,-157.7"/>
+<text text-anchor="start" x="13" y="-163.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 0</text>
+<polygon fill="#ffffff" stroke="transparent" points="81,-157.7 81,-176.7 144,-176.7 144,-157.7 81,-157.7"/>
+<polygon fill="none" stroke="#000000" points="81,-157.7 81,-176.7 144,-176.7 144,-157.7 81,-157.7"/>
+<text text-anchor="start" x="134.8862" y="-163.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="144,-157.7 144,-176.7 260,-176.7 260,-157.7 144,-157.7"/>
+<polygon fill="none" stroke="#000000" points="144,-157.7 144,-176.7 260,-176.7 260,-157.7 144,-157.7"/>
+<text text-anchor="start" x="241.4053" y="-163.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">4 &gt;</text>
+<polygon fill="none" stroke="#000000" stroke-width="2" points="9,-156.7 9,-332.7 261,-332.7 261,-156.7 9,-156.7"/>
 </a>
 </g>
 </g>

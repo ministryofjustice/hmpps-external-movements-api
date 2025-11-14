@@ -16,6 +16,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="username" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="source" nullable="false" remarks="" size="6" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="affected_entities" nullable="false" remarks="" size="2147483647" type="_varchar" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="reason" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_audit_revision" unique="true">
             <column ascending="true" name="id"/>
