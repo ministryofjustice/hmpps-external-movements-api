@@ -32,7 +32,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAbsenceCategorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationCase
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RescheduleAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
@@ -109,7 +109,7 @@ class SyncTapAuthorisation(
     request: TapAuthorisation,
     rdPaths: ReferenceDataPaths,
   ) = apply {
-    applyPrisonPerson(ChangeAuthorisationCase(personIdentifier, request.prisonCode))
+    applyPrisonPerson(ChangePrisonPerson(personIdentifier, request.prisonCode))
     applyAbsenceCategorisation(request, rdPaths)
     checkSchedule(request)
     checkStatus(request, rdPaths)

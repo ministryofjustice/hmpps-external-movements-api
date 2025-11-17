@@ -56,7 +56,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAbsenceCategorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationCase
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RescheduleAuthorisation
 import java.time.LocalDate
@@ -188,7 +188,7 @@ class TemporaryAbsenceAuthorisation(
 
   override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
 
-  fun applyPrisonPerson(action: ChangeAuthorisationCase) {
+  fun applyPrisonPerson(action: ChangePrisonPerson) {
     personIdentifier = action.personIdentifier.uppercase()
     prisonCode = action.prisonCode
   }
