@@ -152,7 +152,7 @@ class SyncTapOccurrenceIntTest(
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
-    val request = tapOccurrence(legacyId = existing.legacyId!!, accompaniedByCode = "U")
+    val request = tapOccurrence(legacyId = existing.legacyId!!, accompaniedByCode = "U", releaseAt = existing.releaseAt, returnBy = existing.returnBy)
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -166,11 +166,11 @@ class SyncTapOccurrenceIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf())
   }
 
   @Test

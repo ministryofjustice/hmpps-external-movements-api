@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.Action
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetTapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapOccurrenceModifications
 import java.util.UUID
@@ -26,7 +26,7 @@ class TapOccurrenceController(
   fun getTapOccurrence(@PathVariable id: UUID): TapOccurrence = get.byId(id)
 
   @PutMapping("/{id}")
-  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: Action) {
+  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: OccurrenceAction) {
     modify.apply(id, action)
   }
 }

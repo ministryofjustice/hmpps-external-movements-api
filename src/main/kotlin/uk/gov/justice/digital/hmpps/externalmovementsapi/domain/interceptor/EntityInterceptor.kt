@@ -26,8 +26,6 @@ class EntityInterceptor : Interceptor {
     types: Array<out Type>,
   ): Boolean {
     if (entity is DomainEventProducer) {
-      val getPreviousState = { name: String -> previousState[propertyNames.indexOf(name)] }
-      entity.stateChangedEvent(getPreviousState)?.let { em.persist(HmppsDomainEvent(it)) }
       entity.domainEvents().forEach { em.persist(HmppsDomainEvent(it)) }
     }
 

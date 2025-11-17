@@ -30,9 +30,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Tr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeAbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
@@ -124,48 +124,41 @@ class SyncTapOccurrence(
     request: TapOccurrence,
     rdPaths: ReferenceDataPaths,
   ) = apply {
-    checkReason(request, rdPaths)
-    checkSchedule(request)
-    checkLogistics(request, rdPaths)
-    if (notes != request.notes) {
-      request.notes?.let { amendNotes(AmendOccurrenceNotes(it)) }
-    }
+    applyAbsenceCategorisation(request, rdPaths)
+    applySchedule(request)
+    applyLogistics(request, rdPaths)
     checkCancellation(request, rdPaths)
+    request.notes?.let { amendNotes(AmendOccurrenceNotes(it)) }
     calculateStatus {
       rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
     }
   }
 
-  private fun TemporaryAbsenceOccurrence.checkReason(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
+  private fun TemporaryAbsenceOccurrence.applyAbsenceCategorisation(
+    request: TapOccurrence,
+    rdPaths: ReferenceDataPaths,
+  ) {
     val categoryCode = rdPaths.reasonPath().path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.code
-    if (absenceType?.code != request.absenceTypeCode || absenceSubType?.code != request.absenceSubTypeCode || absenceReasonCategory?.code != categoryCode || absenceReason?.code != request.absenceReasonCode) {
-      changeReason(
-        ChangeOccurrenceReason(
-          request.absenceTypeCode,
-          request.absenceSubTypeCode,
-          categoryCode,
-          request.absenceReasonCode,
-          rdPaths.reasonPath(),
-        ),
-        rdPaths::getReferenceData,
-      )
-    }
+    applyAbsenceCategorisation(
+      ChangeAbsenceCategorisation(
+        request.absenceTypeCode,
+        request.absenceSubTypeCode,
+        categoryCode,
+        request.absenceReasonCode,
+        rdPaths.reasonPath(),
+      ),
+      rdPaths::getReferenceData,
+    )
   }
 
-  private fun TemporaryAbsenceOccurrence.checkSchedule(request: TapOccurrence) {
+  private fun TemporaryAbsenceOccurrence.applySchedule(request: TapOccurrence) {
     reschedule(RescheduleOccurrence(request.releaseAt, request.returnBy))
   }
 
-  private fun TemporaryAbsenceOccurrence.checkLogistics(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
-    if (location != request.location) {
-      changeLocation(ChangeOccurrenceLocation(request.location))
-    }
-    if (accompaniedBy.code != request.accompaniedByCode) {
-      changeAccompaniment(ChangeOccurrenceAccompaniment(request.accompaniedByCode), rdPaths::getReferenceData)
-    }
-    if (transport.code != request.transportCode) {
-      changeTransport(ChangeOccurrenceTransport(request.transportCode), rdPaths::getReferenceData)
-    }
+  private fun TemporaryAbsenceOccurrence.applyLogistics(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
+    applyLocation(ChangeOccurrenceLocation(request.location))
+    applyAccompaniment(ChangeOccurrenceAccompaniment(request.accompaniedByCode), rdPaths::getReferenceData)
+    applyTransport(ChangeOccurrenceTransport(request.transportCode), rdPaths::getReferenceData)
   }
 
   private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence, rdPaths: ReferenceDataPaths) {

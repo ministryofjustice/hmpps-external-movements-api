@@ -13,7 +13,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
-import org.hibernate.envers.RelationTargetAuditMode
+import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
@@ -52,7 +52,7 @@ class TemporaryAbsenceMovement(
   @Size(max = 10)
   @NotNull
   @Column(name = "person_identifier", nullable = false, length = 10)
-  var personIdentifier: String = personIdentifier
+  var personIdentifier: String = personIdentifier.uppercase()
     private set
 
   @ManyToOne
@@ -71,14 +71,14 @@ class TemporaryAbsenceMovement(
   var direction: Direction = direction
     private set
 
-  @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+  @Audited(targetAuditMode = NOT_AUDITED)
   @NotNull
   @ManyToOne(optional = false)
   @JoinColumn(name = "absence_reason_id", nullable = false)
   var absenceReason: AbsenceReason = absenceReason
     private set
 
-  @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+  @Audited(targetAuditMode = NOT_AUDITED)
   @NotNull
   @ManyToOne(optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)

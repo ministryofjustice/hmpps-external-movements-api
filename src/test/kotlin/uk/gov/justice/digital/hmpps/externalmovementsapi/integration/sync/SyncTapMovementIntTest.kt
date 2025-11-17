@@ -97,7 +97,10 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceMovement::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
     verifyEvents(saved, setOf())

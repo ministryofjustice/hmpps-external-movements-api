@@ -39,12 +39,12 @@ interface TemporaryAbsenceOccurrenceRepository :
   @Query(
     """
       select tao from TemporaryAbsenceOccurrence tao
-      where tao.returnBy < current_timestamp 
+      where tao.returnBy < :dateTime
         and tao.status.key in :statuses
     """,
   )
   @QueryHints(value = [QueryHint(name = HibernateHints.HINT_NATIVE_LOCK_MODE, value = "UPGRADE-SKIPLOCKED")])
-  fun findPastOccurrences(statuses: Set<ReferenceDataKey>, pageable: Pageable): List<TemporaryAbsenceOccurrence>
+  fun findPastOccurrences(statuses: Set<ReferenceDataKey>, dateTime: LocalDateTime, pageable: Pageable): List<TemporaryAbsenceOccurrence>
 
   @Query(
     """

@@ -48,8 +48,8 @@ interface TempAbsenceAuthorisationOperations {
       repeat: Boolean = false,
       notes: String? = "Some notes on the original authorisation",
       fromDate: LocalDate = LocalDate.now().minusDays(7),
-      toDate: LocalDate = LocalDate.now().minusDays(1),
-      applicationDate: LocalDate = LocalDate.now().minusMonths(1),
+      toDate: LocalDate = LocalDate.now().plusDays(7),
+      applicationDate: LocalDate = LocalDate.now().minusWeeks(1),
       reasonPath: ReasonPath = ReasonPath(
         buildList {
           absenceType?.also { add(ABSENCE_TYPE of it) }
