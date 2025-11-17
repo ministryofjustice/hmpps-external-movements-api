@@ -482,6 +482,23 @@
                                     </td>
                                     <td></td>
                                 </tr>
+                                <tr>
+                                    <td><span id="transport_id">transport_id</span></td>
+                                    <td>int8</td>
+                                    <td>19</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -520,7 +537,7 @@
                             </div>
                         </div>
                         <div class="box-body">
-                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    taa.id,&#10;    taa.version,&#10;    taa.person_identifier,&#10;    taa.prison_code,&#10;    taa.absence_type_id,&#10;    taa.absence_sub_type_id,&#10;    taa.absence_reason_id,&#10;    taa.repeat,&#10;    taa.status_id,&#10;    taa.notes,&#10;    taa.legacy_id,&#10;    taa.from_date,&#10;    taa.to_date,&#10;    taa.schedule,&#10;    taa.absence_reason_category_id,&#10;    taa.reason_path,&#10;    taa.accompanied_by_id&#10;   FROM ((((temporary_absence_authorisation taa&#10;     JOIN temporary_absence_authorisation_audit created_audit ON (((created_audit.id &#61; taa.id) AND (created_audit.rev_type &#61; 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id &#61; created_audit.rev_id)))&#10;     LEFT JOIN temporary_absence_authorisation_audit updated_audit ON (((updated_audit.id &#61; taa.id) AND (updated_audit.rev_type &#61; 1) AND (updated_audit.rev_id &#61; ( SELECT max(audit.rev_id) AS max&#10;           FROM temporary_absence_authorisation_audit audit&#10;          WHERE ((audit.id &#61; taa.id) AND (audit.rev_type &#61; 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id &#61; updated_audit.rev_id)));</textarea>
+                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    taa.id,&#10;    taa.version,&#10;    taa.person_identifier,&#10;    taa.prison_code,&#10;    taa.absence_type_id,&#10;    taa.absence_sub_type_id,&#10;    taa.absence_reason_id,&#10;    taa.repeat,&#10;    taa.status_id,&#10;    taa.notes,&#10;    taa.legacy_id,&#10;    taa.from_date,&#10;    taa.to_date,&#10;    taa.schedule,&#10;    taa.absence_reason_category_id,&#10;    taa.reason_path,&#10;    taa.accompanied_by_id,&#10;    taa.transport_id&#10;   FROM ((((temporary_absence_authorisation taa&#10;     JOIN temporary_absence_authorisation_audit created_audit ON (((created_audit.id &#61; taa.id) AND (created_audit.rev_type &#61; 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id &#61; created_audit.rev_id)))&#10;     LEFT JOIN temporary_absence_authorisation_audit updated_audit ON (((updated_audit.id &#61; taa.id) AND (updated_audit.rev_type &#61; 1) AND (updated_audit.rev_id &#61; ( SELECT max(audit.rev_id) AS max&#10;           FROM temporary_absence_authorisation_audit audit&#10;          WHERE ((audit.id &#61; taa.id) AND (audit.rev_type &#61; 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id &#61; updated_audit.rev_id)));</textarea>
                             <div style="padding-top: 5px;"><hr></div>
                             <div class="box box-solid">
                                 <div class="box-header with-border">
