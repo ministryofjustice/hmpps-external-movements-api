@@ -20,8 +20,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -45,6 +47,7 @@ interface TempAbsenceAuthorisationOperations {
       absenceReasonCategory: String? = "PW",
       absenceReason: String? = "R15",
       accompaniedByCode: String = "L",
+      transportCode: String = "OD",
       repeat: Boolean = false,
       notes: String? = "Some notes on the original authorisation",
       fromDate: LocalDate = LocalDate.now().minusDays(7),
@@ -69,6 +72,7 @@ interface TempAbsenceAuthorisationOperations {
         absenceReasonCategory?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory },
         absenceReason?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason },
         rdSupplier(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
+        rdSupplier(TRANSPORT, transportCode) as Transport,
         repeat,
         rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
         notes,
@@ -89,6 +93,7 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
     assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
     assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
+    assertThat(transport.code).isEqualTo(request.transportCode)
     assertThat(notes).isEqualTo(request.notes)
     assertThat(repeat).isEqualTo(request.repeat)
     assertThat(legacyId).isNull()
@@ -107,6 +112,7 @@ interface TempAbsenceAuthorisationOperations {
       verify(ABSENCE_REASON, absenceReason, authorisation.absenceReason)
     }
     assertThat(accompaniedBy.code).isEqualTo(authorisation.accompaniedBy.code)
+    assertThat(transport.code).isEqualTo(authorisation.transport.code)
     assertThat(repeat).isEqualTo(authorisation.repeat)
     assertThat(fromDate).isEqualTo(authorisation.fromDate)
     assertThat(toDate).isEqualTo(authorisation.toDate)

@@ -30,10 +30,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Tr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeAbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
@@ -140,7 +140,7 @@ class SyncTapOccurrence(
   ) {
     val categoryCode = rdPaths.reasonPath().path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.code
     applyAbsenceCategorisation(
-      ChangeAbsenceCategorisation(
+      RecategoriseOccurrence(
         request.absenceTypeCode,
         request.absenceSubTypeCode,
         categoryCode,

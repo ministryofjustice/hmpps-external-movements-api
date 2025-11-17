@@ -52,13 +52,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeAbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ExpireOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.MarkOccurrenceOverdue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ScheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -211,7 +211,7 @@ class TemporaryAbsenceOccurrence(
   override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
 
   fun applyAbsenceCategorisation(
-    action: ChangeAbsenceCategorisation,
+    action: RecategoriseOccurrence,
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
     if (action.changes(this)) {

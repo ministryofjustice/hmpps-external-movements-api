@@ -47,6 +47,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
@@ -55,9 +56,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RescheduleAuthorisation
 import java.time.LocalDate
 import java.util.UUID
@@ -73,6 +74,7 @@ class TemporaryAbsenceAuthorisation(
   absenceReasonCategory: AbsenceReasonCategory?,
   absenceReason: AbsenceReason?,
   accompaniedBy: AccompaniedBy,
+  transport: Transport,
   repeat: Boolean,
   status: TapAuthorisationStatus,
   notes: String?,
@@ -127,6 +129,12 @@ class TemporaryAbsenceAuthorisation(
   @ManyToOne(optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)
   var accompaniedBy: AccompaniedBy = accompaniedBy
+    private set
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "transport_id", nullable = false)
+  var transport: Transport = transport
     private set
 
   @NotNull
@@ -193,7 +201,7 @@ class TemporaryAbsenceAuthorisation(
     prisonCode = action.prisonCode
   }
 
-  fun applyAbsenceCategorisation(action: ChangeAbsenceCategorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+  fun applyAbsenceCategorisation(action: RecategoriseAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
     if (action.changes(this)) {
       reasonPath = action.reasonPath
       absenceReason = action.absenceReasonCode?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason }
