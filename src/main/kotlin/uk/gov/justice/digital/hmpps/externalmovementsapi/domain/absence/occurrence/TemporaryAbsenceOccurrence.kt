@@ -20,6 +20,7 @@ import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.AbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
@@ -44,20 +45,22 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.EXPIRED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.OVERDUE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.SCHEDULED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeAbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ExpireOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.MarkOccurrenceOverdue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ScheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
@@ -92,6 +95,7 @@ class TemporaryAbsenceOccurrence(
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
 ) : Identifiable,
+  AbsenceCategorisation,
   DomainEventProducer {
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(optional = false)
@@ -102,25 +106,25 @@ class TemporaryAbsenceOccurrence(
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
   @JoinColumn(name = "absence_type_id")
-  var absenceType: AbsenceType? = absenceType
+  override var absenceType: AbsenceType? = absenceType
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
   @JoinColumn(name = "absence_sub_type_id")
-  var absenceSubType: AbsenceSubType? = absenceSubType
+  override var absenceSubType: AbsenceSubType? = absenceSubType
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
   @JoinColumn(name = "absence_reason_category_id")
-  var absenceReasonCategory: AbsenceReasonCategory? = absenceReasonCategory
+  override var absenceReasonCategory: AbsenceReasonCategory? = absenceReasonCategory
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
-  var absenceReason: AbsenceReason? = absenceReason
+  override var absenceReason: AbsenceReason? = absenceReason
     private set
 
   @NotNull
@@ -206,8 +210,13 @@ class TemporaryAbsenceOccurrence(
 
   override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
 
-  fun changeReason(action: ChangeOccurrenceReason, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
-    absenceType = action.absenceTypeCode?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType }
+  fun applyAbsenceCategorisation(
+    action: ChangeAbsenceCategorisation,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) {
+    if (action.changes(this)) {
+      absenceType = action.absenceTypeCode?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType }
+    }
     absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
     absenceReasonCategory =
       action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
@@ -224,30 +233,38 @@ class TemporaryAbsenceOccurrence(
     }
   }
 
-  fun changeLocation(action: ChangeOccurrenceLocation) {
-    location = action.location
-    appliedActions += action
+  fun applyLocation(action: ChangeOccurrenceLocation) {
+    if (location != action.location) {
+      location = action.location
+      appliedActions += action
+    }
   }
 
-  fun changeAccompaniment(
+  fun applyAccompaniment(
     action: ChangeOccurrenceAccompaniment,
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
-    accompaniedBy = rdSupplier(ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
-    appliedActions += action
+    if (accompaniedBy.code != action.accompaniedByCode) {
+      accompaniedBy = rdSupplier(ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
+      appliedActions += action
+    }
   }
 
-  fun changeTransport(
+  fun applyTransport(
     action: ChangeOccurrenceTransport,
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
-    transport = rdSupplier(TRANSPORT, action.transportCode) as Transport
-    appliedActions += action
+    if (transport.code != action.transportCode) {
+      transport = rdSupplier(TRANSPORT, action.transportCode) as Transport
+      appliedActions += action
+    }
   }
 
   fun amendNotes(action: AmendOccurrenceNotes) {
-    notes = action.notes
-    appliedActions += action
+    if (action.changes(notes)) {
+      notes = action.notes
+      appliedActions += action
+    }
   }
 
   fun cancel(action: CancelOccurrence, statusProvider: (ReferenceDataDomain.Code, String) -> ReferenceData) {
@@ -275,16 +292,23 @@ class TemporaryAbsenceOccurrence(
       } else if (returnBy.isAfter(now())) {
         IN_PROGRESS
       } else {
-        appliedActions += MarkOccurrenceOverdue()
+        if (::status.isInitialized && status.code != OVERDUE.name) {
+          appliedActions += MarkOccurrenceOverdue()
+        }
         OVERDUE
       }
     }
 
   private fun authorisationStatus(): TapOccurrenceStatus.Code = if (authorisation.status.code == APPROVED.name) {
     if (movements.isEmpty() && returnBy.isBefore(now())) {
-      appliedActions += ExpireOccurrence()
+      if (::status.isInitialized && status.code == SCHEDULED.name) {
+        appliedActions += ExpireOccurrence()
+      }
       EXPIRED
     } else {
+      if (::status.isInitialized && status.code == PENDING.name) {
+        appliedActions += ScheduleOccurrence()
+      }
       SCHEDULED
     }
   } else {

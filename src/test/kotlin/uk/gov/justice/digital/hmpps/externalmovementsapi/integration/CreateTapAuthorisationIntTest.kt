@@ -12,8 +12,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsencePending
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -130,7 +130,7 @@ class CreateTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = username),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsencePending(pi, saved.id)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
   }
 
   @Test
@@ -173,7 +173,7 @@ class CreateTapAuthorisationIntTest(
 
     verifyEvents(
       saved,
-      listOf(TemporaryAbsenceScheduled(pi, occurrence.id), TemporaryAbsenceAuthorised(pi, saved.id)).toSet(),
+      listOf(TemporaryAbsenceScheduled(pi, occurrence.id), TemporaryAbsenceAuthorisationApproved(pi, saved.id)).toSet(),
     )
   }
 

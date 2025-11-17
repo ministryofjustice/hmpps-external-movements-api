@@ -70,7 +70,7 @@ class TapOccurrenceStatusIntTest(
     )
     assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
 
-    TimeUnit.MILLISECONDS.sleep(durationAhead.toMillis() + 100)
+    TimeUnit.MILLISECONDS.sleep(durationAhead.toMillis() + 200)
     update.pastOccurrencesOfInterest()
 
     val updated = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))

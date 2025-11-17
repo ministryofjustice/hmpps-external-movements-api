@@ -32,7 +32,7 @@ class CancelTapOccurrenceIntTest(
   fun `401 unauthorised without a valid token`() {
     webTestClient
       .post()
-      .uri(TAP_OCCURRENCE_MODIFICATION_URL, personIdentifier())
+      .uri(TAP_OCCURRENCE_MODIFICATION_URL, newUuid())
       .exchange()
       .expectStatus()
       .isUnauthorized

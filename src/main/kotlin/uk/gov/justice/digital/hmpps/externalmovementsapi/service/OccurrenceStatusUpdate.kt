@@ -5,7 +5,7 @@ import org.springframework.context.annotation.ConditionContext
 import org.springframework.context.annotation.Conditional
 import org.springframework.core.env.getProperty
 import org.springframework.core.type.AnnotatedTypeMetadata
-import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.PageRequest.ofSize
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import java.time.Duration
+import java.time.LocalDateTime.now
 
 @Transactional
 @Service
@@ -24,7 +25,7 @@ class OccurrenceStatusUpdate(
 ) {
   fun pastOccurrencesOfInterest() {
     val rd = referenceDataRepository.findByKeyDomainAndActiveTrue(TAP_OCCURRENCE_STATUS).associateBy { it.key.code }
-    occurrenceRepository.findPastOccurrences(statusKeys, PageRequest.ofSize(100)).forEach {
+    occurrenceRepository.findPastOccurrences(statusKeys, now(), ofSize(100)).forEach {
       it.calculateStatus { statusCode -> rd[statusCode] as TapOccurrenceStatus }
     }
   }

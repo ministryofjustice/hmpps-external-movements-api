@@ -24,7 +24,17 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.DENIED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AmendAuthorisationNotes
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAbsenceCategorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationCase
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RescheduleAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.util.UUID
@@ -92,5 +102,45 @@ class SyncTapAuthorisation(
       reasonPath = reasonPath,
       legacyId = legacyId,
     )
+  }
+
+  fun TemporaryAbsenceAuthorisation.update(
+    personIdentifier: String,
+    request: TapAuthorisation,
+    rdPaths: ReferenceDataPaths,
+  ) = apply {
+    applyPrisonPerson(ChangeAuthorisationCase(personIdentifier, request.prisonCode))
+    applyAbsenceCategorisation(request, rdPaths)
+    checkSchedule(request)
+    checkStatus(request, rdPaths)
+    request.notes?.also { amendNotes(AmendAuthorisationNotes(it)) }
+  }
+
+  private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
+    val categoryCode = rdPaths.reasonPath().path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.code
+    applyAbsenceCategorisation(
+      ChangeAbsenceCategorisation(
+        request.absenceTypeCode,
+        request.absenceSubTypeCode,
+        categoryCode,
+        request.absenceReasonCode,
+        rdPaths.reasonPath(),
+      ),
+      rdPaths::getReferenceData,
+    )
+  }
+
+  private fun TemporaryAbsenceAuthorisation.checkStatus(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
+    when (request.statusCode) {
+      APPROVED.name -> approve(ApproveAuthorisation(), rdPaths::getReferenceData)
+      CANCELLED.name -> cancel(CancelAuthorisation(), rdPaths::getReferenceData)
+      DENIED.name -> deny(DenyAuthorisation(), rdPaths::getReferenceData)
+    }
+  }
+
+  private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation) {
+    if (repeat != request.repeat || !fromDate.isEqual(request.fromDate) || !toDate.isEqual(request.toDate)) {
+      reschedule(RescheduleAuthorisation(request.fromDate, request.toDate, request.repeat))
+    }
   }
 }

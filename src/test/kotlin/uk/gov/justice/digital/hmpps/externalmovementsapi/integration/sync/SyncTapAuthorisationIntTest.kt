@@ -13,8 +13,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorised
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsencePending
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -75,7 +75,7 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsencePending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -105,7 +105,7 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsencePending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -134,7 +134,7 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsencePending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -159,7 +159,7 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationApproved(pi, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -187,7 +187,7 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationApproved(pi, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -229,7 +229,7 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceAuthorised(pi, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationApproved(pi, saved.id, DataSource.NOMIS)))
   }
 
   private fun tapAuthorisation(
