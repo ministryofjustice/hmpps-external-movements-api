@@ -97,6 +97,7 @@ class CreateTapAuthorisation(
       reasonPath = ReasonPath(reasonPath()),
       schedule = schedule,
       accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
+      transport = rdProvider(TRANSPORT, transportCode) as Transport,
       legacyId = null,
     )
   }

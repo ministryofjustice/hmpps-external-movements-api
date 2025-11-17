@@ -45,6 +45,7 @@ private fun TemporaryAbsenceAuthorisation.with(
     ?.asCodedDescription(),
   absenceReason = absenceReason?.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
   accompaniedBy = accompaniedBy.asCodedDescription(),
+  transport = transport.asCodedDescription(),
   repeat = repeat,
   fromDate = fromDate,
   toDate = toDate,

@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
@@ -21,6 +22,7 @@ data class TapAuthorisation(
   val absenceSubTypeCode: String?,
   val absenceReasonCode: String,
   val accompaniedByCode: String,
+  val transportCode: String,
   val repeat: Boolean,
   val fromDate: LocalDate,
   val toDate: LocalDate,
@@ -35,5 +37,6 @@ data class TapAuthorisation(
     absenceTypeCode?.let { ABSENCE_TYPE of it },
     absenceSubTypeCode?.let { ABSENCE_SUB_TYPE of it },
     ACCOMPANIED_BY of accompaniedByCode,
+    TRANSPORT of transportCode,
   )
 }
