@@ -17,7 +17,7 @@ val springDocVersion = "2.8.14"
 val sqsStarterVersion = "5.6.1"
 val testContainersVersion = "1.21.3"
 val uuidGeneratorVersion = "5.1.1"
-val wiremockVersion = "3.13.1"
+val wiremockVersion = "3.13.2"
 
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
