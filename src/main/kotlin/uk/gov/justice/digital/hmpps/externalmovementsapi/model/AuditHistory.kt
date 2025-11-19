@@ -1,0 +1,21 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.model
+
+import java.time.LocalDateTime
+
+data class AuditHistory(val content: List<AuditedAction>)
+
+data class AuditedAction(
+  val user: User,
+  val occurredAt: LocalDateTime,
+  val domainEvents: List<String>,
+  val reason: String?,
+  val changes: List<Change>,
+) {
+  data class User(val username: String, val name: String)
+
+  data class Change(
+    val propertyName: String,
+    val previous: Any?,
+    val change: Any?,
+  )
+}
