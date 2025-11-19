@@ -12,10 +12,5 @@ data class AuditedAction(
   val changes: List<Change>,
 ) {
   data class User(val username: String, val name: String)
-
-  data class Change(
-    val propertyName: String,
-    val previous: Any?,
-    val change: Any?,
-  )
+  data class Change(val propertyName: String, val previous: Any?, val change: Any?)
 }
