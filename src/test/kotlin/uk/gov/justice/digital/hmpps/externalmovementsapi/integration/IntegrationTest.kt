@@ -24,6 +24,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.Notification
@@ -70,6 +71,9 @@ abstract class IntegrationTest {
 
   @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService
+
+  @Autowired
+  protected lateinit var referenceDataRepository: ReferenceDataRepository
 
   internal val hmppsEventsTestQueue by lazy {
     hmppsQueueService.findByQueueId("hmppseventtestqueue")

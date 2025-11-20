@@ -68,6 +68,7 @@ import java.time.temporal.ChronoUnit.SECONDS
 import java.util.Collections.unmodifiableList
 import java.util.UUID
 import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty1
 
 @Audited
 @Entity
@@ -319,6 +320,20 @@ class TemporaryAbsenceOccurrence(
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
     val RELEASE_AT = TemporaryAbsenceOccurrence::releaseAt.name
     val RETURN_BY = TemporaryAbsenceOccurrence::returnBy.name
+
+    fun changeableProperties(): Set<KProperty1<TemporaryAbsenceOccurrence, Any?>> = setOf(
+      TemporaryAbsenceOccurrence::releaseAt,
+      TemporaryAbsenceOccurrence::returnBy,
+      TemporaryAbsenceOccurrence::accompaniedBy,
+      TemporaryAbsenceOccurrence::transport,
+      TemporaryAbsenceOccurrence::contactInformation,
+      TemporaryAbsenceOccurrence::notes,
+      TemporaryAbsenceOccurrence::location,
+      TemporaryAbsenceOccurrence::absenceType,
+      TemporaryAbsenceOccurrence::absenceSubType,
+      TemporaryAbsenceOccurrence::absenceReasonCategory,
+      TemporaryAbsenceOccurrence::absenceReason,
+    )
   }
 }
 
