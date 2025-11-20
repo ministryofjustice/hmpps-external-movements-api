@@ -29,9 +29,9 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class SyncTapAuthorisationIntTest(
-  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations {
+  TempAbsenceAuthorisationOperations by taaOperations {
 
   @Test
   fun `401 unauthorised without a valid token`() {

@@ -22,12 +22,12 @@ import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 class TapOccurrenceStatusIntTest(
-  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
   @Autowired private val tamOperations: TempAbsenceMovementOperations,
   @Autowired private val update: OccurrenceStatusUpdate,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations,
+  TempAbsenceAuthorisationOperations by taaOperations,
   TempAbsenceOccurrenceOperations by taoOperations,
   TempAbsenceMovementOperations by tamOperations {
 

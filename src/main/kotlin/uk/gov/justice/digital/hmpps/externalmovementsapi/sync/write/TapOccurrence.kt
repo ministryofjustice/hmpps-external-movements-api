@@ -27,6 +27,7 @@ data class TapOccurrence(
   val absenceReasonCode: String,
   val accompaniedByCode: String,
   val transportCode: String,
+  val contactInformation: String?,
   val notes: String?,
   val created: AtAndBy,
   val updated: AtAndBy?,

@@ -19,10 +19,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import java.util.UUID
 
 class DeleteTapAuthorisationIntTest(
-  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations,
+  TempAbsenceAuthorisationOperations by taaOperations,
   TempAbsenceOccurrenceOperations by taoOperations {
 
   @Test

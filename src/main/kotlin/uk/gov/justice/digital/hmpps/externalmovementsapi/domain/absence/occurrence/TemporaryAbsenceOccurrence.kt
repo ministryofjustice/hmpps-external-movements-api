@@ -53,6 +53,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceContactInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ExpireOccurrence
@@ -257,6 +258,13 @@ class TemporaryAbsenceOccurrence(
   ) {
     if (transport.code != action.transportCode) {
       transport = rdSupplier(TRANSPORT, action.transportCode) as Transport
+      appliedActions += action
+    }
+  }
+
+  fun applyContactInformation(action: ChangeOccurrenceContactInformation) {
+    if (contactInformation?.startsWith(action.information) != true) {
+      contactInformation = action.information
       appliedActions += action
     }
   }

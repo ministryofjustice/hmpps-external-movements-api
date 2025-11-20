@@ -18,10 +18,10 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 class GetPrisonExternalMovementsOverviewIntTest(
-  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations,
+  TempAbsenceAuthorisationOperations by taaOperations,
   TempAbsenceOccurrenceOperations by taoOperations {
 
   @Test

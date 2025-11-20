@@ -32,10 +32,10 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 class CreateTapAuthorisationIntTest(
-  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations,
+  TempAbsenceAuthorisationOperations by taaOperations,
   TempAbsenceOccurrenceOperations by taoOperations {
 
   @Test

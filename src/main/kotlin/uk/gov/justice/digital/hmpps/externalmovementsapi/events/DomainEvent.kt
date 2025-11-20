@@ -18,6 +18,7 @@ import java.time.ZonedDateTime
     Type(value = TemporaryAbsenceCancelled::class, name = TemporaryAbsenceCancelled.EVENT_TYPE),
     Type(value = TemporaryAbsenceExpired::class, name = TemporaryAbsenceExpired.EVENT_TYPE),
     Type(value = TemporaryAbsenceOverdue::class, name = TemporaryAbsenceOverdue.EVENT_TYPE),
+    Type(value = TemporaryAbsenceContactInfoChanged::class, name = TemporaryAbsenceContactInfoChanged.EVENT_TYPE),
   ],
 )
 sealed interface DomainEvent<T : AdditionalInformation> {
