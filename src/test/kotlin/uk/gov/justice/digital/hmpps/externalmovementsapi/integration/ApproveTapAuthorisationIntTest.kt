@@ -28,10 +28,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import java.util.UUID
 
 class ApproveTapAuthorisationIntTest(
-  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations,
+  TempAbsenceAuthorisationOperations by taaOperations,
   TempAbsenceOccurrenceOperations by taoOperations {
 
   @Test

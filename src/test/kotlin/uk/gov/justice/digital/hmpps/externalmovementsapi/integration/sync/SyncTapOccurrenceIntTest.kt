@@ -18,8 +18,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceContactInfoChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -36,10 +38,10 @@ import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
 class SyncTapOccurrenceIntTest(
-  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations,
+  TempAbsenceAuthorisationOperations by taaOperations,
   TempAbsenceOccurrenceOperations by taoOperations {
 
   @Test
@@ -119,6 +121,7 @@ class SyncTapOccurrenceIntTest(
       setOf(
         TemporaryAbsenceRescheduled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceCancelled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceContactInfoChanged(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
       ),
     )
   }
@@ -152,7 +155,7 @@ class SyncTapOccurrenceIntTest(
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
-    val request = tapOccurrence(legacyId = existing.legacyId!!, accompaniedByCode = "U", releaseAt = existing.releaseAt, returnBy = existing.returnBy)
+    val request = tapOccurrence(legacyId = existing.legacyId!!, accompaniedByCode = "U", releaseAt = existing.releaseAt, returnBy = existing.returnBy, contactInformation = null)
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -233,6 +236,7 @@ class SyncTapOccurrenceIntTest(
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     location: Location = location(),
+    contactInformation: String? = "Contact ${name(8)}",
     notes: String? = "Some notes about the absence",
     added: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), DEFAULT_USERNAME),
     cancelled: AtAndBy? = null,
@@ -248,6 +252,7 @@ class SyncTapOccurrenceIntTest(
     reasonCode,
     accompaniedByCode,
     transportCode,
+    contactInformation,
     notes,
     added,
     cancelled,
@@ -278,6 +283,7 @@ private fun TemporaryAbsenceOccurrence.verifyAgainst(
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
   assertThat(transport.code).isEqualTo(request.transportCode)
   assertThat(location).isEqualTo(request.location)
+  assertThat(contactInformation).isEqualTo(request.contactInformation)
   assertThat(notes).isEqualTo(request.notes)
   assertThat(legacyId).isEqualTo(request.legacyId)
 }

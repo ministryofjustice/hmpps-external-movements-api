@@ -28,11 +28,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.util.UUID
 
 class GetTapOccurrenceHistoryIntTest(
-  @Autowired private val tasOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
   @Autowired private val tamOperations: TempAbsenceMovementOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by tasOperations,
+  TempAbsenceAuthorisationOperations by taaOperations,
   TempAbsenceOccurrenceOperations by taoOperations,
   TempAbsenceMovementOperations by tamOperations {
 

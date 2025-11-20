@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.fi
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceContactInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
@@ -101,7 +102,7 @@ class SyncTapOccurrence(
       absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
       releaseAt = releaseAt,
       returnBy = returnBy,
-      contactInformation = null,
+      contactInformation = contactInformation,
       accompaniedBy = rdPaths.getReferenceData(
         ReferenceDataDomain.Code.ACCOMPANIED_BY,
         accompaniedByCode,
@@ -159,6 +160,7 @@ class SyncTapOccurrence(
     applyLocation(ChangeOccurrenceLocation(request.location))
     applyAccompaniment(ChangeOccurrenceAccompaniment(request.accompaniedByCode), rdPaths::getReferenceData)
     applyTransport(ChangeOccurrenceTransport(request.transportCode), rdPaths::getReferenceData)
+    request.contactInformation?.also { applyContactInformation(ChangeOccurrenceContactInformation(it)) }
   }
 
   private fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence, rdPaths: ReferenceDataPaths) {

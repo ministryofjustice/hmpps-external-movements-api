@@ -58,6 +58,8 @@ class AuditedTapOccurrence(
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "location")
   val location: Location,
+  @Column(name = "contact_information")
+  val contactInformation: String?,
   val notes: String?,
   val legacyId: Long?,
   val createdAt: LocalDateTime,

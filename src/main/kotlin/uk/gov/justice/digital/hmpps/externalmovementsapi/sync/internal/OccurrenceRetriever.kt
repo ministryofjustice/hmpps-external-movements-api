@@ -30,6 +30,7 @@ private fun AuditedTapOccurrence.forSync() = TapOccurrence(
   absenceReasonCode = requireNotNull(authorisation.absenceReason).code,
   accompaniedByCode = accompaniedBy.code,
   transportCode = transport.code,
+  contactInformation = contactInformation,
   notes = notes,
   created = AtAndBy(createdAt, createdBy),
   updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
