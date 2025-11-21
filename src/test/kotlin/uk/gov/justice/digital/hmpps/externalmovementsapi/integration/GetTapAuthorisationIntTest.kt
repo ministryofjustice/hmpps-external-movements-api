@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
+import java.time.LocalDateTime
 import java.util.UUID
 
 class GetTapAuthorisationIntTest(
@@ -47,12 +48,21 @@ class GetTapAuthorisationIntTest(
   @Test
   fun `200 ok finds tap authorisation and occurrences`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val firstOcc = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        releaseAt = LocalDateTime.now().plusDays(3),
+        returnBy = LocalDateTime.now().plusDays(4),
+        location = firstOcc.location,
+      ),
+    )
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.personIdentifier))
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
-    auth.verifyAgainst(response)
-    occurrence.verifyAgainst(response.occurrences.first())
+    response.verifyAgainst(auth)
+    assertThat(response.locations).hasSize(1)
+    firstOcc.verifyAgainst(response.occurrences.first())
   }
 
   @Test
@@ -74,7 +84,7 @@ class GetTapAuthorisationIntTest(
     assertThat(response.absenceSubType).isNull()
     assertThat(response.absenceReasonCategory).isNull()
     assertThat(response.absenceReason).isNull()
-    auth.verifyAgainst(response)
+    response.verifyAgainst(auth)
     occurrence.verifyAgainst(response.occurrences.first())
   }
 

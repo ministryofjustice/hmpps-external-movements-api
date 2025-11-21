@@ -102,10 +102,10 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(schedule).isEqualTo(request.schedule)
   }
 
-  fun TemporaryAbsenceAuthorisation.verifyAgainst(authorisation: TapAuthorisation) {
-    assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+  fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
+    assertThat(person.personIdentifier).isEqualTo(authorisation.personIdentifier)
     assertThat(status.code).isEqualTo(authorisation.status.code)
-    with(reasonPath) {
+    with(authorisation.reasonPath) {
       verify(ABSENCE_TYPE, absenceType, authorisation.absenceType)
       verify(ABSENCE_SUB_TYPE, absenceSubType, authorisation.absenceSubType)
       verify(ABSENCE_REASON_CATEGORY, absenceReasonCategory, authorisation.absenceReasonCategory)
@@ -117,11 +117,12 @@ interface TempAbsenceAuthorisationOperations {
     assertThat(fromDate).isEqualTo(authorisation.fromDate)
     assertThat(toDate).isEqualTo(authorisation.toDate)
     assertThat(schedule).isEqualTo(authorisation.schedule)
+    assertThat(locations).isEqualTo(occurrences.map { it.location }.distinct())
   }
 
-  private fun ReasonPath.verify(domain: ReferenceDataDomain.Code, ef: ReferenceData?, mf: CodedDescription?) {
+  private fun ReasonPath.verify(domain: ReferenceDataDomain.Code, mf: CodedDescription?, ef: ReferenceData?) {
     if (has(domain)) {
-      assertThat(ef?.code).isEqualTo(mf?.code)
+      assertThat(mf?.code).isEqualTo(ef?.code)
     } else {
       assertThat(mf).isNull()
     }
