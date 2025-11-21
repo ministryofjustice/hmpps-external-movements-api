@@ -40,10 +40,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ac
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.KEY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
@@ -204,11 +202,11 @@ class TemporaryAbsenceAuthorisation(
   fun applyAbsenceCategorisation(action: RecategoriseAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
     if (action.changes(this)) {
       reasonPath = action.reasonPath
-      absenceReason = action.absenceReasonCode?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason }
+      absenceReason = action.absenceReasonCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_REASON, it) as AbsenceReason }
       absenceReasonCategory =
         action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
       absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
-      absenceType = action.absenceTypeCode?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType }
+      absenceType = action.absenceTypeCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_TYPE, it) as AbsenceType }
       appliedActions += action
     }
   }
@@ -255,6 +253,9 @@ class TemporaryAbsenceAuthorisation(
     val FROM_DATE = TemporaryAbsenceAuthorisation::fromDate.name
     val TO_DATE = TemporaryAbsenceAuthorisation::toDate.name
     val STATUS = TemporaryAbsenceAuthorisation::status.name
+    val REPEAT = TemporaryAbsenceAuthorisation::repeat.name
+    val ABSENCE_TYPE = TemporaryAbsenceAuthorisation::absenceType.name
+    val ABSENCE_REASON = TemporaryAbsenceAuthorisation::absenceReason.name
   }
 }
 
