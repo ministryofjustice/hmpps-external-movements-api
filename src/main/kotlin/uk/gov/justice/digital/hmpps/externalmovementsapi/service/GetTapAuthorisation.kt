@@ -50,6 +50,7 @@ private fun TemporaryAbsenceAuthorisation.with(
   fromDate = fromDate,
   toDate = toDate,
   occurrences = occurrences,
+  locations = occurrences.map { it.location }.distinct(),
   schedule = schedule,
   notes = notes,
 )
