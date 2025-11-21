@@ -328,6 +328,7 @@ class TemporaryAbsenceOccurrence(
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
     val RELEASE_AT = TemporaryAbsenceOccurrence::releaseAt.name
     val RETURN_BY = TemporaryAbsenceOccurrence::returnBy.name
+    val STATUS = TemporaryAbsenceOccurrence::status.name
 
     fun changeableProperties(): Set<KProperty1<TemporaryAbsenceOccurrence, Any?>> = setOf(
       TemporaryAbsenceOccurrence::releaseAt,

@@ -8,6 +8,9 @@
   "instrumentation": {
     "logging": {
       "level": "WARN"
+    },
+    "springScheduling": {
+      "enabled": false
     }
   },
   "selfDiagnostics": {

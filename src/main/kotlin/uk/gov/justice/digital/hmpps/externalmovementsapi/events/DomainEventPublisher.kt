@@ -30,8 +30,9 @@ class DomainEventPublisher(
   @Transactional
   fun publishUnpublishedEvents() {
     domainEventRepository.findByPublishedIsFalseOrderById(Pageable.ofSize(BATCH_SIZE))
-      .also { events -> domainEventsTopic.publishBatch(events.map { it.event }) }
-      .forEach { it.published = true }
+      .takeIf { it.isNotEmpty() }
+      ?.also { events -> domainEventsTopic.publishBatch(events.map { it.event }) }
+      ?.forEach { it.published = true }
   }
 
   private fun HmppsTopic.publishBatch(

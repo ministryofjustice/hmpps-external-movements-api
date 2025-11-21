@@ -161,6 +161,7 @@ class SearchTapAuthorisationIntTest(
     toDate: LocalDate,
     status: TapAuthorisationStatus.Code? = null,
     personIdentifier: String? = null,
+    sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()
@@ -169,8 +170,9 @@ class SearchTapAuthorisationIntTest(
       uri.queryParam("prisonCode", prisonCode)
       uri.queryParam("fromDate", ISO_DATE.format(fromDate))
       uri.queryParam("toDate", ISO_DATE.format(toDate))
-      status?.let { uri.queryParam("status", it.name) }
-      personIdentifier?.let { uri.queryParam("query", it) }
+      status?.also { uri.queryParam("status", it.name) }
+      personIdentifier?.also { uri.queryParam("query", it) }
+      sort?.also { uri.queryParam("sort", it) }
       uri.build()
     }
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))

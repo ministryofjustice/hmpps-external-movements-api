@@ -35,6 +35,7 @@ open class ReferenceData(
 ) : ReferenceDataLookup by key {
   companion object {
     val KEY = ReferenceData::key.name
+    val SEQUENCE_NUMBER = ReferenceData::sequenceNumber.name
   }
 }
 
