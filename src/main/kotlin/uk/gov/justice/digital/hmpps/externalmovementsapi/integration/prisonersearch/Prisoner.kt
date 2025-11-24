@@ -6,12 +6,6 @@ data class PrisonerNumbers(
   val prisonerNumbers: Set<String>,
 )
 
-data class PersonSearchRequest(
-  val query: String? = null,
-  val cellLocationPrefix: String? = null,
-  val excludeActiveAllocations: Boolean = false,
-)
-
 data class Prisoner(
   val prisonerNumber: String,
   val firstName: String,
@@ -32,10 +26,4 @@ data class Prisoner(
       Prisoner::cellLocation.name,
     )
   }
-}
-
-data class Prisoners(val content: List<Prisoner>) {
-  private val map = content.associateBy { it.prisonerNumber }
-  operator fun get(prisonerNumber: String): Prisoner? = map[prisonerNumber]
-  val personIdentifiers: Set<String> = map.keys
 }

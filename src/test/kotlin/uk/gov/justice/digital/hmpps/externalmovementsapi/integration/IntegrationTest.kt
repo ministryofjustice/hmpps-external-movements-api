@@ -40,7 +40,11 @@ import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.MissingTopicException
+import uk.gov.justice.hmpps.sqs.publish
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
+import java.time.Duration
+import java.time.Instant.now
+import java.util.concurrent.TimeUnit
 
 @ExtendWith(
   value = [
@@ -75,28 +79,33 @@ abstract class IntegrationTest {
   @Autowired
   protected lateinit var referenceDataRepository: ReferenceDataRepository
 
-  internal val hmppsEventsTestQueue by lazy {
+  protected val hmppsEventsTestQueue by lazy {
     hmppsQueueService.findByQueueId("hmppseventtestqueue")
       ?: throw MissingQueueException("hmppseventtestqueue queue not found")
   }
 
-  val domainEventsTopic by lazy {
-    hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw MissingTopicException("hmppseventtopic not found")
+  protected val domainEventsTopic by lazy {
+    hmppsQueueService.findByTopicId("hmppseventtesttopic")
+      ?: throw MissingTopicException("hmppseventtesttopic not found")
   }
 
-  fun HmppsQueue.receiveDomainEventsOnQueue(maxMessages: Int = 10): List<DomainEvent<*>> = sqsClient.receiveMessage(
+  protected fun sendDomainEvent(event: DomainEvent<*>) {
+    domainEventsTopic.publish(event.eventType, objectMapper.writeValueAsString(event))
+  }
+
+  protected fun HmppsQueue.receiveDomainEventsOnQueue(maxMessages: Int = 10): List<DomainEvent<*>> = sqsClient.receiveMessage(
     ReceiveMessageRequest.builder().queueUrl(queueUrl).maxNumberOfMessages(maxMessages).build(),
   ).get().messages()
     .map { objectMapper.readValue<Notification>(it.body()) }
     .map { objectMapper.readValue<DomainEvent<*>>(it.message) }
 
-  internal fun setAuthorisation(
+  protected fun setAuthorisation(
     username: String? = DEFAULT_USERNAME,
     roles: List<String> = listOf(),
     scopes: List<String> = listOf("read", "write"),
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisationHeader(username = username, scope = scopes, roles = roles)
 
-  internal fun verifyAudit(
+  protected fun verifyAudit(
     entity: Identifiable,
     revisionType: RevisionType,
     affectedEntities: Set<String>,
@@ -131,7 +140,7 @@ abstract class IntegrationTest {
     }
   }
 
-  fun verifyEvents(
+  protected fun verifyEvents(
     entity: Identifiable,
     events: Set<DomainEvent<*>>,
   ) {
@@ -159,11 +168,27 @@ abstract class IntegrationTest {
     }
   }
 
-  internal final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(status: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(status)
+  protected fun waitUntil(
+    pollingInterval: Duration = Duration.ofMillis(100),
+    maxInterval: Duration = Duration.ofSeconds(1),
+    predicate: () -> Boolean,
+  ) {
+    val end = now().plus(maxInterval)
+    var result: Boolean
+    do {
+      TimeUnit.MILLISECONDS.sleep(pollingInterval.toMillis())
+      result = predicate()
+    } while (!result && now().isBefore(end))
+    if (!result) {
+      throw IllegalStateException("Predicate not met before timeout")
+    }
+  }
+
+  protected final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(status: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(status)
     .expectBody(T::class.java)
     .returnResult().responseBody!!
 
-  internal final fun WebTestClient.ResponseSpec.errorResponse(status: HttpStatus): ErrorResponse = expectStatus().isEqualTo(status)
+  protected final fun WebTestClient.ResponseSpec.errorResponse(status: HttpStatus): ErrorResponse = expectStatus().isEqualTo(status)
     .expectBody(ErrorResponse::class.java)
     .returnResult().responseBody!!
 

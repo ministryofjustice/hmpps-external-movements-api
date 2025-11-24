@@ -25,7 +25,7 @@ interface PagedRequest {
     val split = sort.split(",")
     val (field, direction) = when (split.size) {
       1 -> validate(split[0]) to Sort.Direction.DESC
-      else -> validate(split[0]) to if (split[1].lowercase() == "asc") Sort.Direction.ASC else Sort.Direction.DESC
+      else -> validate(split[0]) to if (split[1].lowercase() == "desc") Sort.Direction.DESC else Sort.Direction.ASC
     }
     return buildSort(field, direction)
   }

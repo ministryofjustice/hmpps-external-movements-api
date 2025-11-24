@@ -91,7 +91,7 @@ class DenyTapAuthorisationIntTest(
 
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceAuthorisationDenied(auth.personIdentifier, auth.id)),
+      setOf(TemporaryAbsenceAuthorisationDenied(auth.person.identifier, auth.id)),
     )
   }
 

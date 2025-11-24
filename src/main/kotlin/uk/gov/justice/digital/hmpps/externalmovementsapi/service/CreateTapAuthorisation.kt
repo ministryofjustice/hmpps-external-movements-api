@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
@@ -37,6 +38,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 @Service
 class CreateTapAuthorisation(
   private val prisonerSearch: PrisonerSearchClient,
+  private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
   private val tapAuthRepository: TemporaryAbsenceAuthorisationRepository,
   private val tapOccurrenceRepository: TemporaryAbsenceOccurrenceRepository,
@@ -55,8 +57,9 @@ class CreateTapAuthorisation(
       ?.also {
         throw ConflictException("A matching TAP authorisation already exists")
       }
+    val person = personSummaryService.save(prisoner)
     val authorisation = tapAuthRepository.save(
-      request.asAuthorisation(personIdentifier, prisoner.lastPrisonId, rdProvider, linkProvider),
+      request.asAuthorisation(person, prisoner.lastPrisonId, rdProvider, linkProvider),
     )
     tapOccurrenceRepository.saveAll(
       request.occurrences.map { it.asOccurrence(authorisation, rdProvider, request) },
@@ -65,7 +68,7 @@ class CreateTapAuthorisation(
   }
 
   fun CreateTapAuthorisationRequest.asAuthorisation(
-    personIdentifier: String,
+    person: PersonSummary,
     prisonCode: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
     linkProvider: (Long) -> ReferenceData,
@@ -83,7 +86,7 @@ class CreateTapAuthorisation(
         ?: linkProvider(subType.id)
       ) as AbsenceReason
     return TemporaryAbsenceAuthorisation(
-      personIdentifier = personIdentifier,
+      person = person,
       prisonCode = prisonCode,
       absenceType = type,
       absenceSubType = subType,

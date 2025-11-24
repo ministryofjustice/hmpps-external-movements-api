@@ -54,8 +54,8 @@ class DeleteTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
       requireNotNull(findTemporaryAbsenceOccurrence(givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth)).id))
-    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, occurrence.authorisation.personIdentifier, occurrence))
-    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.IN, occurrence.authorisation.personIdentifier, occurrence))
+    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, occurrence.authorisation.person.identifier, occurrence))
+    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.IN, occurrence.authorisation.person.identifier, occurrence))
 
     deleteTapOccurrence(occurrence.id).expectStatus().isNoContent
 

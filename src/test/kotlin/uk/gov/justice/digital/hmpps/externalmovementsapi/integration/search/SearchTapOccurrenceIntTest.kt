@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -70,7 +69,6 @@ class SearchTapOccurrenceIntTest(
         ),
       )
     }
-    prisonerSearch.getPrisoners(prisonCode, listOf(authorisations[1], authorisations[2]).map { it.personIdentifier }.toSet())
 
     val res = searchTapOccurrences(prisonCode, fromDate, toDate).successResponse<TapOccurrenceSearchResponse>()
 
@@ -114,9 +112,8 @@ class SearchTapOccurrenceIntTest(
         returnBy = LocalDateTime.of(toDate, now()),
       ),
     )
-    prisonerSearch.getPrisoners(prisonCode, setOf(toFind.personIdentifier))
 
-    val res = searchTapOccurrences(prisonCode, fromDate, toDate, personIdentifier = toFind.personIdentifier)
+    val res = searchTapOccurrences(prisonCode, fromDate, toDate, personIdentifier = toFind.person.identifier)
       .successResponse<TapOccurrenceSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(1)

@@ -198,7 +198,7 @@ class TemporaryAbsenceOccurrence(
   }
 
   override fun initialEvent(): DomainEvent<*>? = when (status.code) {
-    SCHEDULED.name -> TemporaryAbsenceScheduled(authorisation.personIdentifier, id)
+    SCHEDULED.name -> TemporaryAbsenceScheduled(authorisation.person.identifier, id)
     else -> null
   }
 

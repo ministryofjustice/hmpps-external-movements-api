@@ -19,6 +19,8 @@ import java.time.ZonedDateTime
     Type(value = TemporaryAbsenceExpired::class, name = TemporaryAbsenceExpired.EVENT_TYPE),
     Type(value = TemporaryAbsenceOverdue::class, name = TemporaryAbsenceOverdue.EVENT_TYPE),
     Type(value = TemporaryAbsenceContactInfoChanged::class, name = TemporaryAbsenceContactInfoChanged.EVENT_TYPE),
+
+    Type(value = PrisonerUpdated::class, name = PrisonerUpdated.EVENT_TYPE),
   ],
 )
 sealed interface DomainEvent<T : AdditionalInformation> {
@@ -32,10 +34,12 @@ sealed interface DomainEvent<T : AdditionalInformation> {
     get() = null
   val version: Int
     get() = 1
+  fun getPersonIdentifier(): String = checkNotNull(personReference.findPersonIdentifier())
 }
 
 data class PersonReference(val identifiers: List<Identifier> = listOf()) {
   operator fun get(key: String): String? = identifiers.find { it.type == key }?.value
+  fun findPersonIdentifier() = get(NOMS_NUMBER_TYPE)
 
   companion object {
     const val NOMS_NUMBER_TYPE = "NOMS"

@@ -83,7 +83,7 @@ class SyncTapMovementIntTest(
       occurrenceId = occurrence.id,
       prisonCode = authorisation.prisonCode,
     )
-    val res = syncTapMovement(authorisation.personIdentifier, request)
+    val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
       .returnResult()
@@ -91,7 +91,7 @@ class SyncTapMovementIntTest(
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceMovement(res.id))
-    saved.verifyAgainst(authorisation.personIdentifier, request)
+    saved.verifyAgainst(authorisation.person.identifier, request)
     assertThat(saved.occurrence?.status?.code).isEqualTo(IN_PROGRESS.name)
 
     verifyAudit(
@@ -113,7 +113,7 @@ class SyncTapMovementIntTest(
     val existing = givenTemporaryAbsenceMovement(
       temporaryAbsenceMovement(
         TemporaryAbsenceMovement.Direction.OUT,
-        authorisation.personIdentifier,
+        authorisation.person.identifier,
         occurrence,
         legacyId = newId().toString(),
       ),
@@ -126,7 +126,7 @@ class SyncTapMovementIntTest(
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
     )
-    val res = syncTapMovement(authorisation.personIdentifier, request)
+    val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
       .returnResult()
@@ -134,7 +134,7 @@ class SyncTapMovementIntTest(
 
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceMovement(existing.id))
-    saved.verifyAgainst(authorisation.personIdentifier, request)
+    saved.verifyAgainst(authorisation.person.identifier, request)
 
     verifyAudit(
       saved,
@@ -152,7 +152,7 @@ class SyncTapMovementIntTest(
     val existing = givenTemporaryAbsenceMovement(
       temporaryAbsenceMovement(
         TemporaryAbsenceMovement.Direction.IN,
-        authorisation.personIdentifier,
+        authorisation.person.identifier,
         occurrence,
         legacyId = newId().toString(),
       ),
@@ -164,7 +164,7 @@ class SyncTapMovementIntTest(
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
     )
-    val res = syncTapMovement(authorisation.personIdentifier, request)
+    val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
       .returnResult()
@@ -172,7 +172,7 @@ class SyncTapMovementIntTest(
 
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceMovement(existing.id))
-    saved.verifyAgainst(authorisation.personIdentifier, request)
+    saved.verifyAgainst(authorisation.person.identifier, request)
 
     verifyAudit(
       saved,

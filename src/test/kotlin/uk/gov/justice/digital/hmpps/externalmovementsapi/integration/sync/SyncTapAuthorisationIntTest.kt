@@ -19,8 +19,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
@@ -51,8 +53,11 @@ class SyncTapAuthorisationIntTest(
 
   @Test
   fun `200 ok application created successfully including full path`() {
+    val prisonCode = prisonCode()
     val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = tapAuthorisation(
+      prisonCode = prisonCode,
       statusCode = "PENDING",
       approved = null,
     )
@@ -67,6 +72,8 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "PW",
       ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
     )
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -75,13 +82,16 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
   fun `200 ok application created successfully without a category`() {
+    val prisonCode = prisonCode()
     val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = tapAuthorisation(
+      prisonCode = prisonCode,
       statusCode = "PENDING",
       subTypeCode = "SPL",
       reasonCode = "LTX",
@@ -97,6 +107,8 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "SPL",
       ReferenceDataDomain.Code.ABSENCE_REASON of "LTX",
     )
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -105,13 +117,16 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
   fun `200 ok application created successfully with type and subtype only`() {
+    val prisonCode = prisonCode()
     val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = tapAuthorisation(
+      prisonCode = prisonCode,
       statusCode = "PENDING",
       subTypeCode = "CRL",
       reasonCode = "3",
@@ -126,6 +141,8 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
       ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "CRL",
     )
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -134,12 +151,14 @@ class SyncTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(saved.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
   fun `200 ok application created for type only path`() {
+    val prisonCode = prisonCode()
     val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = tapAuthorisation(
       reasonCode = "PC",
       typeCode = "PP",
@@ -151,6 +170,8 @@ class SyncTapAuthorisationIntTest(
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
     assertThat(saved.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -164,7 +185,9 @@ class SyncTapAuthorisationIntTest(
 
   @Test
   fun `200 ok application created for security escort`() {
+    val prisonCode = prisonCode()
     val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = tapAuthorisation(
       reasonCode = "SE",
       typeCode = "SE",
@@ -179,6 +202,8 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SE",
       ReferenceDataDomain.Code.ABSENCE_REASON of "SE",
     )
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -193,13 +218,24 @@ class SyncTapAuthorisationIntTest(
   @Test
   fun `200 ok application updated successfully`() {
     val legacyId = newId()
-    val existing = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = legacyId))
+    val prisonCode = prisonCode()
+    val ps = givenPersonSummary(personSummary())
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(ps.identifier))
+    val existing = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        legacyId = legacyId,
+        prisonCode = prisonCode,
+        personIdentifier = ps.identifier,
+      ),
+    )
     val request = tapAuthorisation(id = existing.id, existing.prisonCode, legacyId = legacyId)
-    val res = syncAuthorisation(existing.personIdentifier, request).successResponse<SyncResponse>()
+    val res = syncAuthorisation(existing.person.identifier, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
-    saved.verifyAgainst(existing.personIdentifier, request)
+    saved.verifyAgainst(existing.person.identifier, request)
+    val person = requireNotNull(findPersonSummary(ps.identifier))
+    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -215,12 +251,17 @@ class SyncTapAuthorisationIntTest(
   fun `200 ok application created if authorisation with the given uuid does not exist`() {
     val pi = personIdentifier()
     val uuid = newUuid()
+    val prisonCode = prisonCode()
+    val ps = givenPersonSummary(personSummary(personIdentifier = pi))
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = tapAuthorisation(id = uuid)
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(uuid)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -283,7 +324,7 @@ class SyncTapAuthorisationIntTest(
 }
 
 private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: TapAuthorisation) {
-  assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+  assertThat(person.identifier).isEqualTo(personIdentifier)
   assertThat(legacyId).isEqualTo(request.legacyId)
   assertThat(status.code).isEqualTo(request.statusCode)
   assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
