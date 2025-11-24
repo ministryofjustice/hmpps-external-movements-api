@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.Integration
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchResponse
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter.ISO_DATE
@@ -67,7 +66,6 @@ class SearchTapAuthorisationIntTest(
         temporaryAbsenceAuthorisation(prisonCode, fromDate = fromDate.plusDays(1), toDate = toDate),
       ),
     )
-    prisonerSearch.getPrisoners(prisonCode, auths.map { it.person.identifier }.toSet())
 
     val res = searchTapAuthorisations(prisonCode, fromDate, toDate).successResponse<TapAuthorisationSearchResponse>()
 
@@ -115,7 +113,6 @@ class SearchTapAuthorisationIntTest(
         ),
       ),
     )
-    prisonerSearch.getPrisoners(prisonCode, auths.map { it.person.identifier }.toSet())
 
     val res = searchTapAuthorisations(prisonCode, fromDate, toDate, TapAuthorisationStatus.Code.PENDING)
       .successResponse<TapAuthorisationSearchResponse>()
@@ -146,7 +143,6 @@ class SearchTapAuthorisationIntTest(
         toDate = toDate,
       ),
     )
-    prisonerSearch.getPrisoners(prisonCode, setOf(toFind.person.identifier))
 
     val res = searchTapAuthorisations(prisonCode, fromDate, toDate, personIdentifier = toFind.person.identifier)
       .successResponse<TapAuthorisationSearchResponse>()
@@ -271,6 +267,55 @@ class SearchTapAuthorisationIntTest(
       approved.person.identifier,
       pending.person.identifier,
     )
+  }
+
+  @Test
+  fun `can sort type or reason`() {
+    val prisonCode = prisonCode()
+    val fromDate = LocalDate.now()
+    val toDate = LocalDate.now()
+
+    val sr = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    val pp = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        absenceType = "PP",
+        absenceSubType = "PP",
+        absenceReason = "PC",
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+
+    val res1 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "absenceType,asc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(pp.absenceType?.description, sr.absenceType?.description)
+
+    val res2 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "absenceType,desc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(sr.absenceType?.description, pp.absenceType?.description)
+
+    val res3 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "absenceReason,asc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(2)
+    assertThat(res3.metadata.totalElements).isEqualTo(2)
+    assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(sr.absenceReason?.description, pp.absenceReason?.description)
+
+    val res4 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "absenceReason,desc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res4.content.size).isEqualTo(2)
+    assertThat(res4.metadata.totalElements).isEqualTo(2)
+    assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(pp.absenceReason?.description, sr.absenceReason?.description)
   }
 
   private fun searchTapAuthorisations(

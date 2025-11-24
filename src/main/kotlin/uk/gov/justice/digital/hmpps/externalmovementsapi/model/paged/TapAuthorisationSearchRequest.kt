@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.sun.beans.introspect.PropertyInfo
 import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Sort
 import org.springframework.data.domain.Sort.Direction
@@ -51,7 +50,8 @@ data class TapAuthorisationSearchRequest(
     FROM_DATE -> sortByDate(direction, FROM_DATE, TO_DATE)
     TO_DATE -> sortByDate(direction, TO_DATE, FROM_DATE)
     STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}")
-    ABSENCE_TYPE, ABSENCE_REASON -> by(direction, "${field}_description")
+    ABSENCE_TYPE, ABSENCE_REASON -> by(direction, "${field}_description").and(sortByPersonName())
+
     else -> throw IllegalArgumentException("Unrecognised sort field")
   }
 }

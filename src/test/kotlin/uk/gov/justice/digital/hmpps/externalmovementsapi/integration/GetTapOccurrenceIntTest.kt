@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import java.time.LocalDateTime
 import java.util.UUID
@@ -59,7 +58,6 @@ class GetTapOccurrenceIntTest(
         cancelledBy = "C4nc3113d",
       ),
     )
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -72,7 +70,6 @@ class GetTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().plusHours(2)))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -85,7 +82,6 @@ class GetTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().minusHours(2)))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -99,7 +95,6 @@ class GetTapOccurrenceIntTest(
       givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.PENDING))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -113,7 +108,6 @@ class GetTapOccurrenceIntTest(
       givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.CANCELLED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -127,7 +121,6 @@ class GetTapOccurrenceIntTest(
       givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.DENIED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -146,7 +139,6 @@ class GetTapOccurrenceIntTest(
           movements = listOf(temporaryAbsenceMovement(OUT, auth.person.identifier)),
         ),
       )
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -165,7 +157,6 @@ class GetTapOccurrenceIntTest(
           movements = listOf(temporaryAbsenceMovement(OUT, auth.person.identifier)),
         ),
       )
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -195,8 +186,6 @@ class GetTapOccurrenceIntTest(
         ),
       ),
     )
-
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(occurrence.authorisation.person.identifier))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
