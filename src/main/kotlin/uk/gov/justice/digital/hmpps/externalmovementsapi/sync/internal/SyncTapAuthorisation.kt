@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
@@ -30,6 +31,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.DENIED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AmendAuthorisationNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
@@ -37,6 +40,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RescheduleAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.util.UUID
@@ -44,13 +48,17 @@ import java.util.UUID
 @Transactional
 @Service
 class SyncTapAuthorisation(
+  private val prisonerSearch: PrisonerSearchClient,
+  private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
+    val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
     val rdPaths = referenceDataRepository.findRdWithPaths(request)
+    val person = personSummaryService.save(prisoner)
     val application = (
       request.id?.let { authorisationRepository.findByIdOrNull(it) }
         ?: authorisationRepository.findByLegacyId(request.legacyId)
@@ -58,10 +66,10 @@ class SyncTapAuthorisation(
       ?.also {
         request.updated?.also { ExternalMovementContext.get().copy(requestAt = it.at, username = it.by).set() }
       }
-      ?.update(personIdentifier, request, rdPaths)
+      ?.update(person, request, rdPaths)
       ?: let {
         ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
-        authorisationRepository.save(request.asEntity(personIdentifier, rdPaths))
+        authorisationRepository.save(request.asEntity(person, rdPaths))
       }
     return SyncResponse(application.id)
   }
@@ -77,7 +85,7 @@ class SyncTapAuthorisation(
   }
 
   private fun TapAuthorisation.asEntity(
-    personIdentifier: String,
+    person: PersonSummary,
     rdPaths: ReferenceDataPaths,
   ): TemporaryAbsenceAuthorisation {
     val reasonPath = rdPaths.reasonPath()
@@ -86,7 +94,7 @@ class SyncTapAuthorisation(
     }
     return TemporaryAbsenceAuthorisation(
       id = id ?: newUuid(),
-      personIdentifier = personIdentifier,
+      person = person,
       prisonCode = prisonCode,
       absenceType = absenceTypeCode?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType },
       absenceSubType = absenceSubTypeCode?.let {
@@ -108,18 +116,21 @@ class SyncTapAuthorisation(
   }
 
   fun TemporaryAbsenceAuthorisation.update(
-    personIdentifier: String,
+    person: PersonSummary,
     request: TapAuthorisation,
     rdPaths: ReferenceDataPaths,
   ) = apply {
-    applyPrisonPerson(ChangePrisonPerson(personIdentifier, request.prisonCode))
+    applyPrisonPerson(ChangePrisonPerson(person.identifier, request.prisonCode)) { person }
     applyAbsenceCategorisation(request, rdPaths)
     checkSchedule(request)
     checkStatus(request, rdPaths)
     request.notes?.also { amendNotes(AmendAuthorisationNotes(it)) }
   }
 
-  private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
+  private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(
+    request: TapAuthorisation,
+    rdPaths: ReferenceDataPaths,
+  ) {
     val categoryCode = rdPaths.reasonPath().path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.code
     applyAbsenceCategorisation(
       RecategoriseAuthorisation(

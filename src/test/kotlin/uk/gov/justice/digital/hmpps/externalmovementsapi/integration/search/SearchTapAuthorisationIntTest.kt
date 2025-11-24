@@ -67,7 +67,7 @@ class SearchTapAuthorisationIntTest(
         temporaryAbsenceAuthorisation(prisonCode, fromDate = fromDate.plusDays(1), toDate = toDate),
       ),
     )
-    prisonerSearch.getPrisoners(prisonCode, auths.map { it.personIdentifier }.toSet())
+    prisonerSearch.getPrisoners(prisonCode, auths.map { it.person.identifier }.toSet())
 
     val res = searchTapAuthorisations(prisonCode, fromDate, toDate).successResponse<TapAuthorisationSearchResponse>()
 
@@ -115,7 +115,7 @@ class SearchTapAuthorisationIntTest(
         ),
       ),
     )
-    prisonerSearch.getPrisoners(prisonCode, auths.map { it.personIdentifier }.toSet())
+    prisonerSearch.getPrisoners(prisonCode, auths.map { it.person.identifier }.toSet())
 
     val res = searchTapAuthorisations(prisonCode, fromDate, toDate, TapAuthorisationStatus.Code.PENDING)
       .successResponse<TapAuthorisationSearchResponse>()
@@ -146,13 +146,132 @@ class SearchTapAuthorisationIntTest(
         toDate = toDate,
       ),
     )
-    prisonerSearch.getPrisoners(prisonCode, setOf(toFind.personIdentifier))
+    prisonerSearch.getPrisoners(prisonCode, setOf(toFind.person.identifier))
 
-    val res = searchTapAuthorisations(prisonCode, fromDate, toDate, personIdentifier = toFind.personIdentifier)
+    val res = searchTapAuthorisations(prisonCode, fromDate, toDate, personIdentifier = toFind.person.identifier)
       .successResponse<TapAuthorisationSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(1)
     assertThat(res.metadata.totalElements).isEqualTo(1)
+  }
+
+  @Test
+  fun `can sort by name`() {
+    val prisonCode = prisonCode()
+    val fromDate = LocalDate.now().plusDays(1)
+    val toDate = LocalDate.now().plusDays(2)
+
+    val p1 = givenPersonSummary(personSummary(lastName = "Smith", firstName = "Jane"))
+    val p2 = givenPersonSummary(personSummary(lastName = "Doe", firstName = "John"))
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        p1.identifier,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        p2.identifier,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+
+    val res1 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "firstName,asc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+
+    assertThat(res1.content.map { it.person.personIdentifier }).containsExactly(p1.identifier, p2.identifier)
+
+    val res2 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "lastName,asc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+
+    assertThat(res2.content.map { it.person.personIdentifier }).containsExactly(p2.identifier, p1.identifier)
+
+    val res3 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "firstName,desc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(2)
+    assertThat(res3.metadata.totalElements).isEqualTo(2)
+
+    assertThat(res3.content.map { it.person.personIdentifier }).containsExactly(p2.identifier, p1.identifier)
+
+    val res4 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "lastName,desc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res4.content.size).isEqualTo(2)
+    assertThat(res4.metadata.totalElements).isEqualTo(2)
+
+    assertThat(res4.content.map { it.person.personIdentifier }).containsExactly(p1.identifier, p2.identifier)
+  }
+
+  @Test
+  fun `can sort by status`() {
+    val prisonCode = prisonCode()
+    val fromDate = LocalDate.now().plusDays(1)
+    val toDate = LocalDate.now().plusDays(2)
+
+    val pending = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.PENDING,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    val cancelled = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.CANCELLED,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    val denied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.DENIED,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    val approved = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.APPROVED,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+
+    val res1 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "status,asc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(4)
+    assertThat(res1.metadata.totalElements).isEqualTo(4)
+    println(res1.content)
+
+    assertThat(res1.content.map { it.person.personIdentifier }).containsExactly(
+      pending.person.identifier,
+      approved.person.identifier,
+      denied.person.identifier,
+      cancelled.person.identifier,
+    )
+
+    val res2 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "status,desc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(4)
+    assertThat(res2.metadata.totalElements).isEqualTo(4)
+
+    assertThat(res2.content.map { it.person.personIdentifier }).containsExactly(
+      cancelled.person.identifier,
+      denied.person.identifier,
+      approved.person.identifier,
+      pending.person.identifier,
+    )
   }
 
   private fun searchTapAuthorisations(

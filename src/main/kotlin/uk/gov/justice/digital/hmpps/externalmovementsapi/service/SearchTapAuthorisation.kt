@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationResult
@@ -26,7 +25,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerso
 
 @Service
 class SearchTapAuthorisation(
-  private val prisonerSearch: PrisonerSearchClient,
   private val authRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
@@ -34,13 +32,8 @@ class SearchTapAuthorisation(
     val page = authRepository.findAll(request.asSpecification(), request.pageable())
     val occurrences = occurrenceRepository.findByAuthorisationIdIn(page.content.map { it.id }.toSet())
       .groupBy { it.authorisation.id }
-    val prisoners = prisonerSearch.getPrisoners(page.map { it.personIdentifier }.toSet())
-      .associateBy { it.prisonerNumber }
-    val getPerson = { personIdentifier: String ->
-      prisoners[personIdentifier]?.asPerson() ?: Person.unknown(personIdentifier)
-    }
     return page.map { taa ->
-      taa.with(getPerson(taa.personIdentifier), occurrences[taa.id] ?: emptyList())
+      taa.with(taa.person.asPerson(), occurrences[taa.id] ?: emptyList())
     }.asResponse()
   }
 

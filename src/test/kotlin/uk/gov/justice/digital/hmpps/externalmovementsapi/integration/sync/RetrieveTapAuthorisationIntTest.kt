@@ -70,7 +70,7 @@ class RetrieveTapAuthorisationIntTest(
 }
 
 private fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
-  assertThat(personIdentifier).isEqualTo(authorisation.personIdentifier)
+  assertThat(personIdentifier).isEqualTo(authorisation.person.identifier)
   assertThat(prisonCode).isEqualTo(authorisation.prisonCode)
   assertThat(statusCode).isEqualTo(authorisation.status.code)
   assertThat(absenceTypeCode).isEqualTo(authorisation.absenceType?.code)
@@ -85,7 +85,7 @@ private fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthor
 
 private fun TapAuthorisation.Occurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) {
   assertThat(id).isEqualTo(occurrence.id)
-  assertThat(statusCode).isEqualTo(occurrence.status?.code)
+  assertThat(statusCode).isEqualTo(occurrence.status.code)
   assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
   assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))
   assertThat(location).isEqualTo(occurrence.location)

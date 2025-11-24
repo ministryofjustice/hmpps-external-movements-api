@@ -5,5 +5,5 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceOverdue
 
 data class MarkOccurrenceOverdue(override val reason: String? = null) : OccurrenceAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceOverdue(tao.authorisation.personIdentifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceOverdue(tao.authorisation.person.identifier, tao.id)
 }

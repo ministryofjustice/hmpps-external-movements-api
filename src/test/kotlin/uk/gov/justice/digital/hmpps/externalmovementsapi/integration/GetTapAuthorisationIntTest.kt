@@ -57,7 +57,7 @@ class GetTapAuthorisationIntTest(
         location = firstOcc.location,
       ),
     )
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.person.identifier))
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
@@ -77,7 +77,7 @@ class GetTapAuthorisationIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.personIdentifier))
+    prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.person.identifier))
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
     assertThat(response.absenceType?.code).isEqualTo("PP")

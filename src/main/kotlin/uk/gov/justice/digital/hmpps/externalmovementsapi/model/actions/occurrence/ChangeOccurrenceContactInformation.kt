@@ -8,5 +8,5 @@ data class ChangeOccurrenceContactInformation(
   val information: String,
   override val reason: String? = null,
 ) : OccurrenceAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceContactInfoChanged(tao.authorisation.personIdentifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceContactInfoChanged(tao.authorisation.person.identifier, tao.id)
 }

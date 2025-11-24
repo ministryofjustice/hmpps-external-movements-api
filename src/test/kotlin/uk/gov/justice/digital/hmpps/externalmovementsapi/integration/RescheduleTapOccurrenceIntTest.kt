@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -84,7 +83,7 @@ class RescheduleTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(occurrence.authorisation.personIdentifier, occurrence.id)))
+    verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(occurrence.authorisation.person.identifier, occurrence.id)))
   }
 
   private fun rescheduleOccurrenceRequest(

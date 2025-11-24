@@ -11,11 +11,13 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON_IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RETURN_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import java.time.LocalDate
@@ -44,7 +46,11 @@ interface TemporaryAbsenceOccurrenceRepository :
     """,
   )
   @QueryHints(value = [QueryHint(name = HibernateHints.HINT_NATIVE_LOCK_MODE, value = "UPGRADE-SKIPLOCKED")])
-  fun findPastOccurrences(statuses: Set<ReferenceDataKey>, dateTime: LocalDateTime, pageable: Pageable): List<TemporaryAbsenceOccurrence>
+  fun findPastOccurrences(
+    statuses: Set<ReferenceDataKey>,
+    dateTime: LocalDateTime,
+    pageable: Pageable,
+  ): List<TemporaryAbsenceOccurrence>
 
   @Query(
     """
@@ -96,8 +102,10 @@ fun occurrenceMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbs
 }
 
 fun occurrenceMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  val authorisation = tao.join<TemporaryAbsenceOccurrence, TemporaryAbsenceAuthorisation>(AUTHORISATION, JoinType.INNER)
-  cb.equal(authorisation.get<String>(PERSON_IDENTIFIER), personIdentifier)
+  val authorisation =
+    tao.join<TemporaryAbsenceOccurrence, TemporaryAbsenceAuthorisation>(AUTHORISATION, JoinType.INNER)
+  val person = authorisation.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER)
+  cb.equal(person.get<String>(IDENTIFIER), personIdentifier)
 }
 
 fun occurrenceMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->

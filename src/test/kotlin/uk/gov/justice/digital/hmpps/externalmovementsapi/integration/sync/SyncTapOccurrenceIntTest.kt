@@ -84,7 +84,7 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -119,9 +119,9 @@ class SyncTapOccurrenceIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceRescheduled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceCancelled(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceContactInfoChanged(saved.authorisation.personIdentifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceRescheduled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceCancelled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceContactInfoChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
       ),
     )
   }
@@ -197,7 +197,7 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -222,7 +222,7 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.personIdentifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   private fun tapOccurrence(

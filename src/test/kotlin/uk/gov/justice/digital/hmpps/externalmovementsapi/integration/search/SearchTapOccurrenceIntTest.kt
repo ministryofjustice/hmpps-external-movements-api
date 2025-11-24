@@ -70,7 +70,7 @@ class SearchTapOccurrenceIntTest(
         ),
       )
     }
-    prisonerSearch.getPrisoners(prisonCode, listOf(authorisations[1], authorisations[2]).map { it.personIdentifier }.toSet())
+    prisonerSearch.getPrisoners(prisonCode, listOf(authorisations[1], authorisations[2]).map { it.person.identifier }.toSet())
 
     val res = searchTapOccurrences(prisonCode, fromDate, toDate).successResponse<TapOccurrenceSearchResponse>()
 
@@ -114,9 +114,9 @@ class SearchTapOccurrenceIntTest(
         returnBy = LocalDateTime.of(toDate, now()),
       ),
     )
-    prisonerSearch.getPrisoners(prisonCode, setOf(toFind.personIdentifier))
+    prisonerSearch.getPrisoners(prisonCode, setOf(toFind.person.identifier))
 
-    val res = searchTapOccurrences(prisonCode, fromDate, toDate, personIdentifier = toFind.personIdentifier)
+    val res = searchTapOccurrences(prisonCode, fromDate, toDate, personIdentifier = toFind.person.identifier)
       .successResponse<TapOccurrenceSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(1)

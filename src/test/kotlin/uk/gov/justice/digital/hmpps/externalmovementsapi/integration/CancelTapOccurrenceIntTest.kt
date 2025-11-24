@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -81,7 +80,7 @@ class CancelTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceCancelled(occurrence.authorisation.personIdentifier, occurrence.id)))
+    verifyEvents(saved, setOf(TemporaryAbsenceCancelled(occurrence.authorisation.person.identifier, occurrence.id)))
   }
 
   private fun cancelOccurrenceRequest(

@@ -7,6 +7,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
@@ -33,8 +34,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.Cod
 import java.time.LocalDate
 import java.util.UUID
 
-interface TempAbsenceAuthorisationOperations {
-  fun givenTemporaryAbsenceAuthorisation(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation
+interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
+  fun givenTemporaryAbsenceAuthorisation(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation
   fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation?
 
   companion object {
@@ -63,9 +64,9 @@ interface TempAbsenceAuthorisationOperations {
       ),
       schedule: JsonNode? = null,
       legacyId: Long? = null,
-    ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation = { rdSupplier ->
+    ): ((ReferenceDataDomain.Code, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation = { rdSupplier, personSupplier ->
       TemporaryAbsenceAuthorisation(
-        personIdentifier,
+        personSupplier(personIdentifier),
         prisonCode,
         absenceType?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType },
         absenceSubType?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
@@ -86,7 +87,7 @@ interface TempAbsenceAuthorisationOperations {
   }
 
   fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: CreateTapAuthorisationRequest) {
-    assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+    assertThat(person.identifier).isEqualTo(personIdentifier)
     assertThat(status.code).isEqualTo(request.statusCode.name)
     assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
@@ -103,7 +104,7 @@ interface TempAbsenceAuthorisationOperations {
   }
 
   fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
-    assertThat(person.personIdentifier).isEqualTo(authorisation.personIdentifier)
+    assertThat(person.personIdentifier).isEqualTo(authorisation.person.identifier)
     assertThat(status.code).isEqualTo(authorisation.status.code)
     with(authorisation.reasonPath) {
       verify(ABSENCE_TYPE, absenceType, authorisation.absenceType)
@@ -133,12 +134,17 @@ class TempAbsenceAuthorisationOperationsImpl(
   private val transactionTemplate: TransactionTemplate,
   private val referenceDataRepository: ReferenceDataRepository,
   private val temporaryAbsenceAuthorisationRepository: TemporaryAbsenceAuthorisationRepository,
-) : TempAbsenceAuthorisationOperations {
-  override fun givenTemporaryAbsenceAuthorisation(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation = transactionTemplate.execute {
+  private val psOperations: PersonSummaryOperations,
+) : TempAbsenceAuthorisationOperations,
+  PersonSummaryOperations by psOperations {
+  override fun givenTemporaryAbsenceAuthorisation(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation = transactionTemplate.execute {
     val rdMap = referenceDataRepository.findAll().associateBy { it.key.domain of it.key.code }
-    val authorisation: TemporaryAbsenceAuthorisation = tas { dc: ReferenceDataDomain.Code, c: String ->
-      requireNotNull(rdMap[dc of c])
-    }
+    val authorisation: TemporaryAbsenceAuthorisation = tas(
+      { dc: ReferenceDataDomain.Code, c: String ->
+        requireNotNull(rdMap[dc of c])
+      },
+      { psOperations.findPersonSummary(it) ?: psOperations.givenPersonSummary(personSummary(it)) },
+    )
     temporaryAbsenceAuthorisationRepository.save(authorisation)
   }!!
 
