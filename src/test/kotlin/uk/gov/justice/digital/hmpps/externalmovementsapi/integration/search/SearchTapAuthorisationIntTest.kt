@@ -252,7 +252,6 @@ class SearchTapAuthorisationIntTest(
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res1.content.size).isEqualTo(4)
     assertThat(res1.metadata.totalElements).isEqualTo(4)
-    println(res1.content)
 
     assertThat(res1.content.map { it.person.personIdentifier }).containsExactly(
       pending.person.identifier,
