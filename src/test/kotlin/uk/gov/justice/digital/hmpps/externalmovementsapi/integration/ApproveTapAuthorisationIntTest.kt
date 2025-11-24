@@ -93,8 +93,8 @@ class ApproveTapAuthorisationIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceAuthorisationApproved(auth.personIdentifier, auth.id),
-        TemporaryAbsenceScheduled(auth.personIdentifier, occurrence.id),
+        TemporaryAbsenceAuthorisationApproved(auth.person.identifier, auth.id),
+        TemporaryAbsenceScheduled(auth.person.identifier, occurrence.id),
       ),
     )
   }

@@ -6,6 +6,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummaryRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEventRepository
 
@@ -17,12 +18,14 @@ class TestConfig(
   private val temporaryAbsenceAuthorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val temporaryAbsenceOccurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val temporaryAbsenceMovementRepository: TemporaryAbsenceMovementRepository,
+  private val personSummaryRepository: PersonSummaryRepository,
 ) {
   @Bean
-  fun tempAbsenceAuthorisationOperations(): TempAbsenceAuthorisationOperations = TempAbsenceAuthorisationOperationsImpl(
+  fun tempAbsenceAuthorisationOperations(personSummaryOperations: PersonSummaryOperations): TempAbsenceAuthorisationOperations = TempAbsenceAuthorisationOperationsImpl(
     transactionTemplate,
     referenceDataRepository,
     temporaryAbsenceAuthorisationRepository,
+    personSummaryOperations,
   )
 
   @Bean
@@ -41,4 +44,7 @@ class TestConfig(
 
   @Bean
   fun hmppsDomainEventOperations(): HmppsDomainEventOperations = HmppsDomainEventOperationsImpl(transactionTemplate, hmppsDomainEventRepository)
+
+  @Bean
+  fun personSummaryOperations(): PersonSummaryOperations = PersonSummaryOperationsImpl(personSummaryRepository)
 }

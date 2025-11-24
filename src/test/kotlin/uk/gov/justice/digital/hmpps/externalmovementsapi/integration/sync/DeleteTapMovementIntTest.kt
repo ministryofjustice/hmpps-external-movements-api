@@ -58,7 +58,7 @@ class DeleteTapMovementIntTest(
     val movement = givenTemporaryAbsenceMovement(
       temporaryAbsenceMovement(
         direction = TemporaryAbsenceMovement.Direction.OUT,
-        personIdentifier = occurrence.authorisation.personIdentifier,
+        personIdentifier = occurrence.authorisation.person.identifier,
         occurrence = occurrence,
       ),
     )

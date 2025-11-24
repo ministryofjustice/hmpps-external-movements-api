@@ -27,11 +27,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.AbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.FROM_DATE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON_IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.TO_DATE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
@@ -65,7 +67,7 @@ import java.util.UUID
 @Entity
 @Table(name = "temporary_absence_authorisation")
 class TemporaryAbsenceAuthorisation(
-  personIdentifier: String,
+  person: PersonSummary,
   prisonCode: String,
   absenceType: AbsenceType?,
   absenceSubType: AbsenceSubType?,
@@ -87,10 +89,11 @@ class TemporaryAbsenceAuthorisation(
 ) : Identifiable,
   AbsenceCategorisation,
   DomainEventProducer {
-  @Size(max = 10)
-  @NotNull
-  @Column(name = "person_identifier", nullable = false, length = 10)
-  var personIdentifier: String = personIdentifier.uppercase()
+
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne
+  @JoinColumn(name = "person_identifier")
+  var person: PersonSummary = person
     private set
 
   @Size(max = 6)
@@ -179,9 +182,9 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   override fun initialEvent(): DomainEvent<*>? = if (status.code == TapAuthorisationStatus.Code.APPROVED.name) {
-    TemporaryAbsenceAuthorisationApproved(personIdentifier, id)
+    TemporaryAbsenceAuthorisationApproved(person.identifier, id)
   } else {
-    TemporaryAbsenceAuthorisationPending(personIdentifier, id)
+    TemporaryAbsenceAuthorisationPending(person.identifier, id)
   }
 
   @Transient
@@ -194,15 +197,19 @@ class TemporaryAbsenceAuthorisation(
 
   override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
 
-  fun applyPrisonPerson(action: ChangePrisonPerson) {
-    personIdentifier = action.personIdentifier.uppercase()
+  fun applyPrisonPerson(action: ChangePrisonPerson, person: (String) -> PersonSummary) {
+    this.person = person(action.personIdentifier)
     prisonCode = action.prisonCode
   }
 
-  fun applyAbsenceCategorisation(action: RecategoriseAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+  fun applyAbsenceCategorisation(
+    action: RecategoriseAuthorisation,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) {
     if (action.changes(this)) {
       reasonPath = action.reasonPath
-      absenceReason = action.absenceReasonCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_REASON, it) as AbsenceReason }
+      absenceReason =
+        action.absenceReasonCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_REASON, it) as AbsenceReason }
       absenceReasonCategory =
         action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
       absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
@@ -249,7 +256,7 @@ class TemporaryAbsenceAuthorisation(
 
   companion object {
     val PRISON_CODE = TemporaryAbsenceAuthorisation::prisonCode.name
-    val PERSON_IDENTIFIER = TemporaryAbsenceAuthorisation::personIdentifier.name
+    val PERSON = TemporaryAbsenceAuthorisation::person.name
     val FROM_DATE = TemporaryAbsenceAuthorisation::fromDate.name
     val TO_DATE = TemporaryAbsenceAuthorisation::toDate.name
     val STATUS = TemporaryAbsenceAuthorisation::status.name
@@ -282,7 +289,8 @@ fun authorisationMatchesPrisonCode(prisonCode: String) = Specification<Temporary
 }
 
 fun authorisationMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
-  cb.equal(taa.get<String>(PERSON_IDENTIFIER), personIdentifier)
+  val person = taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
+  cb.equal(person.get<String>(IDENTIFIER), personIdentifier.uppercase())
 }
 
 fun authorisationMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->

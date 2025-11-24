@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerson
@@ -18,13 +17,11 @@ import java.util.UUID
 
 @Service
 class GetTapOccurrence(
-  private val prisonerSearch: PrisonerSearchClient,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
   fun byId(id: UUID): TapOccurrence {
     val occurrence = occurrenceRepository.getOccurrence(id)
-    val person = prisonerSearch.getPrisoner(occurrence.authorisation.personIdentifier)?.asPerson()
-      ?: Person.unknown(occurrence.authorisation.personIdentifier)
+    val person = occurrence.authorisation.person.asPerson()
     return occurrence.with(person)
   }
 }

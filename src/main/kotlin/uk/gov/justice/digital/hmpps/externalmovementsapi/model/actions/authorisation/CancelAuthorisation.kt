@@ -7,5 +7,5 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 data class CancelAuthorisation(
   override val reason: String? = null,
 ) : AuthorisationAction {
-  override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationCancelled(taa.personIdentifier, taa.id)
+  override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationCancelled(taa.person.identifier, taa.id)
 }

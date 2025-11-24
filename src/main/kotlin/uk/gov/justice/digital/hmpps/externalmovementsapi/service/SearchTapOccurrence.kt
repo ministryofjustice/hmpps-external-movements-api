@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceAuthorisation
@@ -26,17 +25,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerso
 
 @Service
 class SearchTapOccurrence(
-  private val prisonerSearch: PrisonerSearchClient,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
   fun find(request: TapOccurrenceSearchRequest): TapOccurrenceSearchResponse {
     val page = occurrenceRepository.findAll(request.asSpecification(), request.pageable())
-    val prisoners = prisonerSearch.getPrisoners(page.map { it.authorisation.personIdentifier }.toSet())
-      .associateBy { it.prisonerNumber }
-    val getPerson = { personIdentifier: String ->
-      prisoners[personIdentifier]?.asPerson() ?: Person.unknown(personIdentifier)
-    }
-    return page.map { it.with(getPerson(it.authorisation.personIdentifier)) }.asResponse()
+    return page.map { it.with(it.authorisation.person.asPerson()) }.asResponse()
   }
 
   private fun TapOccurrenceSearchRequest.asSpecification(): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(

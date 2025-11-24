@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerson
@@ -19,16 +18,13 @@ import java.util.UUID
 
 @Service
 class GetTapAuthorisation(
-  private val prisonerSearch: PrisonerSearchClient,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
   fun byId(id: UUID): TapAuthorisation {
     val authorisation = authorisationRepository.getAuthorisation(id)
-    val person = prisonerSearch.getPrisoner(authorisation.personIdentifier)?.asPerson()
-      ?: Person.unknown(authorisation.personIdentifier)
     val occurrences = occurrenceRepository.findByAuthorisationId(authorisation.id)
-    return authorisation.with(person, occurrences.map { o -> o.asOccurrence() })
+    return authorisation.with(authorisation.person.asPerson(), occurrences.map { o -> o.asOccurrence() })
   }
 }
 

@@ -24,7 +24,7 @@ class PrisonerSearchServer : WireMockServer(9000) {
     prisonCode: String,
     prisonNumbers: Set<String>,
     prisoners: List<Prisoner> = prisonNumbers.map { prisoner(prisonCode, it) },
-  ) {
+  ): List<Prisoner> {
     stubFor(
       post(urlPathEqualTo("/prisoner-search/prisoner-numbers"))
         .withRequestBody(equalToJson(Json.mapper.writeValueAsString(PrisonerNumbers(prisonNumbers)), true, true))
@@ -35,6 +35,7 @@ class PrisonerSearchServer : WireMockServer(9000) {
             .withStatus(200),
         ),
     )
+    return prisoners
   }
 
   companion object {

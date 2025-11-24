@@ -36,7 +36,7 @@ class SyncTapMovement(
 ) {
   fun sync(personIdentifier: String, request: TapMovement): SyncResponse {
     val occurrence = request.occurrenceId?.let { occurrenceRepository.getOccurrence(it) }?.also {
-      require(personIdentifier == it.authorisation.personIdentifier) { "Person identifier does not match occurrence" }
+      require(personIdentifier == it.authorisation.person.identifier) { "Person identifier does not match occurrence" }
     }
     val rdProvider = referenceDataRepository.rdProvider(request)
     val movement =

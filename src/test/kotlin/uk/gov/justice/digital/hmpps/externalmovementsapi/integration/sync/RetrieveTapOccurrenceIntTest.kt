@@ -75,7 +75,7 @@ private fun TapOccurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) 
   assertThat(absenceTypeCode).isEqualTo(occurrence.absenceType?.code)
   assertThat(absenceSubTypeCode).isEqualTo(occurrence.absenceSubType?.code)
   assertThat(absenceReasonCode).isEqualTo(occurrence.absenceReason?.code)
-  assertThat(statusCode).isEqualTo(occurrence.status?.code)
+  assertThat(statusCode).isEqualTo(occurrence.status.code)
   assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
   assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))
   assertThat(location).isEqualTo(occurrence.location)
@@ -86,6 +86,6 @@ private fun TapOccurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) 
 
 private fun TapOccurrence.Authorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
   assertThat(id).isEqualTo(authorisation.id)
-  assertThat(personIdentifier).isEqualTo(authorisation.personIdentifier)
+  assertThat(personIdentifier).isEqualTo(authorisation.person.identifier)
   assertThat(prisonCode).isEqualTo(authorisation.prisonCode)
 }

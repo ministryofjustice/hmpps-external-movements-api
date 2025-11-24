@@ -41,7 +41,7 @@ class TapOccurrenceStatusIntTest(
         releaseAt = LocalDateTime.now().minusHours(2),
         returnBy = LocalDateTime.now().plus(durationAhead),
         movements = listOf(
-          temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, auth.personIdentifier),
+          temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, auth.person.identifier),
         ),
       ),
     )
@@ -54,7 +54,7 @@ class TapOccurrenceStatusIntTest(
     assertThat(updated.status.code).isEqualTo(TapOccurrenceStatus.Code.OVERDUE.name)
 
     verifyAudit(updated, RevisionType.MOD, setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!))
-    verifyEvents(updated, setOf(TemporaryAbsenceOverdue(occurrence.authorisation.personIdentifier, occurrence.id)))
+    verifyEvents(updated, setOf(TemporaryAbsenceOverdue(occurrence.authorisation.person.identifier, occurrence.id)))
   }
 
   @Test
@@ -70,13 +70,13 @@ class TapOccurrenceStatusIntTest(
     )
     assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
 
-    TimeUnit.MILLISECONDS.sleep(durationAhead.toMillis() + 200)
+    TimeUnit.MILLISECONDS.sleep(durationAhead.toMillis() + 100)
     update.pastOccurrencesOfInterest()
 
     val updated = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
     assertThat(updated.status.code).isEqualTo(TapOccurrenceStatus.Code.EXPIRED.name)
 
     verifyAudit(updated, RevisionType.MOD, setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!))
-    verifyEvents(updated, setOf(TemporaryAbsenceExpired(occurrence.authorisation.personIdentifier, occurrence.id)))
+    verifyEvents(updated, setOf(TemporaryAbsenceExpired(occurrence.authorisation.person.identifier, occurrence.id)))
   }
 }

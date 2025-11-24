@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import java.time.LocalDateTime
 import java.util.UUID
@@ -57,7 +56,6 @@ class GetTapAuthorisationIntTest(
         location = firstOcc.location,
       ),
     )
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.personIdentifier))
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
@@ -77,7 +75,6 @@ class GetTapAuthorisationIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.personIdentifier))
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
     assertThat(response.absenceType?.code).isEqualTo("PP")
