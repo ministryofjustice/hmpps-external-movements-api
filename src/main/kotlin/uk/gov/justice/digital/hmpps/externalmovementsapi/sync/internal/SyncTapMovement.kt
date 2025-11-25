@@ -23,6 +23,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
 import java.util.UUID
@@ -30,6 +33,8 @@ import java.util.UUID
 @Transactional
 @Service
 class SyncTapMovement(
+  private val prisonerSearch: PrisonerSearchClient,
+  private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
@@ -39,15 +44,19 @@ class SyncTapMovement(
       require(personIdentifier == it.authorisation.person.identifier) { "Person identifier does not match occurrence" }
     }
     val rdProvider = referenceDataRepository.rdProvider(request)
+    val person = occurrence?.authorisation?.person ?: let {
+      val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
+      personSummaryService.save(prisoner)
+    }
     val movement =
       (request.id?.let { movementRepository.findByIdOrNull(it) } ?: movementRepository.findByLegacyId(request.legacyId))
         ?.also {
           request.updated?.also { ExternalMovementContext.get().copy(requestAt = it.at, username = it.by).set() }
         }
-        ?.update(personIdentifier, occurrence, request, rdProvider)
+        ?.update(person.identifier, occurrence, request, rdProvider)
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
-          val movement = request.asEntity(personIdentifier, occurrence, rdProvider)
+          val movement = request.asEntity(person.identifier, occurrence, rdProvider)
           occurrence?.addMovement(movement) {
             rdProvider(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
           }

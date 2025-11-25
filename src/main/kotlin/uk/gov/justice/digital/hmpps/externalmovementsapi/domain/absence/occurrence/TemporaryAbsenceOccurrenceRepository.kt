@@ -16,9 +16,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RETURN_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.IDENTIFIER
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.KEY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -113,4 +118,23 @@ fun occurrenceMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specifi
     cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), fromDate.atStartOfDay()),
     cb.lessThanOrEqualTo(tao.get(RETURN_BY), toDate.plusDays(1).atStartOfDay()),
   )
+}
+
+fun occurrenceStatusCodeIn(statusCodes: Set<TapOccurrenceStatus.Code>) = Specification<TemporaryAbsenceOccurrence> { taa, _, _ ->
+  val status = taa.join<TemporaryAbsenceOccurrence, ReferenceData>(STATUS, JoinType.INNER)
+  status.get<String>(KEY).get<String>(CODE).`in`(statusCodes.map { it.name })
+}
+
+fun forAuthorisation(authorisationId: UUID) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  val authorisation =
+    tao.join<TemporaryAbsenceOccurrence, TemporaryAbsenceAuthorisation>(AUTHORISATION, JoinType.INNER)
+  cb.equal(authorisation.get<UUID>(TemporaryAbsenceAuthorisation.ID), authorisationId)
+}
+
+fun after(fromDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), fromDate.atStartOfDay())
+}
+
+fun before(toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.lessThan(tao.get(RELEASE_AT), toDate)
 }

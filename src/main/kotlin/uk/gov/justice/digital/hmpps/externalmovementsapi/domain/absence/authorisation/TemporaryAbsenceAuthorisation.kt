@@ -263,6 +263,7 @@ class TemporaryAbsenceAuthorisation(
     val REPEAT = TemporaryAbsenceAuthorisation::repeat.name
     val ABSENCE_TYPE = TemporaryAbsenceAuthorisation::absenceType.name
     val ABSENCE_REASON = TemporaryAbsenceAuthorisation::absenceReason.name
+    val ID = TemporaryAbsenceAuthorisation::id.name
   }
 }
 

@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
@@ -186,6 +187,7 @@ class SyncTapMovementIntTest(
   @Test
   fun `200 ok absence created if one doesn't exist with the given uuid`() {
     val personIdentifier = personIdentifier()
+    prisonerSearch.getPrisoners(prisonCode(), setOf(personIdentifier))
     val request = tapMovement(id = newUuid(), direction = TemporaryAbsenceMovement.Direction.IN)
     val res = syncTapMovement(personIdentifier, request)
       .expectStatus().isOk

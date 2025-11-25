@@ -9,13 +9,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceResult
@@ -29,18 +29,19 @@ class SearchTapOccurrence(
 ) {
   fun find(request: TapOccurrenceSearchRequest): TapOccurrenceSearchResponse {
     val page = occurrenceRepository.findAll(request.asSpecification(), request.pageable())
-    return page.map { it.with(it.authorisation.person.asPerson()) }.asResponse()
+    return page.map { it.toModel() }.asResponse()
   }
 
   private fun TapOccurrenceSearchRequest.asSpecification(): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
     occurrenceMatchesPrisonCode(prisonCode),
     occurrenceMatchesDateRange(fromDate, toDate),
+    status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
     queryString?.let { occurrenceMatchesPersonIdentifier(it) },
   ).reduce { spec, current -> spec.and(current) }
 
-  private fun TemporaryAbsenceOccurrence.with(person: Person) = TapOccurrenceResult(
+  private fun TemporaryAbsenceOccurrence.toModel() = TapOccurrenceResult(
     id = id,
-    authorisation = authorisation.asOccurrenceAuth(person),
+    authorisation = authorisation.asOccurrenceAuth(),
     status = status.asCodedDescription(),
     absenceType = absenceType?.asCodedDescription(),
     absenceSubType = absenceSubType?.asCodedDescription(),
@@ -55,9 +56,9 @@ class SearchTapOccurrence(
   )
 }
 
-private fun TemporaryAbsenceAuthorisation.asOccurrenceAuth(person: Person) = TapOccurrenceAuthorisation(
+private fun TemporaryAbsenceAuthorisation.asOccurrenceAuth() = TapOccurrenceAuthorisation(
   id,
-  person,
+  person.asPerson(),
   status.asCodedDescription(),
   absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
   absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),

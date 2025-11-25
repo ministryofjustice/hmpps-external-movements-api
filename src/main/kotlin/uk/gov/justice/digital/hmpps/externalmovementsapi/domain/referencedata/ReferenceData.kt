@@ -117,7 +117,7 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
 
 fun ReferenceDataRepository.getByKey(key: ReferenceDataKey): ReferenceData = findByKey(key) ?: throw NotFoundException("${key.domain} not found")
 
-fun ReferenceDataRepository.findRdWithPaths(rdr: ReferenceDataRequired): ReferenceDataPaths = ReferenceDataPaths(findMatchingWithDomainLink(rdr.requiredReferenceData()), { id: Long -> findLinkedFrom(id) })
+fun ReferenceDataRepository.findRdWithPaths(rdr: ReferenceDataRequired): ReferenceDataPaths = ReferenceDataPaths(findMatchingWithDomainLink(rdr.requiredReferenceData())) { id: Long -> findLinkedFrom(id) }
 
 fun ReferenceDataRepository.rdProvider(rdr: ReferenceDataRequired): (ReferenceDataDomain.Code, String) -> ReferenceData {
   val rdMap = findByKeyIn(rdr.requiredReferenceData()).associateBy { it.key }

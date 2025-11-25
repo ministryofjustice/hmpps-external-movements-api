@@ -252,7 +252,7 @@ class SyncTapAuthorisationIntTest(
     val pi = personIdentifier()
     val uuid = newUuid()
     val prisonCode = prisonCode()
-    val ps = givenPersonSummary(personSummary(personIdentifier = pi))
+    givenPersonSummary(personSummary(personIdentifier = pi))
     val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = tapAuthorisation(id = uuid)
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()

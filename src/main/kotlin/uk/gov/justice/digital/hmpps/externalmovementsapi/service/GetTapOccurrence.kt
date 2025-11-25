@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerson
 import java.util.UUID
@@ -19,16 +18,12 @@ import java.util.UUID
 class GetTapOccurrence(
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
-  fun byId(id: UUID): TapOccurrence {
-    val occurrence = occurrenceRepository.getOccurrence(id)
-    val person = occurrence.authorisation.person.asPerson()
-    return occurrence.with(person)
-  }
+  fun byId(id: UUID): TapOccurrence = occurrenceRepository.getOccurrence(id).toModel()
 }
 
-private fun TemporaryAbsenceAuthorisation.with(person: Person) = TapOccurrence.Authorisation(
+private fun TemporaryAbsenceAuthorisation.forOccurrence() = TapOccurrence.Authorisation(
   id = id,
-  person = person,
+  person = person.asPerson(),
   status = status.asCodedDescription(),
   absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
   absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
@@ -40,10 +35,10 @@ private fun TemporaryAbsenceAuthorisation.with(person: Person) = TapOccurrence.A
   notes = notes,
 )
 
-private fun TemporaryAbsenceOccurrence.with(person: Person) = TapOccurrence(
+private fun TemporaryAbsenceOccurrence.toModel() = TapOccurrence(
   id = id,
   status = status.asCodedDescription(),
-  authorisation = authorisation.with(person),
+  authorisation = authorisation.forOccurrence(),
   absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
   absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
   absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
@@ -18,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications
+import java.time.LocalDate
 import java.util.UUID
 
 @RestController
@@ -36,7 +38,11 @@ class TapAuthorisationController(
   ) = create.tapAuthorisation(personIdentifier, request)
 
   @GetMapping("/{id}")
-  fun getTapAuthorisation(@PathVariable id: UUID): TapAuthorisation = get.byId(id)
+  fun getTapAuthorisation(
+    @PathVariable id: UUID,
+    @RequestParam fromDate: LocalDate?,
+    @RequestParam toDate: LocalDate?,
+  ): TapAuthorisation = get.byId(id, fromDate, toDate)
 
   @PutMapping("/{id}")
   fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) {

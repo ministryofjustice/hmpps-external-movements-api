@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -72,7 +73,7 @@ class CreateTapAuthorisationIntTest(
     val request = createTapAuthorisationRequest(
       occurrences = listOf(
         createTapOccurrenceRequest(
-          location = location(description = null, address = null),
+          location = location(description = null, address = null, postcode = null),
         ),
       ),
     )
@@ -196,8 +197,8 @@ class CreateTapAuthorisationIntTest(
 
   private fun location(
     description: String? = name(10),
-    address: String? = null,
-    postcode: String? = null,
+    address: String? = "${name(8)} ${name(4)} ${name(8)}",
+    postcode: String? = postcode(),
     uprn: String = "${newId()}",
   ): Location = Location(description, address, postcode, uprn)
 
