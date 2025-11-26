@@ -58,7 +58,7 @@ class SearchTapAuthorisationIntTest(
       temporaryAbsenceAuthorisation(prisonCode, fromDate = fromDate, toDate = toDate.plusDays(1)),
     )
 
-    val auths = listOf(
+    listOf(
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(prisonCode, fromDate = fromDate, toDate = toDate.minusDays(1)),
       ),
@@ -95,7 +95,7 @@ class SearchTapAuthorisationIntTest(
       ),
     )
 
-    val auths = listOf(
+    listOf(
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           prisonCode,

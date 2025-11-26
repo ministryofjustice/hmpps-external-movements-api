@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -36,7 +37,7 @@ class GetTapAuthorisationIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    getTapAuthorisation(newUuid(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+    getTapAuthorisation(newUuid(), role = "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
   }
 
   @Test
@@ -64,6 +65,47 @@ class GetTapAuthorisationIntTest(
   }
 
   @Test
+  fun `200 ok finds tap authorisation and filters occurrences by date`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        releaseAt = LocalDateTime.now().plusHours(1),
+        returnBy = LocalDateTime.now().plusHours(3),
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        releaseAt = LocalDateTime.now().plusDays(2).plusHours(1),
+        returnBy = LocalDateTime.now().plusDays(2).plusHours(3),
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        releaseAt = LocalDateTime.now().plusDays(3).plusHours(1),
+        returnBy = LocalDateTime.now().plusDays(3).plusHours(3),
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        releaseAt = LocalDateTime.now().plusDays(4).plusHours(1),
+        returnBy = LocalDateTime.now().plusDays(4).plusHours(3),
+      ),
+    )
+
+    val response = getTapAuthorisation(
+      auth.id,
+      LocalDate.now().plusDays(2),
+      LocalDate.now().plusDays(3),
+    ).successResponse<TapAuthorisation>()
+    response.verifyAgainst(auth)
+    assertThat(response.occurrences).hasSize(2)
+  }
+
+  @Test
   fun `200 ok finds tap authorisation created with just type`() {
     val auth = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
@@ -87,10 +129,17 @@ class GetTapAuthorisationIntTest(
 
   private fun getTapAuthorisation(
     id: UUID,
+    fromDate: LocalDate? = null,
+    toDate: LocalDate? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()
-    .uri(GET_TAP_AUTH_URL, id)
+    .uri { builder ->
+      builder.path(GET_TAP_AUTH_URL)
+      fromDate?.also { builder.queryParam("fromDate", it) }
+      toDate?.also { builder.queryParam("toDate", it) }
+      builder.build(id)
+    }
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
