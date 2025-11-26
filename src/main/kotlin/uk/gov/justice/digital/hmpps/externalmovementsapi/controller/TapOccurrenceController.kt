@@ -13,8 +13,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetTapOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.OccurrenceChangeHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapOccurrenceModifications
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.OccurrenceChangeHistory
 import java.util.UUID
 
 @RestController
