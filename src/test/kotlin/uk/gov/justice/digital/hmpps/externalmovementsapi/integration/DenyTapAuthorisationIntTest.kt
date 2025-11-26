@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import java.util.UUID
 
@@ -45,7 +46,7 @@ class DenyTapAuthorisationIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    approveAuthorisation(
+    denyAuthorisation(
       newUuid(),
       denyAuthorisationRequest(),
       "ROLE_ANY__OTHER_RW",
@@ -54,14 +55,14 @@ class DenyTapAuthorisationIntTest(
 
   @Test
   fun `404 authorisation does not exist`() {
-    approveAuthorisation(newUuid(), denyAuthorisationRequest()).expectStatus().isNotFound
+    denyAuthorisation(newUuid(), denyAuthorisationRequest()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(TapAuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "DENIED"])
   fun `409 - authorisation not awaiting approval cannot be denied`(status: TapAuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = approveAuthorisation(auth.id, denyAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = denyAuthorisation(auth.id, denyAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.userMessage).isEqualTo("Temporary absence authorisation not awaiting approval")
   }
@@ -71,7 +72,12 @@ class DenyTapAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = denyAuthorisationRequest()
-    approveAuthorisation(auth.id, request).expectStatus().isOk
+    val res = denyAuthorisation(auth.id, request).successResponse<AuditedAction>()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDenied.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change("status", "To be reviewed", "Denied"),
+    )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
     assertThat(saved.status.code).isEqualTo(DENIED.name)
@@ -99,7 +105,7 @@ class DenyTapAuthorisationIntTest(
     reason: String? = "Evidence justifying the denial",
   ) = DenyAuthorisation(reason)
 
-  private fun approveAuthorisation(
+  private fun denyAuthorisation(
     id: UUID,
     request: DenyAuthorisation,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,

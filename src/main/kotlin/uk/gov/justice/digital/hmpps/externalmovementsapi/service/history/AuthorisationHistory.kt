@@ -7,10 +7,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 
 @Service
-class AuthorisationChangeHistory(
+class AuthorisationHistory(
   entityManager: EntityManager,
   managerUsers: ManageUsersClient,
-) : ChangeHistoryService<TemporaryAbsenceAuthorisation>(entityManager, managerUsers) {
+) : HistoryService<TemporaryAbsenceAuthorisation>(entityManager, managerUsers) {
   override val entityClass = TemporaryAbsenceAuthorisation::class.java
   override fun TemporaryAbsenceAuthorisation.changesFrom(previous: TemporaryAbsenceAuthorisation): List<AuditedAction.Change> = TemporaryAbsenceAuthorisation.changeableProperties().mapNotNull {
     val change = it.invoke(this).asChangeValue()

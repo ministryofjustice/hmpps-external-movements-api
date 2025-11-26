@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import java.util.UUID
 
 @Transactional(readOnly = true)
-abstract class ChangeHistoryService<T>(
+abstract class HistoryService<T>(
   protected val entityManager: EntityManager,
   protected val managerUsers: ManageUsersClient,
 ) {
@@ -26,7 +26,7 @@ abstract class ChangeHistoryService<T>(
   fun changes(id: UUID): AuditHistory {
     val audited = getAuditRecords(id)
     if (audited.isEmpty()) {
-      throw NotFoundException("Temporary absence not found")
+      throw NotFoundException("History not found")
     }
     val domainEvents = getDomainEvents(audited.mapNotNull { it.revision.id }.toSet())
     val users =
@@ -34,6 +34,14 @@ abstract class ChangeHistoryService<T>(
     return AuditHistory(
       audited.actions({ domainEvents[it] ?: emptyList() }, { requireNotNull(users[it]) }),
     )
+  }
+
+  fun latestAction(id: UUID): AuditedAction {
+    val audited = getLastTwoAuditRecords(id)
+    check(audited.isNotEmpty()) { "History not found" }
+    val domainEvents = getDomainEvents(setOf(audited.mapNotNull { it.revision.id }.last()))
+    val user = managerUsers.getUserDetails(audited.mapNotNull { it.revision.username }.last())
+    return audited.actions({ domainEvents[it] ?: emptyList() }, { user }).last()
   }
 
   private fun getAuditRecords(id: UUID): List<AuditedEntity<T>> {
@@ -45,10 +53,30 @@ abstract class ChangeHistoryService<T>(
         .add(AuditEntity.id().eq(id))
         .resultList.filterIsInstance<Array<*>>()
 
-    return entityRevisions.map { it.asAuditedAction() }.sortedBy { it.revision.timestamp }
+    return entityRevisions.map { it.asAuditedEntity() }.sortedBy { it.revision.timestamp }
   }
 
-  private fun Array<*>.asAuditedAction(): AuditedEntity<T> {
+  private fun getLastTwoAuditRecords(id: UUID): List<AuditedEntity<T>> {
+    val auditReader = AuditReaderFactory.get(entityManager)
+    val revisionNumbers =
+      auditReader
+        .getRevisions(entityClass, id)
+        .filterIsInstance<Long>()
+        .sortedDescending()
+        .take(2)
+        .reversed()
+
+    val entityRevisions: List<Array<*>> =
+      auditReader
+        .createQuery()
+        .forRevisionsOfEntity(entityClass, false, true)
+        .add(revisionNumber().`in`(revisionNumbers))
+        .resultList.filterIsInstance<Array<*>>()
+
+    return entityRevisions.map { it.asAuditedEntity() }.sortedBy { it.revision.timestamp }
+  }
+
+  private fun Array<*>.asAuditedEntity(): AuditedEntity<T> {
     val entity = entityClass.cast(this[0])
     val revision = this[1] as AuditRevision
     val type = this[2] as RevisionType

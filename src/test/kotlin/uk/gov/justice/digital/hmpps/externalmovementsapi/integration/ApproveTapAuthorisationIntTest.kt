@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import java.util.UUID
 
@@ -72,7 +73,16 @@ class ApproveTapAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = approveAuthorisationRequest()
-    approveAuthorisation(auth.id, request).expectStatus().isOk
+
+    val res = approveAuthorisation(auth.id, request).successResponse<AuditedAction>()
+    assertThat(res.domainEvents).containsExactlyInAnyOrder(
+      TemporaryAbsenceAuthorisationApproved.EVENT_TYPE,
+      TemporaryAbsenceScheduled.EVENT_TYPE,
+    )
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change("status", "To be reviewed", "Approved"),
+    )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
     assertThat(saved.status.code).isEqualTo(APPROVED.name)

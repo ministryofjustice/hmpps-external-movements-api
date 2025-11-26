@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetTapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapOccurrenceModifications
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.OccurrenceChangeHistory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.OccurrenceHistory
 import java.util.UUID
 
 @RestController
@@ -22,7 +22,7 @@ import java.util.UUID
 @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
 class TapOccurrenceController(
   private val get: GetTapOccurrence,
-  private val history: OccurrenceChangeHistory,
+  private val history: OccurrenceHistory,
   private val modify: TapOccurrenceModifications,
 ) {
   @GetMapping("/{id}")
@@ -32,7 +32,5 @@ class TapOccurrenceController(
   fun getTapOccurrenceHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
   @PutMapping("/{id}")
-  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: OccurrenceAction) {
-    modify.apply(id, action)
-  }
+  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: OccurrenceAction) = modify.apply(id, action)
 }

@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationChangeHistory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationHistory
 import java.time.LocalDate
 import java.util.UUID
 
@@ -30,7 +30,7 @@ import java.util.UUID
 class TapAuthorisationController(
   private val create: CreateTapAuthorisation,
   private val get: GetTapAuthorisation,
-  private val history: AuthorisationChangeHistory,
+  private val history: AuthorisationHistory,
   private val modify: TapAuthorisationModifications,
 ) {
   @ResponseStatus(HttpStatus.CREATED)
@@ -51,7 +51,5 @@ class TapAuthorisationController(
   fun getTapAuthorisationHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
   @PutMapping("/{id}")
-  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) {
-    modify.apply(id, action)
-  }
+  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) = modify.apply(id, action)
 }
