@@ -196,7 +196,7 @@
 <!-- temporary_absence_authorisation&#45;&gt;person_summary -->
 <g id="edge3" class="edge">
 <title>temporary_absence_authorisation:w&#45;&gt;person_summary:e</title>
-<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M220.7303,-309.258C197.3597,-300.4315 193.6879,-270.7 162,-270.7"/>
+<path fill="none" stroke="#000000" d="M220.7303,-309.258C197.3597,-300.4315 193.6879,-270.7 162,-270.7"/>
 <polygon fill="#000000" stroke="#000000" points="227.1146,-310.3505 234.3927,-315.2484 231.0573,-311.0253 235,-311.7 235,-311.7 235,-311.7 231.0573,-311.0253 235.6073,-308.1516 227.1146,-310.3505 227.1146,-310.3505"/>
 <ellipse fill="none" stroke="#000000" cx="223.9605" cy="-309.8108" rx="3.2" ry="3.2"/>
 </g>
@@ -256,7 +256,7 @@
 <!-- temporary_absence_movement&#45;&gt;person_summary -->
 <g id="edge5" class="edge">
 <title>temporary_absence_movement:w&#45;&gt;person_summary:e</title>
-<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M230.7842,-150.6284C217.5064,-157.3264 215.2793,-174.5156 203,-191.7 180.0014,-223.8855 201.5581,-270.7 162,-270.7"/>
+<path fill="none" stroke="#000000" d="M230.7842,-150.6284C217.5064,-157.3264 215.2793,-174.5156 203,-191.7 180.0014,-223.8855 201.5581,-270.7 162,-270.7"/>
 <polygon fill="#000000" stroke="#000000" points="237.1645,-149.3141 245.7264,-151.226 241.0823,-148.5071 245,-147.7 245,-147.7 245,-147.7 241.0823,-148.5071 244.2736,-144.174 237.1645,-149.3141 237.1645,-149.3141"/>
 <ellipse fill="none" stroke="#000000" cx="234.0303" cy="-149.9598" rx="3.2" ry="3.2"/>
 </g>

@@ -3,10 +3,10 @@ digraph "twoDegreesRelationshipsDiagramImplied" {
   "audited_tap_authorisation":"elipses":w -> "person_summary":"person_identifier":e [arrowhead=none dir=back arrowtail=crowodot style=dashed];
   "audited_tap_movement":"elipses":w -> "person_summary":"person_identifier":e [arrowhead=none dir=back arrowtail=crowodot style=dashed];
   "hmpps_domain_event_audit":"elipses":w -> "audit_revision":"id":e [arrowhead=none dir=back arrowtail=crowodot];
-  "temporary_absence_authorisation":"elipses":w -> "person_summary":"person_identifier":e [arrowhead=none dir=back arrowtail=crowodot style=dashed];
+  "temporary_absence_authorisation":"elipses":w -> "person_summary":"person_identifier":e [arrowhead=none dir=back arrowtail=crowodot];
   "temporary_absence_authorisation_audit":"person_identifier":w -> "person_summary":"person_identifier":e [arrowhead=none dir=back arrowtail=crowodot style=dashed];
   "temporary_absence_authorisation_audit":"rev_id":w -> "audit_revision":"id":e [arrowhead=none dir=back arrowtail=crowodot];
-  "temporary_absence_movement":"elipses":w -> "person_summary":"person_identifier":e [arrowhead=none dir=back arrowtail=crowodot style=dashed];
+  "temporary_absence_movement":"elipses":w -> "person_summary":"person_identifier":e [arrowhead=none dir=back arrowtail=crowodot];
   "temporary_absence_movement_audit":"elipses":w -> "person_summary":"person_identifier":e [arrowhead=none dir=back arrowtail=crowodot style=dashed];
   "temporary_absence_movement_audit":"elipses":w -> "audit_revision":"id":e [arrowhead=none dir=back arrowtail=crowodot];
   "temporary_absence_occurrence_audit":"elipses":w -> "audit_revision":"id":e [arrowhead=none dir=back arrowtail=crowodot];

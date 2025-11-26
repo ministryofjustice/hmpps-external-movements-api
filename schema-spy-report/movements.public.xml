@@ -130,9 +130,9 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="person_identifier" nullable="false" remarks="" size="10" type="varchar" typeCode="12">
             <child catalog="movements" column="person_identifier" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="audited_tap_authorisation"/>
             <child catalog="movements" column="person_identifier" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="audited_tap_movement"/>
-            <child catalog="movements" column="person_identifier" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation"/>
+            <child catalog="movements" column="person_identifier" foreignKey="fk_temporary_absence_authorisation_person_identifier" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation"/>
             <child catalog="movements" column="person_identifier" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation_audit"/>
-            <child catalog="movements" column="person_identifier" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="temporary_absence_movement"/>
+            <child catalog="movements" column="person_identifier" foreignKey="fk_temporary_absence_movement_person_identifier" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_movement"/>
             <child catalog="movements" column="person_identifier" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="temporary_absence_movement_audit"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="first_name" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
@@ -145,7 +145,7 @@
             <column ascending="true" name="person_identifier"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data" numRows="157" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
             <child catalog="movements" column="id" foreignKey="fk_reference_data_domain_link_reference_data" implied="false" onDeleteCascade="false" schema="public" table="reference_data_domain_link"/>
             <child catalog="movements" column="reference_data_id_1" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data_link"/>
@@ -210,7 +210,7 @@
             <column ascending="true" name="id"/>
          </index>
       </table>
-      <table catalog="movements" name="reference_data_link" numRows="64" remarks="" schema="public" type="TABLE">
+      <table catalog="movements" name="reference_data_link" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_link_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="reference_data_id_1" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
             <parent catalog="movements" column="id" foreignKey="fk_reference_data_one" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
@@ -234,7 +234,7 @@
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="person_identifier" nullable="false" remarks="" size="10" type="varchar" typeCode="12">
-            <parent catalog="movements" column="person_identifier" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="person_summary"/>
+            <parent catalog="movements" column="person_identifier" foreignKey="fk_temporary_absence_authorisation_person_identifier" implied="false" onDeleteCascade="false" schema="public" table="person_summary"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="prison_code" nullable="false" remarks="" size="6" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="absence_type_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5">
@@ -312,7 +312,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="person_identifier" nullable="false" remarks="" size="10" type="varchar" typeCode="12">
-            <parent catalog="movements" column="person_identifier" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="person_summary"/>
+            <parent catalog="movements" column="person_identifier" foreignKey="fk_temporary_absence_movement_person_identifier" implied="false" onDeleteCascade="false" schema="public" table="person_summary"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="occurrence_id" nullable="true" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent catalog="movements" column="id" foreignKey="fk_temporary_absence_movement_occurrence_id" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_occurrence"/>
