@@ -294,8 +294,11 @@ fun authorisationMatchesPersonIdentifier(personIdentifier: String) = Specificati
   cb.equal(person.get<String>(IDENTIFIER), personIdentifier.uppercase())
 }
 
-fun authorisationMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
-  cb.and(cb.greaterThanOrEqualTo(taa.get(FROM_DATE), fromDate), cb.lessThanOrEqualTo(taa.get(TO_DATE), toDate))
+fun authorisationMatchesDateRange(fromDate: LocalDate?, toDate: LocalDate?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  cb.and(
+    fromDate?.let { cb.greaterThanOrEqualTo(taa.get(FROM_DATE), it) } ?: cb.conjunction(),
+    toDate?.let { cb.lessThanOrEqualTo(taa.get(TO_DATE), it) } ?: cb.conjunction(),
+  )
 }
 
 fun authorisationStatusCodeIn(statusCodes: Set<TapAuthorisationStatus.Code>) = Specification<TemporaryAbsenceAuthorisation> { taa, _, _ ->

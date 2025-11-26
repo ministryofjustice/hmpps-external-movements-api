@@ -113,10 +113,10 @@ fun occurrenceMatchesPersonIdentifier(personIdentifier: String) = Specification<
   cb.equal(person.get<String>(IDENTIFIER), personIdentifier)
 }
 
-fun occurrenceMatchesDateRange(fromDate: LocalDate, toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun occurrenceMatchesDateRange(fromDate: LocalDate?, toDate: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.and(
-    cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), fromDate.atStartOfDay()),
-    cb.lessThanOrEqualTo(tao.get(RETURN_BY), toDate.plusDays(1).atStartOfDay()),
+    fromDate?.let { cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), it.atStartOfDay()) } ?: cb.conjunction(),
+    toDate?.let { cb.lessThanOrEqualTo(tao.get(RETURN_BY), it.plusDays(1).atStartOfDay()) } ?: cb.conjunction(),
   )
 }
 
@@ -131,10 +131,10 @@ fun forAuthorisation(authorisationId: UUID) = Specification<TemporaryAbsenceOccu
   cb.equal(authorisation.get<UUID>(TemporaryAbsenceAuthorisation.ID), authorisationId)
 }
 
-fun after(fromDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun releaseAfter(fromDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), fromDate.atStartOfDay())
 }
 
-fun before(toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun releaseBefore(toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.lessThan(tao.get(RELEASE_AT), toDate)
 }

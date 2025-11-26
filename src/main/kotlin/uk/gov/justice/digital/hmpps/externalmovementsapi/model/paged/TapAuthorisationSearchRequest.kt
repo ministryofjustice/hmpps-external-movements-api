@@ -23,8 +23,8 @@ import java.time.LocalDate
 data class TapAuthorisationSearchRequest(
   @NotBlank
   val prisonCode: String,
-  val fromDate: LocalDate,
-  val toDate: LocalDate,
+  val fromDate: LocalDate?,
+  val toDate: LocalDate?,
   val status: Set<TapAuthorisationStatus.Code> = emptySet(),
   val query: String? = null,
   override val page: Int = 1,

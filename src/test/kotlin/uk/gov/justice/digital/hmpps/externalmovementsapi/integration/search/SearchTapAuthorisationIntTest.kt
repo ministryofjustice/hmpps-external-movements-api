@@ -144,7 +144,7 @@ class SearchTapAuthorisationIntTest(
       ),
     )
 
-    val res = searchTapAuthorisations(prisonCode, fromDate, toDate, personIdentifier = toFind.person.identifier)
+    val res = searchTapAuthorisations(prisonCode, personIdentifier = toFind.person.identifier)
       .successResponse<TapAuthorisationSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(1)
@@ -244,7 +244,7 @@ class SearchTapAuthorisationIntTest(
       ),
     )
 
-    val res1 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "status,asc")
+    val res1 = searchTapAuthorisations(prisonCode, sort = "status,asc")
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res1.content.size).isEqualTo(4)
     assertThat(res1.metadata.totalElements).isEqualTo(4)
@@ -256,7 +256,7 @@ class SearchTapAuthorisationIntTest(
       cancelled.person.identifier,
     )
 
-    val res2 = searchTapAuthorisations(prisonCode, fromDate, toDate, sort = "status,desc")
+    val res2 = searchTapAuthorisations(prisonCode, sort = "status,desc")
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res2.content.size).isEqualTo(4)
     assertThat(res2.metadata.totalElements).isEqualTo(4)
@@ -320,8 +320,8 @@ class SearchTapAuthorisationIntTest(
 
   private fun searchTapAuthorisations(
     prisonCode: String,
-    fromDate: LocalDate,
-    toDate: LocalDate,
+    fromDate: LocalDate? = null,
+    toDate: LocalDate? = null,
     status: TapAuthorisationStatus.Code? = null,
     personIdentifier: String? = null,
     sort: String? = null,
@@ -331,8 +331,8 @@ class SearchTapAuthorisationIntTest(
     .uri { uri ->
       uri.path(SEARCH_TAP_AUTH_URL)
       uri.queryParam("prisonCode", prisonCode)
-      uri.queryParam("fromDate", ISO_DATE.format(fromDate))
-      uri.queryParam("toDate", ISO_DATE.format(toDate))
+      fromDate?.also { uri.queryParam("fromDate", ISO_DATE.format(it)) }
+      toDate?.also { uri.queryParam("toDate", ISO_DATE.format(it)) }
       status?.also { uri.queryParam("status", it.name) }
       personIdentifier?.also { uri.queryParam("query", it) }
       sort?.also { uri.queryParam("sort", it) }
