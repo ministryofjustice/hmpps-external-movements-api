@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationChangeHistory
 import java.time.LocalDate
 import java.util.UUID
 
@@ -28,6 +30,7 @@ import java.util.UUID
 class TapAuthorisationController(
   private val create: CreateTapAuthorisation,
   private val get: GetTapAuthorisation,
+  private val history: AuthorisationChangeHistory,
   private val modify: TapAuthorisationModifications,
 ) {
   @ResponseStatus(HttpStatus.CREATED)
@@ -43,6 +46,9 @@ class TapAuthorisationController(
     @RequestParam fromDate: LocalDate?,
     @RequestParam toDate: LocalDate?,
   ): TapAuthorisation = get.byId(id, fromDate, toDate)
+
+  @GetMapping("/{id}/history")
+  fun getTapAuthorisationHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
   @PutMapping("/{id}")
   fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) {

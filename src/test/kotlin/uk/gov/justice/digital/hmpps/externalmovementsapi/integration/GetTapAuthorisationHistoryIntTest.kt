@@ -10,37 +10,33 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension.Companion.manageUsers
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersServer.Companion.user
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import java.util.UUID
 
-class GetTapOccurrenceHistoryIntTest(
+class GetTapAuthorisationHistoryIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
-  @Autowired private val tamOperations: TempAbsenceMovementOperations,
 ) : IntegrationTest(),
   TempAbsenceAuthorisationOperations by taaOperations,
-  TempAbsenceOccurrenceOperations by taoOperations,
-  TempAbsenceMovementOperations by tamOperations {
+  TempAbsenceOccurrenceOperations by taoOperations {
 
   @Test
   fun `401 unauthorised without a valid token`() {
     webTestClient
       .get()
-      .uri(GET_TAP_OCCURRENCE_HISTORY_URL, newUuid())
+      .uri(GET_TAP_AUTHORISATION_HISTORY_URL, newUuid())
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -48,25 +44,25 @@ class GetTapOccurrenceHistoryIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    getTapOccurrenceHistory(newUuid(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+    getTapAuthHistory(newUuid(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
   }
 
   @Test
   fun `404 not found when id invalid`() {
-    getTapOccurrenceHistory(newUuid()).expectStatus().isNotFound
+    getTapAuthHistory(newUuid()).expectStatus().isNotFound
   }
 
   @Test
-  fun `can retrieve history for occurrence`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+  fun `can retrieve history for authorisation`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     manageUsers.findUser(DEFAULT_USERNAME, user(DEFAULT_USERNAME, DEFAULT_NAME))
-    val locationUser = user("LocationUser", "Location User")
-    manageUsers.findUser(locationUser.username, locationUser)
+    val approvingUser = user("ApprovingUser", "Approved By")
+    manageUsers.findUser(approvingUser.username, approvingUser)
 
     transactionTemplate.executeWithoutResult {
-      findTemporaryAbsenceOccurrence(occurrence.id)?.applyAbsenceCategorisation(
-        RecategoriseOccurrence(
+      findTemporaryAbsenceAuthorisation(auth.id)?.applyAbsenceCategorisation(
+        RecategoriseAuthorisation(
           absenceTypeCode = "PP",
           absenceSubTypeCode = "PP",
           absenceReasonCategoryCode = null,
@@ -78,26 +74,27 @@ class GetTapOccurrenceHistoryIntTest(
         requireNotNull(referenceDataRepository.findByKey(domain of code))
       }
     }
-    val originalLocation = occurrence.location
-    val changeLocation = ChangeOccurrenceLocation(location = location(), reason = "A reason for changing the location")
+    val approveAction = ApproveAuthorisation(reason = "A reason for approving")
     transactionTemplate.executeWithoutResult {
-      ExternalMovementContext.get().copy(username = locationUser.username, reason = changeLocation.reason).set()
-      findTemporaryAbsenceOccurrence(occurrence.id)?.applyLocation(changeLocation)
+      ExternalMovementContext.get().copy(username = approvingUser.username, reason = approveAction.reason).set()
+      findTemporaryAbsenceAuthorisation(auth.id)?.approve(approveAction) { domain, code ->
+        requireNotNull(referenceDataRepository.findByKey(domain of code))
+      }
     }
+    val cancelAction = CancelAuthorisation(reason = "A reason for cancelling")
     transactionTemplate.executeWithoutResult {
-      val cancelAction = CancelOccurrence(reason = "A reason for cancelling")
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = cancelAction.reason).set()
-      findTemporaryAbsenceOccurrence(occurrence.id)?.cancel(cancelAction) { domain, code ->
+      findTemporaryAbsenceAuthorisation(auth.id)?.cancel(cancelAction) { domain, code ->
         requireNotNull(referenceDataRepository.findByKey(domain of code))
       }
     }
     ExternalMovementContext.clear()
 
-    val history = getTapOccurrenceHistory(occurrence.id).successResponse<AuditHistory>()
+    val history = getTapAuthHistory(auth.id).successResponse<AuditHistory>()
     assertThat(history.content).hasSize(4)
     with(history.content.first()) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).containsExactly("person.temporary-absence.scheduled")
+      assertThat(domainEvents).containsExactly("person.temporary-absence-authorisation.pending")
     }
     with(history.content[1]) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
@@ -110,38 +107,29 @@ class GetTapOccurrenceHistoryIntTest(
       )
     }
     with(history.content[2]) {
-      assertThat(user).isEqualTo(AuditedAction.User(locationUser.username, locationUser.name))
-      assertThat(domainEvents).isEmpty()
-      assertThat(reason).isEqualTo("A reason for changing the location")
-      with(changes.first()) {
-        assertThat(previous).isEqualTo(originalLocation.asMap())
-        assertThat(change).isEqualTo(changeLocation.location.asMap())
-      }
+      assertThat(user).isEqualTo(AuditedAction.User(approvingUser.username, approvingUser.name))
+      assertThat(domainEvents).containsExactly("person.temporary-absence-authorisation.approved")
+      assertThat(reason).isEqualTo(approveAction.reason)
+      assertThat(changes).containsExactly(AuditedAction.Change("status", "To be reviewed", "Approved"))
     }
     with(history.content.last()) {
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
-      assertThat(domainEvents).containsExactly("person.temporary-absence.cancelled")
-      assertThat(reason).isEqualTo("A reason for cancelling")
+      assertThat(domainEvents).containsExactly("person.temporary-absence-authorisation.cancelled")
+      assertThat(reason).isEqualTo(cancelAction.reason)
+      assertThat(changes).containsExactly(AuditedAction.Change("status", "Approved", "Cancelled"))
     }
   }
 
-  private fun Location.asMap() = listOfNotNull(
-    description?.let { "description" to it },
-    address?.let { "address" to it },
-    postcode?.let { "postcode" to it },
-    uprn?.let { "uprn" to it },
-  ).toMap()
-
-  private fun getTapOccurrenceHistory(
+  private fun getTapAuthHistory(
     id: UUID,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()
-    .uri(GET_TAP_OCCURRENCE_HISTORY_URL, id)
+    .uri(GET_TAP_AUTHORISATION_HISTORY_URL, id)
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
-    const val GET_TAP_OCCURRENCE_HISTORY_URL = "/temporary-absence-occurrences/{id}/history"
+    const val GET_TAP_AUTHORISATION_HISTORY_URL = "/temporary-absence-authorisations/{id}/history"
   }
 }

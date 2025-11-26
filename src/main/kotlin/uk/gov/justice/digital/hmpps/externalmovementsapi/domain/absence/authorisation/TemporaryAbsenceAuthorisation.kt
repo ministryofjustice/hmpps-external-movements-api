@@ -62,6 +62,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RescheduleAuthorisation
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.reflect.KProperty1
 
 @Audited
 @Entity
@@ -264,6 +265,19 @@ class TemporaryAbsenceAuthorisation(
     val ABSENCE_TYPE = TemporaryAbsenceAuthorisation::absenceType.name
     val ABSENCE_REASON = TemporaryAbsenceAuthorisation::absenceReason.name
     val ID = TemporaryAbsenceAuthorisation::id.name
+
+    fun changeableProperties(): Set<KProperty1<TemporaryAbsenceAuthorisation, Any?>> = setOf(
+      TemporaryAbsenceAuthorisation::absenceType,
+      TemporaryAbsenceAuthorisation::absenceSubType,
+      TemporaryAbsenceAuthorisation::absenceReasonCategory,
+      TemporaryAbsenceAuthorisation::absenceReason,
+      TemporaryAbsenceAuthorisation::fromDate,
+      TemporaryAbsenceAuthorisation::toDate,
+      TemporaryAbsenceAuthorisation::accompaniedBy,
+      TemporaryAbsenceAuthorisation::transport,
+      TemporaryAbsenceAuthorisation::status,
+      TemporaryAbsenceAuthorisation::notes,
+    )
   }
 }
 
