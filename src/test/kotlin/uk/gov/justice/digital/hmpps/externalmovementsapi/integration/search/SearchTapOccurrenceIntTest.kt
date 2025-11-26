@@ -118,7 +118,7 @@ class SearchTapOccurrenceIntTest(
       ),
     )
 
-    val res = searchTapOccurrences(prisonCode, fromDate, toDate, personIdentifier = toFind.person.identifier)
+    val res = searchTapOccurrences(prisonCode, personIdentifier = toFind.person.identifier)
       .successResponse<TapOccurrenceSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(1)
@@ -167,8 +167,6 @@ class SearchTapOccurrenceIntTest(
 
     val res = searchTapOccurrences(
       prisonCode,
-      fromDate.toLocalDate().minusDays(5),
-      toDate.toLocalDate().plusDays(5),
       statuses = listOf(TapOccurrenceStatus.Code.SCHEDULED, TapOccurrenceStatus.Code.EXPIRED),
     ).successResponse<TapOccurrenceSearchResponse>()
 
@@ -256,13 +254,7 @@ class SearchTapOccurrenceIntTest(
     )
     assertThat(occ6.status.code).isEqualTo(TapOccurrenceStatus.Code.IN_PROGRESS.name)
 
-    val res1 = searchTapOccurrences(
-      prisonCode,
-      fromDate.toLocalDate().minusDays(5),
-      toDate.toLocalDate().plusDays(5),
-      sort = "status,asc",
-    ).successResponse<TapOccurrenceSearchResponse>()
-
+    val res1 = searchTapOccurrences(prisonCode, sort = "status,asc").successResponse<TapOccurrenceSearchResponse>()
     assertThat(res1.content.size).isEqualTo(6)
     assertThat(res1.metadata.totalElements).isEqualTo(6)
     assertThat(res1.content.map { it.status.code }).containsExactly(
@@ -274,13 +266,7 @@ class SearchTapOccurrenceIntTest(
       TapOccurrenceStatus.Code.DENIED.name,
     )
 
-    val res2 = searchTapOccurrences(
-      prisonCode,
-      fromDate.toLocalDate().minusDays(5),
-      toDate.toLocalDate().plusDays(5),
-      sort = "status,desc",
-    ).successResponse<TapOccurrenceSearchResponse>()
-
+    val res2 = searchTapOccurrences(prisonCode, sort = "status,desc").successResponse<TapOccurrenceSearchResponse>()
     assertThat(res2.content.size).isEqualTo(6)
     assertThat(res2.metadata.totalElements).isEqualTo(6)
     assertThat(res2.content.map { it.status.code }).containsExactly(
@@ -295,8 +281,8 @@ class SearchTapOccurrenceIntTest(
 
   private fun searchTapOccurrences(
     prisonCode: String,
-    fromDate: LocalDate,
-    toDate: LocalDate,
+    fromDate: LocalDate? = null,
+    toDate: LocalDate? = null,
     personIdentifier: String? = null,
     statuses: List<TapOccurrenceStatus.Code>? = null,
     sort: String? = null,
@@ -306,8 +292,8 @@ class SearchTapOccurrenceIntTest(
     .uri { uri ->
       uri.path(SEARCH_TAP_OCCURRENCES_URL)
       uri.queryParam("prisonCode", prisonCode)
-      uri.queryParam("fromDate", fromDate)
-      uri.queryParam("toDate", toDate)
+      fromDate?.also { uri.queryParam("fromDate", it) }
+      toDate?.also { uri.queryParam("toDate", it) }
       statuses?.also { uri.queryParam("status", *it.toTypedArray()) }
       sort?.also { uri.queryParam("sort", it) }
       personIdentifier?.let { uri.queryParam("query", it) }
