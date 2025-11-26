@@ -6,5 +6,5 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
 class AuditedEntity<T>(
   val type: RevisionType,
   val revision: AuditRevision,
-  val entity: T,
+  val state: T,
 )

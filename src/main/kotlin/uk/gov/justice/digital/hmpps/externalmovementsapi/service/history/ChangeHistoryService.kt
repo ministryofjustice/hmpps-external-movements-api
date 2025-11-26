@@ -87,7 +87,7 @@ abstract class ChangeHistoryService<T>(
         audited.revision.timestamp!!,
         de,
         audited.revision.reason,
-        audited.entity.changesFrom(this[idx - 1].entity),
+        audited.state.changesFrom(this[idx - 1].state),
       )
     }
   }
