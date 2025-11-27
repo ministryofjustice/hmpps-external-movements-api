@@ -179,7 +179,7 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @Version
-  var version: Int? = null
+  override var version: Int? = null
     private set
 
   @OneToMany(mappedBy = "occurrence", cascade = [CascadeType.PERSIST, CascadeType.MERGE])

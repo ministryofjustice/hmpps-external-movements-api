@@ -179,7 +179,7 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   @Version
-  var version: Int? = null
+  override var version: Int? = null
     private set
 
   override fun initialEvent(): DomainEvent<*>? = if (status.code == TapAuthorisationStatus.Code.APPROVED.name) {

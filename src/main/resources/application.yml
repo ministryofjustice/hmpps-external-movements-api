@@ -41,6 +41,7 @@ spring:
       org.hibernate.envers.revision_type_field_name: rev_type
       org.hibernate.envers.modified_flag_suffix: _modified
       org.hibernate.envers.store_data_at_delete: true
+      org.hibernate.envers.do_not_audit_optimistic_locking_field: false
     open-in-view: false
 
 
