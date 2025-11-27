@@ -9,4 +9,5 @@ object IdGenerator {
 
 interface Identifiable {
   val id: UUID
+  val version: Int?
 }
