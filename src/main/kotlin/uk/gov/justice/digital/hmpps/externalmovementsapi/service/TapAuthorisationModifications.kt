@@ -37,8 +37,9 @@ class TapAuthorisationModifications(
 ) {
   fun apply(id: UUID, action: AuthorisationAction): AuditedAction {
     ExternalMovementContext.get().copy(reason = action.reason).set()
-    transactionTemplate.executeWithoutResult {
+    val readVersion = transactionTemplate.execute {
       val authorisation = taaRepository.getAuthorisation(id)
+      val readVersion = authorisation.version
       val rdSupplier =
         { domain: ReferenceDataDomain.Code, code: String -> referenceDataRepository.getByKey(domain of code) }
       when (action) {
@@ -65,9 +66,9 @@ class TapAuthorisationModifications(
 
         else -> throw IllegalArgumentException("Action not supported")
       }
-    }
-
-    return authorisationHistory.latestAction(id)
+      readVersion
+    }!!
+    return authorisationHistory.currentAction(id, readVersion)
   }
 
   private fun TemporaryAbsenceAuthorisation.updateOccurrences() {

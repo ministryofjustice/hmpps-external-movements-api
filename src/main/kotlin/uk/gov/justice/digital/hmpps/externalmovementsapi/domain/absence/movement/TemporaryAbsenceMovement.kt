@@ -109,7 +109,7 @@ class TemporaryAbsenceMovement(
     private set
 
   @Version
-  var version: Int? = null
+  override var version: Int? = null
     private set
 
   enum class Direction {

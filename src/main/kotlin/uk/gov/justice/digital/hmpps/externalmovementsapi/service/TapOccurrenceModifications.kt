@@ -28,8 +28,9 @@ class TapOccurrenceModifications(
 ) {
   fun apply(id: UUID, action: OccurrenceAction): AuditedAction {
     ExternalMovementContext.get().copy(reason = action.reason).set()
-    transactionTemplate.executeWithoutResult {
+    val readVersion = transactionTemplate.execute {
       val occurrence = taoRepository.getOccurrence(id)
+      val readVersion = occurrence.version
       when (action) {
         is RescheduleOccurrence -> occurrence.reschedule(action)
         is CancelOccurrence -> {
@@ -42,7 +43,8 @@ class TapOccurrenceModifications(
 
         else -> throw IllegalArgumentException("Action not supported")
       }
-    }
-    return occurrenceHistory.latestAction(id)
+      readVersion
+    }!!
+    return occurrenceHistory.currentAction(id, readVersion)
   }
 }

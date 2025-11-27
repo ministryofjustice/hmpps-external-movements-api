@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.QueryHints
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import java.util.UUID
 
 @Audited
@@ -26,8 +25,8 @@ class HmppsDomainEvent(
 
   @Id
   @Column(name = "id", nullable = false)
-  override val id: UUID = newUuid(),
-) : Identifiable {
+  val id: UUID = newUuid(),
+) {
   val eventType: String = event.eventType
   var published: Boolean = false
 }

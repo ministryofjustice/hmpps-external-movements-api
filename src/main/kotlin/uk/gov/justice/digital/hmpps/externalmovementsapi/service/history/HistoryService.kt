@@ -7,6 +7,7 @@ import org.hibernate.envers.query.AuditEntity
 import org.hibernate.envers.query.AuditEntity.revisionNumber
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
@@ -17,7 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import java.util.UUID
 
 @Transactional(readOnly = true)
-abstract class HistoryService<T>(
+abstract class HistoryService<T : Identifiable>(
   protected val entityManager: EntityManager,
   protected val managerUsers: ManageUsersClient,
 ) {
@@ -36,11 +37,11 @@ abstract class HistoryService<T>(
     )
   }
 
-  fun latestAction(id: UUID): AuditedAction {
-    val audited = getLastTwoAuditRecords(id)
+  fun currentAction(id: UUID, readVersion: Int): AuditedAction {
+    val audited = getAuditRecords(id).dropWhile { readVersion > (it.state.version ?: 0) }.take(2)
     check(audited.isNotEmpty()) { "History not found" }
-    val domainEvents = getDomainEvents(setOf(audited.mapNotNull { it.revision.id }.last()))
-    val user = managerUsers.getUserDetails(audited.mapNotNull { it.revision.username }.last())
+    val domainEvents = getDomainEvents(setOf(audited.last().revision.id!!))
+    val user = managerUsers.getUserDetails(audited.last().revision.username!!)
     return audited.actions({ domainEvents[it] ?: emptyList() }, { user }).last()
   }
 
@@ -51,26 +52,6 @@ abstract class HistoryService<T>(
         .createQuery()
         .forRevisionsOfEntity(entityClass, false, false)
         .add(AuditEntity.id().eq(id))
-        .resultList.filterIsInstance<Array<*>>()
-
-    return entityRevisions.map { it.asAuditedEntity() }.sortedBy { it.revision.timestamp }
-  }
-
-  private fun getLastTwoAuditRecords(id: UUID): List<AuditedEntity<T>> {
-    val auditReader = AuditReaderFactory.get(entityManager)
-    val revisionNumbers =
-      auditReader
-        .getRevisions(entityClass, id)
-        .filterIsInstance<Long>()
-        .sortedDescending()
-        .take(2)
-        .reversed()
-
-    val entityRevisions: List<Array<*>> =
-      auditReader
-        .createQuery()
-        .forRevisionsOfEntity(entityClass, false, true)
-        .add(revisionNumber().`in`(revisionNumbers))
         .resultList.filterIsInstance<Array<*>>()
 
     return entityRevisions.map { it.asAuditedEntity() }.sortedBy { it.revision.timestamp }
