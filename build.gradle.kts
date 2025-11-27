@@ -13,7 +13,7 @@ configurations {
 
 val hmppsKotlinVersion = "1.8.2"
 val sentryVersion = "8.27.1"
-val springDocVersion = "2.8.14"
+val springDocVersion = "3.0.0"
 val sqsStarterVersion = "5.6.3"
 val testContainersVersion = "1.21.3"
 val uuidGeneratorVersion = "5.1.1"
