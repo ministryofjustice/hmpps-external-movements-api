@@ -217,12 +217,12 @@ class TemporaryAbsenceOccurrence(
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
     if (action.changes(this)) {
-      absenceType = action.absenceTypeCode?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType }
+      absenceType = action.absenceTypeCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_TYPE, it) as AbsenceType }
     }
     absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
     absenceReasonCategory =
       action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
-    absenceReason = action.absenceReasonCode?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason }
+    absenceReason = action.absenceReasonCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_REASON, it) as AbsenceReason }
     reasonPath = action.reasonPath
     appliedActions += action
   }
@@ -247,7 +247,7 @@ class TemporaryAbsenceOccurrence(
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
     if (accompaniedBy.code != action.accompaniedByCode) {
-      accompaniedBy = rdSupplier(ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
+      accompaniedBy = rdSupplier(ReferenceDataDomain.Code.ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
       appliedActions += action
     }
   }
@@ -257,7 +257,7 @@ class TemporaryAbsenceOccurrence(
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
     if (transport.code != action.transportCode) {
-      transport = rdSupplier(TRANSPORT, action.transportCode) as Transport
+      transport = rdSupplier(ReferenceDataDomain.Code.TRANSPORT, action.transportCode) as Transport
       appliedActions += action
     }
   }
@@ -329,6 +329,10 @@ class TemporaryAbsenceOccurrence(
     val RELEASE_AT = TemporaryAbsenceOccurrence::releaseAt.name
     val RETURN_BY = TemporaryAbsenceOccurrence::returnBy.name
     val STATUS = TemporaryAbsenceOccurrence::status.name
+    val ABSENCE_TYPE = TemporaryAbsenceOccurrence::absenceType.name
+    val ABSENCE_REASON = TemporaryAbsenceOccurrence::absenceReason.name
+    val ACCOMPANIED_BY = TemporaryAbsenceOccurrence::accompaniedBy.name
+    val TRANSPORT = TemporaryAbsenceOccurrence::transport.name
 
     fun changeableProperties(): Set<KProperty1<TemporaryAbsenceOccurrence, Any?>> = setOf(
       TemporaryAbsenceOccurrence::releaseAt,

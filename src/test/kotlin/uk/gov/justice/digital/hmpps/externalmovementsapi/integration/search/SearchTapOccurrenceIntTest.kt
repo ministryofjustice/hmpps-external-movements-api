@@ -334,6 +334,121 @@ class SearchTapOccurrenceIntTest(
     )
   }
 
+  @Test
+  fun `can sort by name`() {
+    val prisonCode = prisonCode()
+
+    val p1 = givenPersonSummary(personSummary(lastName = "Smith", firstName = "Jane"))
+    val p2 = givenPersonSummary(personSummary(lastName = "Doe", firstName = "John"))
+    val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, p1.identifier))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1))
+    val auth2 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, p2.identifier))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2))
+
+    val res1 = searchTapOccurrences(prisonCode, sort = "firstName,asc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+
+    assertThat(res1.content.map { it.authorisation.person.personIdentifier }).containsExactly(p1.identifier, p2.identifier)
+
+    val res2 = searchTapOccurrences(prisonCode, sort = "lastName,asc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+
+    assertThat(res2.content.map { it.authorisation.person.personIdentifier }).containsExactly(p2.identifier, p1.identifier)
+
+    val res3 = searchTapOccurrences(prisonCode, sort = "firstName,desc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(2)
+    assertThat(res3.metadata.totalElements).isEqualTo(2)
+
+    assertThat(res3.content.map { it.authorisation.person.personIdentifier }).containsExactly(p2.identifier, p1.identifier)
+
+    val res4 = searchTapOccurrences(prisonCode, sort = "lastName,desc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res4.content.size).isEqualTo(2)
+    assertThat(res4.metadata.totalElements).isEqualTo(2)
+
+    assertThat(res4.content.map { it.authorisation.person.personIdentifier }).containsExactly(p1.identifier, p2.identifier)
+  }
+
+  @Test
+  fun `can sort type or reason`() {
+    val prisonCode = prisonCode()
+
+    val sr = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(sr))
+    val pp = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        absenceType = "PP",
+        absenceSubType = "PP",
+        absenceReason = "PC",
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(pp))
+
+    val res1 = searchTapOccurrences(prisonCode, sort = "absenceType,asc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(pp.absenceType?.description, sr.absenceType?.description)
+
+    val res2 = searchTapOccurrences(prisonCode, sort = "absenceType,desc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(sr.absenceType?.description, pp.absenceType?.description)
+
+    val res3 = searchTapOccurrences(prisonCode, sort = "absenceReason,asc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(2)
+    assertThat(res3.metadata.totalElements).isEqualTo(2)
+    assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(sr.absenceReason?.description, pp.absenceReason?.description)
+
+    val res4 = searchTapOccurrences(prisonCode, sort = "absenceReason,desc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res4.content.size).isEqualTo(2)
+    assertThat(res4.metadata.totalElements).isEqualTo(2)
+    assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(pp.absenceReason?.description, sr.absenceReason?.description)
+  }
+
+  @Test
+  fun `can sort accompanied by or transport`() {
+    val prisonCode = prisonCode()
+
+    val one = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(one))
+    val two = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, accompaniedByCode = "GROUP4", transportCode = "CAV"))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(two))
+
+    val res1 = searchTapOccurrences(prisonCode, sort = "accompaniedBy,asc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(two.absenceType?.description, one.absenceType?.description)
+
+    val res2 = searchTapOccurrences(prisonCode, sort = "accompaniedBy,desc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(one.absenceType?.description, two.absenceType?.description)
+
+    val res3 = searchTapOccurrences(prisonCode, sort = "transport,asc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(2)
+    assertThat(res3.metadata.totalElements).isEqualTo(2)
+    assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(one.absenceReason?.description, two.absenceReason?.description)
+
+    val res4 = searchTapOccurrences(prisonCode, sort = "transport,desc")
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res4.content.size).isEqualTo(2)
+    assertThat(res4.metadata.totalElements).isEqualTo(2)
+    assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(two.absenceReason?.description, one.absenceReason?.description)
+  }
+
   private fun searchTapOccurrences(
     prisonCode: String,
     fromDate: LocalDate? = null,
