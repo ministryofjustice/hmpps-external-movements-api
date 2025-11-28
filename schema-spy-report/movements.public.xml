@@ -144,6 +144,7 @@
          <index name="person_summary_pkey" unique="true">
             <column ascending="true" name="person_identifier"/>
          </index>
+         <index name="idx_person_summary_name" unique="false"/>
       </table>
       <table catalog="movements" name="reference_data" remarks="" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('reference_data_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
