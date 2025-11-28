@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesPersonIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesPersonName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceResult
@@ -36,7 +38,13 @@ class SearchTapOccurrence(
     occurrenceMatchesPrisonCode(prisonCode),
     occurrenceMatchesDateRange(fromDate, toDate),
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
-    queryString?.let { occurrenceMatchesPersonIdentifier(it) },
+    queryString?.let {
+      if (it.matches(Prisoner.PATTERN.toRegex())) {
+        occurrenceMatchesPersonIdentifier(it)
+      } else {
+        occurrenceMatchesPersonName(it)
+      }
+    },
   ).reduce { spec, current -> spec.and(current) }
 
   private fun TemporaryAbsenceOccurrence.toModel() = TapOccurrenceResult(

@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationMatchesDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationMatchesPersonIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationMatchesPersonName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationResult
@@ -41,7 +43,13 @@ class SearchTapAuthorisation(
     authorisationMatchesPrisonCode(prisonCode),
     authorisationMatchesDateRange(fromDate, toDate),
     status.takeIf { it.isNotEmpty() }?.let { authorisationStatusCodeIn(it) },
-    queryString?.let { authorisationMatchesPersonIdentifier(it) },
+    queryString?.let {
+      if (it.matches(Prisoner.PATTERN.toRegex())) {
+        authorisationMatchesPersonIdentifier(it)
+      } else {
+        authorisationMatchesPersonName(it)
+      }
+    },
   ).reduce { spec, current -> spec.and(current) }
 
   private fun TemporaryAbsenceAuthorisation.with(
