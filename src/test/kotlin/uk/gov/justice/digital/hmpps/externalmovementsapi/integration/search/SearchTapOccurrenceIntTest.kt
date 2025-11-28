@@ -118,11 +118,57 @@ class SearchTapOccurrenceIntTest(
       ),
     )
 
-    val res = searchTapOccurrences(prisonCode, personIdentifier = toFind.person.identifier)
+    val res = searchTapOccurrences(prisonCode, query = toFind.person.identifier)
       .successResponse<TapOccurrenceSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(1)
     assertThat(res.metadata.totalElements).isEqualTo(1)
+  }
+
+  @Test
+  fun `can find by person name`() {
+    val prisonCode = prisonCode()
+    val fromDate = LocalDate.now().plusDays(1)
+    val toDate = LocalDate.now().plusDays(3)
+
+    val toFind = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.PENDING,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        toFind,
+        releaseAt = LocalDateTime.of(fromDate, now()),
+        returnBy = LocalDateTime.of(toDate, now()),
+      ),
+    )
+    val doNotFind = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.PENDING,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        doNotFind,
+        releaseAt = LocalDateTime.of(fromDate, now()),
+        returnBy = LocalDateTime.of(toDate, now()),
+      ),
+    )
+
+    toFind.person.nameFormats().forEach {
+      val res = searchTapOccurrences(prisonCode, query = it)
+        .successResponse<TapOccurrenceSearchResponse>()
+
+      assertThat(res.content.size).isEqualTo(1)
+      assertThat(res.metadata.totalElements).isEqualTo(1)
+    }
   }
 
   @Test
@@ -292,7 +338,7 @@ class SearchTapOccurrenceIntTest(
     prisonCode: String,
     fromDate: LocalDate? = null,
     toDate: LocalDate? = null,
-    personIdentifier: String? = null,
+    query: String? = null,
     statuses: List<TapOccurrenceStatus.Code>? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
@@ -305,7 +351,7 @@ class SearchTapOccurrenceIntTest(
       toDate?.also { uri.queryParam("toDate", it) }
       statuses?.also { uri.queryParam("status", *it.toTypedArray()) }
       sort?.also { uri.queryParam("sort", it) }
-      personIdentifier?.let { uri.queryParam("query", it) }
+      query?.let { uri.queryParam("query", it) }
       uri.build()
     }
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))

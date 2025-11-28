@@ -31,9 +31,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.TO_DATE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.matchesIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.matchesName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
@@ -306,8 +307,11 @@ fun authorisationMatchesPrisonCode(prisonCode: String) = Specification<Temporary
 }
 
 fun authorisationMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
-  val person = taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
-  cb.equal(person.get<String>(IDENTIFIER), personIdentifier.uppercase())
+  taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesIdentifier(cb, personIdentifier)
+}
+
+fun authorisationMatchesPersonName(name: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
 fun authorisationMatchesDateRange(fromDate: LocalDate?, toDate: LocalDate?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->

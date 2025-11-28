@@ -144,11 +144,43 @@ class SearchTapAuthorisationIntTest(
       ),
     )
 
-    val res = searchTapAuthorisations(prisonCode, personIdentifier = toFind.person.identifier)
+    val res = searchTapAuthorisations(prisonCode, query = toFind.person.identifier)
       .successResponse<TapAuthorisationSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(1)
     assertThat(res.metadata.totalElements).isEqualTo(1)
+  }
+
+  @Test
+  fun `can find by person name`() {
+    val prisonCode = prisonCode()
+    val fromDate = LocalDate.now().plusDays(1)
+    val toDate = LocalDate.now().plusDays(3)
+
+    val toFind = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.PENDING,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = TapAuthorisationStatus.Code.PENDING,
+        fromDate = fromDate,
+        toDate = toDate,
+      ),
+    )
+
+    toFind.person.nameFormats().forEach {
+      val res = searchTapAuthorisations(prisonCode, query = it)
+        .successResponse<TapAuthorisationSearchResponse>()
+
+      assertThat(res.content.size).isEqualTo(1)
+      assertThat(res.metadata.totalElements).isEqualTo(1)
+    }
   }
 
   @Test
@@ -323,7 +355,7 @@ class SearchTapAuthorisationIntTest(
     fromDate: LocalDate? = null,
     toDate: LocalDate? = null,
     status: TapAuthorisationStatus.Code? = null,
-    personIdentifier: String? = null,
+    query: String? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
@@ -334,7 +366,7 @@ class SearchTapAuthorisationIntTest(
       fromDate?.also { uri.queryParam("fromDate", ISO_DATE.format(it)) }
       toDate?.also { uri.queryParam("toDate", ISO_DATE.format(it)) }
       status?.also { uri.queryParam("status", it.name) }
-      personIdentifier?.also { uri.queryParam("query", it) }
+      query?.also { uri.queryParam("query", it) }
       sort?.also { uri.queryParam("sort", it) }
       uri.build()
     }

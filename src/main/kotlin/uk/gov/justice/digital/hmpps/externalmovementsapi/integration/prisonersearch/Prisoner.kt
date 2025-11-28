@@ -25,5 +25,7 @@ data class Prisoner(
       Prisoner::lastPrisonId.name,
       Prisoner::cellLocation.name,
     )
+
+    const val PATTERN: String = "\\w\\d{4}\\w{2}"
   }
 }
