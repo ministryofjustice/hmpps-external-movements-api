@@ -36,10 +36,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersea
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AmendAuthorisationNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RescheduleAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
@@ -153,8 +153,6 @@ class SyncTapAuthorisation(
   }
 
   private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation) {
-    if (repeat != request.repeat || !fromDate.isEqual(request.fromDate) || !toDate.isEqual(request.toDate)) {
-      reschedule(RescheduleAuthorisation(request.fromDate, request.toDate, request.repeat))
-    }
+    amendDateRange(ChangeAuthorisationDateRange(request.fromDate, request.toDate))
   }
 }

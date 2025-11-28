@@ -56,10 +56,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RescheduleAuthorisation
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.reflect.KProperty1
@@ -219,10 +219,12 @@ class TemporaryAbsenceAuthorisation(
     }
   }
 
-  fun reschedule(action: RescheduleAuthorisation) {
-    repeat = action.repeat
-    fromDate = action.from
-    toDate = action.to
+  fun amendDateRange(action: ChangeAuthorisationDateRange) {
+    if (!fromDate.isEqual(action.from) || !toDate.isEqual(action.to)) {
+      fromDate = action.from
+      toDate = action.to
+      appliedActions += action
+    }
   }
 
   fun amendNotes(action: AmendAuthorisationNotes) {

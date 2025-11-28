@@ -176,6 +176,15 @@ class SearchTapOccurrenceIntTest(
       TapOccurrenceStatus.Code.SCHEDULED.name,
       TapOccurrenceStatus.Code.EXPIRED.name,
     )
+
+    val single = searchTapOccurrences(
+      prisonCode,
+      statuses = listOf(TapOccurrenceStatus.Code.DENIED),
+    ).successResponse<TapOccurrenceSearchResponse>()
+
+    assertThat(single.content.size).isEqualTo(1)
+    assertThat(single.metadata.totalElements).isEqualTo(1)
+    assertThat(single.content.map { it.status.code }).containsExactlyInAnyOrder(TapOccurrenceStatus.Code.DENIED.name)
   }
 
   @Test

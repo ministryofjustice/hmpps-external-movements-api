@@ -3,32 +3,26 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.EnumSource
-import org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.DENIED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDenied
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter.ISO_DATE
 import java.util.UUID
 
-class DenyTapAuthorisationIntTest(
+class ChangeTapAuthorisationDateRangeIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -47,50 +41,38 @@ class DenyTapAuthorisationIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    denyAuthorisation(
+    changeDateRange(
       newUuid(),
-      denyAuthorisationRequest(),
+      changeDateRange(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    denyAuthorisation(newUuid(), denyAuthorisationRequest()).expectStatus().isNotFound
-  }
-
-  @ParameterizedTest
-  @EnumSource(TapAuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "DENIED"])
-  fun `409 - authorisation not awaiting approval cannot be denied`(status: TapAuthorisationStatus.Code) {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = denyAuthorisation(auth.id, denyAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
-    assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo("Temporary absence authorisation not awaiting approval")
+    changeDateRange(newUuid(), changeDateRange()).expectStatus().isNotFound
   }
 
   @Test
-  fun `200 ok - authorisation denied`() {
+  fun `200 ok - authorisation date range updated`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = denyAuthorisationRequest()
-    val res = denyAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDenied.EVENT_TYPE)
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val request = changeDateRange()
+    val res = changeDateRange(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("status", "To be reviewed", "Denied"),
+      AuditedAction.Change("fromDate", ISO_DATE.format(auth.fromDate), ISO_DATE.format(request.from)),
+      AuditedAction.Change("toDate", ISO_DATE.format(auth.toDate), ISO_DATE.format(request.to)),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    assertThat(saved.status.code).isEqualTo(DENIED.name)
-    val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(absence.status.code).isEqualTo(TapOccurrenceStatus.Code.DENIED.name)
 
     verifyAudit(
       saved,
       RevisionType.MOD,
       setOf(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
-        TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
@@ -98,17 +80,38 @@ class DenyTapAuthorisationIntTest(
 
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceAuthorisationDenied(auth.person.identifier, auth.id)),
+      setOf(TemporaryAbsenceAuthorisationDateRangeChanged(auth.person.identifier, auth.id)),
     )
   }
 
-  private fun denyAuthorisationRequest(
-    reason: String? = "Evidence justifying the denial",
-  ) = DenyAuthorisation(reason)
+  @Test
+  fun `200 ok - no-op date range change request`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
+    val request = changeDateRange(auth.fromDate, auth.toDate)
+    val res = changeDateRange(auth.id, request).successResponse<AuditHistory>()
+    assertThat(res.content).isEmpty()
 
-  private fun denyAuthorisation(
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get(),
+    )
+  }
+
+  private fun changeDateRange(
+    from: LocalDate = LocalDate.now().plusDays(1),
+    to: LocalDate = LocalDate.now().plusDays(2),
+    reason: String? = "Reason for changing the date range",
+  ) = ChangeAuthorisationDateRange(from, to, reason)
+
+  private fun changeDateRange(
     id: UUID,
-    request: DenyAuthorisation,
+    request: ChangeAuthorisationDateRange,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

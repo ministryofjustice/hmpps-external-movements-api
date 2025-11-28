@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getByKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
@@ -26,9 +26,9 @@ class TapOccurrenceModifications(
   private val referenceDataRepository: ReferenceDataRepository,
   private val occurrenceHistory: OccurrenceHistory,
 ) {
-  fun apply(id: UUID, action: OccurrenceAction): AuditedAction {
+  fun apply(id: UUID, action: OccurrenceAction): AuditHistory {
     ExternalMovementContext.get().copy(reason = action.reason).set()
-    val readVersion = transactionTemplate.execute {
+    val (readVersion, writeVersion) = transactionTemplate.execute {
       val occurrence = taoRepository.getOccurrence(id)
       val readVersion = occurrence.version
       when (action) {
@@ -43,8 +43,9 @@ class TapOccurrenceModifications(
 
         else -> throw IllegalArgumentException("Action not supported")
       }
-      readVersion
+      taoRepository.flush()
+      readVersion!! to occurrence.version!!
     }!!
-    return occurrenceHistory.currentAction(id, readVersion)
+    return AuditHistory(listOfNotNull(occurrenceHistory.currentAction(id, readVersion, writeVersion)))
   }
 }
