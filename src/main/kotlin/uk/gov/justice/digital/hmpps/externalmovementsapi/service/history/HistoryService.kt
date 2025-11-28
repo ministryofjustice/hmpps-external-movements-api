@@ -37,12 +37,17 @@ abstract class HistoryService<T : Identifiable>(
     )
   }
 
-  fun currentAction(id: UUID, readVersion: Int): AuditedAction {
-    val audited = getAuditRecords(id).dropWhile { readVersion > (it.state.version ?: 0) }.take(2)
-    check(audited.isNotEmpty()) { "History not found" }
-    val domainEvents = getDomainEvents(setOf(audited.last().revision.id!!))
-    val user = managerUsers.getUserDetails(audited.last().revision.username!!)
-    return audited.actions({ domainEvents[it] ?: emptyList() }, { user }).last()
+  fun currentAction(id: UUID, readVersion: Int, writeVersion: Int): AuditedAction? {
+    val audited = getAuditRecords(id).filter { it.state.version == readVersion || it.state.version == writeVersion }
+    return when (audited.size) {
+      0 -> throw IllegalStateException("History not found")
+      1 -> null
+      else -> {
+        val domainEvents = getDomainEvents(setOf(audited.last().revision.id!!))
+        val user = managerUsers.getUserDetails(audited.last().revision.username!!)
+        return audited.actions({ domainEvents[it] ?: emptyList() }, { user }).lastOrNull()
+      }
+    }
   }
 
   private fun getAuditRecords(id: UUID): List<AuditedEntity<T>> {

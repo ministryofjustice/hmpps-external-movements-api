@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -68,7 +68,7 @@ class RescheduleTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = rescheduleOccurrenceRequest(LocalDateTime.now().plusDays(7), LocalDateTime.now().plusDays(8))
-    val res = rescheduleOccurrence(occurrence.id, request).successResponse<AuditedAction>()
+    val res = rescheduleOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRescheduled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes.map { it.propertyName }).containsExactly("releaseAt", "returnBy")

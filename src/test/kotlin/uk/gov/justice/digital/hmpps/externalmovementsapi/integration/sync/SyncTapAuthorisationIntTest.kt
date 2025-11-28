@@ -14,6 +14,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged.Companion.invoke
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -240,11 +242,11 @@ class SyncTapAuthorisationIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationDateRangeChanged(saved.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test

@@ -19,10 +19,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getByKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationHistory
 import java.util.UUID
@@ -35,9 +36,9 @@ class TapAuthorisationModifications(
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationHistory: AuthorisationHistory,
 ) {
-  fun apply(id: UUID, action: AuthorisationAction): AuditedAction {
+  fun apply(id: UUID, action: AuthorisationAction): AuditHistory? {
     ExternalMovementContext.get().copy(reason = action.reason).set()
-    val readVersion = transactionTemplate.execute {
+    val (readVersion, writeVersion) = transactionTemplate.execute {
       val authorisation = taaRepository.getAuthorisation(id)
       val readVersion = authorisation.version
       val rdSupplier =
@@ -64,11 +65,14 @@ class TapAuthorisationModifications(
           authorisation.updateOccurrences()
         }
 
+        is ChangeAuthorisationDateRange -> authorisation.amendDateRange(action)
+
         else -> throw IllegalArgumentException("Action not supported")
       }
-      readVersion
+      taaRepository.flush()
+      readVersion!! to authorisation.version!!
     }!!
-    return authorisationHistory.currentAction(id, readVersion)
+    return AuditHistory(listOfNotNull(authorisationHistory.currentAction(id, readVersion, writeVersion)))
   }
 
   private fun TemporaryAbsenceAuthorisation.updateOccurrences() {
