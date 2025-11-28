@@ -183,6 +183,52 @@ class CreateTapAuthorisationIntTest(
     )
   }
 
+  @Test
+  fun `200 ok tap authorisation created successfully using category`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request =
+      createTapAuthorisationRequest(
+        absenceTypeCode = "SR",
+        absenceSubTypeCode = "RDR",
+        absenceReasonCategoryCode = "ET",
+        absenceReasonCode = null,
+        statusCode = TapAuthorisationStatus.Code.APPROVED,
+      )
+    val username = name(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request.copy(absenceReasonCode = "ET"))
+
+    val occurrence = findForAuthorisation(saved.id).first()
+    occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.absenceType?.code).isEqualTo("SR")
+    assertThat(occurrence.absenceSubType?.code).isEqualTo("RDR")
+    assertThat(occurrence.absenceReasonCategory?.code).isEqualTo("ET")
+    assertThat(occurrence.absenceReason?.code).isEqualTo("ET")
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username),
+    )
+
+    verifyEvents(
+      saved,
+      listOf(TemporaryAbsenceScheduled(pi, occurrence.id), TemporaryAbsenceAuthorisationApproved(pi, saved.id)).toSet(),
+    )
+  }
+
   private fun createTapOccurrenceRequest(
     releaseAt: LocalDateTime = LocalDateTime.now().minusHours(3),
     returnBy: LocalDateTime = LocalDateTime.now().plusHours(3),
