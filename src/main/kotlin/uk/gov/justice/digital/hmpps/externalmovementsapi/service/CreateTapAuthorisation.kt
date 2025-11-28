@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
@@ -46,7 +47,14 @@ class CreateTapAuthorisation(
   fun tapAuthorisation(personIdentifier: String, request: CreateTapAuthorisationRequest): ReferenceId {
     val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
     val rdProvider = referenceDataRepository.rdProvider(request)
-    val linkProvider = { id: Long -> referenceDataRepository.findLinkedItems(id).single() }
+    val linkProvider = { previous: ReferenceData ->
+      referenceDataRepository.findLinkedItems(previous.id).let {
+        when (it.size) {
+          1 -> it.single()
+          else -> throw AbsenceCategorisationException(previous, it.size)
+        }
+      }
+    }
     request.occurrences.mapNotNull {
       tapOccurrenceRepository.findByAuthorisationPersonIdentifierAndReleaseAtAndReturnBy(
         personIdentifier,
@@ -71,19 +79,19 @@ class CreateTapAuthorisation(
     person: PersonSummary,
     prisonCode: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
-    linkProvider: (Long) -> ReferenceData,
+    linkProvider: (ReferenceData) -> ReferenceData,
   ): TemporaryAbsenceAuthorisation {
     val type = rdProvider(ABSENCE_TYPE, absenceTypeCode) as AbsenceType
     val subType = (
       absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) }
-        ?: linkProvider(type.id)
+        ?: linkProvider(type)
       ) as AbsenceSubType
     val reasonCategory = (
       absenceReasonCategoryCode?.let { rdProvider(ABSENCE_REASON_CATEGORY, it) }
       ) as AbsenceReasonCategory?
     val reason = (
       absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) }
-        ?: linkProvider(subType.id)
+        ?: linkProvider(subType)
       ) as AbsenceReason
     return TemporaryAbsenceAuthorisation(
       person = person,

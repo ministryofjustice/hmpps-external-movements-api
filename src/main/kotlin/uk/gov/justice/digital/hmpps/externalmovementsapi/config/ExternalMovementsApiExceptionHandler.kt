@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.HandlerMethodValidationException
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -22,6 +23,25 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 @RestControllerAdvice
 class ExternalMovementsApiExceptionHandler {
   private fun RuntimeException.devMessage(): String = message ?: "${this::class.simpleName}: ${cause?.message ?: ""}"
+
+  @ExceptionHandler(AbsenceCategorisationException::class)
+  fun handleAbsenceCategorisationException(e: AbsenceCategorisationException): ResponseEntity<ErrorResponse> {
+    val devMessage = if (e.optionCount > 0) {
+      "Found ${e.optionCount} options for ${e.previous::class} of ${e.previous.code}"
+    } else {
+      "No option found for ${e.previous::class} of ${e.previous.code}"
+    }
+    log.error(devMessage, e)
+    return ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = e.message,
+          developerMessage = devMessage,
+        ),
+      )
+  }
 
   @ExceptionHandler(ConflictException::class)
   fun handleConflictException(e: ConflictException): ResponseEntity<ErrorResponse> = ResponseEntity
