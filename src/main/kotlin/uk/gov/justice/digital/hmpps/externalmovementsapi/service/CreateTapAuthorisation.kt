@@ -91,7 +91,7 @@ class CreateTapAuthorisation(
       ) as AbsenceReasonCategory?
     val reason = (
       absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) }
-        ?: linkProvider(subType)
+        ?: linkProvider(reasonCategory ?: subType)
       ) as AbsenceReason
     return TemporaryAbsenceAuthorisation(
       person = person,

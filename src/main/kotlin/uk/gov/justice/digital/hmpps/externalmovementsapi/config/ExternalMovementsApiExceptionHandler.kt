@@ -27,9 +27,9 @@ class ExternalMovementsApiExceptionHandler {
   @ExceptionHandler(AbsenceCategorisationException::class)
   fun handleAbsenceCategorisationException(e: AbsenceCategorisationException): ResponseEntity<ErrorResponse> {
     val devMessage = if (e.optionCount > 0) {
-      "Found ${e.optionCount} options for ${e.previous::class} of ${e.previous.code}"
+      "Found ${e.optionCount} options for ${e.previous::class.simpleName} of ${e.previous.code}"
     } else {
-      "No option found for ${e.previous::class} of ${e.previous.code}"
+      "No option found for ${e.previous::class.simpleName} of ${e.previous.code}"
     }
     log.error(devMessage, e)
     return ResponseEntity
