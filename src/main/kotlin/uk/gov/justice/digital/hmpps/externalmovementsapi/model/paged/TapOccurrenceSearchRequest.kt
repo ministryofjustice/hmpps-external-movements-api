@@ -54,10 +54,10 @@ data class TapOccurrenceSearchRequest(
 
   override fun buildSort(field: String, direction: Direction): Sort = when (field) {
     LAST_NAME -> sortByPersonName(direction)
-    FIRST_NAME -> sortByDate(direction, PERSON_FIRST_NAME, PERSON_LAST_NAME)
+    FIRST_NAME -> sortByPersonName(direction, PERSON_FIRST_NAME, PERSON_LAST_NAME)
     RELEASE_AT -> sortByDate(direction, RELEASE_AT, RETURN_BY)
     RETURN_BY -> sortByDate(direction, RETURN_BY, RELEASE_AT)
-    STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}")
+    STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}").and(sortByPersonName())
     ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT -> by(direction, "${field}_description").and(sortByPersonName())
     LOCATION -> by(direction, "locationDescription").and(sortByPersonName())
     else -> throw IllegalArgumentException("Unrecognised sort field")
