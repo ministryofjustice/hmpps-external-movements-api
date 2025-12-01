@@ -50,7 +50,7 @@ interface TempAbsenceOccurrenceOperations {
 
     fun location(
       description: String? = name(10),
-      address: String? = null,
+      address: String? = name(16),
       postcode: String? = postcode(),
       uprn: String? = "${newUuid()}",
     ) = Location(description, address, postcode, uprn)

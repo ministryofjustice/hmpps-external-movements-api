@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.LOCATION
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RETURN_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
@@ -33,7 +34,7 @@ data class TapOccurrenceSearchRequest(
   override val size: Int = 10,
   override val sort: String = RELEASE_AT,
 ) : PagedRequest {
-  override fun validSortFields(): Set<String> = setOf(RELEASE_AT, RETURN_BY, STATUS, FIRST_NAME, LAST_NAME, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT)
+  override fun validSortFields(): Set<String> = setOf(RELEASE_AT, RETURN_BY, STATUS, FIRST_NAME, LAST_NAME, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT, LOCATION)
 
   private fun sortByDate(direction: Direction, first: String, second: String) = by(direction, first, second).and(sortByPersonName())
 
@@ -58,6 +59,7 @@ data class TapOccurrenceSearchRequest(
     RETURN_BY -> sortByDate(direction, RETURN_BY, RELEASE_AT)
     STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}")
     ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT -> by(direction, "${field}_description").and(sortByPersonName())
+    LOCATION -> by(direction, "locationDescription").and(sortByPersonName())
     else -> throw IllegalArgumentException("Unrecognised sort field")
   }
 

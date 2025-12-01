@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -15,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchResponse
 import java.time.LocalDate
@@ -447,6 +449,48 @@ class SearchTapOccurrenceIntTest(
     assertThat(res4.content.size).isEqualTo(2)
     assertThat(res4.metadata.totalElements).isEqualTo(2)
     assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(two.absenceReason?.description, one.absenceReason?.description)
+  }
+
+  @Test
+  fun `can sort by location`() {
+    val prisonCode = prisonCode()
+
+    val authOne = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    val one = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authOne,
+        location = location(
+          description = "A description of the location",
+          address = null,
+          postcode = null,
+          uprn = null,
+        ),
+      ),
+    )
+    val authTwo = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    val two = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authTwo,
+        location = location(description = null, address = "An address", postcode = "H3 4TH"),
+      ),
+    )
+    val authThree = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    val three = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authThree,
+        location = location(description = "Special Description", address = "Address Line", postcode = postcode()),
+      ),
+    )
+
+    val res1 = searchTapOccurrences(prisonCode, sort = "location,asc").successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(3)
+    assertThat(res1.metadata.totalElements).isEqualTo(3)
+    assertThat(res1.content.map { it.location }).containsExactly(one.location, two.location, three.location)
+
+    val res2 = searchTapOccurrences(prisonCode, sort = "location,desc").successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(3)
+    assertThat(res2.metadata.totalElements).isEqualTo(3)
+    assertThat(res2.content.map { it.location }).containsExactly(three.location, two.location, one.location)
   }
 
   private fun searchTapOccurrences(
