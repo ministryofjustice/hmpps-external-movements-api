@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.search
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import software.amazon.eventstream.HeaderValue.fromDate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
@@ -348,6 +349,26 @@ class SearchTapAuthorisationIntTest(
     assertThat(res4.content.size).isEqualTo(2)
     assertThat(res4.metadata.totalElements).isEqualTo(2)
     assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(pp.absenceReason?.description, sr.absenceReason?.description)
+  }
+
+  @Test
+  fun `can sort by repeat or single`() {
+    val prisonCode = prisonCode()
+
+    val repeat = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, repeat = true))
+    val single = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+
+    val res1 = searchTapAuthorisations(prisonCode, sort = "repeat,asc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(repeat.absenceType?.description, single.absenceType?.description)
+
+    val res2 = searchTapAuthorisations(prisonCode, sort = "repeat,desc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(single.absenceType?.description, repeat.absenceType?.description)
   }
 
   private fun searchTapAuthorisations(

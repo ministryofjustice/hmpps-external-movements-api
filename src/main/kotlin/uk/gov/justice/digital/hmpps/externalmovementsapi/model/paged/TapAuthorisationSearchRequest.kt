@@ -49,10 +49,9 @@ data class TapAuthorisationSearchRequest(
     FIRST_NAME -> sortByPersonName(direction, PERSON_FIRST_NAME, PERSON_LAST_NAME)
     FROM_DATE -> sortByDate(direction, FROM_DATE, TO_DATE)
     TO_DATE -> sortByDate(direction, TO_DATE, FROM_DATE)
-    STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}")
+    STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}").and(sortByPersonName())
     ABSENCE_TYPE, ABSENCE_REASON -> by(direction, "${field}_description").and(sortByPersonName())
-
-    else -> throw IllegalArgumentException("Unrecognised sort field")
+    else -> by(direction, field).and(sortByPersonName())
   }
 
   companion object {
