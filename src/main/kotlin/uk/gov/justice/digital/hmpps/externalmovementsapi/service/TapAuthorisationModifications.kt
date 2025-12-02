@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.DENIED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.SCHEDULED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getByKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
@@ -58,8 +57,8 @@ class TapAuthorisationModifications(
           authorisation.updateOccurrences()
         }
 
-        is CancelAuthorisation -> if (authorisation.status.code !in listOf(SCHEDULED.name, CANCELLED.name)) {
-          throw ConflictException("Temporary absence authorisation not currently scheduled")
+        is CancelAuthorisation -> if (authorisation.status.code !in listOf(APPROVED.name, CANCELLED.name)) {
+          throw ConflictException("Temporary absence authorisation not approved")
         } else {
           authorisation.cancel(action, rdSupplier)
           authorisation.updateOccurrences()
