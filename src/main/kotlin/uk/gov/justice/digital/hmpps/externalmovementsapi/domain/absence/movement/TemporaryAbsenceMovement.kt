@@ -17,6 +17,7 @@ import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Modifying
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.valueOf
@@ -144,4 +145,7 @@ interface TemporaryAbsenceMovementRepository :
 
   fun findByOccurrenceId(occurrenceId: UUID): List<TemporaryAbsenceMovement>
   fun findByOccurrenceIdIn(ids: Set<UUID>): List<TemporaryAbsenceMovement>
+
+  @Modifying
+  fun deleteByPersonIdentifier(personIdentifier: String)
 }

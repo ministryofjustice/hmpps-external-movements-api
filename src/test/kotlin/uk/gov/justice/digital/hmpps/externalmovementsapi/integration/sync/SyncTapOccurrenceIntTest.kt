@@ -95,7 +95,7 @@ class SyncTapOccurrenceIntTest(
       id = existing.id,
       isCancelled = true,
       legacyId = existing.legacyId!!,
-      cancelled = AtAndBy(LocalDateTime.now().minusMinutes(20), SYSTEM_USERNAME),
+      updated = AtAndBy(LocalDateTime.now().minusMinutes(20), SYSTEM_USERNAME),
     )
 
     val res = syncTapOccurrence(authorisation.id, request)
@@ -238,8 +238,8 @@ class SyncTapOccurrenceIntTest(
     location: Location = location(),
     contactInformation: String? = "Contact ${name(8)}",
     notes: String? = "Some notes about the absence",
-    added: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), DEFAULT_USERNAME),
-    cancelled: AtAndBy? = null,
+    created: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), DEFAULT_USERNAME),
+    updated: AtAndBy? = null,
     legacyId: Long = newId(),
   ) = TapOccurrence(
     id,
@@ -254,8 +254,8 @@ class SyncTapOccurrenceIntTest(
     transportCode,
     contactInformation,
     notes,
-    added,
-    cancelled,
+    created,
+    updated,
     legacyId,
   )
 
@@ -275,9 +275,7 @@ class SyncTapOccurrenceIntTest(
   }
 }
 
-private fun TemporaryAbsenceOccurrence.verifyAgainst(
-  request: TapOccurrence,
-) {
+private fun TemporaryAbsenceOccurrence.verifyAgainst(request: TapOccurrence) {
   assertThat(releaseAt).isCloseTo(request.releaseAt, within(2, SECONDS))
   assertThat(returnBy).isCloseTo(request.returnBy, within(2, SECONDS))
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)

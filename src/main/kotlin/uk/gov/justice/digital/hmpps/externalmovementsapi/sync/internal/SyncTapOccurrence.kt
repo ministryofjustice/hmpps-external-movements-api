@@ -63,7 +63,7 @@ class SyncTapOccurrence(
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
           occurrenceRepository.save(
-            request.asEntity(authorisation, rdPaths, request.isCancelled).calculateStatus {
+            request.asEntity(authorisation, rdPaths).calculateStatus {
               rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
             },
           )
@@ -81,7 +81,6 @@ class SyncTapOccurrence(
   private fun TapOccurrence.asEntity(
     authorisation: TemporaryAbsenceAuthorisation,
     rdPaths: ReferenceDataPaths,
-    isCancelled: Boolean,
   ): TemporaryAbsenceOccurrence {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {

@@ -9,6 +9,7 @@ data class ExternalMovementContext(
   val requestAt: LocalDateTime = LocalDateTime.now(),
   val reason: String? = null,
   val source: DataSource = DataSource.DPS,
+  val migratingData: Boolean = false,
 ) {
   companion object {
     const val SYSTEM_USERNAME = "SYS"

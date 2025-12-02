@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndByWithPrison
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -28,13 +29,6 @@ data class TapMovement(
   val updated: AtAndBy?,
   val legacyId: String,
 ) : ReferenceDataRequired {
-  @Schema(name = "SyncAtAndByWithPrison")
-  data class AtAndByWithPrison(
-    val at: LocalDateTime,
-    val by: String,
-    val prisonCode: String,
-  )
-
   override fun requiredReferenceData() = setOfNotNull(
     ABSENCE_REASON of absenceReasonCode,
     ACCOMPANIED_BY of accompaniedByCode,
