@@ -1,3 +1,4 @@
+migration_system_audit
 hmpps_domain_event
 temporary_absence_movement
 temporary_absence_movement_audit

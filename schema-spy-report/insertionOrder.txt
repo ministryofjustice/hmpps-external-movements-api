@@ -12,3 +12,4 @@ temporary_absence_authorisation_audit
 temporary_absence_movement_audit
 temporary_absence_movement
 hmpps_domain_event
+migration_system_audit
