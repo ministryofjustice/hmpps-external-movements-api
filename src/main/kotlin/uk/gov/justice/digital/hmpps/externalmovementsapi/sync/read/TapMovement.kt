@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement.AtAndByWithPrison
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndByWithPrison
 import java.time.LocalDateTime
 import java.util.UUID
 

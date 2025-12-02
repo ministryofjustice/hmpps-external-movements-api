@@ -23,6 +23,10 @@ import java.time.ZonedDateTime
     Type(value = TemporaryAbsenceContactInfoChanged::class, name = TemporaryAbsenceContactInfoChanged.EVENT_TYPE),
 
     Type(value = PrisonerUpdated::class, name = PrisonerUpdated.EVENT_TYPE),
+
+    Type(value = TemporaryAbsenceAuthorisationMigrated::class, name = TemporaryAbsenceAuthorisationMigrated.EVENT_TYPE),
+    Type(value = TemporaryAbsenceMigrated::class, name = TemporaryAbsenceMigrated.EVENT_TYPE),
+    Type(value = ExternalMovementMigrated::class, name = ExternalMovementMigrated.EVENT_TYPE),
   ],
 )
 sealed interface DomainEvent<T : AdditionalInformation> {

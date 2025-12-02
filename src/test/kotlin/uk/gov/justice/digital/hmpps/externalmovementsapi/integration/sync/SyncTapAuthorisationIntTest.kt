@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged.Companion.invoke
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -61,7 +60,7 @@ class SyncTapAuthorisationIntTest(
     val request = tapAuthorisation(
       prisonCode = prisonCode,
       statusCode = "PENDING",
-      approved = null,
+      updated = null,
     )
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
@@ -97,7 +96,7 @@ class SyncTapAuthorisationIntTest(
       statusCode = "PENDING",
       subTypeCode = "SPL",
       reasonCode = "LTX",
-      approved = null,
+      updated = null,
     )
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
@@ -132,7 +131,7 @@ class SyncTapAuthorisationIntTest(
       statusCode = "PENDING",
       subTypeCode = "CRL",
       reasonCode = "3",
-      approved = null,
+      updated = null,
     )
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
@@ -288,8 +287,8 @@ class SyncTapAuthorisationIntTest(
     notes: String? = "Some notes about the application",
     fromDate: LocalDate = LocalDate.now().minusDays(7),
     toDate: LocalDate = LocalDate.now().minusDays(1),
-    submitted: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), DEFAULT_USERNAME),
-    approved: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), SYSTEM_USERNAME),
+    created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), DEFAULT_USERNAME),
+    updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), SYSTEM_USERNAME),
     legacyId: Long = newId(),
   ) = TapAuthorisation(
     id,
@@ -304,8 +303,8 @@ class SyncTapAuthorisationIntTest(
     fromDate,
     toDate,
     notes,
-    submitted,
-    approved,
+    created,
+    updated,
     legacyId,
   )
 

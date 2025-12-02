@@ -112,7 +112,7 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
     where rdl.rd2.id = :id
     """,
   )
-  fun findLinkedFrom(id: Long): ReferenceData?
+  fun findLinkedFrom(id: Long): List<ReferenceData>
 }
 
 fun ReferenceDataRepository.getByKey(key: ReferenceDataKey): ReferenceData = findByKey(key) ?: throw NotFoundException("${key.domain} not found")

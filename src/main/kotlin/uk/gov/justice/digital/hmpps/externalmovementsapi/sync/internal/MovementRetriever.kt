@@ -6,8 +6,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.AuditedTapMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.getMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndByWithPrison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement.AtAndByWithPrison
 import java.util.UUID
 
 @Transactional(readOnly = true)

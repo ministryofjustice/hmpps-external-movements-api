@@ -6,6 +6,7 @@ import org.hibernate.type.Type
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 
 @Component
@@ -39,7 +40,7 @@ class EntityInterceptor : Interceptor {
     propertyNames: Array<out String>,
     types: Array<out Type>,
   ): Boolean {
-    if (entity is DomainEventProducer) {
+    if (entity is DomainEventProducer && !ExternalMovementContext.get().migratingData) {
       entity.initialEvent()?.let { em.persist(HmppsDomainEvent(it)) }
     }
     return super.onPersist(entity, id, state, propertyNames, types)

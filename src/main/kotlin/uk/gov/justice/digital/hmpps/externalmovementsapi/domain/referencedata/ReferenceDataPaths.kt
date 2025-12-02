@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 
-class ReferenceDataPaths(data: List<RdWithDomainLink>, private val parentOf: (id: Long) -> ReferenceData?) {
+class ReferenceDataPaths(data: List<RdWithDomainLink>, private val parentOf: (id: Long) -> List<ReferenceData>) {
   private val data = data.associateBy { it.referenceData.key }.toMutableMap()
   fun getReferenceData(domain: ReferenceDataDomain.Code, code: String): ReferenceData = requireNotNull(data[domain of code]).referenceData
 
@@ -16,11 +16,15 @@ class ReferenceDataPaths(data: List<RdWithDomainLink>, private val parentOf: (id
     val category = subType?.takeIf { it.nextDomain == ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY }?.let {
       data.values.singleOrNull { it.domain == ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY }
         ?: reason?.referenceData?.id?.let { reasonId -> parentOf(reasonId) }?.let { category ->
-          object : RdWithDomainLink {
-            override val referenceData: ReferenceData = category
-            override val nextDomain: ReferenceDataDomain.Code = ABSENCE_REASON
-          }.also {
-            data[it.referenceData.key] = it
+          when (category.size) {
+            1 -> object : RdWithDomainLink {
+              override val referenceData: ReferenceData = category.single()
+              override val nextDomain: ReferenceDataDomain.Code = ABSENCE_REASON
+            }.also {
+              data[it.referenceData.key] = it
+            }
+
+            else -> null
           }
         }
     }

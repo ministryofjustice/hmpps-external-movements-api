@@ -20,6 +20,7 @@ import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -298,6 +299,9 @@ interface TemporaryAbsenceAuthorisationRepository :
   """,
   )
   fun findApprovalsRequiredCount(prisonIdentifier: String): Int
+
+  @Modifying
+  fun deleteByPersonIdentifier(personIdentifier: String)
 }
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")
