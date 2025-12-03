@@ -11,7 +11,7 @@ object DataGenerator {
 
   fun newId(): Long = id.getAndIncrement()
   fun personIdentifier(): String = "${letters.random()}${(1111..9999).random()}${letters.random()}${letters.random()}"
-  fun name(length: Int): String = (1..length).joinToString("") { if (it == 1) letters.random().uppercase() else letters.random().lowercase() }
+  fun word(length: Int): String = (1..length).joinToString("") { if (it == 1) letters.random().uppercase() else letters.random().lowercase() }
 
   fun dob(): LocalDate {
     val month = Month.entries.random()

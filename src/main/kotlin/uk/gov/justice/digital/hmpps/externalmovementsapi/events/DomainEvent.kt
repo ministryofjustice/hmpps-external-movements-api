@@ -21,6 +21,7 @@ import java.time.ZonedDateTime
     Type(value = TemporaryAbsenceExpired::class, name = TemporaryAbsenceExpired.EVENT_TYPE),
     Type(value = TemporaryAbsenceOverdue::class, name = TemporaryAbsenceOverdue.EVENT_TYPE),
     Type(value = TemporaryAbsenceContactInfoChanged::class, name = TemporaryAbsenceContactInfoChanged.EVENT_TYPE),
+    Type(value = TemporaryAbsenceNotesChanged::class, name = TemporaryAbsenceNotesChanged.EVENT_TYPE),
 
     Type(value = PrisonerUpdated::class, name = PrisonerUpdated.EVENT_TYPE),
 

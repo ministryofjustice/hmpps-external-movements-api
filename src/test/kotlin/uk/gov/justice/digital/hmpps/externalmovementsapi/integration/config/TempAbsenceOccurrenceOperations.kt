@@ -29,8 +29,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
@@ -49,8 +49,8 @@ interface TempAbsenceOccurrenceOperations {
   companion object {
 
     fun location(
-      description: String? = name(10),
-      address: String? = name(16),
+      description: String? = word(10),
+      address: String? = word(16),
       postcode: String? = postcode(),
       uprn: String? = "${newUuid()}",
     ) = Location(description, address, postcode, uprn)

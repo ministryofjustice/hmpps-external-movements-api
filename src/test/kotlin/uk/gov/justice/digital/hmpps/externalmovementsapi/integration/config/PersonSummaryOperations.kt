@@ -6,8 +6,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSum
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummaryRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.cellLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.dob
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import java.time.LocalDate
 
@@ -17,8 +17,8 @@ interface PersonSummaryOperations {
 
   fun personSummary(
     personIdentifier: String = personIdentifier(),
-    firstName: String = name(8),
-    lastName: String = name(8),
+    firstName: String = word(8),
+    lastName: String = word(8),
     dateOfBirth: LocalDate = dob(),
     cellLocation: String? = cellLocation(),
   ): PersonSummary = PersonSummary(firstName, lastName, dateOfBirth, cellLocation, personIdentifier)

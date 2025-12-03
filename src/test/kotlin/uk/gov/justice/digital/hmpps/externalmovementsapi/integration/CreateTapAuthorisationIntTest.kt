@@ -15,11 +15,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -108,7 +108,7 @@ class CreateTapAuthorisationIntTest(
     val pi = personIdentifier()
     val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = createTapAuthorisationRequest()
-    val username = name(8)
+    val username = word(8)
     val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
@@ -150,7 +150,7 @@ class CreateTapAuthorisationIntTest(
         absenceReasonCode = null,
         statusCode = TapAuthorisationStatus.Code.APPROVED,
       )
-    val username = name(8)
+    val username = word(8)
     val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
@@ -196,7 +196,7 @@ class CreateTapAuthorisationIntTest(
         absenceReasonCode = null,
         statusCode = TapAuthorisationStatus.Code.APPROVED,
       )
-    val username = name(8)
+    val username = word(8)
     val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
@@ -242,8 +242,8 @@ class CreateTapAuthorisationIntTest(
   )
 
   private fun location(
-    description: String? = name(10),
-    address: String? = "${name(8)} ${name(4)} ${name(8)}",
+    description: String? = word(10),
+    address: String? = "${word(8)} ${word(4)} ${word(8)}",
     postcode: String? = postcode(),
     uprn: String = "${newId()}",
   ): Location = Location(description, address, postcode, uprn)
