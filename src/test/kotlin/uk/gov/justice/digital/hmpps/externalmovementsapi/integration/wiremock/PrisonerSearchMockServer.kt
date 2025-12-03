@@ -11,8 +11,8 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.cellLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.dob
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.json.Json
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerNumbers
@@ -42,8 +42,8 @@ class PrisonerSearchServer : WireMockServer(9000) {
     fun prisoner(
       prisonCode: String,
       personIdentifier: String = personIdentifier(),
-      firstName: String = name(8),
-      lastName: String = name(12),
+      firstName: String = word(8),
+      lastName: String = word(12),
       dateOfBirth: LocalDate = dob(),
       cellLocation: String = cellLocation(),
     ): Prisoner = Prisoner(

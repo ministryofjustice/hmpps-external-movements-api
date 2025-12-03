@@ -128,3 +128,23 @@ data class TemporaryAbsenceContactInfoChanged(
     )
   }
 }
+
+data class TemporaryAbsenceNotesChanged(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "The notes of a temporary absence have been changed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.notes-changed"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceNotesChanged(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}

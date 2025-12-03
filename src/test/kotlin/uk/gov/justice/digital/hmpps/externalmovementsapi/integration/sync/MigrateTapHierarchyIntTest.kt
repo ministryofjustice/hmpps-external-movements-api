@@ -23,11 +23,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.Migrat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.username
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -278,7 +278,7 @@ class MigrateTapHierarchyIntTest(
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     location: Location = location(),
-    contactInformation: String? = "Contact ${name(8)}",
+    contactInformation: String? = "Contact ${word(8)}",
     notes: String? = "Some notes about the absence",
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), username()),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusWeeks(1), username()),

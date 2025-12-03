@@ -19,10 +19,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceContactInfoChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceNotesChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.name
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -122,6 +123,7 @@ class SyncTapOccurrenceIntTest(
         TemporaryAbsenceRescheduled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceCancelled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceContactInfoChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceNotesChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
       ),
     )
   }
@@ -155,7 +157,14 @@ class SyncTapOccurrenceIntTest(
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
-    val request = tapOccurrence(legacyId = existing.legacyId!!, accompaniedByCode = "U", releaseAt = existing.releaseAt, returnBy = existing.returnBy, contactInformation = null)
+    val request = tapOccurrence(
+      legacyId = existing.legacyId!!,
+      accompaniedByCode = "U",
+      releaseAt = existing.releaseAt,
+      returnBy = existing.returnBy,
+      contactInformation = null,
+      notes = existing.notes,
+    )
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -236,7 +245,7 @@ class SyncTapOccurrenceIntTest(
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     location: Location = location(),
-    contactInformation: String? = "Contact ${name(8)}",
+    contactInformation: String? = "Contact ${word(8)}",
     notes: String? = "Some notes about the absence",
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), DEFAULT_USERNAME),
     updated: AtAndBy? = null,

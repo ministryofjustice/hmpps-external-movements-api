@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ge
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
@@ -40,6 +41,7 @@ class TapOccurrenceModifications(
             occurrence.cancel(action) { domain, code -> referenceDataRepository.getByKey(domain of code) }
           }
         }
+        is AmendOccurrenceNotes -> occurrence.amendNotes(action)
 
         else -> throw IllegalArgumentException("Action not supported")
       }
