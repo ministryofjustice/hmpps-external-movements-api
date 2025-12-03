@@ -15,6 +15,13 @@ generic-prometheus-alerts:
   businessHoursOnly: true
   alertSeverity: hmpps-alerts-api-non-prod
   rdsAlertsDatabases:
-    cloud-platform-348213e2359f7b4e: 'External Movements DB'
+    cloud-platform-348213e2359f7b4e: "External Movements API"
   rdsAlertsConnectionThreshold: 100
+  sqsOldestAlertQueueNames:
+    - "hmpps-external-movements-dev-domain_events_queue"
+  sqsAlertsOldestThreshold: 10
+  sqsNumberAlertQueueNames:
+    - "hmpps-external-movements-dev-domain_events_dlq"
+  sqsAlertsTotalMessagesThreshold: 1
+  applicationCronJobStatusFailedWindowMinutes: 15
 

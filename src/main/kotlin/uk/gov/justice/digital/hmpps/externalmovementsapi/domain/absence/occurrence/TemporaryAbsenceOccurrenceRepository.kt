@@ -130,6 +130,8 @@ fun occurrenceMatchesDateRange(fromDate: LocalDate?, toDate: LocalDate?) = Speci
   )
 }
 
+fun occurrenceStatusCodeIn(vararg statusCodes: TapOccurrenceStatus.Code) = occurrenceStatusCodeIn(statusCodes.toSet())
+
 fun occurrenceStatusCodeIn(statusCodes: Set<TapOccurrenceStatus.Code>) = Specification<TemporaryAbsenceOccurrence> { taa, _, _ ->
   val status = taa.join<TemporaryAbsenceOccurrence, ReferenceData>(STATUS, JoinType.INNER)
   status.get<String>(KEY).get<String>(CODE).`in`(statusCodes.map { it.name })

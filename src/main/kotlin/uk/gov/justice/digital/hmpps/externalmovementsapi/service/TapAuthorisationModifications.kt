@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.getAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.forAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
@@ -75,7 +77,12 @@ class TapAuthorisationModifications(
   }
 
   private fun TemporaryAbsenceAuthorisation.updateOccurrences() {
-    taoRepository.findByAuthorisationId(id).forEach {
+    taoRepository.findAll(
+      forAuthorisation(id)
+        .and(
+          occurrenceStatusCodeIn(TapOccurrenceStatus.Code.PENDING, TapOccurrenceStatus.Code.SCHEDULED),
+        ),
+    ).forEach {
       it.calculateStatus { statusCode ->
         referenceDataRepository.findByKey(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS of statusCode) as TapOccurrenceStatus
       }

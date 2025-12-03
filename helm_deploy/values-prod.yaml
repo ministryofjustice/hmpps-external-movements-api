@@ -13,3 +13,13 @@ generic-service:
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
   alertSeverity: hmpps-alerts-api-prod
+  rdsAlertsDatabases:
+    cloud-platform-4dbf3982763d5579: "External Movements API"
+  rdsAlertsConnectionThreshold: 100
+  sqsOldestAlertQueueNames:
+    - "hmpps-external-movements-prod-domain_events_queue"
+  sqsAlertsOldestThreshold: 10
+  sqsNumberAlertQueueNames:
+    - "hmpps-external-movements-prod-domain_events_dlq"
+  sqsAlertsTotalMessagesThreshold: 1
+  applicationCronJobStatusFailedWindowMinutes: 15

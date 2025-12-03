@@ -313,19 +313,25 @@ class TemporaryAbsenceOccurrence(
     }
 
   private fun authorisationStatus(): TapOccurrenceStatus.Code = if (authorisation.status.code == APPROVED.name) {
-    if (movements.isEmpty() && returnBy.isBefore(now())) {
-      if (::status.isInitialized && status.code == SCHEDULED.name) {
-        appliedActions += ExpireOccurrence()
-      }
-      EXPIRED
-    } else {
-      if (::status.isInitialized && status.code == PENDING.name) {
-        appliedActions += ScheduleOccurrence()
-      }
-      SCHEDULED
-    }
+    approvedAuthorisationStatuses()
   } else {
-    TapOccurrenceStatus.Code.valueOf(authorisation.status.code)
+    val calculatedStatus = TapOccurrenceStatus.Code.valueOf(authorisation.status.code)
+    if (::status.isInitialized && status.code == SCHEDULED.name && calculatedStatus == CANCELLED) {
+      appliedActions += CancelOccurrence()
+    }
+    calculatedStatus
+  }
+
+  private fun approvedAuthorisationStatuses() = if (movements.isEmpty() && returnBy.isBefore(now())) {
+    if (::status.isInitialized && status.code == SCHEDULED.name) {
+      appliedActions += ExpireOccurrence()
+    }
+    EXPIRED
+  } else {
+    if (::status.isInitialized && status.code == PENDING.name) {
+      appliedActions += ScheduleOccurrence()
+    }
+    SCHEDULED
   }
 
   companion object {
