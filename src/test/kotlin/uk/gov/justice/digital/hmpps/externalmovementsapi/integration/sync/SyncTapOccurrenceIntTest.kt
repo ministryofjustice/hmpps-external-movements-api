@@ -156,14 +156,17 @@ class SyncTapOccurrenceIntTest(
   @Test
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
+    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId(), absenceType = "PP", absenceSubType = "PP", absenceReasonCategory = null, absenceReason = "PC"))
     val request = tapOccurrence(
       legacyId = existing.legacyId!!,
-      accompaniedByCode = "U",
+      accompaniedByCode = existing.accompaniedBy.code,
       releaseAt = existing.releaseAt,
       returnBy = existing.returnBy,
       contactInformation = null,
       notes = existing.notes,
+      typeCode = existing.absenceType?.code,
+      subTypeCode = existing.absenceSubType?.code,
+      reasonCode = existing.absenceReason!!.code,
     )
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk

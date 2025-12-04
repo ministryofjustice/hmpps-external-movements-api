@@ -113,3 +113,24 @@ data class TemporaryAbsenceAuthorisationDateRangeChanged(
     )
   }
 }
+
+data class TemporaryAbsenceAuthorisationRecategorised(
+  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "An temporary absence authorisation has been recategorised."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.recategorised"
+
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorisationRecategorised(
+      TemporaryAbsenceAuthorisationInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}

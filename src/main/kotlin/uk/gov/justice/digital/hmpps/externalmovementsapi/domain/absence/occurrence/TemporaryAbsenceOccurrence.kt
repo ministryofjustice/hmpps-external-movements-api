@@ -220,15 +220,15 @@ class TemporaryAbsenceOccurrence(
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) {
     if (action.changes(this)) {
+      reasonPath = action.reasonPath
       absenceType = action.absenceTypeCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_TYPE, it) as AbsenceType }
+      absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
+      absenceReasonCategory =
+        action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
+      absenceReason =
+        action.absenceReasonCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_REASON, it) as AbsenceReason }
+      appliedActions += action
     }
-    absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
-    absenceReasonCategory =
-      action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
-    absenceReason =
-      action.absenceReasonCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_REASON, it) as AbsenceReason }
-    reasonPath = action.reasonPath
-    appliedActions += action
   }
 
   fun reschedule(action: RescheduleOccurrence) {
