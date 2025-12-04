@@ -87,7 +87,13 @@ class TapAuthorisationModifications(
           authorisation.affectedOccurrences().forEach { it.amendNotes(aon) }
         }
 
-        is ChangeAuthorisationDateRange -> authorisation.amendDateRange(action)
+        is ChangeAuthorisationDateRange -> {
+          val odr = taoRepository.dateRangeForAuthorisation(authorisation.id) ?: action
+          check(!odr.fromDate.isBefore(action.fromDate) && !odr.toDate.isAfter(action.toDate)) {
+            "Authorisation date range cannot be less than the date range of absences"
+          }
+          authorisation.amendDateRange(action)
+        }
 
         is RecategoriseAuthorisation -> {
           val (action, rdSupplier) = action.recalculateCategorisation()

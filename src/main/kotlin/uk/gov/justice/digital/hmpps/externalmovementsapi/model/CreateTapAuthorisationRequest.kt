@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
-import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.validation.Valid
@@ -38,10 +37,8 @@ data class CreateTapAuthorisationRequest(
   val transportCode: String,
   val notes: String?,
   val repeat: Boolean,
-  @JsonAlias("fromDate")
-  override val from: LocalDate,
-  @JsonAlias("toDate")
-  override val to: LocalDate,
+  override val fromDate: LocalDate,
+  override val toDate: LocalDate,
   val contactInformation: String?,
   @JsonIgnore
   val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,

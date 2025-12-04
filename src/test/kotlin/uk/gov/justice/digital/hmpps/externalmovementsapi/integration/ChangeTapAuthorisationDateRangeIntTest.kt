@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter.ISO_DATE
 import java.util.UUID
 
@@ -65,16 +66,35 @@ class ChangeTapAuthorisationDateRangeIntTest(
   }
 
   @Test
+  fun `400 bad request - attempt to change date range to be shorter than range of occurrences`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val occ2 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        releaseAt = LocalDateTime.now().plusDays(3),
+        returnBy = LocalDateTime.now().plusDays(4),
+      ),
+    )
+    val response = changeDateRange(
+      auth.id,
+      changeDateRange(occ1.releaseAt.plusDays(1).toLocalDate(), occ2.returnBy.minusDays(1).toLocalDate()),
+    ).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(response.userMessage).isEqualTo("Validation failure: Authorisation date range cannot be less than the date range of absences")
+  }
+
+  @Test
   fun `200 ok - authorisation date range updated`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = changeDateRange()
+    val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val request = changeDateRange(occ.releaseAt.toLocalDate(), occ.returnBy.toLocalDate())
     val res = changeDateRange(auth.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("fromDate", ISO_DATE.format(auth.fromDate), ISO_DATE.format(request.from)),
-      AuditedAction.Change("toDate", ISO_DATE.format(auth.toDate), ISO_DATE.format(request.to)),
+      AuditedAction.Change("fromDate", ISO_DATE.format(auth.fromDate), ISO_DATE.format(request.fromDate)),
+      AuditedAction.Change("toDate", ISO_DATE.format(auth.toDate), ISO_DATE.format(request.toDate)),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))

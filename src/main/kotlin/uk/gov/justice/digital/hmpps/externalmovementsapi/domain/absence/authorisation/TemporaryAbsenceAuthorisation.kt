@@ -222,9 +222,9 @@ class TemporaryAbsenceAuthorisation(
   }
 
   fun amendDateRange(action: ChangeAuthorisationDateRange) {
-    if (!fromDate.isEqual(action.from) || !toDate.isEqual(action.to)) {
-      fromDate = action.from
-      toDate = action.to
+    if (!fromDate.isEqual(action.fromDate) || !toDate.isEqual(action.toDate)) {
+      fromDate = action.fromDate
+      toDate = action.toDate
       appliedActions += action
     }
   }

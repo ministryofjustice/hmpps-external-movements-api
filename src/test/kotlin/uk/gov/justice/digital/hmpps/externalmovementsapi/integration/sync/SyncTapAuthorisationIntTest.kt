@@ -290,6 +290,30 @@ class SyncTapAuthorisationIntTest(
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationApproved(pi, saved.id, DataSource.NOMIS)))
   }
 
+  @Test
+  fun `200 ok - can create authorisation with date range over 6 months`() {
+    val pi = personIdentifier()
+    val prisonCode = prisonCode()
+    givenPersonSummary(personSummary(personIdentifier = pi))
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = tapAuthorisation(fromDate = LocalDate.now(), toDate = LocalDate.now().plusMonths(6).plusDays(1))
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationApproved(pi, saved.id, DataSource.NOMIS)))
+  }
+
   private fun tapAuthorisation(
     id: UUID? = null,
     prisonCode: String = prisonCode(),

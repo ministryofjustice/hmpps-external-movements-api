@@ -9,8 +9,8 @@ import java.time.LocalDate
 
 @ValidDateRange
 data class ChangeAuthorisationDateRange(
-  override val from: LocalDate,
-  override val to: LocalDate,
+  override val fromDate: LocalDate,
+  override val toDate: LocalDate,
   override val reason: String? = null,
 ) : AuthorisationAction,
   DateRange {
