@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -39,6 +40,17 @@ interface TemporaryAbsenceOccurrenceRepository :
     releaseAt: LocalDateTime,
     returnBy: LocalDateTime,
   ): TemporaryAbsenceOccurrence?
+
+  @Query(
+    """
+    select 
+        min(cast(tao.releaseAt as LocalDate)) as fromDate, 
+        max(cast(tao.returnBy as LocalDate)) as toDate 
+    from TemporaryAbsenceOccurrence tao where tao.authorisation.id = :authorisationId
+    group by tao.authorisation.id
+    """,
+  )
+  fun dateRangeForAuthorisation(authorisationId: UUID): DateRange?
 
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceOccurrence?
 
