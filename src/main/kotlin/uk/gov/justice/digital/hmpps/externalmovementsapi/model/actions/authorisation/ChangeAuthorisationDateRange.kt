@@ -3,12 +3,16 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.ValidDateRange
 import java.time.LocalDate
 
+@ValidDateRange
 data class ChangeAuthorisationDateRange(
-  val from: LocalDate,
-  val to: LocalDate,
+  override val from: LocalDate,
+  override val to: LocalDate,
   override val reason: String? = null,
-) : AuthorisationAction {
+) : AuthorisationAction,
+  DateRange {
   override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationDateRangeChanged(taa.person.identifier, taa.id)
 }

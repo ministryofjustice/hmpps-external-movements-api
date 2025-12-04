@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -51,6 +52,16 @@ class ChangeTapAuthorisationDateRangeIntTest(
   @Test
   fun `404 authorisation does not exist`() {
     changeDateRange(newUuid(), changeDateRange()).expectStatus().isNotFound
+  }
+
+  @Test
+  fun `400 bad request - date range over 6 months`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
+    val from = LocalDate.now()
+    val to = LocalDate.now().plusMonths(6).plusDays(1)
+    val response = changeDateRange(auth.id, changeDateRange(from, to)).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(response.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
   }
 
   @Test

@@ -98,8 +98,8 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
     assertThat(notes).isEqualTo(request.notes)
     assertThat(repeat).isEqualTo(request.repeat)
     assertThat(legacyId).isNull()
-    assertThat(fromDate).isEqualTo(request.fromDate)
-    assertThat(toDate).isEqualTo(request.toDate)
+    assertThat(fromDate).isEqualTo(request.from)
+    assertThat(toDate).isEqualTo(request.to)
     assertThat(schedule).isEqualTo(request.schedule)
   }
 

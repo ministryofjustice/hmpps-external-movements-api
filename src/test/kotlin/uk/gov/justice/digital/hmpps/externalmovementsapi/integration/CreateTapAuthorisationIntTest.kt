@@ -83,6 +83,15 @@ class CreateTapAuthorisationIntTest(
   }
 
   @Test
+  fun `400 bad request - date range over 6 months`() {
+    val pi = personIdentifier()
+    val request = createTapAuthorisationRequest(fromDate = LocalDate.now(), toDate = LocalDate.now().plusMonths(6).plusDays(1))
+    val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(res.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
+  }
+
+  @Test
   fun `409 conflict - matching tap authorisation already exists`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()

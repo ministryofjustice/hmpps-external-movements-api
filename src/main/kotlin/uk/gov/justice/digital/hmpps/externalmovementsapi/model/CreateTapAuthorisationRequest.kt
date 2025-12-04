@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.validation.Valid
@@ -18,10 +19,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.ValidDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+@ValidDateRange
 data class CreateTapAuthorisationRequest(
   val absenceTypeCode: String,
   val absenceSubTypeCode: String?,
@@ -34,8 +38,10 @@ data class CreateTapAuthorisationRequest(
   val transportCode: String,
   val notes: String?,
   val repeat: Boolean,
-  val fromDate: LocalDate,
-  val toDate: LocalDate,
+  @JsonAlias("fromDate")
+  override val from: LocalDate,
+  @JsonAlias("toDate")
+  override val to: LocalDate,
   val contactInformation: String?,
   @JsonIgnore
   val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,
@@ -46,7 +52,8 @@ data class CreateTapAuthorisationRequest(
   @JsonIgnore
   val approvedBy: String? = if (statusCode == APPROVED) ExternalMovementContext.get().username else null,
   val schedule: JsonNode? = null,
-) : ReferenceDataRequired {
+) : ReferenceDataRequired,
+  DateRange {
 
   override fun requiredReferenceData() = buildSet {
     addAll(reasonPath())
