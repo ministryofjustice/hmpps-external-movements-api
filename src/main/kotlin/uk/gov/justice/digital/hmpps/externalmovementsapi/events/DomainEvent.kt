@@ -14,6 +14,7 @@ import java.time.ZonedDateTime
     Type(value = TemporaryAbsenceAuthorisationDenied::class, name = TemporaryAbsenceAuthorisationDenied.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationCancelled::class, name = TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDateRangeChanged::class, name = TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationNotesChanged::class, name = TemporaryAbsenceAuthorisationNotesChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationRecategorised::class, name = TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE),
 
     Type(value = TemporaryAbsenceScheduled::class, name = TemporaryAbsenceScheduled.EVENT_TYPE),
