@@ -10,10 +10,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.Action
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
   value = [
+    Type(value = AmendAuthorisationNotes::class, name = "AmendAuthorisationNotes"),
     Type(value = ApproveAuthorisation::class, name = "ApproveAuthorisation"),
     Type(value = DenyAuthorisation::class, name = "DenyAuthorisation"),
     Type(value = CancelAuthorisation::class, name = "CancelAuthorisation"),
     Type(value = ChangeAuthorisationDateRange::class, name = "ChangeAuthorisationDateRange"),
+    Type(value = RecategoriseAuthorisation::class, name = "RecategoriseAuthorisation"),
   ],
 )
 sealed interface AuthorisationAction : Action {

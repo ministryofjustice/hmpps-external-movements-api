@@ -12,6 +12,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -94,11 +98,11 @@ class GetTapAuthorisationHistoryIntTest(
     assertThat(history.content).hasSize(4)
     with(history.content.first()) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).containsExactly("person.temporary-absence-authorisation.pending")
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationPending.EVENT_TYPE)
     }
     with(history.content[1]) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).contains(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
       assertThat(changes).containsExactlyInAnyOrder(
         AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Police production"),
         AuditedAction.Change("absenceSubType", "RDR (Resettlement Day Release)", "Police production"),
@@ -108,13 +112,13 @@ class GetTapAuthorisationHistoryIntTest(
     }
     with(history.content[2]) {
       assertThat(user).isEqualTo(AuditedAction.User(approvingUser.username, approvingUser.name))
-      assertThat(domainEvents).containsExactly("person.temporary-absence-authorisation.approved")
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
       assertThat(reason).isEqualTo(approveAction.reason)
       assertThat(changes).containsExactly(AuditedAction.Change("status", "To be reviewed", "Approved"))
     }
     with(history.content.last()) {
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
-      assertThat(domainEvents).containsExactly("person.temporary-absence-authorisation.cancelled")
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
       assertThat(reason).isEqualTo(cancelAction.reason)
       assertThat(changes).containsExactly(AuditedAction.Change("status", "Approved", "Cancelled"))
     }

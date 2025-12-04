@@ -11,6 +11,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRecategorised
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
@@ -97,11 +100,11 @@ class GetTapOccurrenceHistoryIntTest(
     assertThat(history.content).hasSize(4)
     with(history.content.first()) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).containsExactly("person.temporary-absence.scheduled")
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceScheduled.EVENT_TYPE)
     }
     with(history.content[1]) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).contains(TemporaryAbsenceRecategorised.EVENT_TYPE)
       assertThat(changes).containsExactlyInAnyOrder(
         AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Police production"),
         AuditedAction.Change("absenceSubType", "RDR (Resettlement Day Release)", "Police production"),
@@ -120,7 +123,7 @@ class GetTapOccurrenceHistoryIntTest(
     }
     with(history.content.last()) {
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
-      assertThat(domainEvents).containsExactly("person.temporary-absence.cancelled")
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceCancelled.EVENT_TYPE)
       assertThat(reason).isEqualTo("A reason for cancelling")
     }
   }
