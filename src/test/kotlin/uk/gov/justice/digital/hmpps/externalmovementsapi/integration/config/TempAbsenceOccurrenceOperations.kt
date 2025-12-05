@@ -32,7 +32,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
@@ -52,7 +51,7 @@ interface TempAbsenceOccurrenceOperations {
       description: String? = word(10),
       address: String? = word(16),
       postcode: String? = postcode(),
-      uprn: String? = "${newUuid()}",
+      uprn: Long? = newUuid().mostSignificantBits,
     ) = Location(description, address, postcode, uprn)
 
     fun temporaryAbsenceOccurrence(
@@ -122,7 +121,7 @@ interface TempAbsenceOccurrenceOperations {
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(
     personIdentifier: String,
-    request: CreateTapOccurrenceRequest,
+    request: CreateTapAuthorisationRequest.OccurrenceRequest,
     authRequest: CreateTapAuthorisationRequest,
   ) {
     assertThat(authorisation.person.identifier).isEqualTo(personIdentifier)

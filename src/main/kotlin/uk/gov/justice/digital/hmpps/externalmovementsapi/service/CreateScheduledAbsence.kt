@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.getAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
@@ -26,18 +27,20 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import java.util.UUID
 
 @Transactional
 @Service
-class CreateTapAuthorisation(
+class CreateScheduledAbsence(
   private val prisonerSearch: PrisonerSearchClient,
   private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
@@ -75,7 +78,23 @@ class CreateTapAuthorisation(
     return ReferenceId(authorisation.id)
   }
 
-  fun CreateTapAuthorisationRequest.asAuthorisation(
+  fun tapOccurrence(authorisationId: UUID, request: CreateOccurrenceRequest): ReferenceId {
+    val authorisation = tapAuthRepository.getAuthorisation(authorisationId)
+    check(
+      !request.releaseAt.toLocalDate().isBefore(authorisation.fromDate) &&
+        !request.returnBy.toLocalDate().isAfter(authorisation.toDate),
+    ) {
+      "Temporary absence must be within the authorised date range."
+    }
+
+    val occurrence = request.asOccurrence(authorisation).calculateStatus {
+      referenceDataRepository.findByKey(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS of it) as TapOccurrenceStatus
+    }
+
+    return ReferenceId(tapOccurrenceRepository.save(occurrence).id)
+  }
+
+  private fun CreateTapAuthorisationRequest.asAuthorisation(
     person: PersonSummary,
     prisonCode: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
@@ -113,7 +132,7 @@ class CreateTapAuthorisation(
     )
   }
 
-  fun CreateTapOccurrenceRequest.asOccurrence(
+  private fun CreateTapAuthorisationRequest.OccurrenceRequest.asOccurrence(
     authorisation: TemporaryAbsenceAuthorisation,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
     authRequest: CreateTapAuthorisationRequest,
@@ -126,7 +145,7 @@ class CreateTapAuthorisation(
     releaseAt = releaseAt,
     returnBy = returnBy,
     accompaniedBy = authorisation.accompaniedBy,
-    transport = rdProvider(TRANSPORT, authRequest.transportCode) as Transport,
+    transport = authorisation.transport,
     location = location.let {
       if (it.address?.isEmpty() == true) {
         it.copy(address = null)
@@ -140,4 +159,30 @@ class CreateTapAuthorisation(
     scheduleReference = scheduleReference,
     legacyId = null,
   ).calculateStatus { rdProvider(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus }
+
+  private fun CreateOccurrenceRequest.asOccurrence(
+    authorisation: TemporaryAbsenceAuthorisation,
+  ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
+    authorisation,
+    absenceType = authorisation.absenceType,
+    absenceSubType = authorisation.absenceSubType,
+    absenceReasonCategory = authorisation.absenceReasonCategory,
+    absenceReason = authorisation.absenceReason,
+    releaseAt = releaseAt,
+    returnBy = returnBy,
+    accompaniedBy = authorisation.accompaniedBy,
+    transport = authorisation.transport,
+    location = location.let {
+      if (it.address?.isEmpty() == true) {
+        it.copy(address = null)
+      } else {
+        it
+      }
+    },
+    contactInformation = null,
+    notes = notes ?: authorisation.notes,
+    reasonPath = authorisation.reasonPath,
+    scheduleReference = null,
+    legacyId = null,
+  )
 }

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
@@ -15,7 +16,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -27,7 +27,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDate
@@ -243,7 +242,7 @@ class CreateTapAuthorisationIntTest(
     returnBy: LocalDateTime = LocalDateTime.now().plusHours(3),
     location: Location = location(),
     scheduleReference: JsonNode? = null,
-  ) = CreateTapOccurrenceRequest(
+  ) = CreateTapAuthorisationRequest.OccurrenceRequest(
     releaseAt = releaseAt,
     returnBy = returnBy,
     location = location,
@@ -254,7 +253,7 @@ class CreateTapAuthorisationIntTest(
     description: String? = word(10),
     address: String? = "${word(8)} ${word(4)} ${word(8)}",
     postcode: String? = postcode(),
-    uprn: String = "${newId()}",
+    uprn: Long? = newUuid().mostSignificantBits,
   ): Location = Location(description, address, postcode, uprn)
 
   private fun createTapAuthorisationRequest(
@@ -267,7 +266,7 @@ class CreateTapAuthorisationIntTest(
     fromDate: LocalDate = LocalDate.now().minusDays(3),
     toDate: LocalDate = LocalDate.now().plusDays(1),
     statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
-    occurrences: List<CreateTapOccurrenceRequest> = listOf(createTapOccurrenceRequest()),
+    occurrences: List<CreateTapAuthorisationRequest.OccurrenceRequest> = listOf(createTapOccurrenceRequest()),
     notes: String? = null,
     repeat: Boolean = false,
     contactInformation: String? = null,

@@ -32,7 +32,7 @@ class RecategoriseAuthorisationIntTest(
   @Test
   fun `401 unauthorised without a valid token`() {
     webTestClient
-      .post()
+      .put()
       .uri(TAP_AUTHORISATION_MODIFICATION_URL, newUuid())
       .exchange()
       .expectStatus()
