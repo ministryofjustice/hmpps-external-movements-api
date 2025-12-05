@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationNotesChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceNotesChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -52,8 +54,45 @@ class AmendTapOccurrenceNotesIntTest(
   }
 
   @Test
-  fun `200 ok tap occurrence rescheduled successfully`() {
+  fun `200 ok single tap occurrence notes updated successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val request = amendNotesRequest()
+    val res = amendOccurrenceNotes(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactlyInAnyOrder(
+      TemporaryAbsenceNotesChanged.EVENT_TYPE,
+      TemporaryAbsenceAuthorisationNotesChanged.EVENT_TYPE,
+    )
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(AuditedAction.Change("notes", occurrence.notes, request.notes))
+
+    val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
+    assertThat(saved.notes).isEqualTo(request.notes)
+    assertThat(saved.authorisation.notes).isEqualTo(request.notes)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+    )
+
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceNotesChanged(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceAuthorisationNotesChanged(auth.person.identifier, auth.id),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok repeat tap occurrence notes updated successfully`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = amendNotesRequest()
     val res = amendOccurrenceNotes(occurrence.id, request).successResponse<AuditHistory>().content.single()
@@ -63,6 +102,7 @@ class AmendTapOccurrenceNotesIntTest(
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
     assertThat(saved.notes).isEqualTo(request.notes)
+    assertThat(saved.authorisation.notes).isEqualTo(auth.notes)
 
     verifyAudit(
       saved,
@@ -74,7 +114,12 @@ class AmendTapOccurrenceNotesIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceNotesChanged(occurrence.authorisation.person.identifier, occurrence.id)))
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceNotesChanged(occurrence.authorisation.person.identifier, occurrence.id),
+      ),
+    )
   }
 
   private fun amendNotesRequest(
