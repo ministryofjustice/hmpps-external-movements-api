@@ -31,7 +31,7 @@ data class CreateTapAuthorisationRequest(
   val absenceReasonCategoryCode: String?,
   val absenceReasonCode: String?,
   @Valid
-  val occurrences: List<CreateTapOccurrenceRequest>,
+  val occurrences: List<OccurrenceRequest>,
   val statusCode: TapAuthorisationStatus.Code,
   val accompaniedByCode: String,
   val transportCode: String,
@@ -66,12 +66,12 @@ data class CreateTapAuthorisationRequest(
     absenceReasonCategoryCode?.also { add(ABSENCE_REASON_CATEGORY of it) }
     absenceReasonCode?.also { add(ABSENCE_REASON of it) }
   }
-}
 
-data class CreateTapOccurrenceRequest(
-  val releaseAt: LocalDateTime,
-  val returnBy: LocalDateTime,
-  @Valid
-  val location: Location,
-  val scheduleReference: JsonNode?,
-)
+  data class OccurrenceRequest(
+    val releaseAt: LocalDateTime,
+    val returnBy: LocalDateTime,
+    @Valid
+    val location: Location,
+    val scheduleReference: JsonNode?,
+  )
+}

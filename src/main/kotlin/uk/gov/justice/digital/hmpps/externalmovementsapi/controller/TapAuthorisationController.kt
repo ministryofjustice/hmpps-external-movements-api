@@ -14,10 +14,11 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateTapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateScheduledAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationHistory
@@ -28,7 +29,7 @@ import java.util.UUID
 @RequestMapping("/temporary-absence-authorisations")
 @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
 class TapAuthorisationController(
-  private val create: CreateTapAuthorisation,
+  private val create: CreateScheduledAbsence,
   private val get: GetTapAuthorisation,
   private val history: AuthorisationHistory,
   private val modify: TapAuthorisationModifications,
@@ -52,4 +53,10 @@ class TapAuthorisationController(
 
   @PutMapping("/{id}")
   fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) = modify.apply(id, action)
+
+  @PostMapping("/{id}/occurrences")
+  fun createOccurrence(
+    @PathVariable id: UUID,
+    @Valid @RequestBody request: CreateOccurrenceRequest,
+  ) = create.tapOccurrence(id, request)
 }

@@ -31,7 +31,7 @@ class CancelTapOccurrenceIntTest(
   @Test
   fun `401 unauthorised without a valid token`() {
     webTestClient
-      .post()
+      .put()
       .uri(TAP_OCCURRENCE_MODIFICATION_URL, newUuid())
       .exchange()
       .expectStatus()
