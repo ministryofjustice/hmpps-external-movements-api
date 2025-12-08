@@ -60,6 +60,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
@@ -247,6 +248,16 @@ class TemporaryAbsenceAuthorisation(
   ) {
     if (action.accompaniedByCode != accompaniedBy.code) {
       accompaniedBy = rdSupplier(ReferenceDataDomain.Code.ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
+      appliedActions += action
+    }
+  }
+
+  fun applyTransport(
+    action: ChangeAuthorisationTransport,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) {
+    if (action.transportCode != transport.code) {
+      transport = rdSupplier(ReferenceDataDomain.Code.TRANSPORT, action.transportCode) as Transport
       appliedActions += action
     }
   }

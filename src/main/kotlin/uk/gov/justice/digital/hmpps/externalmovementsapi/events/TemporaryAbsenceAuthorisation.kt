@@ -176,3 +176,24 @@ data class TemporaryAbsenceAuthorisationAccompanimentChanged(
     )
   }
 }
+
+data class TemporaryAbsenceAuthorisationTransportChanged(
+  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "The transport for a temporary absence authorisation has been changed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.transport-changed"
+
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorisationTransportChanged(
+      TemporaryAbsenceAuthorisationInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
