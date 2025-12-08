@@ -213,7 +213,11 @@ class TemporaryAbsenceOccurrence(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+  override fun domainEvents(): Set<DomainEvent<*>> {
+    val events = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+    appliedActions = emptyList()
+    return events
+  }
 
   fun applyAbsenceCategorisation(
     action: RecategoriseOccurrence,
