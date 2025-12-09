@@ -127,18 +127,19 @@ class TapOccurrenceModifications(
 
   private fun RecategoriseOccurrence.recalculateCategorisation(): Pair<RecategoriseOccurrence, (ReferenceDataDomain.Code, String) -> ReferenceData> {
     val rdProvider = referenceDataRepository.rdProvider(this)
-    val linkProvider = { previous: ReferenceData ->
-      referenceDataRepository.findLinkedItems(previous.id).let {
+    val linkProvider = { nextDomain: ReferenceDataDomain.Code, previous: ReferenceData ->
+      referenceDataRepository.findLinkedItems(nextDomain, previous.id).let {
         when (it.size) {
+          0 -> null
           1 -> it.single()
           else -> throw AbsenceCategorisationException(previous, it.size)
         }
       }
     }
     val type = requireNotNull(absenceTypeCode?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType })
-    val subType = (absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) } ?: linkProvider(type)) as? AbsenceSubType
+    val subType = (absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) } ?: linkProvider(ABSENCE_SUB_TYPE, type)) as? AbsenceSubType
     val reasonCategory = (absenceReasonCategoryCode?.let { rdProvider(ABSENCE_REASON_CATEGORY, it) }) as? AbsenceReasonCategory
-    val reason = (absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) } ?: linkProvider(reasonCategory ?: subType ?: type)) as? AbsenceReason
+    val reason = (absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) } ?: linkProvider(ABSENCE_REASON, reasonCategory ?: subType ?: type)) as? AbsenceReason
     val newAction = copy(
       absenceTypeCode = type.code,
       absenceSubTypeCode = subType?.code,

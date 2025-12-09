@@ -100,10 +100,10 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
     """
     select rdl.rd2 as referenceData from ReferenceDataLink rdl
     left join ReferenceDataDomainLink dl on rdl.rd2.id = dl.id
-    where rdl.rd1.id = :id
+    where rdl.rd1.id = :id and rdl.rd2.key.domain = :nextDomain
     """,
   )
-  fun findLinkedItems(id: Long): List<ReferenceData>
+  fun findLinkedItems(nextDomain: ReferenceDataDomain.Code, id: Long): List<ReferenceData>
 
   @Query(
     """
