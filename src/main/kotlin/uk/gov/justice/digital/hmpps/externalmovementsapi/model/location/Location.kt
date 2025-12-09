@@ -10,4 +10,6 @@ data class Location(
   companion object {
     fun unknown() = Location("Location not found", null, null, null)
   }
+
+  override fun toString(): String = listOfNotNull(description?.trim(), address?.trim(), postcode?.trim()).joinToString(" ")
 }

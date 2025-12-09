@@ -284,9 +284,9 @@ class TemporaryAbsenceOccurrence(
     }
   }
 
-  fun cancel(action: CancelOccurrence, statusProvider: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+  fun cancel(action: CancelOccurrence, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
     if (!::status.isInitialized || status.code != CANCELLED.name) {
-      status = statusProvider(TAP_OCCURRENCE_STATUS, CANCELLED.name) as TapOccurrenceStatus
+      status = rdSupplier(TAP_OCCURRENCE_STATUS, CANCELLED.name) as TapOccurrenceStatus
       appliedActions += action
     }
   }
