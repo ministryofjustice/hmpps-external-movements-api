@@ -12,11 +12,11 @@ configurations {
 }
 
 val hmppsKotlinVersion = "1.8.2"
-val sentryVersion = "8.27.1"
+val sentryVersion = "8.28.0"
 val springDocVersion = "2.8.14"
 val sqsStarterVersion = "5.6.3"
 val testContainersVersion = "1.21.3"
-val uuidGeneratorVersion = "5.1.1"
+val uuidGeneratorVersion = "5.2.0"
 val wiremockVersion = "3.13.2"
 
 dependencies {

@@ -50,9 +50,10 @@ class CreateScheduledAbsence(
   fun tapAuthorisation(personIdentifier: String, request: CreateTapAuthorisationRequest): ReferenceId {
     val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
     val rdProvider = referenceDataRepository.rdProvider(request)
-    val linkProvider = { previous: ReferenceData ->
-      referenceDataRepository.findLinkedItems(previous.id).let {
+    val linkProvider = { nextDomain: ReferenceDataDomain.Code, previous: ReferenceData ->
+      referenceDataRepository.findLinkedItems(nextDomain, previous.id).let {
         when (it.size) {
+          0 -> null
           1 -> it.single()
           else -> throw AbsenceCategorisationException(previous, it.size)
         }
@@ -98,19 +99,19 @@ class CreateScheduledAbsence(
     person: PersonSummary,
     prisonCode: String,
     rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
-    linkProvider: (ReferenceData) -> ReferenceData,
+    linkProvider: (ReferenceDataDomain.Code, ReferenceData) -> ReferenceData?,
   ): TemporaryAbsenceAuthorisation {
     val type = rdProvider(ABSENCE_TYPE, absenceTypeCode) as AbsenceType
     val subType = (
       absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) }
-        ?: linkProvider(type)
-      ) as AbsenceSubType
+        ?: linkProvider(ABSENCE_SUB_TYPE, type)
+      ) as? AbsenceSubType
     val reasonCategory = (
       absenceReasonCategoryCode?.let { rdProvider(ABSENCE_REASON_CATEGORY, it) }
       ) as AbsenceReasonCategory?
     val reason = (
       absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) }
-        ?: linkProvider(reasonCategory ?: subType)
+        ?: linkProvider(ABSENCE_REASON, reasonCategory ?: subType ?: type)
       ) as AbsenceReason
     return TemporaryAbsenceAuthorisation(
       person = person,
