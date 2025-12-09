@@ -213,7 +213,11 @@ class TemporaryAbsenceOccurrence(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+  override fun domainEvents(): Set<DomainEvent<*>> {
+    val events = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+    appliedActions = emptyList()
+    return events
+  }
 
   fun applyAbsenceCategorisation(
     action: RecategoriseOccurrence,
@@ -280,9 +284,9 @@ class TemporaryAbsenceOccurrence(
     }
   }
 
-  fun cancel(action: CancelOccurrence, statusProvider: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+  fun cancel(action: CancelOccurrence, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
     if (!::status.isInitialized || status.code != CANCELLED.name) {
-      status = statusProvider(TAP_OCCURRENCE_STATUS, CANCELLED.name) as TapOccurrenceStatus
+      status = rdSupplier(TAP_OCCURRENCE_STATUS, CANCELLED.name) as TapOccurrenceStatus
       appliedActions += action
     }
   }

@@ -58,7 +58,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
@@ -198,7 +200,11 @@ class TemporaryAbsenceAuthorisation(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+  override fun domainEvents(): Set<DomainEvent<*>> {
+    val events = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+    appliedActions = emptyList()
+    return events
+  }
 
   fun applyPrisonPerson(action: ChangePrisonPerson, person: (String) -> PersonSummary) {
     this.person = person(action.personIdentifier)
@@ -232,6 +238,26 @@ class TemporaryAbsenceAuthorisation(
   fun amendNotes(action: AmendAuthorisationNotes) {
     if (action.changes(notes)) {
       notes = action.notes
+      appliedActions += action
+    }
+  }
+
+  fun applyAccompaniment(
+    action: ChangeAuthorisationAccompaniment,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) {
+    if (action.accompaniedByCode != accompaniedBy.code) {
+      accompaniedBy = rdSupplier(ReferenceDataDomain.Code.ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
+      appliedActions += action
+    }
+  }
+
+  fun applyTransport(
+    action: ChangeAuthorisationTransport,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) {
+    if (action.transportCode != transport.code) {
+      transport = rdSupplier(ReferenceDataDomain.Code.TRANSPORT, action.transportCode) as Transport
       appliedActions += action
     }
   }
@@ -311,7 +337,8 @@ fun authorisationMatchesPrisonCode(prisonCode: String) = Specification<Temporary
 }
 
 fun authorisationMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
-  taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesIdentifier(cb, personIdentifier)
+  taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
+    .matchesIdentifier(cb, personIdentifier)
 }
 
 fun authorisationMatchesPersonName(name: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->

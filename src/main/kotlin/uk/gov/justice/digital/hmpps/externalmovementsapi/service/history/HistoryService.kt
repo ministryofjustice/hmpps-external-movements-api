@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers.UserDetails
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.util.UUID
 
 @Transactional(readOnly = true)
@@ -107,7 +108,8 @@ abstract class HistoryService<T : Identifiable>(
   }
 
   protected fun Any?.asChangeValue(): Any? = when (this) {
-    is ReferenceData -> this.description
+    is ReferenceData -> description
+    is Location -> toString()
     else -> this
   }
 

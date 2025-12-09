@@ -36,10 +36,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationHistory
 import java.util.UUID
@@ -79,6 +83,18 @@ class TapAuthorisationModifications(
         } else {
           authorisation.cancel(action, rdSupplier)
           authorisation.updateOccurrenceStatus()
+        }
+
+        is ChangeAuthorisationAccompaniment -> {
+          authorisation.applyAccompaniment(action, rdSupplier)
+          val coa = ChangeOccurrenceAccompaniment(action.accompaniedByCode, action.reason)
+          authorisation.affectedOccurrences().forEach { it.applyAccompaniment(coa, rdSupplier) }
+        }
+
+        is ChangeAuthorisationTransport -> {
+          authorisation.applyTransport(action, rdSupplier)
+          val coa = ChangeOccurrenceTransport(action.transportCode, action.reason)
+          authorisation.affectedOccurrences().forEach { it.applyTransport(coa, rdSupplier) }
         }
 
         is AmendAuthorisationNotes -> {

@@ -149,6 +149,46 @@ data class TemporaryAbsenceNotesChanged(
   }
 }
 
+data class TemporaryAbsenceAccompanimentChanged(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "The accompaniment of a temporary absence has been changed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.accompaniment-changed"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAccompanimentChanged(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceTransportChanged(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "The transport for a temporary absence has been changed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.transport-changed"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceTransportChanged(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
 data class TemporaryAbsenceRecategorised(
   override val additionalInformation: TemporaryAbsenceInformation,
   override val personReference: PersonReference,
@@ -163,6 +203,26 @@ data class TemporaryAbsenceRecategorised(
       id: UUID,
       dataSource: DataSource = ExternalMovementContext.get().source,
     ) = TemporaryAbsenceRecategorised(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceRelocated(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "A temporary absence has been relocated."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.relocated"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceRelocated(
       TemporaryAbsenceInformation(id, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )

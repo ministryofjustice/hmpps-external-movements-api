@@ -4,25 +4,26 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationNotesChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceNotesChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.util.UUID
 
-class AmendTapOccurrenceNotesIntTest(
+class ChangeTapOccurrenceLocationIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -41,68 +42,45 @@ class AmendTapOccurrenceNotesIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    amendOccurrenceNotes(
+    applyLocation(
       newUuid(),
-      amendNotesRequest(),
+      action(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 occurrence does not exist`() {
-    amendOccurrenceNotes(newUuid(), amendNotesRequest()).expectStatus().isNotFound
+    applyLocation(newUuid(), action()).expectStatus().isNotFound
   }
 
   @Test
-  fun `200 ok single tap occurrence notes updated successfully`() {
+  fun `400 bad request - description or address part required`() {
+    val res = applyLocation(newUuid(), action(location(description = null, address = null, postcode = null)))
+      .errorResponse(HttpStatus.BAD_REQUEST)
+
+    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(res.userMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
+  }
+
+  @Test
+  fun `200 ok tap occurrence location updated successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = amendNotesRequest()
-    val res = amendOccurrenceNotes(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceNotesChanged.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationNotesChanged.EVENT_TYPE,
-    )
+    val request = action()
+    val res = applyLocation(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRelocated.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(AuditedAction.Change("notes", occurrence.notes, request.notes))
-
-    val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.notes).isEqualTo(request.notes)
-    assertThat(saved.authorisation.notes).isEqualTo(request.notes)
-
-    verifyAudit(
-      saved,
-      RevisionType.MOD,
-      setOf(
-        TemporaryAbsenceOccurrence::class.simpleName!!,
-        TemporaryAbsenceAuthorisation::class.simpleName!!,
-        HmppsDomainEvent::class.simpleName!!,
-      ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
-    )
-
-    verifyEvents(
-      saved,
-      setOf(
-        TemporaryAbsenceNotesChanged(occurrence.authorisation.person.identifier, occurrence.id),
-        TemporaryAbsenceAuthorisationNotesChanged(auth.person.identifier, auth.id),
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change(
+        "location",
+        occurrence.location.toString(),
+        request.location.toString(),
       ),
     )
-  }
-
-  @Test
-  fun `200 ok repeat tap occurrence notes updated successfully`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = amendNotesRequest()
-    val res = amendOccurrenceNotes(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceNotesChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(AuditedAction.Change("notes", occurrence.notes, request.notes))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.notes).isEqualTo(request.notes)
-    assertThat(saved.authorisation.notes).isEqualTo(auth.notes)
+    assertThat(saved.location).isEqualTo(request.location)
 
     verifyAudit(
       saved,
@@ -117,19 +95,19 @@ class AmendTapOccurrenceNotesIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceNotesChanged(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceRelocated(auth.person.identifier, occurrence.id),
       ),
     )
   }
 
-  private fun amendNotesRequest(
-    notes: String = (0..10).joinToString(separator = " ") { word(6) },
+  private fun action(
+    location: Location = location(),
     reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = AmendOccurrenceNotes(notes, reason)
+  ) = ChangeOccurrenceLocation(location, reason)
 
-  private fun amendOccurrenceNotes(
+  private fun applyLocation(
     id: UUID,
-    request: AmendOccurrenceNotes,
+    request: ChangeOccurrenceLocation,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
