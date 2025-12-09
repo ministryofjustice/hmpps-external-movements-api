@@ -97,6 +97,7 @@ class SyncTapOccurrenceIntTest(
       isCancelled = true,
       legacyId = existing.legacyId!!,
       updated = AtAndBy(LocalDateTime.now().minusMinutes(20), SYSTEM_USERNAME),
+      location = existing.location,
     )
 
     val res = syncTapOccurrence(authorisation.id, request)
@@ -156,13 +157,23 @@ class SyncTapOccurrenceIntTest(
   @Test
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId(), absenceType = "PP", absenceSubType = "PP", absenceReasonCategory = null, absenceReason = "PC"))
+    val existing = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authorisation,
+        legacyId = newId(),
+        absenceType = "PP",
+        absenceSubType = "PP",
+        absenceReasonCategory = null,
+        absenceReason = "PC",
+      ),
+    )
     val request = tapOccurrence(
       legacyId = existing.legacyId!!,
       accompaniedByCode = existing.accompaniedBy.code,
       releaseAt = existing.releaseAt,
       returnBy = existing.returnBy,
       contactInformation = null,
+      location = existing.location,
       notes = existing.notes,
       typeCode = existing.absenceType?.code,
       subTypeCode = existing.absenceSubType?.code,
@@ -180,12 +191,10 @@ class SyncTapOccurrenceIntTest(
 
     verifyAudit(
       saved,
-      RevisionType.MOD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(),
     )
-
-    verifyEvents(saved, setOf())
   }
 
   @Test

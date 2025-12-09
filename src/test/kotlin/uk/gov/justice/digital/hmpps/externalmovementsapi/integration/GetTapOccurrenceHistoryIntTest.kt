@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRecategorised
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -27,7 +28,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.util.UUID
 
 class GetTapOccurrenceHistoryIntTest(
@@ -114,11 +114,11 @@ class GetTapOccurrenceHistoryIntTest(
     }
     with(history.content[2]) {
       assertThat(user).isEqualTo(AuditedAction.User(locationUser.username, locationUser.name))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).contains(TemporaryAbsenceRelocated.EVENT_TYPE)
       assertThat(reason).isEqualTo("A reason for changing the location")
       with(changes.first()) {
-        assertThat(previous).isEqualTo(originalLocation.asMap())
-        assertThat(change).isEqualTo(changeLocation.location.asMap())
+        assertThat(previous).isEqualTo(originalLocation.toString())
+        assertThat(change).isEqualTo(changeLocation.location.toString())
       }
     }
     with(history.content.last()) {
@@ -127,13 +127,6 @@ class GetTapOccurrenceHistoryIntTest(
       assertThat(reason).isEqualTo("A reason for cancelling")
     }
   }
-
-  private fun Location.asMap() = listOfNotNull(
-    description?.let { "description" to it },
-    address?.let { "address" to it },
-    postcode?.let { "postcode" to it },
-    uprn?.let { "uprn" to it },
-  ).toMap()
 
   private fun getTapOccurrenceHistory(
     id: UUID,

@@ -27,6 +27,15 @@ data class RecategoriseAuthorisation(
 ) : AuthorisationAction,
   AbsenceCategorisationAction,
   ReferenceDataRequired {
+  constructor(aca: AbsenceCategorisationAction) : this(
+    aca.absenceTypeCode,
+    aca.absenceSubTypeCode,
+    aca.absenceReasonCategoryCode,
+    aca.absenceReasonCode,
+    aca.reasonPath,
+    aca.reason,
+  )
+
   override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationRecategorised(taa.person.identifier, taa.id)
 
   override fun requiredReferenceData(): Set<ReferenceDataKey> = setOfNotNull(
