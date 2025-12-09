@@ -96,6 +96,48 @@ class RecategoriseAuthorisationIntTest(
   }
 
   @Test
+  fun `200 ok - authorisation recategorised type and reason`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val request = action("SE", null, null, "C6")
+    val res = recategoriseAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE, TemporaryAbsenceRecategorised.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Security escort"),
+      AuditedAction.Change("absenceSubType", "RDR (Resettlement Day Release)", null),
+      AuditedAction.Change("absenceReasonCategory", "Paid work", null),
+      AuditedAction.Change("absenceReason", "IT and communication", "Inpatient medical or dental appointment"),
+    )
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
+    assertThat(occurrence.absenceReason?.code).isEqualTo(saved.absenceReason?.code)
+    assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(saved.absenceReasonCategory?.code)
+    assertThat(occurrence.absenceSubType?.code).isEqualTo(saved.absenceSubType?.code)
+    assertThat(occurrence.absenceType?.code).isEqualTo(saved.absenceType?.code)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+    )
+
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationRecategorised(auth.person.identifier, auth.id),
+        TemporaryAbsenceRecategorised(auth.person.identifier, occ.id),
+      ),
+    )
+  }
+
+  @Test
   fun `200 ok - no-op re-categorisation request`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val request = action(auth.absenceType?.code, auth.absenceSubType?.code, auth.absenceReasonCategory?.code, auth.absenceReason?.code)
