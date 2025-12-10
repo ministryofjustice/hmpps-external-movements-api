@@ -63,23 +63,23 @@ class RescheduleTapOccurrenceIntTest(
     val request = rescheduleOccurrenceRequest(null, null)
     val res = rescheduleOccurrence(occurrence.id, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Either release or return date must be provided.")
+    assertThat(res.userMessage).isEqualTo("Validation failure: Either start or end must be provided.")
   }
 
   @Test
   fun `400 if absence is outside of repeat authorisation date range`() {
     val auth = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
-        fromDate = LocalDate.now(),
-        toDate = LocalDate.now().plusDays(3),
+        start = LocalDate.now(),
+        end = LocalDate.now().plusDays(3),
         repeat = true,
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().plusDays(1),
-        returnBy = LocalDateTime.now().plusDays(2),
+        start = LocalDateTime.now().plusDays(1),
+        end = LocalDateTime.now().plusDays(2),
       ),
     )
     val request = rescheduleOccurrenceRequest(LocalDateTime.now().plusDays(3), LocalDateTime.now().plusDays(4))
@@ -96,11 +96,11 @@ class RescheduleTapOccurrenceIntTest(
     val res = rescheduleOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRescheduled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes.map { it.propertyName }).containsExactly("releaseAt", "returnBy")
+    assertThat(res.changes.map { it.propertyName }).containsExactly("start", "end")
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.releaseAt).isCloseTo(request.releaseAt, within(2, ChronoUnit.SECONDS))
-    assertThat(saved.returnBy).isCloseTo(request.returnBy, within(2, ChronoUnit.SECONDS))
+    assertThat(saved.start).isCloseTo(request.start, within(2, ChronoUnit.SECONDS))
+    assertThat(saved.end).isCloseTo(request.end, within(2, ChronoUnit.SECONDS))
 
     verifyAudit(
       saved,
@@ -126,11 +126,11 @@ class RescheduleTapOccurrenceIntTest(
       TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE,
     )
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes.map { it.propertyName }).containsExactly("releaseAt", "returnBy")
+    assertThat(res.changes.map { it.propertyName }).containsExactly("start", "end")
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.releaseAt).isCloseTo(request.releaseAt, within(2, ChronoUnit.SECONDS))
-    assertThat(saved.returnBy).isCloseTo(request.returnBy, within(2, ChronoUnit.SECONDS))
+    assertThat(saved.start).isCloseTo(request.start, within(2, ChronoUnit.SECONDS))
+    assertThat(saved.end).isCloseTo(request.end, within(2, ChronoUnit.SECONDS))
 
     verifyAudit(
       saved,
@@ -153,10 +153,10 @@ class RescheduleTapOccurrenceIntTest(
   }
 
   private fun rescheduleOccurrenceRequest(
-    releaseAt: LocalDateTime? = LocalDateTime.now().minusHours(2),
-    returnBy: LocalDateTime? = LocalDateTime.now().plusHours(2),
+    start: LocalDateTime? = LocalDateTime.now().minusHours(2),
+    end: LocalDateTime? = LocalDateTime.now().plusHours(2),
     reason: String? = "A reason for the reschedule",
-  ) = RescheduleOccurrence(releaseAt, returnBy, reason)
+  ) = RescheduleOccurrence(start, end, reason)
 
   private fun rescheduleOccurrence(
     id: UUID,

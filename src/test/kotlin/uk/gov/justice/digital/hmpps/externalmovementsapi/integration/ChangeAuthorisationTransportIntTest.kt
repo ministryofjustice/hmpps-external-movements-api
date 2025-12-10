@@ -61,8 +61,8 @@ class ChangeAuthorisationTransportIntTest(
     val prev = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().minusDays(3),
-        returnBy = LocalDateTime.now().minusDays(2),
+        start = LocalDateTime.now().minusDays(3),
+        end = LocalDateTime.now().minusDays(2),
       ),
     )
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))

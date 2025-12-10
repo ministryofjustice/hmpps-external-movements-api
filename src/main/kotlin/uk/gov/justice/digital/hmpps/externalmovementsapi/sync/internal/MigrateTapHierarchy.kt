@@ -43,7 +43,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonSummaryService
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigratedAuthorisation
@@ -148,9 +148,9 @@ class MigrateTapHierarchy(
       transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
       repeat = repeat,
       status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus,
-      notes = notes,
-      fromDate = fromDate,
-      toDate = toDate,
+      comments = notes,
+      start = fromDate,
+      end = toDate,
       schedule = null,
       reasonPath = reasonPath,
       legacyId = legacyId,
@@ -178,13 +178,13 @@ class MigrateTapHierarchy(
       },
       absenceReasonCategory = category as? AbsenceReasonCategory,
       absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
-      releaseAt = releaseAt,
-      returnBy = returnBy,
+      start = start,
+      end = end,
       contactInformation = contactInformation,
       accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
       transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
       location = location,
-      notes = notes,
+      comments = comments,
       legacyId = legacyId,
       reasonPath = reasonPath,
       scheduleReference = null,
@@ -208,8 +208,8 @@ class MigrateTapHierarchy(
     direction = valueOf(direction.name),
     absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
     accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
-    accompaniedByNotes = accompaniedByNotes,
-    notes = notes,
+    accompaniedByComments = accompaniedByComments,
+    comments = comments,
     recordedByPrisonCode = created.prisonCode,
     location = location,
     legacyId = legacyId,

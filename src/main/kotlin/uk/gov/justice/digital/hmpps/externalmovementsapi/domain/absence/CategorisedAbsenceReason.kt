@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 
-interface AbsenceCategorisation {
+interface CategorisedAbsenceReason {
   val absenceType: AbsenceType?
   val absenceSubType: AbsenceSubType?
   val absenceReasonCategory: AbsenceReasonCategory?

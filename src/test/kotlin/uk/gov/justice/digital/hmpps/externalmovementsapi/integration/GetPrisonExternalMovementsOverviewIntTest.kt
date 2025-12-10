@@ -80,15 +80,15 @@ class GetPrisonExternalMovementsOverviewIntTest(
         temporaryAbsenceAuthorisation(
           prisonCode,
           personIdentifier,
-          fromDate = LocalDate.now(),
-          toDate = LocalDate.now().plusDays(1),
+          start = LocalDate.now(),
+          end = LocalDate.now().plusDays(1),
         ),
       )
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
           authorisation,
-          releaseAt = LocalDateTime.now(),
-          returnBy = LocalDateTime.now().plusDays((idx % 2).toLong()),
+          start = LocalDateTime.now(),
+          end = LocalDateTime.now().plusDays((idx % 2).toLong()),
         ),
       )
     }
@@ -103,15 +103,15 @@ class GetPrisonExternalMovementsOverviewIntTest(
         temporaryAbsenceAuthorisation(
           prisonCode,
           personIdentifier,
-          fromDate = from,
-          toDate = to,
+          start = from,
+          end = to,
         ),
       )
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
           authorisation,
-          releaseAt = LocalDateTime.of(from, LocalTime.now()),
-          returnBy = LocalDateTime.of(to, LocalTime.now()),
+          start = LocalDateTime.of(from, LocalTime.now()),
+          end = LocalDateTime.of(to, LocalTime.now()),
         ),
       )
     }
@@ -125,8 +125,8 @@ class GetPrisonExternalMovementsOverviewIntTest(
           prisonCode,
           personIdentifier,
           status = TapAuthorisationStatus.Code.PENDING,
-          fromDate = from,
-          toDate = from.plusDays(1),
+          start = from,
+          end = from.plusDays(1),
         ),
       )
     }

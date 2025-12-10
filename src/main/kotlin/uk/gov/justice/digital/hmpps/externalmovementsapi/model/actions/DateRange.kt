@@ -7,8 +7,8 @@ import java.time.LocalDate
 import kotlin.reflect.KClass
 
 interface DateRange {
-  val fromDate: LocalDate
-  val toDate: LocalDate
+  val start: LocalDate
+  val end: LocalDate
 }
 
 @Target(AnnotationTarget.CLASS)
@@ -25,6 +25,5 @@ annotation class ValidDateRange(
 }
 
 class DateRangeValidator : ConstraintValidator<ValidDateRange, DateRange> {
-  override fun isValid(request: DateRange, context: ConstraintValidatorContext): Boolean = !request.toDate.isBefore(request.fromDate) &&
-    !request.fromDate.plusMonths(6).isBefore(request.toDate)
+  override fun isValid(request: DateRange, context: ConstraintValidatorContext): Boolean = !request.start.plusMonths(6).isBefore(request.end)
 }

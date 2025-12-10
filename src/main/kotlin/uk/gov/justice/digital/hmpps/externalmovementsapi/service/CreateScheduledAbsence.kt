@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersea
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import java.util.UUID
 
 @Transactional
@@ -60,10 +61,10 @@ class CreateScheduledAbsence(
       }
     }
     request.occurrences.mapNotNull {
-      tapOccurrenceRepository.findByAuthorisationPersonIdentifierAndReleaseAtAndReturnBy(
+      tapOccurrenceRepository.findByAuthorisationPersonIdentifierAndStartAndEnd(
         personIdentifier,
-        it.releaseAt,
-        it.returnBy,
+        it.start,
+        it.end,
       )
     }.takeIf { it.isNotEmpty() }
       ?.also {
@@ -82,8 +83,8 @@ class CreateScheduledAbsence(
   fun tapOccurrence(authorisationId: UUID, request: CreateOccurrenceRequest): ReferenceId {
     val authorisation = tapAuthRepository.getAuthorisation(authorisationId)
     check(
-      !request.releaseAt.toLocalDate().isBefore(authorisation.fromDate) &&
-        !request.returnBy.toLocalDate().isAfter(authorisation.toDate),
+      !request.start.toLocalDate().isBefore(authorisation.start) &&
+        !request.end.toLocalDate().isAfter(authorisation.end),
     ) {
       "Temporary absence must be within the authorised date range."
     }
@@ -121,9 +122,9 @@ class CreateScheduledAbsence(
       absenceReasonCategory = reasonCategory,
       absenceReason = reason,
       status = rdProvider(TAP_AUTHORISATION_STATUS, statusCode.name) as TapAuthorisationStatus,
-      notes = notes,
-      fromDate = fromDate,
-      toDate = toDate,
+      comments = comments,
+      start = start,
+      end = end,
       repeat = repeat,
       reasonPath = ReasonPath(reasonPath()),
       schedule = schedule,
@@ -143,8 +144,8 @@ class CreateScheduledAbsence(
     absenceSubType = authorisation.absenceSubType,
     absenceReasonCategory = authorisation.absenceReasonCategory,
     absenceReason = authorisation.absenceReason,
-    releaseAt = releaseAt,
-    returnBy = returnBy,
+    start = start,
+    end = end,
     accompaniedBy = authorisation.accompaniedBy,
     transport = authorisation.transport,
     location = location.let {
@@ -155,7 +156,7 @@ class CreateScheduledAbsence(
       }
     },
     contactInformation = authRequest.contactInformation,
-    notes = authorisation.notes,
+    comments = authorisation.comments,
     reasonPath = authorisation.reasonPath,
     scheduleReference = scheduleReference,
     legacyId = null,
@@ -169,8 +170,8 @@ class CreateScheduledAbsence(
     absenceSubType = authorisation.absenceSubType,
     absenceReasonCategory = authorisation.absenceReasonCategory,
     absenceReason = authorisation.absenceReason,
-    releaseAt = releaseAt,
-    returnBy = returnBy,
+    start = start,
+    end = end,
     accompaniedBy = authorisation.accompaniedBy,
     transport = authorisation.transport,
     location = location.let {
@@ -181,7 +182,7 @@ class CreateScheduledAbsence(
       }
     },
     contactInformation = null,
-    notes = notes ?: authorisation.notes,
+    comments = notes ?: authorisation.comments,
     reasonPath = authorisation.reasonPath,
     scheduleReference = null,
     legacyId = null,

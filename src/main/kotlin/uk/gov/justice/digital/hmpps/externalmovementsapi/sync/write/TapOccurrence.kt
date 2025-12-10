@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
@@ -19,8 +20,10 @@ import java.util.UUID
 data class TapOccurrence(
   val id: UUID?,
   val isCancelled: Boolean,
-  val releaseAt: LocalDateTime,
-  val returnBy: LocalDateTime,
+  @JsonAlias("releaseAt")
+  val start: LocalDateTime,
+  @JsonAlias("returnBy")
+  val end: LocalDateTime,
   val location: Location,
   val absenceTypeCode: String?,
   val absenceSubTypeCode: String?,
@@ -28,7 +31,8 @@ data class TapOccurrence(
   val accompaniedByCode: String,
   val transportCode: String,
   val contactInformation: String?,
-  val notes: String?,
+  @JsonAlias("notes")
+  val comments: String?,
   val created: AtAndBy,
   val updated: AtAndBy?,
   val legacyId: Long,

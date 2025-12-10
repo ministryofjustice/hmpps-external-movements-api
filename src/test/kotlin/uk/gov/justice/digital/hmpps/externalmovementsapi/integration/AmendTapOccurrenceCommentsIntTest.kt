@@ -10,8 +10,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationNotesChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceNotesChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -19,10 +19,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import java.util.UUID
 
-class AmendTapOccurrenceNotesIntTest(
+class AmendTapOccurrenceCommentsIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -41,34 +41,34 @@ class AmendTapOccurrenceNotesIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    amendOccurrenceNotes(
+    applyOccurrenceComments(
       newUuid(),
-      amendNotesRequest(),
+      action(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 occurrence does not exist`() {
-    amendOccurrenceNotes(newUuid(), amendNotesRequest()).expectStatus().isNotFound
+    applyOccurrenceComments(newUuid(), action()).expectStatus().isNotFound
   }
 
   @Test
   fun `200 ok single tap occurrence notes updated successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = amendNotesRequest()
-    val res = amendOccurrenceNotes(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val request = action()
+    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceNotesChanged.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationNotesChanged.EVENT_TYPE,
+      TemporaryAbsenceCommentsChanged.EVENT_TYPE,
+      TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
     )
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(AuditedAction.Change("notes", occurrence.notes, request.notes))
+    assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.notes).isEqualTo(request.notes)
-    assertThat(saved.authorisation.notes).isEqualTo(request.notes)
+    assertThat(saved.comments).isEqualTo(request.comments)
+    assertThat(saved.authorisation.comments).isEqualTo(request.comments)
 
     verifyAudit(
       saved,
@@ -84,8 +84,8 @@ class AmendTapOccurrenceNotesIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceNotesChanged(occurrence.authorisation.person.identifier, occurrence.id),
-        TemporaryAbsenceAuthorisationNotesChanged(auth.person.identifier, auth.id),
+        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id),
       ),
     )
   }
@@ -94,15 +94,15 @@ class AmendTapOccurrenceNotesIntTest(
   fun `200 ok repeat tap occurrence notes updated successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = amendNotesRequest()
-    val res = amendOccurrenceNotes(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceNotesChanged.EVENT_TYPE)
+    val request = action()
+    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(AuditedAction.Change("notes", occurrence.notes, request.notes))
+    assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.notes).isEqualTo(request.notes)
-    assertThat(saved.authorisation.notes).isEqualTo(auth.notes)
+    assertThat(saved.comments).isEqualTo(request.comments)
+    assertThat(saved.authorisation.comments).isEqualTo(auth.comments)
 
     verifyAudit(
       saved,
@@ -117,19 +117,19 @@ class AmendTapOccurrenceNotesIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceNotesChanged(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id),
       ),
     )
   }
 
-  private fun amendNotesRequest(
+  private fun action(
     notes: String = (0..10).joinToString(separator = " ") { word(6) },
     reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = AmendOccurrenceNotes(notes, reason)
+  ) = ChangeOccurrenceComments(notes, reason)
 
-  private fun amendOccurrenceNotes(
+  private fun applyOccurrenceComments(
     id: UUID,
-    request: AmendOccurrenceNotes,
+    request: ChangeOccurrenceComments,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional
 import software.amazon.awssdk.services.sns.model.PublishBatchRequest
 import software.amazon.awssdk.services.sns.model.PublishBatchRequestEntry
 import software.amazon.awssdk.services.sns.model.PublishBatchResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.hmpps.sqs.DEFAULT_BACKOFF_POLICY
 import uk.gov.justice.hmpps.sqs.DEFAULT_RETRY_POLICY
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -31,12 +30,12 @@ class DomainEventPublisher(
   fun publishUnpublishedEvents() {
     domainEventRepository.findByPublishedIsFalseOrderById(Pageable.ofSize(BATCH_SIZE))
       .takeIf { it.isNotEmpty() }
-      ?.also { events -> domainEventsTopic.publishBatch(events.map { it.event }) }
+      ?.also { events -> domainEventsTopic.publishBatch(events) }
       ?.forEach { it.published = true }
   }
 
   private fun HmppsTopic.publishBatch(
-    events: List<DomainEvent<*>>,
+    events: List<HmppsDomainEvent>,
     retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY,
     backOffPolicy: BackOffPolicy = DEFAULT_BACKOFF_POLICY,
   ) {
@@ -47,8 +46,8 @@ class DomainEventPublisher(
     val publishRequest = PublishBatchRequest.builder().topicArn(arn).publishBatchRequestEntries(
       events.map {
         PublishBatchRequestEntry.builder()
-          .id(newUuid().toString())
-          .message(objectMapper.writeValueAsString(it))
+          .id(it.id.toString())
+          .message(objectMapper.writeValueAsString(it.event))
           .messageAttributes(eventTypeSnsMap(it.eventType, noTracing = true))
           .build()
       },

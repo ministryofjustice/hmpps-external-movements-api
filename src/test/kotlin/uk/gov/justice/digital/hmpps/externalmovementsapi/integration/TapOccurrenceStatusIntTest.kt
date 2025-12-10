@@ -38,8 +38,8 @@ class TapOccurrenceStatusIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().minusHours(2),
-        returnBy = LocalDateTime.now().plus(durationAhead),
+        start = LocalDateTime.now().minusHours(2),
+        end = LocalDateTime.now().plus(durationAhead),
         movements = listOf(
           temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, auth.person.identifier),
         ),
@@ -64,8 +64,8 @@ class TapOccurrenceStatusIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().minusHours(2),
-        returnBy = LocalDateTime.now().plus(durationAhead),
+        start = LocalDateTime.now().minusHours(2),
+        end = LocalDateTime.now().plus(durationAhead),
       ),
     )
     assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)

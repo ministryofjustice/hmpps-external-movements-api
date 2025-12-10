@@ -11,8 +11,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationNotesChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceNotesChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AmendAuthorisationNotes
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -61,8 +61,8 @@ class AmendAuthorisationNotesIntTest(
     val prev = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().minusDays(1),
-        returnBy = LocalDateTime.now().minusHours(1),
+        start = LocalDateTime.now().minusDays(1),
+        end = LocalDateTime.now().minusHours(1),
         notes = "Previous notes on a past occurrence",
       ),
     )
@@ -70,12 +70,12 @@ class AmendAuthorisationNotesIntTest(
     val request = action()
     val res = amendNotes(auth.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(
-      TemporaryAbsenceAuthorisationNotesChanged.EVENT_TYPE,
-      TemporaryAbsenceNotesChanged.EVENT_TYPE,
+      TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
+      TemporaryAbsenceCommentsChanged.EVENT_TYPE,
     )
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("notes", auth.notes, request.notes),
+      AuditedAction.Change("comments", auth.comments, request.comments),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
@@ -86,7 +86,7 @@ class AmendAuthorisationNotesIntTest(
     assertThat(occurrence.absenceType?.code).isEqualTo(saved.absenceType?.code)
 
     val previous = requireNotNull(findTemporaryAbsenceOccurrence(prev.id))
-    assertThat(previous.notes).isEqualTo(prev.notes)
+    assertThat(previous.comments).isEqualTo(prev.comments)
 
     verifyAudit(
       saved,
@@ -102,8 +102,8 @@ class AmendAuthorisationNotesIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceAuthorisationNotesChanged(auth.person.identifier, auth.id),
-        TemporaryAbsenceNotesChanged(auth.person.identifier, occ.id),
+        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id),
+        TemporaryAbsenceCommentsChanged(auth.person.identifier, occ.id),
       ),
     )
   }
@@ -111,7 +111,7 @@ class AmendAuthorisationNotesIntTest(
   @Test
   fun `200 ok - no-op change notes request`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    val request = action(auth.notes!!)
+    val request = action(auth.comments!!)
     val res = amendNotes(auth.id, request).successResponse<AuditHistory>()
     assertThat(res.content).isEmpty()
 
@@ -130,11 +130,11 @@ class AmendAuthorisationNotesIntTest(
   private fun action(
     notes: String = (0..10).joinToString(separator = " ") { word(6) },
     reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = AmendAuthorisationNotes(notes, reason)
+  ) = ChangeAuthorisationComments(notes, reason)
 
   private fun amendNotes(
     id: UUID,
-    request: AmendAuthorisationNotes,
+    request: ChangeAuthorisationComments,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

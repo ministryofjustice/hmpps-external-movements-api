@@ -1,15 +1,13 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person
 
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.Join
 import jakarta.persistence.criteria.Predicate
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.FIRST_NAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.LAST_NAME
 
-fun Join<TemporaryAbsenceAuthorisation, PersonSummary>.matchesName(cb: CriteriaBuilder, name: String): Predicate {
+fun <T> Join<T, PersonSummary>.matchesName(cb: CriteriaBuilder, name: String): Predicate {
   val matches = name.replace(",", " ").split("\\s".toRegex())
     .filter { it.isNotBlank() }
     .map {
@@ -21,7 +19,7 @@ fun Join<TemporaryAbsenceAuthorisation, PersonSummary>.matchesName(cb: CriteriaB
   return cb.and(*matches)
 }
 
-fun Join<TemporaryAbsenceAuthorisation, PersonSummary>.matchesIdentifier(
+fun <T> Join<T, PersonSummary>.matchesIdentifier(
   cb: CriteriaBuilder,
   identifier: String,
 ): Predicate = cb.equal(get<String>(IDENTIFIER), identifier.uppercase())

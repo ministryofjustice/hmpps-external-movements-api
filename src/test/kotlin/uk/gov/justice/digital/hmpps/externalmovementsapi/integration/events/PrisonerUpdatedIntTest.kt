@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Pers
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchServer.Companion.prisoner
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonUpdatedHandler
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonUpdatedHandler
 
 class PrisonerUpdatedIntTest(
   @Autowired @Qualifier("personSummaryOperations") private val ps: PersonSummaryOperations,

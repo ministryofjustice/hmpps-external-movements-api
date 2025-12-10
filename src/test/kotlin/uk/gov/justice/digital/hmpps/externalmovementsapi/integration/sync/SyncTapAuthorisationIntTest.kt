@@ -14,8 +14,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationNotesChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -259,7 +259,7 @@ class SyncTapAuthorisationIntTest(
       saved,
       setOf(
         TemporaryAbsenceAuthorisationDateRangeChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceAuthorisationNotesChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceAuthorisationCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
       ),
     )
   }
@@ -374,7 +374,7 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
   assertThat(prisonCode).isEqualTo(request.prisonCode)
   assertThat(repeat).isEqualTo(request.repeat)
-  assertThat(notes).isEqualTo(request.notes)
-  assertThat(fromDate).isEqualTo(request.fromDate)
-  assertThat(toDate).isEqualTo(request.toDate)
+  assertThat(comments).isEqualTo(request.comments)
+  assertThat(start).isEqualTo(request.start)
+  assertThat(end).isEqualTo(request.end)
 }

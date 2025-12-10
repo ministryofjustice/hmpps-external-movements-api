@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.service
+package uk.gov.justice.digital.hmpps.externalmovementsapi.service.search
 
 import org.springframework.data.domain.Page
 import org.springframework.data.jpa.domain.Specification
@@ -41,7 +41,7 @@ class SearchTapAuthorisation(
 
   private fun TapAuthorisationSearchRequest.asSpecification(): Specification<TemporaryAbsenceAuthorisation> = listOfNotNull(
     authorisationMatchesPrisonCode(prisonCode),
-    authorisationMatchesDateRange(fromDate, toDate),
+    authorisationMatchesDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { authorisationStatusCodeIn(it) },
     queryString?.let {
       if (it.matches(Prisoner.PATTERN.toRegex())) {
@@ -65,8 +65,8 @@ class SearchTapAuthorisation(
       ?.asCodedDescription(),
     absenceReason = absenceReason?.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
     repeat,
-    fromDate,
-    toDate,
+    start,
+    end,
     occurrences.map { it.location }.distinct(),
     occurrences.size,
   )

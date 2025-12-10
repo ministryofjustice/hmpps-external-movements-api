@@ -273,8 +273,8 @@ class MigrateTapHierarchyIntTest(
     reasonCode: String = "R15",
     typeCode: String? = "SR",
     subTypeCode: String? = "RDR",
-    releaseAt: LocalDateTime = LocalDateTime.now().minusHours(7),
-    returnBy: LocalDateTime = LocalDateTime.now().plusHours(1),
+    start: LocalDateTime = LocalDateTime.now().minusHours(7),
+    end: LocalDateTime = LocalDateTime.now().plusHours(1),
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     location: Location = location(),
@@ -286,8 +286,8 @@ class MigrateTapHierarchyIntTest(
     movements: List<TapMovement> = listOf(tapMovement()),
   ) = TapOccurrence(
     isCancelled,
-    releaseAt,
-    returnBy,
+    start,
+    end,
     location,
     typeCode,
     subTypeCode,
@@ -355,9 +355,9 @@ class MigrateTapHierarchyIntTest(
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
       assertThat(prisonCode).isEqualTo(request.prisonCode)
       assertThat(repeat).isEqualTo(request.repeat)
-      assertThat(notes).isEqualTo(request.notes)
-      assertThat(fromDate).isEqualTo(request.fromDate)
-      assertThat(toDate).isEqualTo(request.toDate)
+      assertThat(comments).isEqualTo(request.notes)
+      assertThat(start).isEqualTo(request.fromDate)
+      assertThat(end).isEqualTo(request.toDate)
       assertThat(msa.createdBy).isEqualTo(request.created.by)
       assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))
       request.updated?.also {
@@ -367,13 +367,13 @@ class MigrateTapHierarchyIntTest(
     }
 
     private fun TemporaryAbsenceOccurrence.verifyAgainst(request: TapOccurrence, msa: MigrationSystemAudit) {
-      assertThat(releaseAt).isCloseTo(request.releaseAt, within(2, SECONDS))
-      assertThat(returnBy).isCloseTo(request.returnBy, within(2, SECONDS))
+      assertThat(start).isCloseTo(request.start, within(2, SECONDS))
+      assertThat(end).isCloseTo(request.end, within(2, SECONDS))
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
       assertThat(transport.code).isEqualTo(request.transportCode)
       assertThat(location).isEqualTo(request.location)
       assertThat(contactInformation).isEqualTo(request.contactInformation)
-      assertThat(notes).isEqualTo(request.notes)
+      assertThat(comments).isEqualTo(request.comments)
       assertThat(legacyId).isEqualTo(request.legacyId)
       assertThat(msa.createdBy).isEqualTo(request.created.by)
       assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))
@@ -394,7 +394,7 @@ class MigrateTapHierarchyIntTest(
       assertThat(absenceReason.code).isEqualTo(request.absenceReasonCode)
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
       assertThat(location).isEqualTo(request.location)
-      assertThat(notes).isEqualTo(request.notes)
+      assertThat(comments).isEqualTo(request.comments)
       assertThat(recordedByPrisonCode).isEqualTo(request.created.prisonCode)
       assertThat(legacyId).isEqualTo(request.legacyId)
       assertThat(msa.createdBy).isEqualTo(request.created.by)

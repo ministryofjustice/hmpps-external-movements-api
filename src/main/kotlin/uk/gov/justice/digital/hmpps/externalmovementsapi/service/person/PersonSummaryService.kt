@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.service
+package uk.gov.justice.digital.hmpps.externalmovementsapi.service.person
 
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service

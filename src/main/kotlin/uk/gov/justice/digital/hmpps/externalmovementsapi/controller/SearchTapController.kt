@@ -10,8 +10,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchResponse
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.SearchTapAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.SearchTapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.search.SearchTapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.search.SearchTapOccurrence
 
 @RestController
 @RequestMapping("/search")

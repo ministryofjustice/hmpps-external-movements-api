@@ -28,9 +28,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceContactInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
@@ -99,8 +99,8 @@ class SyncTapOccurrence(
       },
       absenceReasonCategory = category as? AbsenceReasonCategory,
       absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
-      releaseAt = releaseAt,
-      returnBy = returnBy,
+      start = start,
+      end = end,
       contactInformation = contactInformation,
       accompaniedBy = rdPaths.getReferenceData(
         ReferenceDataDomain.Code.ACCOMPANIED_BY,
@@ -108,7 +108,7 @@ class SyncTapOccurrence(
       ) as AccompaniedBy,
       transport = rdPaths.getReferenceData(ReferenceDataDomain.Code.TRANSPORT, transportCode) as Transport,
       location = location,
-      notes = notes,
+      comments = comments,
       legacyId = legacyId,
       reasonPath = reasonPath,
       scheduleReference = null,
@@ -128,7 +128,7 @@ class SyncTapOccurrence(
     applySchedule(request)
     applyLogistics(request, rdPaths)
     checkCancellation(request, rdPaths)
-    request.notes?.let { amendNotes(AmendOccurrenceNotes(it)) }
+    request.comments?.let { applyComments(ChangeOccurrenceComments(it)) }
     calculateStatus {
       rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
     }
@@ -152,7 +152,7 @@ class SyncTapOccurrence(
   }
 
   private fun TemporaryAbsenceOccurrence.applySchedule(request: TapOccurrence) {
-    reschedule(RescheduleOccurrence(request.releaseAt, request.returnBy))
+    reschedule(RescheduleOccurrence(request.start, request.end))
   }
 
   private fun TemporaryAbsenceOccurrence.applyLogistics(request: TapOccurrence, rdPaths: ReferenceDataPaths) {

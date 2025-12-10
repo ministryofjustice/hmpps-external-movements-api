@@ -19,13 +19,16 @@ data class TapOccurrenceResult(
   val absenceSubType: CodedDescription?,
   val absenceReasonCategory: CodedDescription?,
   val absenceReason: CodedDescription?,
-  val releaseAt: LocalDateTime,
-  val returnBy: LocalDateTime,
+  val start: LocalDateTime,
+  val end: LocalDateTime,
   val accompaniedBy: CodedDescription,
   val transport: CodedDescription,
   val location: Location,
   val isCancelled: Boolean,
-)
+) {
+  val releaseAt: LocalDateTime = start
+  val returnBy: LocalDateTime = end
+}
 
 data class TapOccurrenceAuthorisation(
   val id: UUID,
