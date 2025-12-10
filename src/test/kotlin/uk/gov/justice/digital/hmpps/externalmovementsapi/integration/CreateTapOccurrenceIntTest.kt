@@ -91,7 +91,7 @@ class CreateTapOccurrenceIntTest(
     assertThat(start).isCloseTo(request.start, within(1, ChronoUnit.SECONDS))
     assertThat(end).isCloseTo(request.end, within(1, ChronoUnit.SECONDS))
     assertThat(location).isEqualTo(request.location)
-    assertThat(comments).isEqualTo(request.notes ?: authorisation.comments)
+    assertThat(comments).isEqualTo(request.comments ?: authorisation.comments)
   }
 
   private fun TemporaryAbsenceOccurrence.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {

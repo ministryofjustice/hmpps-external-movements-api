@@ -182,7 +182,7 @@ class CreateScheduledAbsence(
       }
     },
     contactInformation = null,
-    comments = notes ?: authorisation.comments,
+    comments = comments ?: authorisation.comments,
     reasonPath = authorisation.reasonPath,
     scheduleReference = null,
     legacyId = null,
