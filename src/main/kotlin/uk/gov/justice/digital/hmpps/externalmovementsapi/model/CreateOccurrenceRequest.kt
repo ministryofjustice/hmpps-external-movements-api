@@ -12,5 +12,5 @@ data class CreateOccurrenceRequest(
   override val end: LocalDateTime,
   @Valid
   val location: Location,
-  val notes: String?,
+  val comments: String?,
 ) : StartAndEnd<LocalDateTime>
