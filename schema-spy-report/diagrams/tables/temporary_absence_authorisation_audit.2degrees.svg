@@ -119,7 +119,7 @@
 <polygon fill="none" stroke="#000000" points="484,-443.7 484,-465.7 583,-465.7 583,-443.7 484,-443.7"/>
 <text text-anchor="start" x="487" y="-451.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">int8[19]</text>
 <polygon fill="none" stroke="#000000" points="193,-421.7 193,-443.7 484,-443.7 484,-421.7 193,-421.7"/>
-<text text-anchor="start" x="213" y="-428.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">notes</text>
+<text text-anchor="start" x="213" y="-428.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">comments</text>
 <polygon fill="none" stroke="#000000" points="484,-421.7 484,-443.7 583,-443.7 583,-421.7 484,-421.7"/>
 <text text-anchor="start" x="487" y="-429.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">text[2147483647]</text>
 <polygon fill="none" stroke="#000000" points="193,-399.7 193,-421.7 484,-421.7 484,-399.7 193,-399.7"/>
@@ -127,11 +127,11 @@
 <polygon fill="none" stroke="#000000" points="484,-399.7 484,-421.7 583,-421.7 583,-399.7 484,-399.7"/>
 <text text-anchor="start" x="487" y="-407.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">int8[19]</text>
 <polygon fill="none" stroke="#000000" points="193,-377.7 193,-399.7 484,-399.7 484,-377.7 193,-377.7"/>
-<text text-anchor="start" x="213" y="-384.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">from_date</text>
+<text text-anchor="start" x="213" y="-384.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">start</text>
 <polygon fill="none" stroke="#000000" points="484,-377.7 484,-399.7 583,-399.7 583,-377.7 484,-377.7"/>
 <text text-anchor="start" x="487" y="-385.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">date[13]</text>
 <polygon fill="none" stroke="#000000" points="193,-355.7 193,-377.7 484,-377.7 484,-355.7 193,-355.7"/>
-<text text-anchor="start" x="213" y="-362.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">to_date</text>
+<text text-anchor="start" x="213" y="-362.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">end</text>
 <polygon fill="none" stroke="#000000" points="484,-355.7 484,-377.7 583,-377.7 583,-355.7 484,-355.7"/>
 <text text-anchor="start" x="487" y="-363.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">date[13]</text>
 <polygon fill="none" stroke="#000000" points="193,-333.7 193,-355.7 484,-355.7 484,-333.7 193,-333.7"/>

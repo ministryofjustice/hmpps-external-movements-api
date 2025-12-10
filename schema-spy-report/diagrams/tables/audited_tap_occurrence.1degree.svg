@@ -52,11 +52,11 @@
 <polygon fill="none" stroke="#000000" points="223,-369.7 223,-391.7 322,-391.7 322,-369.7 223,-369.7"/>
 <text text-anchor="start" x="226" y="-377.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">uuid[2147483647]</text>
 <polygon fill="none" stroke="#000000" points="10,-347.7 10,-369.7 223,-369.7 223,-347.7 10,-347.7"/>
-<text text-anchor="start" x="30" y="-354.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">release_at</text>
+<text text-anchor="start" x="30" y="-354.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">start</text>
 <polygon fill="none" stroke="#000000" points="223,-347.7 223,-369.7 322,-369.7 322,-347.7 223,-347.7"/>
 <text text-anchor="start" x="226" y="-355.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">timestamp[29,6]</text>
 <polygon fill="none" stroke="#000000" points="10,-325.7 10,-347.7 223,-347.7 223,-325.7 10,-325.7"/>
-<text text-anchor="start" x="30" y="-332.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">return_by</text>
+<text text-anchor="start" x="30" y="-332.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">end</text>
 <polygon fill="none" stroke="#000000" points="223,-325.7 223,-347.7 322,-347.7 322,-325.7 223,-325.7"/>
 <text text-anchor="start" x="226" y="-333.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">timestamp[29,6]</text>
 <polygon fill="none" stroke="#000000" points="10,-303.7 10,-325.7 223,-325.7 223,-303.7 10,-303.7"/>
@@ -72,7 +72,7 @@
 <polygon fill="none" stroke="#000000" points="223,-259.7 223,-281.7 322,-281.7 322,-259.7 223,-259.7"/>
 <text text-anchor="start" x="226" y="-267.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">text[2147483647]</text>
 <polygon fill="none" stroke="#000000" points="10,-237.7 10,-259.7 223,-259.7 223,-237.7 10,-237.7"/>
-<text text-anchor="start" x="30" y="-244.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">notes</text>
+<text text-anchor="start" x="30" y="-244.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">comments</text>
 <polygon fill="none" stroke="#000000" points="223,-237.7 223,-259.7 322,-259.7 322,-237.7 223,-237.7"/>
 <text text-anchor="start" x="226" y="-245.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">text[2147483647]</text>
 <polygon fill="none" stroke="#000000" points="10,-215.7 10,-237.7 223,-237.7 223,-215.7 10,-215.7"/>

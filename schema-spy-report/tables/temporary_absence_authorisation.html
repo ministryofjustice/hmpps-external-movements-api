@@ -292,7 +292,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="notes">notes</span></td>
+                                    <td><span id="comments">comments</span></td>
                                     <td>text</td>
                                     <td>2147483647</td>
                                     <td title='nullable'>√</td>
@@ -326,7 +326,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="from_date">from_date</span></td>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="start">start</span></td>
                                     <td>date</td>
                                     <td>13</td>
                                     <td title=''></td>
@@ -343,7 +343,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="to_date">to_date</span></td>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="end">end</span></td>
                                     <td>date</td>
                                     <td>13</td>
                                     <td title=''></td>
@@ -491,10 +491,10 @@
                                     <td>id</td>
                                 </tr>
                                 <tr>
-                                    <td title='Indexed'>idx_taa_prison_code_person_identifier_from_to</td>
+                                    <td title='Indexed'>idx_taa_prison_code_person_identifier_start_end</td>
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span></td>
-                                    <td>prison_code + person_identifier + from_date + to_date</td>
+                                    <td>prison_code + person_identifier + start + end</td>
                                 </tr>
                                 <tr>
                                     <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> uq_temporary_absence_authorisation_legacy_id</td>

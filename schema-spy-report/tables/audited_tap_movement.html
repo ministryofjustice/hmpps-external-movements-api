@@ -335,7 +335,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="accompanied_by_notes">accompanied_by_notes</span></td>
+                                    <td><span id="accompanied_by_comments">accompanied_by_comments</span></td>
                                     <td>text</td>
                                     <td>2147483647</td>
                                     <td title='nullable'>√</td>
@@ -352,7 +352,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="notes">notes</span></td>
+                                    <td><span id="comments">comments</span></td>
                                     <td>text</td>
                                     <td>2147483647</td>
                                     <td title='nullable'>√</td>
@@ -467,7 +467,7 @@
                             </div>
                         </div>
                         <div class="box-body">
-                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    tam.id,&#10;    tam.version,&#10;    tam.person_identifier,&#10;    tam.occurrence_id,&#10;    tam.occurred_at,&#10;    tam.direction,&#10;    tam.absence_reason_id,&#10;    tam.accompanied_by_id,&#10;    tam.accompanied_by_notes,&#10;    tam.notes,&#10;    tam.recorded_by_prison_code,&#10;    tam.legacy_id,&#10;    tam.location&#10;   FROM ((((temporary_absence_movement tam&#10;     JOIN temporary_absence_movement_audit created_audit ON (((created_audit.id &#61; tam.id) AND (created_audit.rev_type &#61; 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id &#61; created_audit.rev_id)))&#10;     LEFT JOIN temporary_absence_movement_audit updated_audit ON (((updated_audit.id &#61; tam.id) AND (updated_audit.rev_type &#61; 1) AND (updated_audit.rev_id &#61; ( SELECT max(audit.rev_id) AS max&#10;           FROM temporary_absence_movement_audit audit&#10;          WHERE ((audit.id &#61; tam.id) AND (audit.rev_type &#61; 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id &#61; updated_audit.rev_id)));</textarea>
+                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    tam.id,&#10;    tam.version,&#10;    tam.person_identifier,&#10;    tam.occurrence_id,&#10;    tam.occurred_at,&#10;    tam.direction,&#10;    tam.absence_reason_id,&#10;    tam.accompanied_by_id,&#10;    tam.accompanied_by_comments,&#10;    tam.comments,&#10;    tam.recorded_by_prison_code,&#10;    tam.legacy_id,&#10;    tam.location&#10;   FROM ((((temporary_absence_movement tam&#10;     JOIN temporary_absence_movement_audit created_audit ON (((created_audit.id &#61; tam.id) AND (created_audit.rev_type &#61; 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id &#61; created_audit.rev_id)))&#10;     LEFT JOIN temporary_absence_movement_audit updated_audit ON (((updated_audit.id &#61; tam.id) AND (updated_audit.rev_type &#61; 1) AND (updated_audit.rev_id &#61; ( SELECT max(audit.rev_id) AS max&#10;           FROM temporary_absence_movement_audit audit&#10;          WHERE ((audit.id &#61; tam.id) AND (audit.rev_type &#61; 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id &#61; updated_audit.rev_id)));</textarea>
                             <div style="padding-top: 5px;"><hr></div>
                             <div class="box box-solid">
                                 <div class="box-header with-border">

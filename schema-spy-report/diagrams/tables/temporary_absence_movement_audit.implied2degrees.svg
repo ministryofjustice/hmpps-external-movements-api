@@ -280,11 +280,11 @@
 <polygon fill="none" stroke="#000000" points="485.5,-355.7 485.5,-377.7 584.5,-377.7 584.5,-355.7 485.5,-355.7"/>
 <text text-anchor="start" x="488.5" y="-363.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">int8[19]</text>
 <polygon fill="none" stroke="#000000" points="213.5,-333.7 213.5,-355.7 485.5,-355.7 485.5,-333.7 213.5,-333.7"/>
-<text text-anchor="start" x="233.5" y="-340.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">accompanied_by_notes</text>
+<text text-anchor="start" x="233.5" y="-340.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">accompanied_by_comments</text>
 <polygon fill="none" stroke="#000000" points="485.5,-333.7 485.5,-355.7 584.5,-355.7 584.5,-333.7 485.5,-333.7"/>
 <text text-anchor="start" x="488.5" y="-341.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">text[2147483647]</text>
 <polygon fill="none" stroke="#000000" points="213.5,-311.7 213.5,-333.7 485.5,-333.7 485.5,-311.7 213.5,-311.7"/>
-<text text-anchor="start" x="233.5" y="-318.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">notes</text>
+<text text-anchor="start" x="233.5" y="-318.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">comments</text>
 <polygon fill="none" stroke="#000000" points="485.5,-311.7 485.5,-333.7 584.5,-333.7 584.5,-311.7 485.5,-311.7"/>
 <text text-anchor="start" x="488.5" y="-319.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">text[2147483647]</text>
 <polygon fill="none" stroke="#000000" points="213.5,-289.7 213.5,-311.7 485.5,-311.7 485.5,-289.7 213.5,-289.7"/>
