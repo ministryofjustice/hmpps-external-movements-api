@@ -134,7 +134,7 @@ data class TemporaryAbsenceCommentsChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The notes of a temporary absence have been changed."
+  override val description: String = "The comments on a temporary absence have been changed."
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.comments-changed"
