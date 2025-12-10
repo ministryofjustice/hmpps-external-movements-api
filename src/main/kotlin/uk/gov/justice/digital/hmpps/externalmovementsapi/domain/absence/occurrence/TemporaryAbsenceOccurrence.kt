@@ -22,7 +22,7 @@ import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.AbsenceCategorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.CategorisedAbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
@@ -48,9 +48,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceContactInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
@@ -81,13 +81,13 @@ class TemporaryAbsenceOccurrence(
   absenceSubType: AbsenceSubType?,
   absenceReasonCategory: AbsenceReasonCategory?,
   absenceReason: AbsenceReason?,
-  releaseAt: LocalDateTime,
-  returnBy: LocalDateTime,
+  start: LocalDateTime,
+  end: LocalDateTime,
   accompaniedBy: AccompaniedBy,
   transport: Transport,
   location: Location,
   contactInformation: String?,
-  notes: String?,
+  comments: String?,
   reasonPath: ReasonPath,
   scheduleReference: JsonNode?,
   legacyId: Long?,
@@ -95,7 +95,7 @@ class TemporaryAbsenceOccurrence(
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
 ) : Identifiable,
-  AbsenceCategorisation,
+  CategorisedAbsenceReason,
   DomainEventProducer {
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(optional = false)
@@ -128,13 +128,13 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @NotNull
-  @Column(name = "release_at", nullable = false)
-  var releaseAt: LocalDateTime = releaseAt
+  @Column(name = "start", nullable = false)
+  var start: LocalDateTime = start
     private set
 
   @NotNull
-  @Column(name = "return_by", nullable = false)
-  var returnBy: LocalDateTime = returnBy
+  @Column(name = "end", nullable = false)
+  var end: LocalDateTime = end
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
@@ -163,8 +163,8 @@ class TemporaryAbsenceOccurrence(
   var contactInformation: String? = contactInformation
     private set
 
-  @Column(name = "notes")
-  var notes: String? = notes
+  @Column(name = "comments")
+  var comments: String? = comments
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
@@ -236,8 +236,8 @@ class TemporaryAbsenceOccurrence(
   }
 
   fun reschedule(action: RescheduleOccurrence) {
-    val rel = action.releaseAt.ifChanges(::releaseAt)
-    val ret = action.returnBy.ifChanges(::returnBy)
+    val rel = action.start.ifChanges(::start)
+    val ret = action.end.ifChanges(::end)
     if (rel || ret) {
       appliedActions += action
     }
@@ -277,9 +277,9 @@ class TemporaryAbsenceOccurrence(
     }
   }
 
-  fun amendNotes(action: AmendOccurrenceNotes) {
-    if (action.changes(notes)) {
-      notes = action.notes
+  fun applyComments(action: ChangeOccurrenceComments) {
+    if (action.changes(comments)) {
+      comments = action.comments
       appliedActions += action
     }
   }
@@ -306,7 +306,7 @@ class TemporaryAbsenceOccurrence(
     ?.map { it.direction }?.let {
       if (it.contains(TemporaryAbsenceMovement.Direction.IN)) {
         COMPLETED
-      } else if (returnBy.isAfter(now())) {
+      } else if (end.isAfter(now())) {
         IN_PROGRESS
       } else {
         if (::status.isInitialized && status.code != OVERDUE.name) {
@@ -326,7 +326,7 @@ class TemporaryAbsenceOccurrence(
     calculatedStatus
   }
 
-  private fun approvedAuthorisationStatuses() = if (movements.isEmpty() && returnBy.isBefore(now())) {
+  private fun approvedAuthorisationStatuses() = if (movements.isEmpty() && end.isBefore(now())) {
     if (::status.isInitialized && status.code == SCHEDULED.name) {
       appliedActions += ExpireOccurrence()
     }
@@ -340,8 +340,8 @@ class TemporaryAbsenceOccurrence(
 
   companion object {
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
-    val RELEASE_AT = TemporaryAbsenceOccurrence::releaseAt.name
-    val RETURN_BY = TemporaryAbsenceOccurrence::returnBy.name
+    val START = TemporaryAbsenceOccurrence::start.name
+    val END = TemporaryAbsenceOccurrence::end.name
     val STATUS = TemporaryAbsenceOccurrence::status.name
     val ABSENCE_TYPE = TemporaryAbsenceOccurrence::absenceType.name
     val ABSENCE_REASON = TemporaryAbsenceOccurrence::absenceReason.name
@@ -350,12 +350,12 @@ class TemporaryAbsenceOccurrence(
     val LOCATION = TemporaryAbsenceOccurrence::location.name
 
     fun changeableProperties(): Set<KProperty1<TemporaryAbsenceOccurrence, Any?>> = setOf(
-      TemporaryAbsenceOccurrence::releaseAt,
-      TemporaryAbsenceOccurrence::returnBy,
+      TemporaryAbsenceOccurrence::start,
+      TemporaryAbsenceOccurrence::end,
       TemporaryAbsenceOccurrence::accompaniedBy,
       TemporaryAbsenceOccurrence::transport,
       TemporaryAbsenceOccurrence::contactInformation,
-      TemporaryAbsenceOccurrence::notes,
+      TemporaryAbsenceOccurrence::comments,
       TemporaryAbsenceOccurrence::location,
       TemporaryAbsenceOccurrence::absenceType,
       TemporaryAbsenceOccurrence::absenceSubType,

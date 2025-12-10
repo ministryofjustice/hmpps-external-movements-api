@@ -44,9 +44,9 @@ class TapAuthorisationController(
   @GetMapping("/{id}")
   fun getTapAuthorisation(
     @PathVariable id: UUID,
-    @RequestParam fromDate: LocalDate?,
-    @RequestParam toDate: LocalDate?,
-  ): TapAuthorisation = get.byId(id, fromDate, toDate)
+    @RequestParam start: LocalDate?,
+    @RequestParam end: LocalDate?,
+  ): TapAuthorisation = get.byId(id, start, end)
 
   @GetMapping("/{id}/history")
   fun getTapAuthorisationHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)

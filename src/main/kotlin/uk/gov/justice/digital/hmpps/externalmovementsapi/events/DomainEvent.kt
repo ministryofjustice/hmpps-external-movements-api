@@ -16,7 +16,7 @@ import java.time.ZonedDateTime
     Type(value = TemporaryAbsenceAuthorisationDateRangeChanged::class, name = TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationAccompanimentChanged::class, name = TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationTransportChanged::class, name = TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE),
-    Type(value = TemporaryAbsenceAuthorisationNotesChanged::class, name = TemporaryAbsenceAuthorisationNotesChanged.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationCommentsChanged::class, name = TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationRecategorised::class, name = TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE),
 
     Type(value = TemporaryAbsenceScheduled::class, name = TemporaryAbsenceScheduled.EVENT_TYPE),
@@ -27,7 +27,7 @@ import java.time.ZonedDateTime
     Type(value = TemporaryAbsenceContactInfoChanged::class, name = TemporaryAbsenceContactInfoChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceAccompanimentChanged::class, name = TemporaryAbsenceAccompanimentChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceTransportChanged::class, name = TemporaryAbsenceTransportChanged.EVENT_TYPE),
-    Type(value = TemporaryAbsenceNotesChanged::class, name = TemporaryAbsenceNotesChanged.EVENT_TYPE),
+    Type(value = TemporaryAbsenceCommentsChanged::class, name = TemporaryAbsenceCommentsChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceRecategorised::class, name = TemporaryAbsenceRecategorised.EVENT_TYPE),
     Type(value = TemporaryAbsenceRelocated::class, name = TemporaryAbsenceRelocated.EVENT_TYPE),
 

@@ -10,9 +10,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.LOCATION
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RETURN_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.FIRST_NAME
@@ -32,9 +32,9 @@ data class TapOccurrenceSearchRequest(
   val query: String? = null,
   override val page: Int = 1,
   override val size: Int = 10,
-  override val sort: String = RELEASE_AT,
+  override val sort: String = START,
 ) : PagedRequest {
-  override fun validSortFields(): Set<String> = setOf(RELEASE_AT, RETURN_BY, STATUS, FIRST_NAME, LAST_NAME, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT, LOCATION)
+  override fun validSortFields(): Set<String> = setOf(START, END, STATUS, FIRST_NAME, LAST_NAME, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT, LOCATION)
 
   private fun sortByDate(direction: Direction, first: String, second: String) = by(direction, first, second).and(sortByPersonName())
 
@@ -55,8 +55,8 @@ data class TapOccurrenceSearchRequest(
   override fun buildSort(field: String, direction: Direction): Sort = when (field) {
     LAST_NAME -> sortByPersonName(direction)
     FIRST_NAME -> sortByPersonName(direction, PERSON_FIRST_NAME, PERSON_LAST_NAME)
-    RELEASE_AT -> sortByDate(direction, RELEASE_AT, RETURN_BY)
-    RETURN_BY -> sortByDate(direction, RETURN_BY, RELEASE_AT)
+    START -> sortByDate(direction, START, END)
+    END -> sortByDate(direction, END, START)
     STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}").and(sortByPersonName())
     ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT -> by(direction, "${field}_description").and(sortByPersonName())
     LOCATION -> by(direction, "locationDescription").and(sortByPersonName())

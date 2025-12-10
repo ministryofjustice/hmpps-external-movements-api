@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.awspring.cloud.sqs.annotation.SqsListener
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonUpdatedHandler
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonUpdatedHandler
 
 @Service
 class DomainEventListener(

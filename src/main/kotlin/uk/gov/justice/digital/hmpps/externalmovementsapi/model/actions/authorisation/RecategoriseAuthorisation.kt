@@ -3,10 +3,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authoris
 import com.fasterxml.jackson.annotation.JsonIgnore
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.AbsenceCategorisationAction
@@ -25,8 +21,7 @@ data class RecategoriseAuthorisation(
   ),
   override val reason: String? = null,
 ) : AuthorisationAction,
-  AbsenceCategorisationAction,
-  ReferenceDataRequired {
+  AbsenceCategorisationAction {
   constructor(aca: AbsenceCategorisationAction) : this(
     aca.absenceTypeCode,
     aca.absenceSubTypeCode,
@@ -37,11 +32,4 @@ data class RecategoriseAuthorisation(
   )
 
   override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationRecategorised(taa.person.identifier, taa.id)
-
-  override fun requiredReferenceData(): Set<ReferenceDataKey> = setOfNotNull(
-    absenceTypeCode?.let { ReferenceDataDomain.Code.ABSENCE_TYPE of it },
-    absenceSubTypeCode?.let { ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of it },
-    absenceReasonCategoryCode?.let { ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of it },
-    absenceReasonCode?.let { ReferenceDataDomain.Code.ABSENCE_REASON of it },
-  )
 }

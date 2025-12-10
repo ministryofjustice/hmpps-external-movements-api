@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.service
+package uk.gov.justice.digital.hmpps.externalmovementsapi.service.search
 
 import org.springframework.data.domain.Page
 import org.springframework.data.jpa.domain.Specification
@@ -55,8 +55,8 @@ class SearchTapOccurrence(
     absenceSubType = absenceSubType?.asCodedDescription(),
     absenceReasonCategory = absenceReasonCategory?.asCodedDescription(),
     absenceReason = absenceReason?.asCodedDescription(),
-    releaseAt = releaseAt,
-    returnBy = returnBy,
+    start = start,
+    end = end,
     accompaniedBy = accompaniedBy.asCodedDescription(),
     transport = transport.asCodedDescription(),
     location = location,

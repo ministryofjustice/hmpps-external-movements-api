@@ -41,8 +41,8 @@ class TemporaryAbsenceMovement(
   direction: Direction,
   absenceReason: AbsenceReason,
   accompaniedBy: AccompaniedBy,
-  accompaniedByNotes: String?,
-  notes: String?,
+  accompaniedByComments: String?,
+  comments: String?,
   location: Location,
   recordedByPrisonCode: String,
   legacyId: String?,
@@ -86,12 +86,12 @@ class TemporaryAbsenceMovement(
   var accompaniedBy: AccompaniedBy = accompaniedBy
     private set
 
-  @Column(name = "accompanied_by_notes", length = Integer.MAX_VALUE)
-  var accompaniedByNotes: String? = accompaniedByNotes
+  @Column(name = "accompanied_by_comments", length = Integer.MAX_VALUE)
+  var accompaniedByComments: String? = accompaniedByComments
     private set
 
-  @Column(name = "notes", length = Integer.MAX_VALUE)
-  var notes: String? = notes
+  @Column(name = "comments", length = Integer.MAX_VALUE)
+  var comments: String? = comments
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
@@ -130,8 +130,8 @@ class TemporaryAbsenceMovement(
     direction = valueOf(request.direction.name)
     absenceReason = rdProvider(ReferenceDataDomain.Code.ABSENCE_REASON, request.absenceReasonCode) as AbsenceReason
     accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
-    accompaniedByNotes = request.accompaniedByNotes
-    notes = request.notes
+    accompaniedByComments = request.accompaniedByComments
+    comments = request.comments
     recordedByPrisonCode = request.created.prisonCode
     location = request.location
     legacyId = request.legacyId

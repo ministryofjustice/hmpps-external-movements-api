@@ -75,8 +75,8 @@ class CancelTapAuthorisationIntTest(
     val pastOccurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().minusDays(3),
-        returnBy = LocalDateTime.now().minusDays(2),
+        start = LocalDateTime.now().minusDays(3),
+        end = LocalDateTime.now().minusDays(2),
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))

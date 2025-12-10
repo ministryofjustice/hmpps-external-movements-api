@@ -52,8 +52,8 @@ class GetTapAuthorisationIntTest(
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().plusDays(3),
-        returnBy = LocalDateTime.now().plusDays(4),
+        start = LocalDateTime.now().plusDays(3),
+        end = LocalDateTime.now().plusDays(4),
         location = firstOcc.location,
       ),
     )
@@ -70,29 +70,29 @@ class GetTapAuthorisationIntTest(
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().plusHours(1),
-        returnBy = LocalDateTime.now().plusHours(3),
+        start = LocalDateTime.now().plusHours(1),
+        end = LocalDateTime.now().plusHours(3),
       ),
     )
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().plusDays(2).plusHours(1),
-        returnBy = LocalDateTime.now().plusDays(2).plusHours(3),
+        start = LocalDateTime.now().plusDays(2).plusHours(1),
+        end = LocalDateTime.now().plusDays(2).plusHours(3),
       ),
     )
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().plusDays(3).plusHours(1),
-        returnBy = LocalDateTime.now().plusDays(3).plusHours(3),
+        start = LocalDateTime.now().plusDays(3).plusHours(1),
+        end = LocalDateTime.now().plusDays(3).plusHours(3),
       ),
     )
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().plusDays(4).plusHours(1),
-        returnBy = LocalDateTime.now().plusDays(4).plusHours(3),
+        start = LocalDateTime.now().plusDays(4).plusHours(1),
+        end = LocalDateTime.now().plusDays(4).plusHours(3),
       ),
     )
 
@@ -129,15 +129,15 @@ class GetTapAuthorisationIntTest(
 
   private fun getTapAuthorisation(
     id: UUID,
-    fromDate: LocalDate? = null,
-    toDate: LocalDate? = null,
+    start: LocalDate? = null,
+    end: LocalDate? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()
     .uri { builder ->
       builder.path(GET_TAP_AUTH_URL)
-      fromDate?.also { builder.queryParam("fromDate", it) }
-      toDate?.also { builder.queryParam("toDate", it) }
+      start?.also { builder.queryParam("start", it) }
+      end?.also { builder.queryParam("end", it) }
       builder.build(id)
     }
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))

@@ -11,8 +11,8 @@ data class TapOccurrence(
   val id: UUID,
   val authorisation: Authorisation,
   val statusCode: String,
-  val releaseAt: LocalDateTime,
-  val returnBy: LocalDateTime,
+  val start: LocalDateTime,
+  val end: LocalDateTime,
   val location: Location,
   val absenceTypeCode: String?,
   val absenceSubTypeCode: String?,
@@ -20,10 +20,14 @@ data class TapOccurrence(
   val accompaniedByCode: String,
   val transportCode: String,
   val contactInformation: String?,
-  val notes: String?,
+  val comments: String?,
   val created: AtAndBy,
   val updated: AtAndBy?,
 ) {
+  val releaseAt: LocalDateTime = start
+  val returnBy: LocalDateTime = end
+  val notes: String? = comments
+
   @Schema(name = "SyncReadTapOccurrenceAuthorisation")
   data class Authorisation(
     val id: UUID,

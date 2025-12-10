@@ -33,14 +33,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Tr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AmendAuthorisationNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonSummaryService
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.util.UUID
@@ -106,9 +106,9 @@ class SyncTapAuthorisation(
       transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
       repeat = repeat,
       status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus,
-      notes = notes,
-      fromDate = fromDate,
-      toDate = toDate,
+      comments = comments,
+      start = start,
+      end = end,
       schedule = null,
       reasonPath = reasonPath,
       legacyId = legacyId,
@@ -124,7 +124,7 @@ class SyncTapAuthorisation(
     applyAbsenceCategorisation(request, rdPaths)
     checkSchedule(request)
     checkStatus(request, rdPaths)
-    request.notes?.also { amendNotes(AmendAuthorisationNotes(it)) }
+    request.comments?.also { applyComments(ChangeAuthorisationComments(it)) }
   }
 
   private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(
@@ -153,6 +153,6 @@ class SyncTapAuthorisation(
   }
 
   private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation) {
-    amendDateRange(ChangeAuthorisationDateRange(request.fromDate, request.toDate))
+    amendDateRange(ChangeAuthorisationDateRange(request.start, request.end))
   }
 }

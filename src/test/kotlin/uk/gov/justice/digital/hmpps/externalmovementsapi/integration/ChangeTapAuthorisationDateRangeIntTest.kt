@@ -72,13 +72,13 @@ class ChangeTapAuthorisationDateRangeIntTest(
     val occ2 = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().plusDays(3),
-        returnBy = LocalDateTime.now().plusDays(4),
+        start = LocalDateTime.now().plusDays(3),
+        end = LocalDateTime.now().plusDays(4),
       ),
     )
     val response = changeDateRange(
       auth.id,
-      changeDateRange(occ1.releaseAt.plusDays(1).toLocalDate(), occ2.returnBy.minusDays(1).toLocalDate()),
+      changeDateRange(occ1.start.plusDays(1).toLocalDate(), occ2.end.minusDays(1).toLocalDate()),
     ).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
     assertThat(response.userMessage).isEqualTo("Validation failure: Authorisation date range cannot be less than the date range of absences")
@@ -88,13 +88,13 @@ class ChangeTapAuthorisationDateRangeIntTest(
   fun `200 ok - authorisation date range updated`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = changeDateRange(occ.releaseAt.toLocalDate(), occ.returnBy.toLocalDate())
+    val request = changeDateRange(occ.start.toLocalDate(), occ.end.toLocalDate())
     val res = changeDateRange(auth.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("fromDate", ISO_DATE.format(auth.fromDate), ISO_DATE.format(request.fromDate)),
-      AuditedAction.Change("toDate", ISO_DATE.format(auth.toDate), ISO_DATE.format(request.toDate)),
+      AuditedAction.Change("start", ISO_DATE.format(auth.start), ISO_DATE.format(request.start)),
+      AuditedAction.Change("end", ISO_DATE.format(auth.end), ISO_DATE.format(request.end)),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
@@ -118,7 +118,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
   @Test
   fun `200 ok - no-op date range change request`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    val request = changeDateRange(auth.fromDate, auth.toDate)
+    val request = changeDateRange(auth.start, auth.end)
     val res = changeDateRange(auth.id, request).successResponse<AuditHistory>()
     assertThat(res.content).isEmpty()
 

@@ -42,8 +42,9 @@ spring:
       org.hibernate.envers.modified_flag_suffix: _modified
       org.hibernate.envers.store_data_at_delete: true
       org.hibernate.envers.do_not_audit_optimistic_locking_field: false
+      hibernate.globally_quoted_identifiers: true
+      hibernate.globally_quoted_identifiers_skip_column_definitions: true
     open-in-view: false
-
 
   security:
     oauth2:

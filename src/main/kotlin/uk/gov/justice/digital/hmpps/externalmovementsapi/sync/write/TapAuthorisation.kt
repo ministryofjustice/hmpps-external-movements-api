@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
@@ -24,9 +25,12 @@ data class TapAuthorisation(
   val accompaniedByCode: String,
   val transportCode: String,
   val repeat: Boolean,
-  val fromDate: LocalDate,
-  val toDate: LocalDate,
-  val notes: String?,
+  @JsonAlias("fromDate")
+  val start: LocalDate,
+  @JsonAlias("toDate")
+  val end: LocalDate,
+  @JsonAlias("notes")
+  val comments: String?,
   val created: AtAndBy,
   val updated: AtAndBy?,
   val legacyId: Long,

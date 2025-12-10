@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.validation.Valid
@@ -25,6 +26,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @ValidDateRange
+@ValidStartAndEnd
 data class CreateTapAuthorisationRequest(
   val absenceTypeCode: String,
   val absenceSubTypeCode: String?,
@@ -35,10 +37,16 @@ data class CreateTapAuthorisationRequest(
   val statusCode: TapAuthorisationStatus.Code,
   val accompaniedByCode: String,
   val transportCode: String,
-  val notes: String?,
+  // Temporary - to be removed after UI update
+  @JsonAlias("notes")
+  val comments: String?,
   val repeat: Boolean,
-  override val fromDate: LocalDate,
-  override val toDate: LocalDate,
+  // Temporary - to be removed after UI update
+  @JsonAlias("fromDate")
+  override val start: LocalDate,
+  // Temporary - to be removed after UI update
+  @JsonAlias("toDate")
+  override val end: LocalDate,
   val contactInformation: String?,
   @JsonIgnore
   val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,
@@ -50,7 +58,8 @@ data class CreateTapAuthorisationRequest(
   val approvedBy: String? = if (statusCode == APPROVED) ExternalMovementContext.get().username else null,
   val schedule: JsonNode? = null,
 ) : ReferenceDataRequired,
-  DateRange {
+  DateRange,
+  StartAndEnd<LocalDate> {
 
   override fun requiredReferenceData() = buildSet {
     addAll(reasonPath())
@@ -67,11 +76,16 @@ data class CreateTapAuthorisationRequest(
     absenceReasonCode?.also { add(ABSENCE_REASON of it) }
   }
 
+  @ValidStartAndEnd
   data class OccurrenceRequest(
-    val releaseAt: LocalDateTime,
-    val returnBy: LocalDateTime,
+    // Temporary - to be removed after UI update
+    @JsonAlias("releaseAt")
+    override val start: LocalDateTime,
+    // Temporary - to be removed after UI update
+    @JsonAlias("returnBy")
+    override val end: LocalDateTime,
     @Valid
     val location: Location,
     val scheduleReference: JsonNode?,
-  )
+  ) : StartAndEnd<LocalDateTime>
 }

@@ -59,7 +59,7 @@ class CancelTapOccurrenceIntTest(
   fun `409 - occurrence not scheduled cannot be cancelled`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().minusHours(4)))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, end = LocalDateTime.now().minusHours(4)))
     val res = cancelOccurrence(occurrence.id, cancelOccurrenceRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.userMessage).isEqualTo("Temporary absence not currently scheduled")

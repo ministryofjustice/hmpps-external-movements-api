@@ -39,8 +39,8 @@ class AuditedTapMovement(
   @ManyToOne(optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)
   val accompaniedBy: AccompaniedBy,
-  val accompaniedByNotes: String?,
-  val notes: String?,
+  val accompaniedByComments: String?,
+  val comments: String?,
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "location")
   var location: Location,

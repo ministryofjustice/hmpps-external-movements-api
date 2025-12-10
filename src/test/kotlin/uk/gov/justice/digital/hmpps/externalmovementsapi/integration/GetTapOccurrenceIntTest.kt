@@ -69,7 +69,7 @@ class GetTapOccurrenceIntTest(
   fun `can retrieve scheduled occurrence`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().plusHours(2)))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, end = LocalDateTime.now().plusHours(2)))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -81,7 +81,7 @@ class GetTapOccurrenceIntTest(
   fun `can retrieve expired occurrence`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, returnBy = LocalDateTime.now().minusHours(2)))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, end = LocalDateTime.now().minusHours(2)))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -135,7 +135,7 @@ class GetTapOccurrenceIntTest(
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
           auth,
-          returnBy = LocalDateTime.now().minusHours(2),
+          end = LocalDateTime.now().minusHours(2),
           movements = listOf(temporaryAbsenceMovement(OUT, auth.person.identifier)),
         ),
       )
@@ -153,7 +153,7 @@ class GetTapOccurrenceIntTest(
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
           auth,
-          returnBy = LocalDateTime.now().plusHours(2),
+          end = LocalDateTime.now().plusHours(2),
           movements = listOf(temporaryAbsenceMovement(OUT, auth.person.identifier)),
         ),
       )
@@ -170,8 +170,8 @@ class GetTapOccurrenceIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        releaseAt = LocalDateTime.now().minusHours(4),
-        returnBy = LocalDateTime.now().plusHours(2),
+        start = LocalDateTime.now().minusHours(4),
+        end = LocalDateTime.now().plusHours(2),
         movements = listOf(
           temporaryAbsenceMovement(
             OUT,

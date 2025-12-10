@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonSummaryService
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
 import java.util.UUID
@@ -87,8 +87,8 @@ class SyncTapMovement(
     direction = valueOf(direction.name),
     absenceReason = rdProvider(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
     accompaniedBy = rdProvider(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
-    accompaniedByNotes = accompaniedByNotes,
-    notes = notes,
+    accompaniedByComments = accompaniedByComments,
+    comments = comments,
     recordedByPrisonCode = created.prisonCode,
     location = location,
     legacyId = legacyId,

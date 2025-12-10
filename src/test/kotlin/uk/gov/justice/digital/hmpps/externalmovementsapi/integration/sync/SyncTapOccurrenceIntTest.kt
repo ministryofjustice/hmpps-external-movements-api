@@ -18,8 +18,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceContactInfoChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceNotesChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -124,7 +124,7 @@ class SyncTapOccurrenceIntTest(
         TemporaryAbsenceRescheduled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceCancelled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceContactInfoChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceNotesChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
       ),
     )
   }
@@ -170,11 +170,11 @@ class SyncTapOccurrenceIntTest(
     val request = tapOccurrence(
       legacyId = existing.legacyId!!,
       accompaniedByCode = existing.accompaniedBy.code,
-      releaseAt = existing.releaseAt,
-      returnBy = existing.returnBy,
+      start = existing.start,
+      end = existing.end,
       contactInformation = null,
       location = existing.location,
-      notes = existing.notes,
+      notes = existing.comments,
       typeCode = existing.absenceType?.code,
       subTypeCode = existing.absenceSubType?.code,
       reasonCode = existing.absenceReason!!.code,
@@ -252,8 +252,8 @@ class SyncTapOccurrenceIntTest(
     reasonCode: String = "R15",
     typeCode: String? = "SR",
     subTypeCode: String? = "RDR",
-    releaseAt: LocalDateTime = LocalDateTime.now().minusHours(7),
-    returnBy: LocalDateTime = LocalDateTime.now().plusHours(1),
+    start: LocalDateTime = LocalDateTime.now().minusHours(7),
+    end: LocalDateTime = LocalDateTime.now().plusHours(1),
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     location: Location = location(),
@@ -265,8 +265,8 @@ class SyncTapOccurrenceIntTest(
   ) = TapOccurrence(
     id,
     isCancelled,
-    releaseAt,
-    returnBy,
+    start,
+    end,
     location,
     typeCode,
     subTypeCode,
@@ -297,12 +297,12 @@ class SyncTapOccurrenceIntTest(
 }
 
 private fun TemporaryAbsenceOccurrence.verifyAgainst(request: TapOccurrence) {
-  assertThat(releaseAt).isCloseTo(request.releaseAt, within(2, SECONDS))
-  assertThat(returnBy).isCloseTo(request.returnBy, within(2, SECONDS))
+  assertThat(start).isCloseTo(request.start, within(2, SECONDS))
+  assertThat(end).isCloseTo(request.end, within(2, SECONDS))
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
   assertThat(transport.code).isEqualTo(request.transportCode)
   assertThat(location).isEqualTo(request.location)
   assertThat(contactInformation).isEqualTo(request.contactInformation)
-  assertThat(notes).isEqualTo(request.notes)
+  assertThat(comments).isEqualTo(request.comments)
   assertThat(legacyId).isEqualTo(request.legacyId)
 }

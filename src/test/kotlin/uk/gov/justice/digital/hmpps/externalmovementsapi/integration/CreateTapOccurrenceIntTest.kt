@@ -88,10 +88,10 @@ class CreateTapOccurrenceIntTest(
   }
 
   private fun TemporaryAbsenceOccurrence.verifyAgainst(request: CreateOccurrenceRequest) {
-    assertThat(releaseAt).isCloseTo(request.releaseAt, within(1, ChronoUnit.SECONDS))
-    assertThat(returnBy).isCloseTo(request.returnBy, within(1, ChronoUnit.SECONDS))
+    assertThat(start).isCloseTo(request.start, within(1, ChronoUnit.SECONDS))
+    assertThat(end).isCloseTo(request.end, within(1, ChronoUnit.SECONDS))
     assertThat(location).isEqualTo(request.location)
-    assertThat(notes).isEqualTo(request.notes ?: authorisation.notes)
+    assertThat(comments).isEqualTo(request.notes ?: authorisation.comments)
   }
 
   private fun TemporaryAbsenceOccurrence.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
@@ -118,28 +118,28 @@ class CreateTapOccurrenceIntTest(
     const val CREATE_OCCURRENCE_URL = "/temporary-absence-authorisations/{id}/occurrences"
 
     private fun request(
-      releaseAt: LocalDateTime = LocalDateTime.now().plusDays(1),
-      returnBy: LocalDateTime = LocalDateTime.now().plusDays(2),
+      start: LocalDateTime = LocalDateTime.now().plusDays(1),
+      end: LocalDateTime = LocalDateTime.now().plusDays(2),
       location: Location = location(),
       notes: String? = word(20),
-    ) = CreateOccurrenceRequest(releaseAt, returnBy, location, notes)
+    ) = CreateOccurrenceRequest(start, end, location, notes)
 
     @JvmStatic
     fun validationRequests() = listOf(
       Arguments.of(
-        request(releaseAt = LocalDateTime.now().minusDays(5), returnBy = LocalDateTime.now().minusDays(4)),
+        request(start = LocalDateTime.now().minusDays(5), end = LocalDateTime.now().minusDays(4)),
         "Validation failure: Absence cannot be scheduled in the past.",
       ),
       Arguments.of(
-        request(releaseAt = LocalDateTime.now().plusDays(5), returnBy = LocalDateTime.now().plusDays(4)),
-        "Validation failure: Return by must be after release at.",
+        request(start = LocalDateTime.now().plusDays(5), end = LocalDateTime.now().plusDays(4)),
+        "Validation failure: End must be after start.",
       ),
       Arguments.of(
         request(location = location(description = null, address = null, postcode = null)),
         "Validation failure: Either a description or partial address must be specified.",
       ),
       Arguments.of(
-        request(releaseAt = LocalDateTime.now().plusDays(7), returnBy = LocalDateTime.now().plusDays(8)),
+        request(start = LocalDateTime.now().plusDays(7), end = LocalDateTime.now().plusDays(8)),
         "Validation failure: Temporary absence must be within the authorised date range.",
       ),
     )

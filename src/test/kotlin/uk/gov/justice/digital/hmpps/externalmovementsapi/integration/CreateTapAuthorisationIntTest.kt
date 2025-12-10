@@ -87,7 +87,7 @@ class CreateTapAuthorisationIntTest(
   @Test
   fun `400 bad request - date range over 6 months`() {
     val pi = personIdentifier()
-    val request = createTapAuthorisationRequest(fromDate = LocalDate.now(), toDate = LocalDate.now().plusMonths(6).plusDays(1))
+    val request = createTapAuthorisationRequest(start = LocalDate.now(), end = LocalDate.now().plusMonths(6).plusDays(1))
     val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
     assertThat(res.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
@@ -104,8 +104,8 @@ class CreateTapAuthorisationIntTest(
     val request = createTapAuthorisationRequest(
       occurrences = listOf(
         createTapOccurrenceRequest(
-          releaseAt = occurrence.releaseAt,
-          returnBy = occurrence.returnBy,
+          start = occurrence.start,
+          end = occurrence.end,
         ),
       ),
     )
@@ -288,13 +288,13 @@ class CreateTapAuthorisationIntTest(
   }
 
   private fun createTapOccurrenceRequest(
-    releaseAt: LocalDateTime = LocalDateTime.now().minusHours(3),
-    returnBy: LocalDateTime = LocalDateTime.now().plusHours(3),
+    start: LocalDateTime = LocalDateTime.now().minusHours(3),
+    end: LocalDateTime = LocalDateTime.now().plusHours(3),
     location: Location = location(),
     scheduleReference: JsonNode? = null,
   ) = CreateTapAuthorisationRequest.OccurrenceRequest(
-    releaseAt = releaseAt,
-    returnBy = returnBy,
+    start = start,
+    end = end,
     location = location,
     scheduleReference = scheduleReference,
   )
@@ -313,8 +313,8 @@ class CreateTapAuthorisationIntTest(
     absenceReasonCode: String? = "R15",
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
-    fromDate: LocalDate = LocalDate.now().minusDays(3),
-    toDate: LocalDate = LocalDate.now().plusDays(1),
+    start: LocalDate = LocalDate.now().minusDays(3),
+    end: LocalDate = LocalDate.now().plusDays(1),
     statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
     occurrences: List<CreateTapAuthorisationRequest.OccurrenceRequest> = listOf(createTapOccurrenceRequest()),
     notes: String? = null,
@@ -331,8 +331,8 @@ class CreateTapAuthorisationIntTest(
     transportCode,
     notes,
     repeat,
-    fromDate,
-    toDate,
+    start,
+    end,
     contactInformation,
   )
 

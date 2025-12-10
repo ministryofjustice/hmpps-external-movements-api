@@ -52,9 +52,9 @@ class AuditedTapAuthorisation(
   @JoinColumn(name = "transport_id", nullable = false)
   val transport: Transport,
   val repeat: Boolean,
-  val fromDate: LocalDate,
-  val toDate: LocalDate,
-  val notes: String?,
+  val start: LocalDate,
+  val end: LocalDate,
+  val comments: String?,
   @JdbcTypeCode(SqlTypes.JSON)
   val reasonPath: ReasonPath,
   val legacyId: Long?,
