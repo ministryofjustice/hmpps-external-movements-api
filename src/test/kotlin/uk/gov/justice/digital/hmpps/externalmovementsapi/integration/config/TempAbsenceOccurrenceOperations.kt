@@ -66,7 +66,7 @@ interface TempAbsenceOccurrenceOperations {
       contactInformation: String? = null,
       accompaniedBy: String = authorisation.accompaniedBy.code,
       transport: String = authorisation.transport.code,
-      notes: String? = "Some notes on the occurrence",
+      comments: String? = "Some comments on the occurrence",
       cancelledAt: LocalDateTime? = null,
       cancelledBy: String? = null,
       reasonPath: ReasonPath = ReasonPath(
@@ -98,7 +98,7 @@ interface TempAbsenceOccurrenceOperations {
         contactInformation = contactInformation,
         accompaniedBy = rdSupplier(ACCOMPANIED_BY, accompaniedBy) as AccompaniedBy,
         transport = rdSupplier(TRANSPORT, transport) as Transport,
-        comments = notes,
+        comments = comments,
         reasonPath = reasonPath,
         scheduleReference = scheduleReference,
         legacyId = legacyId,

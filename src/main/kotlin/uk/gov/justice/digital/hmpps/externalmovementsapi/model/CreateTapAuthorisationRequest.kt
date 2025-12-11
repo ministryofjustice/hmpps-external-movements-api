@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
-import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.validation.Valid
@@ -37,15 +36,9 @@ data class CreateTapAuthorisationRequest(
   val statusCode: TapAuthorisationStatus.Code,
   val accompaniedByCode: String,
   val transportCode: String,
-  // Temporary - to be removed after UI update
-  @JsonAlias("notes")
   val comments: String?,
   val repeat: Boolean,
-  // Temporary - to be removed after UI update
-  @JsonAlias("fromDate")
   override val start: LocalDate,
-  // Temporary - to be removed after UI update
-  @JsonAlias("toDate")
   override val end: LocalDate,
   val contactInformation: String?,
   @JsonIgnore
@@ -78,11 +71,7 @@ data class CreateTapAuthorisationRequest(
 
   @ValidStartAndEnd
   data class OccurrenceRequest(
-    // Temporary - to be removed after UI update
-    @JsonAlias("releaseAt")
     override val start: LocalDateTime,
-    // Temporary - to be removed after UI update
-    @JsonAlias("returnBy")
     override val end: LocalDateTime,
     @Valid
     val location: Location,

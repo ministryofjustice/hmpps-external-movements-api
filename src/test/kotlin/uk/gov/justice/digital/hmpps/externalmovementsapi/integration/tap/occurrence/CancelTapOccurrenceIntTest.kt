@@ -1,28 +1,31 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.occurrence
 
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
+import java.time.LocalDateTime
 import java.util.UUID
 
-class AmendTapOccurrenceCommentsIntTest(
+class CancelTapOccurrenceIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -41,34 +44,44 @@ class AmendTapOccurrenceCommentsIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    applyOccurrenceComments(
+    cancelOccurrence(
       newUuid(),
-      action(),
+      cancelOccurrenceRequest(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 occurrence does not exist`() {
-    applyOccurrenceComments(newUuid(), action()).expectStatus().isNotFound
+    cancelOccurrence(newUuid(), cancelOccurrenceRequest()).expectStatus().isNotFound
   }
 
   @Test
-  fun `200 ok single tap occurrence notes updated successfully`() {
+  fun `409 - occurrence not scheduled cannot be cancelled`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occurrence =
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, end = LocalDateTime.now().minusHours(4)))
+    val res = cancelOccurrence(occurrence.id, cancelOccurrenceRequest()).errorResponse(HttpStatus.CONFLICT)
+    assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
+    assertThat(res.userMessage).isEqualTo("Temporary absence not currently scheduled")
+  }
+
+  @Test
+  fun `200 ok tap occurrence cancelled for single authorisation successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = action()
-    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val request = cancelOccurrenceRequest()
+    val res = cancelOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceCommentsChanged.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
+      TemporaryAbsenceCancelled.EVENT_TYPE,
+      TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE,
     )
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
+    assertThat(res.changes).isEmpty()
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.comments).isEqualTo(request.comments)
-    assertThat(saved.authorisation.comments).isEqualTo(request.comments)
+    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.authorisation.status.code).isEqualTo(TapAuthorisationStatus.Code.CANCELLED.name)
 
     verifyAudit(
       saved,
@@ -84,25 +97,25 @@ class AmendTapOccurrenceCommentsIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id),
-        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id),
+        TemporaryAbsenceCancelled(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id),
       ),
     )
   }
 
   @Test
-  fun `200 ok repeat tap occurrence notes updated successfully`() {
+  fun `200 ok tap occurrence cancelled for repeat authorisation successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = action()
-    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
+    val request = cancelOccurrenceRequest()
+    val res = cancelOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactlyInAnyOrder(TemporaryAbsenceCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
+    assertThat(res.changes).isEmpty()
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.comments).isEqualTo(request.comments)
-    assertThat(saved.authorisation.comments).isEqualTo(auth.comments)
+    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.authorisation.status.code).isEqualTo(auth.status.code)
 
     verifyAudit(
       saved,
@@ -117,19 +130,18 @@ class AmendTapOccurrenceCommentsIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceCancelled(occurrence.authorisation.person.identifier, occurrence.id),
       ),
     )
   }
 
-  private fun action(
-    notes: String = (0..10).joinToString(separator = " ") { word(6) },
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeOccurrenceComments(notes, reason)
+  private fun cancelOccurrenceRequest(
+    reason: String? = "A reason for the cancellation",
+  ) = CancelOccurrence(reason)
 
-  private fun applyOccurrenceComments(
+  private fun cancelOccurrence(
     id: UUID,
-    request: ChangeOccurrenceComments,
+    request: CancelOccurrence,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

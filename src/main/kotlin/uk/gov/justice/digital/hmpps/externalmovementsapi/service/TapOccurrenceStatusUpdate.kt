@@ -48,5 +48,5 @@ class PastOccurrencesPoller(private val update: OccurrenceStatusUpdate) {
 }
 
 class PollPastOccurrencesCondition : Condition {
-  override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean = context.environment.getProperty<Duration>("service.domain-events.poll-interval", Duration.ZERO).isPositive
+  override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean = context.environment.getProperty<Duration>("service.occurrence-status.poll-interval", Duration.ZERO).isPositive
 }

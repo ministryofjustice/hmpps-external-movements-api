@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write
 
-import com.fasterxml.jackson.annotation.JsonAlias
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
@@ -24,9 +23,7 @@ data class TapMovement(
   val absenceReasonCode: String,
   val location: Location,
   val accompaniedByCode: String,
-  @JsonAlias("accompaniedByNotes")
   val accompaniedByComments: String?,
-  @JsonAlias("notes")
   val comments: String?,
   val created: AtAndByWithPrison,
   val updated: AtAndBy?,

@@ -50,6 +50,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
       CodedDescription("APPROVED", "Approved"),
       CodedDescription("DENIED", "Denied"),
       CodedDescription("CANCELLED", "Cancelled"),
+      CodedDescription("EXPIRED", "Expired"),
     )
   }
 
@@ -82,7 +83,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
       CodedDescription(
         "SPL",
         "SPL (Special Purpose Licence)",
-        "For prisoners to spend time at their release address to re-establish links with family and the local community.",
+        "A short release in response to exceptional or personal circumstances, such as medical appointments, or wider criminal justice needs.",
       ),
       CodedDescription("PP", "Police production"),
       CodedDescription("SE", "Security escort"),

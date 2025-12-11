@@ -88,6 +88,7 @@ class TapAuthorisationStatus(
     APPROVED,
     CANCELLED,
     DENIED,
+    EXPIRED,
   }
 }
 

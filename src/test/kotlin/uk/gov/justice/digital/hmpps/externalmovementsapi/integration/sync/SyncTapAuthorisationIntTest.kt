@@ -296,7 +296,7 @@ class SyncTapAuthorisationIntTest(
     val prisonCode = prisonCode()
     givenPersonSummary(personSummary(personIdentifier = pi))
     val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val request = tapAuthorisation(fromDate = LocalDate.now(), toDate = LocalDate.now().plusMonths(6).plusDays(1))
+    val request = tapAuthorisation(start = LocalDate.now(), end = LocalDate.now().plusMonths(6).plusDays(1))
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -324,9 +324,9 @@ class SyncTapAuthorisationIntTest(
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     repeat: Boolean = false,
-    notes: String? = "Some notes about the application",
-    fromDate: LocalDate = LocalDate.now().minusDays(7),
-    toDate: LocalDate = LocalDate.now().minusDays(1),
+    comments: String? = "Some comments about the application",
+    start: LocalDate = LocalDate.now().minusDays(7),
+    end: LocalDate = LocalDate.now().minusDays(1),
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), DEFAULT_USERNAME),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), SYSTEM_USERNAME),
     legacyId: Long = newId(),
@@ -340,9 +340,9 @@ class SyncTapAuthorisationIntTest(
     accompaniedByCode,
     transportCode,
     repeat,
-    fromDate,
-    toDate,
-    notes,
+    start,
+    end,
+    comments,
     created,
     updated,
     legacyId,

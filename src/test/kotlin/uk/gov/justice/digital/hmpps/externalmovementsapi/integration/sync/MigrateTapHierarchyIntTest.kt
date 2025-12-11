@@ -243,9 +243,9 @@ class MigrateTapHierarchyIntTest(
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     repeat: Boolean = false,
-    notes: String? = "Some notes about the application",
-    fromDate: LocalDate = LocalDate.now().minusDays(7),
-    toDate: LocalDate = LocalDate.now().minusDays(1),
+    comments: String? = "Some comments about the application",
+    start: LocalDate = LocalDate.now().minusDays(7),
+    end: LocalDate = LocalDate.now().minusDays(1),
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), username()),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), username()),
     legacyId: Long = newId(),
@@ -259,9 +259,9 @@ class MigrateTapHierarchyIntTest(
     accompaniedByCode,
     transportCode,
     repeat,
-    fromDate,
-    toDate,
-    notes,
+    start,
+    end,
+    comments,
     created,
     updated,
     legacyId,
@@ -279,7 +279,7 @@ class MigrateTapHierarchyIntTest(
     transportCode: String = "OD",
     location: Location = location(),
     contactInformation: String? = "Contact ${word(8)}",
-    notes: String? = "Some notes about the absence",
+    comments: String? = "Some comments about the absence",
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), username()),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusWeeks(1), username()),
     legacyId: Long = newId(),
@@ -295,7 +295,7 @@ class MigrateTapHierarchyIntTest(
     accompaniedByCode,
     transportCode,
     contactInformation,
-    notes,
+    comments,
     created,
     updated,
     legacyId,
@@ -308,8 +308,8 @@ class MigrateTapHierarchyIntTest(
     occurrenceAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     reasonCode: String = "R15",
     accompaniedByCode: String = "L",
-    accompaniedByNotes: String? = "Information about the escort",
-    notes: String? = "Some notes about the movement",
+    accompaniedByComments: String? = "Information about the escort",
+    comments: String? = "Some comments about the movement",
     location: Location = location(),
     legacyId: String = "${newId()}",
     recordedBy: String = username(),
@@ -320,8 +320,8 @@ class MigrateTapHierarchyIntTest(
     reasonCode,
     location,
     accompaniedByCode,
-    accompaniedByNotes,
-    notes,
+    accompaniedByComments,
+    comments,
     AtAndByWithPrison(recordedAt, recordedBy, prisonCode),
     null,
     legacyId,
@@ -355,9 +355,9 @@ class MigrateTapHierarchyIntTest(
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
       assertThat(prisonCode).isEqualTo(request.prisonCode)
       assertThat(repeat).isEqualTo(request.repeat)
-      assertThat(comments).isEqualTo(request.notes)
-      assertThat(start).isEqualTo(request.fromDate)
-      assertThat(end).isEqualTo(request.toDate)
+      assertThat(comments).isEqualTo(request.comments)
+      assertThat(start).isEqualTo(request.start)
+      assertThat(end).isEqualTo(request.end)
       assertThat(msa.createdBy).isEqualTo(request.created.by)
       assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))
       request.updated?.also {

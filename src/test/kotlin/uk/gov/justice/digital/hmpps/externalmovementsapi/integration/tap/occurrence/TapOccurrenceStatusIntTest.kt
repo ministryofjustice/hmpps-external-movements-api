@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.occurrence
 
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceExpired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceOverdue
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations

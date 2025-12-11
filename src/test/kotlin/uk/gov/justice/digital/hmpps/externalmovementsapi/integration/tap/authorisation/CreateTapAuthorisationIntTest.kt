@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.authorisation
 
 import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -317,7 +318,7 @@ class CreateTapAuthorisationIntTest(
     end: LocalDate = LocalDate.now().plusDays(1),
     statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
     occurrences: List<CreateTapAuthorisationRequest.OccurrenceRequest> = listOf(createTapOccurrenceRequest()),
-    notes: String? = null,
+    comments: String? = null,
     repeat: Boolean = false,
     contactInformation: String? = null,
   ) = CreateTapAuthorisationRequest(
@@ -329,7 +330,7 @@ class CreateTapAuthorisationIntTest(
     statusCode,
     accompaniedByCode,
     transportCode,
-    notes,
+    comments,
     repeat,
     start,
     end,

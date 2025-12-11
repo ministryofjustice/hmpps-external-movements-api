@@ -24,7 +24,4 @@ data class TapAuthorisationResult(
   val end: LocalDate,
   val locations: List<Location>,
   val occurrenceCount: Int,
-) {
-  val fromDate: LocalDate = start
-  val toDate: LocalDate = end
-}
+)

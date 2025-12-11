@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.authorisation
 
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -24,7 +25,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import java.time.LocalDateTime
 import java.util.UUID
 
-class AmendAuthorisationNotesIntTest(
+class ChangeAuthorisationCommentsIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -43,7 +44,7 @@ class AmendAuthorisationNotesIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    amendNotes(
+    applyComments(
       UUID.randomUUID(),
       action(),
       "ROLE_ANY__OTHER_RW",
@@ -52,23 +53,23 @@ class AmendAuthorisationNotesIntTest(
 
   @Test
   fun `404 authorisation does not exist`() {
-    amendNotes(newUuid(), action()).expectStatus().isNotFound
+    applyComments(newUuid(), action()).expectStatus().isNotFound
   }
 
   @Test
-  fun `200 ok - authorisation notes changed`() {
+  fun `200 ok - authorisation comments changed`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val prev = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
         start = LocalDateTime.now().minusDays(1),
         end = LocalDateTime.now().minusHours(1),
-        notes = "Previous notes on a past occurrence",
+        comments = "Previous comments on a past occurrence",
       ),
     )
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = amendNotes(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = applyComments(auth.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(
       TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
       TemporaryAbsenceCommentsChanged.EVENT_TYPE,
@@ -109,10 +110,10 @@ class AmendAuthorisationNotesIntTest(
   }
 
   @Test
-  fun `200 ok - no-op change notes request`() {
+  fun `200 ok - no-op change comments request`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val request = action(auth.comments!!)
-    val res = amendNotes(auth.id, request).successResponse<AuditHistory>()
+    val res = applyComments(auth.id, request).successResponse<AuditHistory>()
     assertThat(res.content).isEmpty()
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
@@ -128,11 +129,11 @@ class AmendAuthorisationNotesIntTest(
   }
 
   private fun action(
-    notes: String = (0..10).joinToString(separator = " ") { word(6) },
+    comments: String = (0..10).joinToString(separator = " ") { word(6) },
     reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeAuthorisationComments(notes, reason)
+  ) = ChangeAuthorisationComments(comments, reason)
 
-  private fun amendNotes(
+  private fun applyComments(
     id: UUID,
     request: ChangeAuthorisationComments,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,

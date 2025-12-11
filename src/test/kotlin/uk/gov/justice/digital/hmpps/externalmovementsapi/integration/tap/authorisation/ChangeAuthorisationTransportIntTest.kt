@@ -1,30 +1,31 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.authorisation
 
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationTransportChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceTransportChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
-import java.time.LocalDate
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter.ISO_DATE
 import java.util.UUID
 
-class ChangeTapAuthorisationDateRangeIntTest(
+class ChangeAuthorisationTransportIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -43,67 +44,55 @@ class ChangeTapAuthorisationDateRangeIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    changeDateRange(
-      newUuid(),
-      changeDateRange(),
+    applyTransport(
+      UUID.randomUUID(),
+      action(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    changeDateRange(newUuid(), changeDateRange()).expectStatus().isNotFound
+    applyTransport(newUuid(), action()).expectStatus().isNotFound
   }
 
   @Test
-  fun `400 bad request - date range over 6 months`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    val from = LocalDate.now()
-    val to = LocalDate.now().plusMonths(6).plusDays(1)
-    val response = changeDateRange(auth.id, changeDateRange(from, to)).errorResponse(HttpStatus.BAD_REQUEST)
-    assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(response.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
-  }
-
-  @Test
-  fun `400 bad request - attempt to change date range to be shorter than range of occurrences`() {
+  fun `200 ok - authorisation transport changed`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val occ2 = givenTemporaryAbsenceOccurrence(
+    val prev = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
-        start = LocalDateTime.now().plusDays(3),
-        end = LocalDateTime.now().plusDays(4),
+        start = LocalDateTime.now().minusDays(3),
+        end = LocalDateTime.now().minusDays(2),
       ),
     )
-    val response = changeDateRange(
-      auth.id,
-      changeDateRange(occ1.start.plusDays(1).toLocalDate(), occ2.end.minusDays(1).toLocalDate()),
-    ).errorResponse(HttpStatus.BAD_REQUEST)
-    assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(response.userMessage).isEqualTo("Validation failure: Authorisation date range cannot be less than the date range of absences")
-  }
-
-  @Test
-  fun `200 ok - authorisation date range updated`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = changeDateRange(occ.start.toLocalDate(), occ.end.toLocalDate())
-    val res = changeDateRange(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE)
+    val request = action()
+    val res = applyTransport(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(
+      TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE,
+      TemporaryAbsenceTransportChanged.EVENT_TYPE,
+    )
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("start", ISO_DATE.format(auth.start), ISO_DATE.format(request.start)),
-      AuditedAction.Change("end", ISO_DATE.format(auth.end), ISO_DATE.format(request.end)),
+      AuditedAction.Change("transport", "Prisoner driver", "Not Required"),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.transport.code).isEqualTo(request.transportCode)
+
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
+    assertThat(occurrence.transport.code).isEqualTo(request.transportCode)
+
+    val previous = requireNotNull(findTemporaryAbsenceOccurrence(prev.id))
+    assertThat(previous.transport.code).isEqualTo(prev.transport.code)
 
     verifyAudit(
       saved,
       RevisionType.MOD,
       setOf(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
@@ -111,15 +100,18 @@ class ChangeTapAuthorisationDateRangeIntTest(
 
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceAuthorisationDateRangeChanged(auth.person.identifier, auth.id)),
+      setOf(
+        TemporaryAbsenceAuthorisationTransportChanged(auth.person.identifier, auth.id),
+        TemporaryAbsenceTransportChanged(auth.person.identifier, occ.id),
+      ),
     )
   }
 
   @Test
-  fun `200 ok - no-op date range change request`() {
+  fun `200 ok - no-op change transport request`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    val request = changeDateRange(auth.start, auth.end)
-    val res = changeDateRange(auth.id, request).successResponse<AuditHistory>()
+    val request = action(auth.transport.code)
+    val res = applyTransport(auth.id, request).successResponse<AuditHistory>()
     assertThat(res.content).isEmpty()
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
@@ -134,15 +126,14 @@ class ChangeTapAuthorisationDateRangeIntTest(
     )
   }
 
-  private fun changeDateRange(
-    from: LocalDate = LocalDate.now().plusDays(1),
-    to: LocalDate = LocalDate.now().plusDays(2),
-    reason: String? = "Reason for changing the date range",
-  ) = ChangeAuthorisationDateRange(from, to, reason)
+  private fun action(
+    transportCode: String = "TNR",
+    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
+  ) = ChangeAuthorisationTransport(transportCode, reason)
 
-  private fun changeDateRange(
+  private fun applyTransport(
     id: UUID,
-    request: ChangeAuthorisationDateRange,
+    request: ChangeAuthorisationTransport,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
