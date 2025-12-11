@@ -285,6 +285,10 @@
             <column ascending="true" name="start"/>
             <column ascending="true" name="end"/>
          </index>
+         <index name="idx_tap_authorisation_status_end" unique="false">
+            <column ascending="true" name="status_id"/>
+            <column ascending="true" name="end"/>
+         </index>
          <index name="uq_temporary_absence_authorisation_legacy_id" unique="true">
             <column ascending="true" name="legacy_id"/>
          </index>
@@ -428,6 +432,10 @@
          </index>
          <index name="idx_tao_start_end" unique="false">
             <column ascending="true" name="start"/>
+            <column ascending="true" name="end"/>
+         </index>
+         <index name="idx_tap_occurrence_status_end" unique="false">
+            <column ascending="true" name="status_id"/>
             <column ascending="true" name="end"/>
          </index>
          <index name="uq_temporary_absence_occurrence_legacy_id" unique="true">

@@ -58,6 +58,7 @@
 <text text-anchor="start" x="233.5" y="-511.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">repeat</text>
 <polygon fill="none" stroke="#000000" points="463.5,-504.7 463.5,-526.7 562.5,-526.7 562.5,-504.7 463.5,-504.7"/>
 <text text-anchor="start" x="466.5" y="-512.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">bool[1]</text>
+<polygon fill="#ffffff" stroke="transparent" points="213.5,-482.7 213.5,-504.7 463.5,-504.7 463.5,-482.7 213.5,-482.7"/>
 <polygon fill="none" stroke="#000000" points="213.5,-482.7 213.5,-504.7 463.5,-504.7 463.5,-482.7 213.5,-482.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="218.5" y="-499.7"/>
 <text text-anchor="start" x="233.5" y="-489.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">status_id</text>
@@ -271,6 +272,7 @@
 <polygon fill="none" stroke="#000000" points="613,-97.7 613,-119.7 865,-119.7 865,-97.7 613,-97.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="618" y="-114.7"/>
 <text text-anchor="start" x="642" y="-104.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">absence_reason_id</text>
+<polygon fill="#ffffff" stroke="transparent" points="613,-75.7 613,-97.7 865,-97.7 865,-75.7 613,-75.7"/>
 <polygon fill="none" stroke="#000000" points="613,-75.7 613,-97.7 865,-97.7 865,-75.7 613,-75.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="618" y="-92.7"/>
 <text text-anchor="start" x="642" y="-82.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">status_id</text>
