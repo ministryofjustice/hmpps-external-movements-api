@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
@@ -67,6 +68,7 @@ class MigrateTapHierarchy(
   private val personSummaryService: PersonSummaryService,
   private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
   private val domainEventRepository: HmppsDomainEventRepository,
+  private val telemetryClient: TelemetryClient,
 ) {
   fun migrate(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
     ExternalMovementContext.get().copy(source = DataSource.NOMIS, migratingData = true).set()
@@ -171,20 +173,27 @@ class MigrateTapHierarchy(
   ): TemporaryAbsenceOccurrence {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
-      rdPaths.getReferenceData(it.domain, it.code)
+      val cat = rdPaths.getReferenceData(it.domain, it.code) as? AbsenceReasonCategory
+      telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_REASON_CATEGORY.name to it.code), null)
+      cat
     }
     return TemporaryAbsenceOccurrence(
       authorisation = authorisation,
       absenceType = absenceTypeCode?.let {
-        rdPaths.getReferenceData(
-          ABSENCE_TYPE,
-          it,
-        ) as AbsenceType
+        val type = rdPaths.getReferenceData(ABSENCE_TYPE, it) as? AbsenceType
+        if (type == null) {
+          telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_TYPE.name to it), null)
+        }
+        type
       },
       absenceSubType = absenceSubTypeCode?.let {
-        rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType
+        val subType = rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as? AbsenceSubType
+        if (subType == null) {
+          telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_SUB_TYPE.name to it), null)
+        }
+        subType
       },
-      absenceReasonCategory = category as? AbsenceReasonCategory,
+      absenceReasonCategory = category,
       absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
       start = start,
       end = end,
