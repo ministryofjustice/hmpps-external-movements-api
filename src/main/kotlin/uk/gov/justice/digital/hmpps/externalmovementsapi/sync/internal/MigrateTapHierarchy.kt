@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
@@ -34,6 +35,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
@@ -43,7 +46,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PersonSummaryService
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigratedAuthorisation
@@ -52,6 +55,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigratedOc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapOccurrence
+import java.time.LocalDate
 
 @Transactional
 @Service
@@ -64,6 +68,7 @@ class MigrateTapHierarchy(
   private val personSummaryService: PersonSummaryService,
   private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
   private val domainEventRepository: HmppsDomainEventRepository,
+  private val telemetryClient: TelemetryClient,
 ) {
   fun migrate(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
     ExternalMovementContext.get().copy(source = DataSource.NOMIS, migratingData = true).set()
@@ -135,6 +140,7 @@ class MigrateTapHierarchy(
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
       rdPaths.getReferenceData(it.domain, it.code)
     }
+    val status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus
     return TemporaryAbsenceAuthorisation(
       person = person,
       prisonCode = prisonCode,
@@ -147,10 +153,14 @@ class MigrateTapHierarchy(
       accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
       transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
       repeat = repeat,
-      status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus,
-      notes = notes,
-      fromDate = fromDate,
-      toDate = toDate,
+      status = if (status.code == PENDING.name && end.isBefore(LocalDate.now())) {
+        rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, EXPIRED.name) as TapAuthorisationStatus
+      } else {
+        status
+      },
+      comments = comments,
+      start = start,
+      end = end,
       schedule = null,
       reasonPath = reasonPath,
       legacyId = legacyId,
@@ -163,28 +173,35 @@ class MigrateTapHierarchy(
   ): TemporaryAbsenceOccurrence {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
-      rdPaths.getReferenceData(it.domain, it.code)
+      val cat = rdPaths.getReferenceData(it.domain, it.code) as? AbsenceReasonCategory
+      telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_REASON_CATEGORY.name to it.code), null)
+      cat
     }
     return TemporaryAbsenceOccurrence(
       authorisation = authorisation,
       absenceType = absenceTypeCode?.let {
-        rdPaths.getReferenceData(
-          ABSENCE_TYPE,
-          it,
-        ) as AbsenceType
+        val type = rdPaths.getReferenceData(ABSENCE_TYPE, it) as? AbsenceType
+        if (type == null) {
+          telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_TYPE.name to it), null)
+        }
+        type
       },
       absenceSubType = absenceSubTypeCode?.let {
-        rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType
+        val subType = rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as? AbsenceSubType
+        if (subType == null) {
+          telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_SUB_TYPE.name to it), null)
+        }
+        subType
       },
-      absenceReasonCategory = category as? AbsenceReasonCategory,
+      absenceReasonCategory = category,
       absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
-      releaseAt = releaseAt,
-      returnBy = returnBy,
+      start = start,
+      end = end,
       contactInformation = contactInformation,
       accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
       transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
       location = location,
-      notes = notes,
+      comments = comments,
       legacyId = legacyId,
       reasonPath = reasonPath,
       scheduleReference = null,
@@ -208,8 +225,8 @@ class MigrateTapHierarchy(
     direction = valueOf(direction.name),
     absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
     accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
-    accompaniedByNotes = accompaniedByNotes,
-    notes = notes,
+    accompaniedByComments = accompaniedByComments,
+    comments = comments,
     recordedByPrisonCode = created.prisonCode,
     location = location,
     legacyId = legacyId,

@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.Duration
 
-@Conditional(PollIntervalCondition::class)
+@Conditional(PollDomainEventsCondition::class)
 @Service
 class DomainEventPoller(private val domainEventPublisher: DomainEventPublisher) {
   @Scheduled(fixedDelayString = $$"${service.domain-events.poll-interval}")
@@ -18,6 +18,6 @@ class DomainEventPoller(private val domainEventPublisher: DomainEventPublisher) 
   }
 }
 
-class PollIntervalCondition : Condition {
+class PollDomainEventsCondition : Condition {
   override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean = context.environment.getProperty<Duration>("service.domain-events.poll-interval", Duration.ZERO).isPositive
 }

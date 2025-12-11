@@ -10,16 +10,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.forAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceStatusCodeIn
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.CANCELLED
@@ -29,20 +21,19 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getByKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
-import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AmendAuthorisationNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.AmendOccurrenceNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationHistory
@@ -54,6 +45,7 @@ class TapAuthorisationModifications(
   private val taaRepository: TemporaryAbsenceAuthorisationRepository,
   private val taoRepository: TemporaryAbsenceOccurrenceRepository,
   private val referenceDataRepository: ReferenceDataRepository,
+  private val acr: AbsenceCategorisationRetriever,
   private val authorisationHistory: AuthorisationHistory,
 ) {
   fun apply(id: UUID, action: AuthorisationAction): AuditHistory? {
@@ -97,15 +89,15 @@ class TapAuthorisationModifications(
           authorisation.affectedOccurrences().forEach { it.applyTransport(coa, rdSupplier) }
         }
 
-        is AmendAuthorisationNotes -> {
-          authorisation.amendNotes(action)
-          val aon = AmendOccurrenceNotes(action.notes, action.reason)
-          authorisation.affectedOccurrences().forEach { it.amendNotes(aon) }
+        is ChangeAuthorisationComments -> {
+          authorisation.applyComments(action)
+          val aoc = ChangeOccurrenceComments(action.comments, action.reason)
+          authorisation.affectedOccurrences().forEach { it.applyComments(aoc) }
         }
 
         is ChangeAuthorisationDateRange -> {
           val odr = taoRepository.dateRangeForAuthorisation(authorisation.id) ?: action
-          check(!odr.fromDate.isBefore(action.fromDate) && !odr.toDate.isAfter(action.toDate)) {
+          check(!odr.start.isBefore(action.start) && !odr.end.isAfter(action.end)) {
             "Authorisation date range cannot be less than the date range of absences"
           }
           authorisation.amendDateRange(action)
@@ -142,25 +134,12 @@ class TapAuthorisationModifications(
   }
 
   private fun RecategoriseAuthorisation.recalculateCategorisation(): Pair<RecategoriseAuthorisation, (ReferenceDataDomain.Code, String) -> ReferenceData> {
-    val rdProvider = referenceDataRepository.rdProvider(this)
-    val linkProvider = { nextDomain: ReferenceDataDomain.Code, previous: ReferenceData ->
-      referenceDataRepository.findLinkedItems(nextDomain, previous.id).let {
-        when (it.size) {
-          0 -> null
-          1 -> it.single()
-          else -> throw AbsenceCategorisationException(previous, it.size)
-        }
-      }
-    }
-    val type = requireNotNull(absenceTypeCode?.let { rdProvider(ABSENCE_TYPE, it) as AbsenceType })
-    val subType = (absenceSubTypeCode?.let { rdProvider(ABSENCE_SUB_TYPE, it) } ?: linkProvider(ABSENCE_SUB_TYPE, type)) as? AbsenceSubType
-    val reasonCategory = (absenceReasonCategoryCode?.let { rdProvider(ABSENCE_REASON_CATEGORY, it) }) as? AbsenceReasonCategory
-    val reason = (absenceReasonCode?.let { rdProvider(ABSENCE_REASON, it) } ?: linkProvider(ABSENCE_REASON, reasonCategory ?: subType ?: type)) as? AbsenceReason
+    val ca = acr.getReasonCategorisation(this)
     val newAction = copy(
-      absenceTypeCode = type.code,
-      absenceSubTypeCode = subType?.code,
-      absenceReasonCategoryCode = reasonCategory?.code,
-      absenceReasonCode = reason?.code,
+      absenceTypeCode = ca.absenceType?.code,
+      absenceSubTypeCode = ca.absenceSubType?.code,
+      absenceReasonCategoryCode = ca.absenceReasonCategory?.code,
+      absenceReasonCode = ca.absenceReason?.code,
     )
     return newAction to referenceDataRepository.rdProvider(newAction)
   }

@@ -12,3 +12,5 @@ service:
     poll-interval: PT10s
   occurrence-status:
     poll-interval: PT60s
+  authorisation-expiration:
+    cron: "0 30 0 * * *"

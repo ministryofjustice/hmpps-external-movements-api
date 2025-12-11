@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.EXPIRED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.ExternalMovementMigrated
@@ -68,9 +69,9 @@ data class TapAuthorisation(
   val accompaniedByCode: String,
   val transportCode: String,
   val repeat: Boolean,
-  val fromDate: LocalDate,
-  val toDate: LocalDate,
-  val notes: String?,
+  val start: LocalDate,
+  val end: LocalDate,
+  val comments: String?,
   val created: AtAndBy,
   val updated: AtAndBy?,
   val legacyId: Long,
@@ -83,14 +84,15 @@ data class TapAuthorisation(
     absenceSubTypeCode?.let { ABSENCE_SUB_TYPE of it },
     ACCOMPANIED_BY of accompaniedByCode,
     TRANSPORT of transportCode,
+    TAP_AUTHORISATION_STATUS of EXPIRED.name,
   )
 }
 
 @Schema(name = "MigrateTapOccurrence")
 data class TapOccurrence(
   val isCancelled: Boolean,
-  val releaseAt: LocalDateTime,
-  val returnBy: LocalDateTime,
+  val start: LocalDateTime,
+  val end: LocalDateTime,
   val location: Location,
   val absenceTypeCode: String?,
   val absenceSubTypeCode: String?,
@@ -98,7 +100,7 @@ data class TapOccurrence(
   val accompaniedByCode: String,
   val transportCode: String,
   val contactInformation: String?,
-  val notes: String?,
+  val comments: String?,
   val created: AtAndBy,
   val updated: AtAndBy?,
   val legacyId: Long,
@@ -120,8 +122,8 @@ data class TapMovement(
   val absenceReasonCode: String,
   val location: Location,
   val accompaniedByCode: String,
-  val accompaniedByNotes: String?,
-  val notes: String?,
+  val accompaniedByComments: String?,
+  val comments: String?,
   val created: AtAndByWithPrison,
   val updated: AtAndBy?,
   val legacyId: String,

@@ -26,16 +26,16 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.AbsenceCategorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.FROM_DATE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.CategorisedAbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.TO_DATE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.matchesIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.matchesName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
@@ -54,15 +54,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AmendAuthorisationNotes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import java.time.LocalDate
 import java.util.UUID
@@ -82,9 +83,9 @@ class TemporaryAbsenceAuthorisation(
   transport: Transport,
   repeat: Boolean,
   status: TapAuthorisationStatus,
-  notes: String?,
-  fromDate: LocalDate,
-  toDate: LocalDate,
+  comments: String?,
+  start: LocalDate,
+  end: LocalDate,
   reasonPath: ReasonPath,
   schedule: JsonNode?,
   legacyId: Long?,
@@ -92,7 +93,7 @@ class TemporaryAbsenceAuthorisation(
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
 ) : Identifiable,
-  AbsenceCategorisation,
+  CategorisedAbsenceReason,
   DomainEventProducer {
 
   @Audited(targetAuditMode = NOT_AUDITED)
@@ -154,18 +155,18 @@ class TemporaryAbsenceAuthorisation(
   var status: TapAuthorisationStatus = status
     private set
 
-  @Column(name = "notes")
-  var notes: String? = notes
+  @Column(name = "comments")
+  var comments: String? = comments
     private set
 
   @NotNull
-  @Column(name = "from_date", nullable = false)
-  var fromDate: LocalDate = fromDate
+  @Column(name = "start", nullable = false)
+  var start: LocalDate = start
     private set
 
   @NotNull
-  @Column(name = "to_date", nullable = false)
-  var toDate: LocalDate = toDate
+  @Column(name = "end", nullable = false)
+  var end: LocalDate = end
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
@@ -228,16 +229,16 @@ class TemporaryAbsenceAuthorisation(
   }
 
   fun amendDateRange(action: ChangeAuthorisationDateRange) {
-    if (!fromDate.isEqual(action.fromDate) || !toDate.isEqual(action.toDate)) {
-      fromDate = action.fromDate
-      toDate = action.toDate
+    if (!start.isEqual(action.start) || !end.isEqual(action.end)) {
+      start = action.start
+      end = action.end
       appliedActions += action
     }
   }
 
-  fun amendNotes(action: AmendAuthorisationNotes) {
-    if (action.changes(notes)) {
-      notes = action.notes
+  fun applyComments(action: ChangeAuthorisationComments) {
+    if (action.changes(comments)) {
+      comments = action.comments
       appliedActions += action
     }
   }
@@ -274,6 +275,10 @@ class TemporaryAbsenceAuthorisation(
     applyStatus(TapAuthorisationStatus.Code.CANCELLED, rdSupplier, action)
   }
 
+  fun expire(action: ExpireAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+    applyStatus(TapAuthorisationStatus.Code.EXPIRED, rdSupplier, action)
+  }
+
   private fun applyStatus(
     statusCode: TapAuthorisationStatus.Code,
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
@@ -288,8 +293,8 @@ class TemporaryAbsenceAuthorisation(
   companion object {
     val PRISON_CODE = TemporaryAbsenceAuthorisation::prisonCode.name
     val PERSON = TemporaryAbsenceAuthorisation::person.name
-    val FROM_DATE = TemporaryAbsenceAuthorisation::fromDate.name
-    val TO_DATE = TemporaryAbsenceAuthorisation::toDate.name
+    val START = TemporaryAbsenceAuthorisation::start.name
+    val END = TemporaryAbsenceAuthorisation::end.name
     val STATUS = TemporaryAbsenceAuthorisation::status.name
     val REPEAT = TemporaryAbsenceAuthorisation::repeat.name
     val ABSENCE_TYPE = TemporaryAbsenceAuthorisation::absenceType.name
@@ -301,12 +306,12 @@ class TemporaryAbsenceAuthorisation(
       TemporaryAbsenceAuthorisation::absenceSubType,
       TemporaryAbsenceAuthorisation::absenceReasonCategory,
       TemporaryAbsenceAuthorisation::absenceReason,
-      TemporaryAbsenceAuthorisation::fromDate,
-      TemporaryAbsenceAuthorisation::toDate,
+      TemporaryAbsenceAuthorisation::start,
+      TemporaryAbsenceAuthorisation::end,
       TemporaryAbsenceAuthorisation::accompaniedBy,
       TemporaryAbsenceAuthorisation::transport,
       TemporaryAbsenceAuthorisation::status,
-      TemporaryAbsenceAuthorisation::notes,
+      TemporaryAbsenceAuthorisation::comments,
     )
   }
 }
@@ -321,10 +326,18 @@ interface TemporaryAbsenceAuthorisationRepository :
     select count(1) as approvalsRequired
     from TemporaryAbsenceAuthorisation taa
     where taa.prisonCode = :prisonIdentifier 
-    and taa.status.key.code = 'PENDING' and taa.fromDate >= current_date
+    and taa.status.key.code = 'PENDING' and taa.start >= current_date
   """,
   )
   fun findApprovalsRequiredCount(prisonIdentifier: String): Int
+
+  @Query(
+    """
+      select taa from TemporaryAbsenceAuthorisation taa
+      where taa.status.key.code = 'PENDING' and taa.end < current_date
+    """,
+  )
+  fun findRecentlyExpired(): List<TemporaryAbsenceAuthorisation>
 
   @Modifying
   fun deleteByPersonIdentifier(personIdentifier: String)
@@ -345,10 +358,10 @@ fun authorisationMatchesPersonName(name: String) = Specification<TemporaryAbsenc
   taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
-fun authorisationMatchesDateRange(fromDate: LocalDate?, toDate: LocalDate?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+fun authorisationMatchesDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
   cb.and(
-    fromDate?.let { cb.greaterThanOrEqualTo(taa.get(FROM_DATE), it) } ?: cb.conjunction(),
-    toDate?.let { cb.lessThanOrEqualTo(taa.get(TO_DATE), it) } ?: cb.conjunction(),
+    start?.let { cb.greaterThanOrEqualTo(taa.get(START), it) } ?: cb.conjunction(),
+    end?.let { cb.lessThanOrEqualTo(taa.get(END), it) } ?: cb.conjunction(),
   )
 }
 

@@ -25,6 +25,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @ValidDateRange
+@ValidStartAndEnd
 data class CreateTapAuthorisationRequest(
   val absenceTypeCode: String,
   val absenceSubTypeCode: String?,
@@ -35,10 +36,10 @@ data class CreateTapAuthorisationRequest(
   val statusCode: TapAuthorisationStatus.Code,
   val accompaniedByCode: String,
   val transportCode: String,
-  val notes: String?,
+  val comments: String?,
   val repeat: Boolean,
-  override val fromDate: LocalDate,
-  override val toDate: LocalDate,
+  override val start: LocalDate,
+  override val end: LocalDate,
   val contactInformation: String?,
   @JsonIgnore
   val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,
@@ -50,7 +51,8 @@ data class CreateTapAuthorisationRequest(
   val approvedBy: String? = if (statusCode == APPROVED) ExternalMovementContext.get().username else null,
   val schedule: JsonNode? = null,
 ) : ReferenceDataRequired,
-  DateRange {
+  DateRange,
+  StartAndEnd<LocalDate> {
 
   override fun requiredReferenceData() = buildSet {
     addAll(reasonPath())
@@ -67,11 +69,12 @@ data class CreateTapAuthorisationRequest(
     absenceReasonCode?.also { add(ABSENCE_REASON of it) }
   }
 
+  @ValidStartAndEnd
   data class OccurrenceRequest(
-    val releaseAt: LocalDateTime,
-    val returnBy: LocalDateTime,
+    override val start: LocalDateTime,
+    override val end: LocalDateTime,
     @Valid
     val location: Location,
     val scheduleReference: JsonNode?,
-  )
+  ) : StartAndEnd<LocalDateTime>
 }

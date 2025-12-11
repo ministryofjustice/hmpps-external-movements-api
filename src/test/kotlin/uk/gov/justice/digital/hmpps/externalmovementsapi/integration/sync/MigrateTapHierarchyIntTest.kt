@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -90,7 +91,7 @@ class MigrateTapHierarchyIntTest(
     )
     val um = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(Direction.IN, auth.person.identifier))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.person.identifier))
-    val request = migrateTapRequest()
+    val request = migrateTapRequest(temporaryAbsences = listOf(tapAuthorisation(), tapAuthorisation(statusCode = TapAuthorisationStatus.Code.PENDING.name, occurrences = listOf())))
     val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     // confirm existing tap hierarchy has been removed
@@ -144,8 +145,13 @@ class MigrateTapHierarchyIntTest(
       )
 
       val domainEvents = latestRevisionDomainEvents(auth)
-      assertThat(domainEvents).hasSize(4)
+      assertThat(domainEvents).hasSize(5)
       domainEvents.forEach { domainEvent -> assertThat(domainEvent.published).isTrue }
+    }
+
+    with(response.temporaryAbsences.last()) {
+      val expired = requireNotNull(findTemporaryAbsenceAuthorisation(id))
+      assertThat(expired.status.code).isEqualTo(TapAuthorisationStatus.Code.EXPIRED.name)
     }
   }
 
@@ -243,9 +249,9 @@ class MigrateTapHierarchyIntTest(
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     repeat: Boolean = false,
-    notes: String? = "Some notes about the application",
-    fromDate: LocalDate = LocalDate.now().minusDays(7),
-    toDate: LocalDate = LocalDate.now().minusDays(1),
+    comments: String? = "Some comments about the application",
+    start: LocalDate = LocalDate.now().minusDays(7),
+    end: LocalDate = LocalDate.now().minusDays(1),
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), username()),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), username()),
     legacyId: Long = newId(),
@@ -259,9 +265,9 @@ class MigrateTapHierarchyIntTest(
     accompaniedByCode,
     transportCode,
     repeat,
-    fromDate,
-    toDate,
-    notes,
+    start,
+    end,
+    comments,
     created,
     updated,
     legacyId,
@@ -273,21 +279,21 @@ class MigrateTapHierarchyIntTest(
     reasonCode: String = "R15",
     typeCode: String? = "SR",
     subTypeCode: String? = "RDR",
-    releaseAt: LocalDateTime = LocalDateTime.now().minusHours(7),
-    returnBy: LocalDateTime = LocalDateTime.now().plusHours(1),
+    start: LocalDateTime = LocalDateTime.now().minusHours(7),
+    end: LocalDateTime = LocalDateTime.now().plusHours(1),
     accompaniedByCode: String = "L",
     transportCode: String = "OD",
     location: Location = location(),
     contactInformation: String? = "Contact ${word(8)}",
-    notes: String? = "Some notes about the absence",
+    comments: String? = "Some comments about the absence",
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), username()),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusWeeks(1), username()),
     legacyId: Long = newId(),
     movements: List<TapMovement> = listOf(tapMovement()),
   ) = TapOccurrence(
     isCancelled,
-    releaseAt,
-    returnBy,
+    start,
+    end,
     location,
     typeCode,
     subTypeCode,
@@ -295,7 +301,7 @@ class MigrateTapHierarchyIntTest(
     accompaniedByCode,
     transportCode,
     contactInformation,
-    notes,
+    comments,
     created,
     updated,
     legacyId,
@@ -308,8 +314,8 @@ class MigrateTapHierarchyIntTest(
     occurrenceAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     reasonCode: String = "R15",
     accompaniedByCode: String = "L",
-    accompaniedByNotes: String? = "Information about the escort",
-    notes: String? = "Some notes about the movement",
+    accompaniedByComments: String? = "Information about the escort",
+    comments: String? = "Some comments about the movement",
     location: Location = location(),
     legacyId: String = "${newId()}",
     recordedBy: String = username(),
@@ -320,8 +326,8 @@ class MigrateTapHierarchyIntTest(
     reasonCode,
     location,
     accompaniedByCode,
-    accompaniedByNotes,
-    notes,
+    accompaniedByComments,
+    comments,
     AtAndByWithPrison(recordedAt, recordedBy, prisonCode),
     null,
     legacyId,
@@ -355,9 +361,9 @@ class MigrateTapHierarchyIntTest(
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
       assertThat(prisonCode).isEqualTo(request.prisonCode)
       assertThat(repeat).isEqualTo(request.repeat)
-      assertThat(notes).isEqualTo(request.notes)
-      assertThat(fromDate).isEqualTo(request.fromDate)
-      assertThat(toDate).isEqualTo(request.toDate)
+      assertThat(comments).isEqualTo(request.comments)
+      assertThat(start).isEqualTo(request.start)
+      assertThat(end).isEqualTo(request.end)
       assertThat(msa.createdBy).isEqualTo(request.created.by)
       assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))
       request.updated?.also {
@@ -367,13 +373,13 @@ class MigrateTapHierarchyIntTest(
     }
 
     private fun TemporaryAbsenceOccurrence.verifyAgainst(request: TapOccurrence, msa: MigrationSystemAudit) {
-      assertThat(releaseAt).isCloseTo(request.releaseAt, within(2, SECONDS))
-      assertThat(returnBy).isCloseTo(request.returnBy, within(2, SECONDS))
+      assertThat(start).isCloseTo(request.start, within(2, SECONDS))
+      assertThat(end).isCloseTo(request.end, within(2, SECONDS))
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
       assertThat(transport.code).isEqualTo(request.transportCode)
       assertThat(location).isEqualTo(request.location)
       assertThat(contactInformation).isEqualTo(request.contactInformation)
-      assertThat(notes).isEqualTo(request.notes)
+      assertThat(comments).isEqualTo(request.comments)
       assertThat(legacyId).isEqualTo(request.legacyId)
       assertThat(msa.createdBy).isEqualTo(request.created.by)
       assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))
@@ -394,7 +400,7 @@ class MigrateTapHierarchyIntTest(
       assertThat(absenceReason.code).isEqualTo(request.absenceReasonCode)
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
       assertThat(location).isEqualTo(request.location)
-      assertThat(notes).isEqualTo(request.notes)
+      assertThat(comments).isEqualTo(request.comments)
       assertThat(recordedByPrisonCode).isEqualTo(request.created.prisonCode)
       assertThat(legacyId).isEqualTo(request.legacyId)
       assertThat(msa.createdBy).isEqualTo(request.created.by)

@@ -50,9 +50,9 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
       accompaniedByCode: String = "L",
       transportCode: String = "OD",
       repeat: Boolean = false,
-      notes: String? = "Some notes on the original authorisation",
-      fromDate: LocalDate = LocalDate.now().minusDays(7),
-      toDate: LocalDate = LocalDate.now().plusDays(7),
+      comments: String? = "Some comments on the original authorisation",
+      start: LocalDate = LocalDate.now().minusDays(7),
+      end: LocalDate = LocalDate.now().plusDays(7),
       applicationDate: LocalDate = LocalDate.now().minusWeeks(1),
       reasonPath: ReasonPath = ReasonPath(
         buildList {
@@ -76,9 +76,9 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
         rdSupplier(TRANSPORT, transportCode) as Transport,
         repeat,
         rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
-        notes,
-        fromDate,
-        toDate,
+        comments,
+        start,
+        end,
         reasonPath,
         schedule,
         legacyId,
@@ -95,11 +95,11 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
     assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
     assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
     assertThat(transport.code).isEqualTo(request.transportCode)
-    assertThat(notes).isEqualTo(request.notes)
+    assertThat(comments).isEqualTo(request.comments)
     assertThat(repeat).isEqualTo(request.repeat)
     assertThat(legacyId).isNull()
-    assertThat(fromDate).isEqualTo(request.fromDate)
-    assertThat(toDate).isEqualTo(request.toDate)
+    assertThat(start).isEqualTo(request.start)
+    assertThat(end).isEqualTo(request.end)
     assertThat(schedule).isEqualTo(request.schedule)
   }
 
@@ -115,8 +115,8 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
     assertThat(accompaniedBy.code).isEqualTo(authorisation.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(authorisation.transport.code)
     assertThat(repeat).isEqualTo(authorisation.repeat)
-    assertThat(fromDate).isEqualTo(authorisation.fromDate)
-    assertThat(toDate).isEqualTo(authorisation.toDate)
+    assertThat(start).isEqualTo(authorisation.start)
+    assertThat(end).isEqualTo(authorisation.end)
     assertThat(schedule).isEqualTo(authorisation.schedule)
     assertThat(locations).isEqualTo(occurrences.map { it.location }.distinct())
   }

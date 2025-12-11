@@ -7,11 +7,11 @@ import org.springframework.data.domain.Sort.Direction
 import org.springframework.data.domain.Sort.by
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.FROM_DATE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.REPEAT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.TO_DATE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.FIRST_NAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.LAST_NAME
@@ -23,15 +23,15 @@ import java.time.LocalDate
 data class TapAuthorisationSearchRequest(
   @NotBlank
   val prisonCode: String,
-  val fromDate: LocalDate?,
-  val toDate: LocalDate?,
+  val start: LocalDate?,
+  val end: LocalDate?,
   val status: Set<TapAuthorisationStatus.Code> = emptySet(),
   val query: String? = null,
   override val page: Int = 1,
   override val size: Int = 10,
-  override val sort: String = FROM_DATE,
+  override val sort: String = START,
 ) : PagedRequest {
-  override fun validSortFields(): Set<String> = setOf(FROM_DATE, TO_DATE, STATUS, ABSENCE_TYPE, ABSENCE_REASON, REPEAT, FIRST_NAME, LAST_NAME)
+  override fun validSortFields(): Set<String> = setOf(START, END, STATUS, ABSENCE_TYPE, ABSENCE_REASON, REPEAT, FIRST_NAME, LAST_NAME)
 
   private fun sortByDate(direction: Direction, first: String, second: String) = by(direction, first, second).and(sortByPersonName())
 
@@ -47,8 +47,8 @@ data class TapAuthorisationSearchRequest(
   override fun buildSort(field: String, direction: Direction): Sort = when (field) {
     LAST_NAME -> sortByPersonName(direction)
     FIRST_NAME -> sortByPersonName(direction, PERSON_FIRST_NAME, PERSON_LAST_NAME)
-    FROM_DATE -> sortByDate(direction, FROM_DATE, TO_DATE)
-    TO_DATE -> sortByDate(direction, TO_DATE, FROM_DATE)
+    START -> sortByDate(direction, START, END)
+    END -> sortByDate(direction, END, START)
     STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}").and(sortByPersonName())
     ABSENCE_TYPE, ABSENCE_REASON -> by(direction, "${field}_description").and(sortByPersonName())
     else -> by(direction, field).and(sortByPersonName())

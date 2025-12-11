@@ -47,8 +47,8 @@ class AuditedTapOccurrence(
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
   val absenceReason: AbsenceReason?,
-  val releaseAt: LocalDateTime,
-  val returnBy: LocalDateTime,
+  val start: LocalDateTime,
+  val end: LocalDateTime,
   @ManyToOne(optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)
   val accompaniedBy: AccompaniedBy,
@@ -60,7 +60,7 @@ class AuditedTapOccurrence(
   val location: Location,
   @Column(name = "contact_information")
   val contactInformation: String?,
-  val notes: String?,
+  val comments: String?,
   val legacyId: Long?,
   val createdAt: LocalDateTime,
   val createdBy: String,

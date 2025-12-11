@@ -93,63 +93,21 @@ data class TemporaryAbsenceAuthorisationCancelled(
   }
 }
 
-data class TemporaryAbsenceAuthorisationDateRangeChanged(
+data class TemporaryAbsenceAuthorisationExpired(
   override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The date range of an absence authorisation has changed."
+  override val description: String = "A temporary absence authorisation has expired."
 
   companion object {
-    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.date-range-changed"
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.expired"
 
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
       dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = TemporaryAbsenceAuthorisationDateRangeChanged(
-      TemporaryAbsenceAuthorisationInformation(id, dataSource),
-      PersonReference.withIdentifier(personIdentifier),
-    )
-  }
-}
-
-data class TemporaryAbsenceAuthorisationRecategorised(
-  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
-  override val personReference: PersonReference,
-) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
-  override val eventType: String = EVENT_TYPE
-  override val description: String = "An temporary absence authorisation has been recategorised."
-
-  companion object {
-    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.recategorised"
-
-    operator fun invoke(
-      personIdentifier: String,
-      id: UUID,
-      dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = TemporaryAbsenceAuthorisationRecategorised(
-      TemporaryAbsenceAuthorisationInformation(id, dataSource),
-      PersonReference.withIdentifier(personIdentifier),
-    )
-  }
-}
-
-data class TemporaryAbsenceAuthorisationNotesChanged(
-  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
-  override val personReference: PersonReference,
-) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
-  override val eventType: String = EVENT_TYPE
-  override val description: String = "The notes of a temporary absence authorisation have been changed."
-
-  companion object {
-    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.notes-changed"
-
-    operator fun invoke(
-      personIdentifier: String,
-      id: UUID,
-      dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = TemporaryAbsenceAuthorisationNotesChanged(
+    ) = TemporaryAbsenceAuthorisationExpired(
       TemporaryAbsenceAuthorisationInformation(id, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
@@ -177,6 +135,48 @@ data class TemporaryAbsenceAuthorisationAccompanimentChanged(
   }
 }
 
+data class TemporaryAbsenceAuthorisationCommentsChanged(
+  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "The comments on a temporary absence authorisation have been changed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.comments-changed"
+
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorisationCommentsChanged(
+      TemporaryAbsenceAuthorisationInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceAuthorisationDateRangeChanged(
+  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "The date range of an absence authorisation has changed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.date-range-changed"
+
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorisationDateRangeChanged(
+      TemporaryAbsenceAuthorisationInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
 data class TemporaryAbsenceAuthorisationTransportChanged(
   override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
   override val personReference: PersonReference,
@@ -192,6 +192,27 @@ data class TemporaryAbsenceAuthorisationTransportChanged(
       id: UUID,
       dataSource: DataSource = ExternalMovementContext.get().source,
     ) = TemporaryAbsenceAuthorisationTransportChanged(
+      TemporaryAbsenceAuthorisationInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceAuthorisationRecategorised(
+  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "An temporary absence authorisation has been recategorised."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.recategorised"
+
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorisationRecategorised(
       TemporaryAbsenceAuthorisationInformation(id, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )

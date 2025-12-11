@@ -14,13 +14,13 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.matchesIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.matchesName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RELEASE_AT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.RETURN_BY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.END
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.KEY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
@@ -35,17 +35,17 @@ import java.util.UUID
 interface TemporaryAbsenceOccurrenceRepository :
   JpaRepository<TemporaryAbsenceOccurrence, UUID>,
   JpaSpecificationExecutor<TemporaryAbsenceOccurrence> {
-  fun findByAuthorisationPersonIdentifierAndReleaseAtAndReturnBy(
+  fun findByAuthorisationPersonIdentifierAndStartAndEnd(
     personIdentifier: String,
-    releaseAt: LocalDateTime,
-    returnBy: LocalDateTime,
+    start: LocalDateTime,
+    end: LocalDateTime,
   ): TemporaryAbsenceOccurrence?
 
   @Query(
     """
     select 
-        min(cast(tao.releaseAt as LocalDate)) as fromDate, 
-        max(cast(tao.returnBy as LocalDate)) as toDate 
+        min(cast(tao.start as LocalDate)) as start, 
+        max(cast(tao.end as LocalDate)) as end 
     from TemporaryAbsenceOccurrence tao where tao.authorisation.id = :authorisationId
     group by tao.authorisation.id
     """,
@@ -60,7 +60,7 @@ interface TemporaryAbsenceOccurrenceRepository :
   @Query(
     """
       select tao from TemporaryAbsenceOccurrence tao
-      where tao.returnBy < :dateTime
+      where tao.end < :dateTime
         and tao.status.key in :statuses
     """,
   )
@@ -74,14 +74,14 @@ interface TemporaryAbsenceOccurrenceRepository :
   @Query(
     """
     select
-    sum(case when tao.release_at between current_date and (current_date + 1) then 1 else 0 end) as leavingToday,
-    sum(case when tao.release_at between (current_date + 1) and (current_date + 8) then 1 else 0 end) as leavingNextSevenDays
+    sum(case when tao.start between current_date and (current_date + 1) then 1 else 0 end) as leavingToday,
+    sum(case when tao.start between (current_date + 1) and (current_date + 8) then 1 else 0 end) as leavingNextSevenDays
     from temporary_absence_occurrence tao
         join temporary_absence_authorisation taa on taa.id = tao.authorisation_id
         join reference_data st on st.id = taa.status_id
     where taa.prison_code = :prisonIdentifier
       and st.code = 'APPROVED'
-      and tao.release_at between current_date and (current_date + 8)
+      and tao.start between current_date and (current_date + 8)
     group by taa.prison_code
   """,
     nativeQuery = true,
@@ -96,7 +96,7 @@ interface TemporaryAbsenceOccurrenceRepository :
         join reference_data st on st.id = taa.status_id
     where taa.prison_code = :prisonIdentifier
       and st.code = 'APPROVED'
-      and tao.return_by between current_date and (current_date + 1)
+      and tao.end between current_date and (current_date + 1)
   """,
     nativeQuery = true,
   )
@@ -135,10 +135,10 @@ fun occurrenceMatchesPersonName(name: String) = Specification<TemporaryAbsenceOc
   authorisation.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
-fun occurrenceMatchesDateRange(fromDate: LocalDate?, toDate: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun occurrenceMatchesDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.and(
-    fromDate?.let { cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), it.atStartOfDay()) } ?: cb.conjunction(),
-    toDate?.let { cb.lessThanOrEqualTo(tao.get(RETURN_BY), it.plusDays(1).atStartOfDay()) } ?: cb.conjunction(),
+    start?.let { cb.greaterThanOrEqualTo(tao.get(START), it.atStartOfDay()) } ?: cb.conjunction(),
+    end?.let { cb.lessThanOrEqualTo(tao.get(END), it.plusDays(1).atStartOfDay()) } ?: cb.conjunction(),
   )
 }
 
@@ -155,10 +155,10 @@ fun forAuthorisation(authorisationId: UUID) = Specification<TemporaryAbsenceOccu
   cb.equal(authorisation.get<UUID>(TemporaryAbsenceAuthorisation.ID), authorisationId)
 }
 
-fun releaseAfter(fromDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.greaterThanOrEqualTo(tao.get(RELEASE_AT), fromDate.atStartOfDay())
+fun startAfter(start: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.greaterThanOrEqualTo(tao.get(START), start.atStartOfDay())
 }
 
-fun releaseBefore(toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.lessThan(tao.get(RELEASE_AT), toDate)
+fun startBefore(end: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.lessThan(tao.get(START), end)
 }

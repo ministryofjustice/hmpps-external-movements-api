@@ -80,15 +80,15 @@ class GetPrisonExternalMovementsOverviewIntTest(
         temporaryAbsenceAuthorisation(
           prisonCode,
           personIdentifier,
-          fromDate = LocalDate.now(),
-          toDate = LocalDate.now().plusDays(1),
+          start = LocalDate.now(),
+          end = LocalDate.now().plusDays(1),
         ),
       )
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
           authorisation,
-          releaseAt = LocalDateTime.now(),
-          returnBy = LocalDateTime.now().plusDays((idx % 2).toLong()),
+          start = LocalDateTime.now(),
+          end = LocalDateTime.now().plusDays((idx % 2).toLong()),
         ),
       )
     }
@@ -96,22 +96,22 @@ class GetPrisonExternalMovementsOverviewIntTest(
 
   private fun givenLeavingInSevenDays(prisonCode: String, vararg personIdentifiers: String) {
     val dateRange = (1L..7L).map { LocalDate.now().plusDays(it) }
-    val from = dateRange.random()
-    val to = from.plusDays(1)
+    val start = dateRange.random()
+    val end = start.plusDays(1)
     personIdentifiers.forEachIndexed { idx, personIdentifier ->
       val authorisation = givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           prisonCode,
           personIdentifier,
-          fromDate = from,
-          toDate = to,
+          start = start,
+          end = end,
         ),
       )
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
           authorisation,
-          releaseAt = LocalDateTime.of(from, LocalTime.now()),
-          returnBy = LocalDateTime.of(to, LocalTime.now()),
+          start = LocalDateTime.of(start, LocalTime.now()),
+          end = LocalDateTime.of(end, LocalTime.now()),
         ),
       )
     }
@@ -119,14 +119,14 @@ class GetPrisonExternalMovementsOverviewIntTest(
 
   private fun givenApprovalsRequired(prisonCode: String, vararg personIdentifiers: String) {
     personIdentifiers.forEachIndexed { idx, personIdentifier ->
-      val from = LocalDate.now().plusDays(idx.toLong())
+      val start = LocalDate.now().plusDays(idx.toLong())
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           prisonCode,
           personIdentifier,
           status = TapAuthorisationStatus.Code.PENDING,
-          fromDate = from,
-          toDate = from.plusDays(1),
+          start = start,
+          end = start.plusDays(1),
         ),
       )
     }

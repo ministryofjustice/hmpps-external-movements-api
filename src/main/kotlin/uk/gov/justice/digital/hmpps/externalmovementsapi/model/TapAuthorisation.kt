@@ -18,12 +18,12 @@ data class TapAuthorisation(
   val accompaniedBy: CodedDescription,
   val transport: CodedDescription,
   val repeat: Boolean,
-  val fromDate: LocalDate,
-  val toDate: LocalDate,
+  val start: LocalDate,
+  val end: LocalDate,
   val occurrences: List<Occurrence>,
   val locations: List<Location>,
   val schedule: JsonNode?,
-  val notes: String?,
+  val comments: String?,
 ) {
   data class Occurrence(
     val id: UUID,
@@ -32,11 +32,11 @@ data class TapAuthorisation(
     val absenceSubType: CodedDescription?,
     val absenceReasonCategory: CodedDescription?,
     val absenceReason: CodedDescription?,
-    val releaseAt: LocalDateTime,
-    val returnBy: LocalDateTime,
+    val start: LocalDateTime,
+    val end: LocalDateTime,
     val location: Location,
     val accompaniedBy: CodedDescription,
     val transport: CodedDescription,
-    val notes: String?,
+    val comments: String?,
   )
 }

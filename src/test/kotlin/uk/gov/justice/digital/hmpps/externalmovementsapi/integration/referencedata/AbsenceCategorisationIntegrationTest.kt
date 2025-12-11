@@ -186,7 +186,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
             AbsenceCategorisation(
               "SPL",
               "SPL (Special Purpose Licence)",
-              "For prisoners to spend time at their release address to re-establish links with family and the local community.",
+              "A short release in response to exceptional or personal circumstances, such as medical appointments, or wider criminal justice needs.",
               ABSENCE_REASON,
             ),
           ),
@@ -220,7 +220,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
             AbsenceCategorisation(
               "SPL",
               "SPL (Special Purpose Licence)",
-              "For prisoners to spend time at their release address to re-establish links with family and the local community.",
+              "A short release in response to exceptional or personal circumstances, such as medical appointments, or wider criminal justice needs.",
               ABSENCE_REASON,
             ),
           ),

@@ -60,13 +60,13 @@ interface TempAbsenceOccurrenceOperations {
       absenceSubType: String? = authorisation.absenceSubType?.code,
       absenceReasonCategory: String? = authorisation.absenceReasonCategory?.code,
       absenceReason: String? = authorisation.absenceReason?.code,
-      releaseAt: LocalDateTime = LocalDateTime.now().minusDays(1),
-      returnBy: LocalDateTime = LocalDateTime.now().plusDays(1),
+      start: LocalDateTime = LocalDateTime.now().minusDays(1),
+      end: LocalDateTime = LocalDateTime.now().plusDays(1),
       location: Location = location(),
       contactInformation: String? = null,
       accompaniedBy: String = authorisation.accompaniedBy.code,
       transport: String = authorisation.transport.code,
-      notes: String? = "Some notes on the occurrence",
+      comments: String? = "Some comments on the occurrence",
       cancelledAt: LocalDateTime? = null,
       cancelledBy: String? = null,
       reasonPath: ReasonPath = ReasonPath(
@@ -92,13 +92,13 @@ interface TempAbsenceOccurrenceOperations {
           ) as AbsenceReasonCategory
         },
         absenceReason = absenceReason?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason },
-        releaseAt = releaseAt,
-        returnBy = returnBy,
+        start = start,
+        end = end,
         location = location,
         contactInformation = contactInformation,
         accompaniedBy = rdSupplier(ACCOMPANIED_BY, accompaniedBy) as AccompaniedBy,
         transport = rdSupplier(TRANSPORT, transport) as Transport,
-        notes = notes,
+        comments = comments,
         reasonPath = reasonPath,
         scheduleReference = scheduleReference,
         legacyId = legacyId,
@@ -125,7 +125,7 @@ interface TempAbsenceOccurrenceOperations {
     authRequest: CreateTapAuthorisationRequest,
   ) {
     assertThat(authorisation.person.identifier).isEqualTo(personIdentifier)
-    assertThat(notes).isEqualTo(authRequest.notes)
+    assertThat(comments).isEqualTo(authRequest.comments)
     assertThat(legacyId).isNull()
     assertThat(location).isEqualTo(request.location)
     assertThat(accompaniedBy.code).isEqualTo(authRequest.accompaniedByCode)
@@ -138,8 +138,8 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(location).isEqualTo(occurrence.location)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
-    assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
-    assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))
+    assertThat(start).isCloseTo(occurrence.start, within(2, SECONDS))
+    assertThat(end).isCloseTo(occurrence.end, within(2, SECONDS))
     assertThat(absenceType?.code).isEqualTo(occurrence.absenceType?.code)
     assertThat(absenceSubType?.code).isEqualTo(occurrence.absenceSubType?.code)
     assertThat(absenceReasonCategory?.code).isEqualTo(occurrence.absenceReasonCategory?.code)
@@ -155,8 +155,8 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(location).isEqualTo(occurrence.location)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
-    assertThat(releaseAt).isCloseTo(occurrence.releaseAt, within(2, SECONDS))
-    assertThat(returnBy).isCloseTo(occurrence.returnBy, within(2, SECONDS))
+    assertThat(start).isCloseTo(occurrence.start, within(2, SECONDS))
+    assertThat(end).isCloseTo(occurrence.end, within(2, SECONDS))
     assertThat(contactInformation).isEqualTo(occurrence.contactInformation)
     assertThat(scheduleReference).isEqualTo(occurrence.scheduleReference)
   }

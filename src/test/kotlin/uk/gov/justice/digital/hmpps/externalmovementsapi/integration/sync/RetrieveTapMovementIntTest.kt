@@ -85,7 +85,7 @@ private fun TapMovement.verifyAgainst(movement: TemporaryAbsenceMovement) {
   assertThat(absenceReasonCode).isEqualTo(movement.absenceReason.code)
   assertThat(location).isEqualTo(movement.location)
   assertThat(accompaniedByCode).isEqualTo(movement.accompaniedBy.code)
-  assertThat(accompaniedByNotes).isEqualTo(movement.accompaniedByNotes)
-  assertThat(notes).isEqualTo(movement.notes)
+  assertThat(accompaniedByComments).isEqualTo(movement.accompaniedByComments)
+  assertThat(comments).isEqualTo(movement.comments)
   assertThat(created.prisonCode).isEqualTo(movement.recordedByPrisonCode)
 }
