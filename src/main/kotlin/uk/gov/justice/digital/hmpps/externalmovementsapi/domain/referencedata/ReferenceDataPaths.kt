@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 class ReferenceDataPaths(data: List<RdWithDomainLink>, private val parentOf: (id: Long) -> List<ReferenceData>) {
   private val data = data.associateBy { it.referenceData.key }.toMutableMap()
   fun getReferenceData(domain: ReferenceDataDomain.Code, code: String): ReferenceData = requireNotNull(data[domain of code]).referenceData
+  fun findReferenceData(domain: ReferenceDataDomain.Code, code: String): ReferenceData? = data[domain of code]?.referenceData
 
   fun reasonPath(): ReasonPath {
     val type = data.values.singleOrNull { it.domain == ReferenceDataDomain.Code.ABSENCE_TYPE }

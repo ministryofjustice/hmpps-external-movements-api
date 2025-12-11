@@ -173,21 +173,21 @@ class MigrateTapHierarchy(
   ): TemporaryAbsenceOccurrence {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
-      val cat = rdPaths.getReferenceData(it.domain, it.code) as? AbsenceReasonCategory
+      val cat = rdPaths.findReferenceData(it.domain, it.code) as? AbsenceReasonCategory
       telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_REASON_CATEGORY.name to it.code), null)
       cat
     }
     return TemporaryAbsenceOccurrence(
       authorisation = authorisation,
       absenceType = absenceTypeCode?.let {
-        val type = rdPaths.getReferenceData(ABSENCE_TYPE, it) as? AbsenceType
+        val type = rdPaths.findReferenceData(ABSENCE_TYPE, it) as? AbsenceType
         if (type == null) {
           telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_TYPE.name to it), null)
         }
         type
       },
       absenceSubType = absenceSubTypeCode?.let {
-        val subType = rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as? AbsenceSubType
+        val subType = rdPaths.findReferenceData(ABSENCE_SUB_TYPE, it) as? AbsenceSubType
         if (subType == null) {
           telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_SUB_TYPE.name to it), null)
         }
