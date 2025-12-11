@@ -7,7 +7,7 @@ spring:
     name: hmpps-external-movements-api
 
   datasource:
-    url: 'jdbc:postgresql://${DB_SERVER}/${DB_NAME}?sslmode=${DB_SSL_MODE}'
+    url: 'jdbc:postgresql://${DB_SERVER}/${DB_NAME}?sslmode=${DB_SSL_MODE}&reWriteBatchedInserts=true'
     username: ${DB_USER}
     password: ${DB_PASS}
 
@@ -35,15 +35,22 @@ spring:
     hibernate:
       ddl-auto: validate
     properties:
-      hibernate.jdbc.lob.non_contextual_creation: true
-      org.hibernate.envers.audit_table_suffix: _audit
-      org.hibernate.envers.revision_field_name: rev_id
-      org.hibernate.envers.revision_type_field_name: rev_type
-      org.hibernate.envers.modified_flag_suffix: _modified
-      org.hibernate.envers.store_data_at_delete: true
-      org.hibernate.envers.do_not_audit_optimistic_locking_field: false
-      hibernate.globally_quoted_identifiers: true
-      hibernate.globally_quoted_identifiers_skip_column_definitions: true
+      hibernate:
+        jdbc:
+          lob.non_contextual_creation: true
+          batch_size: 100
+          fetch_size: 100
+        globally_quoted_identifiers: true
+        globally_quoted_identifiers_skip_column_definitions: true
+        order_inserts: true
+        order_updates: true
+      org.hibernate.envers:
+        audit_table_suffix: _audit
+        revision_field_name: rev_id
+        revision_type_field_name: rev_type
+        modified_flag_suffix: _modified
+        store_data_at_delete: true
+        do_not_audit_optimistic_locking_field: false
     open-in-view: false
 
   security:
