@@ -15,7 +15,7 @@ integration:
 
 spring:
   datasource:
-    url: 'jdbc:postgresql://localhost:5432/movements'
+    url: 'jdbc:postgresql://localhost:5432/movements?reWriteBatchedInserts=true'
     username: external
     password: movements
   flyway:

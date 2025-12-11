@@ -26,9 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
@@ -92,26 +90,6 @@ class CreateTapAuthorisationIntTest(
     val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
     assertThat(res.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
-  }
-
-  @Test
-  fun `409 conflict - matching tap authorisation already exists`() {
-    val prisonCode = prisonCode()
-    val pi = personIdentifier()
-    prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, pi))
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
-
-    val request = createTapAuthorisationRequest(
-      occurrences = listOf(
-        createTapOccurrenceRequest(
-          start = occurrence.start,
-          end = occurrence.end,
-        ),
-      ),
-    )
-    createTapAuthorisation(pi, request)
-      .expectStatus().isEqualTo(HttpStatus.CONFLICT)
   }
 
   @Test

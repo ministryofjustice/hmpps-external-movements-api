@@ -30,7 +30,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Tr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.AbsenceCategorisationException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
@@ -60,16 +59,6 @@ class CreateScheduledAbsence(
         }
       }
     }
-    request.occurrences.mapNotNull {
-      tapOccurrenceRepository.findByAuthorisationPersonIdentifierAndStartAndEnd(
-        personIdentifier,
-        it.start,
-        it.end,
-      )
-    }.takeIf { it.isNotEmpty() }
-      ?.also {
-        throw ConflictException("A matching TAP authorisation already exists")
-      }
     val person = personSummaryService.save(prisoner)
     val authorisation = tapAuthRepository.save(
       request.asAuthorisation(person, prisoner.lastPrisonId, rdProvider, linkProvider),

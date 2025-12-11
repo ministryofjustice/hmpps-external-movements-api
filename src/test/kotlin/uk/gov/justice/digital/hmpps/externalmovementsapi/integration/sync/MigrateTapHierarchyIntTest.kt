@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -90,7 +91,7 @@ class MigrateTapHierarchyIntTest(
     )
     val um = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(Direction.IN, auth.person.identifier))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.person.identifier))
-    val request = migrateTapRequest()
+    val request = migrateTapRequest(temporaryAbsences = listOf(tapAuthorisation(), tapAuthorisation(statusCode = TapAuthorisationStatus.Code.PENDING.name, occurrences = listOf())))
     val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     // confirm existing tap hierarchy has been removed
@@ -144,8 +145,13 @@ class MigrateTapHierarchyIntTest(
       )
 
       val domainEvents = latestRevisionDomainEvents(auth)
-      assertThat(domainEvents).hasSize(4)
+      assertThat(domainEvents).hasSize(5)
       domainEvents.forEach { domainEvent -> assertThat(domainEvent.published).isTrue }
+    }
+
+    with(response.temporaryAbsences.last()) {
+      val expired = requireNotNull(findTemporaryAbsenceAuthorisation(id))
+      assertThat(expired.status.code).isEqualTo(TapAuthorisationStatus.Code.EXPIRED.name)
     }
   }
 
