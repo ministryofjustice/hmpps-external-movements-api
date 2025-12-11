@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.EXPIRED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.ExternalMovementMigrated
@@ -83,6 +84,7 @@ data class TapAuthorisation(
     absenceSubTypeCode?.let { ABSENCE_SUB_TYPE of it },
     ACCOMPANIED_BY of accompaniedByCode,
     TRANSPORT of transportCode,
+    TAP_AUTHORISATION_STATUS of EXPIRED.name,
   )
 }
 
