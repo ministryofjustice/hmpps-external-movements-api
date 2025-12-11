@@ -63,6 +63,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import java.time.LocalDate
 import java.util.UUID
@@ -274,6 +275,10 @@ class TemporaryAbsenceAuthorisation(
     applyStatus(TapAuthorisationStatus.Code.CANCELLED, rdSupplier, action)
   }
 
+  fun expire(action: ExpireAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+    applyStatus(TapAuthorisationStatus.Code.EXPIRED, rdSupplier, action)
+  }
+
   private fun applyStatus(
     statusCode: TapAuthorisationStatus.Code,
     rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
@@ -325,6 +330,14 @@ interface TemporaryAbsenceAuthorisationRepository :
   """,
   )
   fun findApprovalsRequiredCount(prisonIdentifier: String): Int
+
+  @Query(
+    """
+      select taa from TemporaryAbsenceAuthorisation taa
+      where taa.status.key.code = 'PENDING' and taa.end < current_date
+    """,
+  )
+  fun findRecentlyExpired(): List<TemporaryAbsenceAuthorisation>
 
   @Modifying
   fun deleteByPersonIdentifier(personIdentifier: String)

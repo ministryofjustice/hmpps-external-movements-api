@@ -122,7 +122,7 @@ class SyncTapMovementIntTest(
     )
     val request = tapMovement(
       accompaniedByCode = "U",
-      accompaniedByNotes = "Updated the text about the escort",
+      accompaniedByComments = "Updated the text about the escort",
       direction = TemporaryAbsenceMovement.Direction.OUT,
       id = existing.id,
       occurrenceId = occurrence.id,
@@ -161,7 +161,7 @@ class SyncTapMovementIntTest(
     )
     val request = tapMovement(
       accompaniedByCode = "U",
-      accompaniedByNotes = "Updated the text about the escort",
+      accompaniedByComments = "Updated the text about the escort",
       direction = TemporaryAbsenceMovement.Direction.IN,
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
@@ -217,8 +217,8 @@ class SyncTapMovementIntTest(
     occurrenceAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     reasonCode: String = "R15",
     accompaniedByCode: String = "L",
-    accompaniedByNotes: String? = "Information about the escort",
-    notes: String? = "Some notes about the movement",
+    accompaniedByComments: String? = "Information about the escort",
+    comments: String? = "Some comments about the movement",
     location: Location = location(),
     legacyId: String = "${newId()}",
     recordedBy: String = DEFAULT_USERNAME,
@@ -231,8 +231,8 @@ class SyncTapMovementIntTest(
     reasonCode,
     location,
     accompaniedByCode,
-    accompaniedByNotes,
-    notes,
+    accompaniedByComments,
+    comments,
     AtAndByWithPrison(recordedAt, recordedBy, prisonCode),
     null,
     legacyId,

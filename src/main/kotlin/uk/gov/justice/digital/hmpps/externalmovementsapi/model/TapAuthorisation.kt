@@ -25,10 +25,6 @@ data class TapAuthorisation(
   val schedule: JsonNode?,
   val comments: String?,
 ) {
-  val fromDate: LocalDate = start
-  val toDate: LocalDate = end
-  val notes: String? = comments
-
   data class Occurrence(
     val id: UUID,
     val status: CodedDescription,
@@ -42,9 +38,5 @@ data class TapAuthorisation(
     val accompaniedBy: CodedDescription,
     val transport: CodedDescription,
     val comments: String?,
-  ) {
-    val releaseAt: LocalDateTime = start
-    val returnBy: LocalDateTime = end
-    val notes: String? = comments
-  }
+  )
 }

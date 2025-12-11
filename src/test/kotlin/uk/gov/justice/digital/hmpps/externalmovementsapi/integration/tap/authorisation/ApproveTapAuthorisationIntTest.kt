@@ -1,30 +1,36 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.authorisation
 
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAccompanimentChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationAccompanimentChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
-import java.time.LocalDateTime
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import java.util.UUID
 
-class ChangeAuthorisationAccompanimentIntTest(
+class ApproveTapAuthorisationIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -43,48 +49,47 @@ class ChangeAuthorisationAccompanimentIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    applyAccompaniment(
-      UUID.randomUUID(),
-      action(),
+    approveAuthorisation(
+      newUuid(),
+      approveAuthorisationRequest(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    applyAccompaniment(newUuid(), action()).expectStatus().isNotFound
+    approveAuthorisation(newUuid(), approveAuthorisationRequest()).expectStatus().isNotFound
+  }
+
+  @ParameterizedTest
+  @EnumSource(TapAuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "APPROVED"])
+  fun `409 - authorisation not awaiting approval cannot be approved`(status: TapAuthorisationStatus.Code) {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
+    val res = approveAuthorisation(auth.id, approveAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
+    assertThat(res.userMessage).isEqualTo("Temporary absence authorisation not awaiting approval")
   }
 
   @Test
-  fun `200 ok - authorisation accompaniment changed`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val prev = givenTemporaryAbsenceOccurrence(
-      temporaryAbsenceOccurrence(
-        auth,
-        start = LocalDateTime.now().minusDays(3),
-        end = LocalDateTime.now().minusDays(2),
-      ),
-    )
-    val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = action()
-    val res = applyAccompaniment(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(
-      TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE,
-      TemporaryAbsenceAccompanimentChanged.EVENT_TYPE,
+  fun `200 ok - authorisation approved`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val request = approveAuthorisationRequest()
+
+    val res = approveAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactlyInAnyOrder(
+      TemporaryAbsenceAuthorisationApproved.EVENT_TYPE,
+      TemporaryAbsenceScheduled.EVENT_TYPE,
     )
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("accompaniedBy", "Prison officer escort (local)", "Unaccompanied"),
+      AuditedAction.Change("status", "To be reviewed", "Approved"),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    assertThat(saved.accompaniedBy.code).isEqualTo(request.accompaniedByCode)
-
-    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
-    assertThat(occurrence.accompaniedBy.code).isEqualTo(request.accompaniedByCode)
-
-    val previous = requireNotNull(findTemporaryAbsenceOccurrence(prev.id))
-    assertThat(previous.accompaniedBy.code).isEqualTo(prev.accompaniedBy.code)
+    assertThat(saved.status.code).isEqualTo(APPROVED.name)
+    val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
+    assertThat(absence.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
 
     verifyAudit(
       saved,
@@ -100,39 +105,19 @@ class ChangeAuthorisationAccompanimentIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceAuthorisationAccompanimentChanged(auth.person.identifier, auth.id),
-        TemporaryAbsenceAccompanimentChanged(auth.person.identifier, occ.id),
+        TemporaryAbsenceAuthorisationApproved(auth.person.identifier, auth.id),
+        TemporaryAbsenceScheduled(auth.person.identifier, occurrence.id),
       ),
     )
   }
 
-  @Test
-  fun `200 ok - no-op change accompaniment request`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    val request = action(auth.accompaniedBy.code)
-    val res = applyAccompaniment(auth.id, request).successResponse<AuditHistory>()
-    assertThat(res.content).isEmpty()
+  private fun approveAuthorisationRequest(
+    reason: String? = "Evidence justifying the approval",
+  ) = ApproveAuthorisation(reason)
 
-    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    verifyAudit(
-      saved,
-      RevisionType.ADD,
-      setOf(
-        TemporaryAbsenceAuthorisation::class.simpleName!!,
-        HmppsDomainEvent::class.simpleName!!,
-      ),
-      ExternalMovementContext.get(),
-    )
-  }
-
-  private fun action(
-    accompaniedByCode: String = "U",
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeAuthorisationAccompaniment(accompaniedByCode, reason)
-
-  private fun applyAccompaniment(
+  private fun approveAuthorisation(
     id: UUID,
-    request: ChangeAuthorisationAccompaniment,
+    request: ApproveAuthorisation,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

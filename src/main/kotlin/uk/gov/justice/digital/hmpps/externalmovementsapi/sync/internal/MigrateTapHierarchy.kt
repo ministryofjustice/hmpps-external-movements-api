@@ -34,6 +34,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
@@ -52,6 +54,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigratedOc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapOccurrence
+import java.time.LocalDate
 
 @Transactional
 @Service
@@ -135,6 +138,7 @@ class MigrateTapHierarchy(
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
       rdPaths.getReferenceData(it.domain, it.code)
     }
+    val status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus
     return TemporaryAbsenceAuthorisation(
       person = person,
       prisonCode = prisonCode,
@@ -147,10 +151,14 @@ class MigrateTapHierarchy(
       accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
       transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
       repeat = repeat,
-      status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus,
-      comments = notes,
-      start = fromDate,
-      end = toDate,
+      status = if (status.code == PENDING.name && end.isBefore(LocalDate.now())) {
+        rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, EXPIRED.name) as TapAuthorisationStatus
+      } else {
+        status
+      },
+      comments = comments,
+      start = start,
+      end = end,
       schedule = null,
       reasonPath = reasonPath,
       legacyId = legacyId,

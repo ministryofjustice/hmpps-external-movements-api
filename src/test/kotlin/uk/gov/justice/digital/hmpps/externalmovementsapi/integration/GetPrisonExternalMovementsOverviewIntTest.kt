@@ -96,22 +96,22 @@ class GetPrisonExternalMovementsOverviewIntTest(
 
   private fun givenLeavingInSevenDays(prisonCode: String, vararg personIdentifiers: String) {
     val dateRange = (1L..7L).map { LocalDate.now().plusDays(it) }
-    val from = dateRange.random()
-    val to = from.plusDays(1)
+    val start = dateRange.random()
+    val end = start.plusDays(1)
     personIdentifiers.forEachIndexed { idx, personIdentifier ->
       val authorisation = givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           prisonCode,
           personIdentifier,
-          start = from,
-          end = to,
+          start = start,
+          end = end,
         ),
       )
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
           authorisation,
-          start = LocalDateTime.of(from, LocalTime.now()),
-          end = LocalDateTime.of(to, LocalTime.now()),
+          start = LocalDateTime.of(start, LocalTime.now()),
+          end = LocalDateTime.of(end, LocalTime.now()),
         ),
       )
     }
@@ -119,14 +119,14 @@ class GetPrisonExternalMovementsOverviewIntTest(
 
   private fun givenApprovalsRequired(prisonCode: String, vararg personIdentifiers: String) {
     personIdentifiers.forEachIndexed { idx, personIdentifier ->
-      val from = LocalDate.now().plusDays(idx.toLong())
+      val start = LocalDate.now().plusDays(idx.toLong())
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           prisonCode,
           personIdentifier,
           status = TapAuthorisationStatus.Code.PENDING,
-          start = from,
-          end = from.plusDays(1),
+          start = start,
+          end = start.plusDays(1),
         ),
       )
     }

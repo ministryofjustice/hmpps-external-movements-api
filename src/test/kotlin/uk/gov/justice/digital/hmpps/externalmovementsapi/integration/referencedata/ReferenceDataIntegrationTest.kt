@@ -50,6 +50,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
       CodedDescription("APPROVED", "Approved"),
       CodedDescription("DENIED", "Denied"),
       CodedDescription("CANCELLED", "Cancelled"),
+      CodedDescription("EXPIRED", "Expired"),
     )
   }
 

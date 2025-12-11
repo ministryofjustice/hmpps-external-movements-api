@@ -24,10 +24,6 @@ data class TapOccurrence(
   val created: AtAndBy,
   val updated: AtAndBy?,
 ) {
-  val releaseAt: LocalDateTime = start
-  val returnBy: LocalDateTime = end
-  val notes: String? = comments
-
   @Schema(name = "SyncReadTapOccurrenceAuthorisation")
   data class Authorisation(
     val id: UUID,

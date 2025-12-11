@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.occurrence
 
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
@@ -10,19 +10,20 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAccompanimentChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationAccompanimentChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import java.util.UUID
 
-class ChangeTapOccurrenceAccompanimentIntTest(
+class ChangeOccurrenceCommentsIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -41,7 +42,7 @@ class ChangeTapOccurrenceAccompanimentIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    applyAccompaniment(
+    applyOccurrenceComments(
       newUuid(),
       action(),
       "ROLE_ANY__OTHER_RW",
@@ -50,31 +51,25 @@ class ChangeTapOccurrenceAccompanimentIntTest(
 
   @Test
   fun `404 occurrence does not exist`() {
-    applyAccompaniment(newUuid(), action()).expectStatus().isNotFound
+    applyOccurrenceComments(newUuid(), action()).expectStatus().isNotFound
   }
 
   @Test
-  fun `200 ok single tap occurrence accompaniment updated successfully`() {
+  fun `200 ok single tap occurrence comments updated successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyAccompaniment(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceAccompanimentChanged.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE,
+      TemporaryAbsenceCommentsChanged.EVENT_TYPE,
+      TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
     )
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(
-      AuditedAction.Change(
-        "accompaniedBy",
-        occurrence.accompaniedBy.description,
-        "Unaccompanied",
-      ),
-    )
+    assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.accompaniedBy.code).isEqualTo(request.accompaniedByCode)
-    assertThat(saved.authorisation.accompaniedBy.code).isEqualTo(request.accompaniedByCode)
+    assertThat(saved.comments).isEqualTo(request.comments)
+    assertThat(saved.authorisation.comments).isEqualTo(request.comments)
 
     verifyAudit(
       saved,
@@ -90,31 +85,25 @@ class ChangeTapOccurrenceAccompanimentIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceAccompanimentChanged(occurrence.authorisation.person.identifier, occurrence.id),
-        TemporaryAbsenceAuthorisationAccompanimentChanged(auth.person.identifier, auth.id),
+        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id),
       ),
     )
   }
 
   @Test
-  fun `200 ok repeat tap occurrence accompaniment updated successfully`() {
+  fun `200 ok repeat tap occurrence comments updated successfully`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyAccompaniment(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAccompanimentChanged.EVENT_TYPE)
+    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(
-      AuditedAction.Change(
-        "accompaniedBy",
-        occurrence.accompaniedBy.description,
-        "Unaccompanied",
-      ),
-    )
+    assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.accompaniedBy.code).isEqualTo(request.accompaniedByCode)
-    assertThat(saved.authorisation.accompaniedBy.code).isEqualTo(auth.accompaniedBy.code)
+    assertThat(saved.comments).isEqualTo(request.comments)
+    assertThat(saved.authorisation.comments).isEqualTo(auth.comments)
 
     verifyAudit(
       saved,
@@ -129,19 +118,19 @@ class ChangeTapOccurrenceAccompanimentIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceAccompanimentChanged(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id),
       ),
     )
   }
 
   private fun action(
-    accompaniedByCode: String = "U",
+    comments: String = (0..10).joinToString(separator = " ") { word(6) },
     reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeOccurrenceAccompaniment(accompaniedByCode, reason)
+  ) = ChangeOccurrenceComments(comments, reason)
 
-  private fun applyAccompaniment(
+  private fun applyOccurrenceComments(
     id: UUID,
-    request: ChangeOccurrenceAccompaniment,
+    request: ChangeOccurrenceComments,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.occurrence
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -65,7 +66,7 @@ class CreateTapOccurrenceIntTest(
   }
 
   @Test
-  fun `200 ok - an occurrence is added to an authorisation with independent notes`() {
+  fun `200 ok - an occurrence is added to an authorisation with independent comments`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val request = request()
     val response = createOccurrence(authorisation.id, request).successResponse<ReferenceId>()
@@ -76,9 +77,9 @@ class CreateTapOccurrenceIntTest(
   }
 
   @Test
-  fun `200 ok - an occurrence is added to an authorisation without notes`() {
+  fun `200 ok - an occurrence is added to an authorisation without comments`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val request = request(notes = null)
+    val request = request(comments = null)
     val response = createOccurrence(authorisation.id, request).successResponse<ReferenceId>()
 
     val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
@@ -121,8 +122,8 @@ class CreateTapOccurrenceIntTest(
       start: LocalDateTime = LocalDateTime.now().plusDays(1),
       end: LocalDateTime = LocalDateTime.now().plusDays(2),
       location: Location = location(),
-      notes: String? = word(20),
-    ) = CreateOccurrenceRequest(start, end, location, notes)
+      comments: String? = word(20),
+    ) = CreateOccurrenceRequest(start, end, location, comments)
 
     @JvmStatic
     fun validationRequests() = listOf(

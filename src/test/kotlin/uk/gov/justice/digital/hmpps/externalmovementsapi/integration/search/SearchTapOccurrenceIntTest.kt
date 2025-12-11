@@ -86,37 +86,37 @@ class SearchTapOccurrenceIntTest(
   @Test
   fun `can find by prison number`() {
     val prisonCode = prisonCode()
-    val fromDate = LocalDate.now().plusDays(1)
-    val toDate = LocalDate.now().plusDays(3)
+    val start = LocalDate.now().plusDays(1)
+    val end = LocalDate.now().plusDays(3)
 
     val toFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
         status = TapAuthorisationStatus.Code.PENDING,
-        start = fromDate,
-        end = toDate,
+        start = start,
+        end = end,
       ),
     )
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         toFind,
-        start = LocalDateTime.of(fromDate, now()),
-        end = LocalDateTime.of(toDate, now()),
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
       ),
     )
     val doNotFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
         status = TapAuthorisationStatus.Code.PENDING,
-        start = fromDate,
-        end = toDate,
+        start = start,
+        end = end,
       ),
     )
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         doNotFind,
-        start = LocalDateTime.of(fromDate, now()),
-        end = LocalDateTime.of(toDate, now()),
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
       ),
     )
 
@@ -130,37 +130,37 @@ class SearchTapOccurrenceIntTest(
   @Test
   fun `can find by person name`() {
     val prisonCode = prisonCode()
-    val fromDate = LocalDate.now().plusDays(1)
-    val toDate = LocalDate.now().plusDays(3)
+    val start = LocalDate.now().plusDays(1)
+    val end = LocalDate.now().plusDays(3)
 
     val toFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
         status = TapAuthorisationStatus.Code.PENDING,
-        start = fromDate,
-        end = toDate,
+        start = start,
+        end = end,
       ),
     )
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         toFind,
-        start = LocalDateTime.of(fromDate, now()),
-        end = LocalDateTime.of(toDate, now()),
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
       ),
     )
     val doNotFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
         status = TapAuthorisationStatus.Code.PENDING,
-        start = fromDate,
-        end = toDate,
+        start = start,
+        end = end,
       ),
     )
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         doNotFind,
-        start = LocalDateTime.of(fromDate, now()),
-        end = LocalDateTime.of(toDate, now()),
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
       ),
     )
 
@@ -176,11 +176,11 @@ class SearchTapOccurrenceIntTest(
   @Test
   fun `can filter occurrences by status`() {
     val prisonCode = prisonCode()
-    val fromDate = LocalDateTime.now().plusDays(1)
-    val toDate = LocalDateTime.now().plusDays(2)
+    val start = LocalDateTime.now().plusDays(1)
+    val end = LocalDateTime.now().plusDays(2)
     val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
     val occ1 =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1, start = fromDate, end = toDate))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1, start = start, end = end))
     assertThat(occ1.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
 
     val auth2 = givenTemporaryAbsenceAuthorisation(
@@ -190,7 +190,7 @@ class SearchTapOccurrenceIntTest(
       ),
     )
     val occ2 =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2, start = fromDate, end = toDate))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2, start = start, end = end))
     assertThat(occ2.status.code).isEqualTo(TapOccurrenceStatus.Code.PENDING.name)
 
     val auth3 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
@@ -210,7 +210,7 @@ class SearchTapOccurrenceIntTest(
       ),
     )
     val occ4 =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth4, start = fromDate, end = toDate))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth4, start = start, end = end))
     assertThat(occ4.status.code).isEqualTo(TapOccurrenceStatus.Code.DENIED.name)
 
     val res = searchTapOccurrences(
@@ -238,11 +238,11 @@ class SearchTapOccurrenceIntTest(
   @Test
   fun `can sort occurrences by status`() {
     val prisonCode = prisonCode()
-    val fromDate = LocalDateTime.now().plusDays(1)
-    val toDate = LocalDateTime.now().plusDays(2)
+    val start = LocalDateTime.now().plusDays(1)
+    val end = LocalDateTime.now().plusDays(2)
     val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
     val occ1 =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1, start = fromDate, end = toDate))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1, start = start, end = end))
     assertThat(occ1.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
 
     val auth2 = givenTemporaryAbsenceAuthorisation(
@@ -252,7 +252,7 @@ class SearchTapOccurrenceIntTest(
       ),
     )
     val occ2 =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2, start = fromDate, end = toDate))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2, start = start, end = end))
     assertThat(occ2.status.code).isEqualTo(TapOccurrenceStatus.Code.PENDING.name)
 
     val auth3 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
@@ -272,7 +272,7 @@ class SearchTapOccurrenceIntTest(
       ),
     )
     val occ4 =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth4, start = fromDate, end = toDate))
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth4, start = start, end = end))
     assertThat(occ4.status.code).isEqualTo(TapOccurrenceStatus.Code.DENIED.name)
 
     val auth5 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
@@ -495,8 +495,8 @@ class SearchTapOccurrenceIntTest(
 
   private fun searchTapOccurrences(
     prisonCode: String,
-    fromDate: LocalDate? = null,
-    toDate: LocalDate? = null,
+    start: LocalDate? = null,
+    end: LocalDate? = null,
     query: String? = null,
     statuses: List<TapOccurrenceStatus.Code>? = null,
     sort: String? = null,
@@ -506,8 +506,8 @@ class SearchTapOccurrenceIntTest(
     .uri { uri ->
       uri.path(SEARCH_TAP_OCCURRENCES_URL)
       uri.queryParam("prisonCode", prisonCode)
-      fromDate?.also { uri.queryParam("fromDate", it) }
-      toDate?.also { uri.queryParam("toDate", it) }
+      start?.also { uri.queryParam("start", it) }
+      end?.also { uri.queryParam("end", it) }
       statuses?.also { uri.queryParam("status", *it.toTypedArray()) }
       sort?.also { uri.queryParam("sort", it) }
       query?.let { uri.queryParam("query", it) }

@@ -135,10 +135,10 @@ fun occurrenceMatchesPersonName(name: String) = Specification<TemporaryAbsenceOc
   authorisation.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
-fun occurrenceMatchesDateRange(fromDate: LocalDate?, toDate: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun occurrenceMatchesDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.and(
-    fromDate?.let { cb.greaterThanOrEqualTo(tao.get(START), it.atStartOfDay()) } ?: cb.conjunction(),
-    toDate?.let { cb.lessThanOrEqualTo(tao.get(END), it.plusDays(1).atStartOfDay()) } ?: cb.conjunction(),
+    start?.let { cb.greaterThanOrEqualTo(tao.get(START), it.atStartOfDay()) } ?: cb.conjunction(),
+    end?.let { cb.lessThanOrEqualTo(tao.get(END), it.plusDays(1).atStartOfDay()) } ?: cb.conjunction(),
   )
 }
 
@@ -155,10 +155,10 @@ fun forAuthorisation(authorisationId: UUID) = Specification<TemporaryAbsenceOccu
   cb.equal(authorisation.get<UUID>(TemporaryAbsenceAuthorisation.ID), authorisationId)
 }
 
-fun startAfter(fromDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.greaterThanOrEqualTo(tao.get(START), fromDate.atStartOfDay())
+fun startAfter(start: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.greaterThanOrEqualTo(tao.get(START), start.atStartOfDay())
 }
 
-fun startBefore(toDate: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.lessThan(tao.get(START), toDate)
+fun startBefore(end: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.lessThan(tao.get(START), end)
 }

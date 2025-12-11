@@ -36,7 +36,7 @@ class SearchTapOccurrence(
 
   private fun TapOccurrenceSearchRequest.asSpecification(): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
     occurrenceMatchesPrisonCode(prisonCode),
-    occurrenceMatchesDateRange(fromDate, toDate),
+    occurrenceMatchesDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
     queryString?.let {
       if (it.matches(Prisoner.PATTERN.toRegex())) {

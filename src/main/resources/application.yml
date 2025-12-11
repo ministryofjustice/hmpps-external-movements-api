@@ -111,6 +111,8 @@ service:
     poll-interval: PT0s
   occurrence-status:
     poll-interval: PT0s
+  authorisation-expiration:
+    cron: ""
 
 client:
   id: external-movements
