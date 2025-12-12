@@ -60,10 +60,7 @@ class ChangeTapOccurrenceAccompanimentIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
     val res = applyAccompaniment(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceAccompanimentChanged.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAccompanimentChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(

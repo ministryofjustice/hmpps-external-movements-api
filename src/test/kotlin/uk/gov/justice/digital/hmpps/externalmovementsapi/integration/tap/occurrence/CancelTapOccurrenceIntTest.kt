@@ -72,10 +72,7 @@ class CancelTapOccurrenceIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = cancelOccurrenceRequest()
     val res = cancelOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceCancelled.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).isEmpty()
 

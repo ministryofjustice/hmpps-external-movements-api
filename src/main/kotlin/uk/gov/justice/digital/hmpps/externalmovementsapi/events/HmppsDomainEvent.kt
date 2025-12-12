@@ -31,6 +31,10 @@ class HmppsDomainEvent(
   @Version
   val version: Int? = null
   val eventType: String = event.eventType
+  val entityId: UUID? = when (val additionalInformation = event.additionalInformation) {
+    is IdInformation -> additionalInformation.id
+    else -> null
+  }
   var published: Boolean = false
 }
 

@@ -69,10 +69,7 @@ class ChangeAuthorisationTransportIntTest(
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
     val res = applyTransport(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(
-      TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE,
-      TemporaryAbsenceTransportChanged.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("transport", "Prisoner driver", "Not Required"),

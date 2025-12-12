@@ -69,10 +69,7 @@ class ChangeAuthorisationAccompanimentIntTest(
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
     val res = applyAccompaniment(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(
-      TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE,
-      TemporaryAbsenceAccompanimentChanged.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("accompaniedBy", "Prison officer escort (local)", "Unaccompanied"),

@@ -122,10 +122,7 @@ class RescheduleTapOccurrenceIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = rescheduleOccurrenceRequest(LocalDateTime.now().plusDays(7), LocalDateTime.now().plusDays(8))
     val res = rescheduleOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceRescheduled.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRescheduled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes.map { it.propertyName }).containsExactly("start", "end")
 

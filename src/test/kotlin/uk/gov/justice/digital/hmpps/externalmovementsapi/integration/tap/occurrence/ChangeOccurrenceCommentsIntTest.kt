@@ -60,10 +60,7 @@ class ChangeOccurrenceCommentsIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
     val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceCommentsChanged.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import java.time.ZonedDateTime
+import java.util.UUID
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "eventType")
 @JsonSubTypes(
@@ -66,4 +67,8 @@ data class PersonReference(val identifiers: List<Identifier> = listOf()) {
 
 sealed interface AdditionalInformation {
   val source: DataSource
+}
+
+sealed interface IdInformation {
+  val id: UUID
 }

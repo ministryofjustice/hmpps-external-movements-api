@@ -5,9 +5,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import java.util.UUID
 
 data class TemporaryAbsenceInformation(
-  val id: UUID,
+  override val id: UUID,
   override val source: DataSource,
-) : AdditionalInformation
+) : AdditionalInformation,
+  IdInformation
 
 data class TemporaryAbsenceScheduled(
   override val additionalInformation: TemporaryAbsenceInformation,

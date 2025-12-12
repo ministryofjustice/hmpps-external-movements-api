@@ -84,10 +84,7 @@ class CancelTapAuthorisationIntTest(
     val request = cancelAuthorisationRequest()
 
     val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE,
-      TemporaryAbsenceCancelled.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Approved", "Cancelled"),
