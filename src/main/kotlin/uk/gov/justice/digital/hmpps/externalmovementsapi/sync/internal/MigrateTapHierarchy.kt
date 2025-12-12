@@ -128,6 +128,11 @@ class MigrateTapHierarchy(
   ): MigratedMovement {
     val rdPaths = rdPaths(rdWithDomainLinks, findLinked)
     val movement = movementRepository.save(asEntity(person.identifier, occurrence, rdPaths))
+    occurrence?.also { occ ->
+      occ.addMovement(movement) {
+        referenceDataRepository.findByKey(TAP_OCCURRENCE_STATUS of it) as TapOccurrenceStatus
+      }
+    }
     migrationSystemAuditRepository.save(MigrationSystemAudit(movement.id, created.at, created.by, updated?.at, updated?.by))
     return MigratedMovement(legacyId, movement.id)
   }

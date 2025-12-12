@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.Migrat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -91,7 +92,12 @@ class MigrateTapHierarchyIntTest(
     )
     val um = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(Direction.IN, auth.person.identifier))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.person.identifier))
-    val request = migrateTapRequest(temporaryAbsences = listOf(tapAuthorisation(), tapAuthorisation(statusCode = TapAuthorisationStatus.Code.PENDING.name, occurrences = listOf())))
+    val request = migrateTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(),
+        tapAuthorisation(statusCode = TapAuthorisationStatus.Code.PENDING.name, occurrences = listOf()),
+      ),
+    )
     val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     // confirm existing tap hierarchy has been removed
@@ -217,6 +223,53 @@ class MigrateTapHierarchyIntTest(
     }
   }
 
+  @Test
+  fun `200 ok - historic absences with movements get correct status`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = migrateTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          occurrences = listOf(
+            tapOccurrence(
+              start = LocalDateTime.now().minusDays(3),
+              end = LocalDateTime.now().minusDays(2),
+              movements = listOf(
+                tapMovement(occurredAt = LocalDateTime.now().minusDays(1)),
+              ),
+            ),
+          ),
+        ),
+        tapAuthorisation(
+          occurrences = listOf(
+            tapOccurrence(
+              start = LocalDateTime.now().minusDays(3),
+              end = LocalDateTime.now().minusDays(2),
+              movements = listOf(),
+            ),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    val response = migrateTap(pi, request).successResponse<MigrateTapResponse>()
+
+    response.temporaryAbsences.first().also { ma ->
+      ma.occurrences.first().also { mo ->
+        val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
+        assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.OVERDUE.name)
+      }
+    }
+
+    response.temporaryAbsences.last().also { ma ->
+      ma.occurrences.first().also { mo ->
+        val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
+        assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.EXPIRED.name)
+      }
+    }
+  }
+
   private fun latestRevisionDomainEvents(entity: Identifiable): List<HmppsDomainEvent> = transactionTemplate.execute {
     val auditReader = AuditReaderFactory.get(entityManager)
     assertTrue(auditReader.isEntityClassAudited(entity::class.java))
@@ -311,7 +364,7 @@ class MigrateTapHierarchyIntTest(
   private fun tapMovement(
     direction: Direction = Direction.OUT,
     prisonCode: String = prisonCode(),
-    occurrenceAt: LocalDateTime = LocalDateTime.now().minusDays(7),
+    occurredAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     reasonCode: String = "R15",
     accompaniedByCode: String = "L",
     accompaniedByComments: String? = "Information about the escort",
@@ -321,7 +374,7 @@ class MigrateTapHierarchyIntTest(
     recordedBy: String = username(),
     recordedAt: LocalDateTime = LocalDateTime.now().minusDays(7),
   ) = TapMovement(
-    occurrenceAt,
+    occurredAt,
     direction,
     reasonCode,
     location,
