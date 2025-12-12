@@ -7,7 +7,7 @@ integration:
     url: "https://prisoner-search-dev.prison.service.justice.gov.uk"
 
 service:
-  active-prisons: "LEI,MDI"
+  active-prisons: "***"
   domain-events:
     poll-interval: PT10s
   occurrence-status:
