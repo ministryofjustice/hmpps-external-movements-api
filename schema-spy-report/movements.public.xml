@@ -102,6 +102,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="event_type" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="event" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="published" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_hmpps_domain_event" unique="true">
             <column ascending="true" name="id"/>
@@ -119,6 +120,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="event_type" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="event" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="published" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <primaryKey column="rev_id" sequenceNumberInPK="2"/>
          <index name="pk_hmpps_domain_event_audit" unique="true">
