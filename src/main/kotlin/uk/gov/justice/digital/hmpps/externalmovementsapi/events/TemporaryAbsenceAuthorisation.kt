@@ -14,7 +14,7 @@ data class TemporaryAbsenceAuthorisationPending(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence authorisation has been pending."
+  override val description: String = "A temporary absence authorisation is pending."
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.pending"
@@ -161,7 +161,7 @@ data class TemporaryAbsenceAuthorisationDateRangeChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The date range of an absence authorisation has changed."
+  override val description: String = "The date range of a temporary absence authorisation has been changed."
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.date-range-changed"
@@ -203,7 +203,7 @@ data class TemporaryAbsenceAuthorisationRecategorised(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "An temporary absence authorisation has been recategorised."
+  override val description: String = "A temporary absence authorisation has been recategorised."
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.recategorised"
