@@ -77,10 +77,7 @@ class ApproveTapAuthorisationIntTest(
     val request = approveAuthorisationRequest()
 
     val res = approveAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceAuthorisationApproved.EVENT_TYPE,
-      TemporaryAbsenceScheduled.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "To be reviewed", "Approved"),

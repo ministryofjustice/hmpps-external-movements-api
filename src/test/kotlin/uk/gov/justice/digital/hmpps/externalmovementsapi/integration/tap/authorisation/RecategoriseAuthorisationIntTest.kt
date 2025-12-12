@@ -60,7 +60,7 @@ class RecategoriseAuthorisationIntTest(
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action("PP", null, null, null)
     val res = recategoriseAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE, TemporaryAbsenceRecategorised.EVENT_TYPE)
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Police production"),
@@ -102,7 +102,7 @@ class RecategoriseAuthorisationIntTest(
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action("SE", null, null, "C6")
     val res = recategoriseAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE, TemporaryAbsenceRecategorised.EVENT_TYPE)
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Security escort"),

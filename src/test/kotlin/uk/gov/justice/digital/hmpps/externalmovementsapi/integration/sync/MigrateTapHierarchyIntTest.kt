@@ -78,14 +78,16 @@ class MigrateTapHierarchyIntTest(
 
   @Test
   fun `200 ok - can migrate tap for a person`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
+        legacyId = newId(),
         movements = listOf(
           temporaryAbsenceMovement(
             personIdentifier = auth.person.identifier,
             direction = Direction.OUT,
+            legacyId = newId().toString(),
           ),
         ),
       ),
@@ -140,7 +142,7 @@ class MigrateTapHierarchyIntTest(
 
       verifyAudit(
         auth,
-        RevisionType.ADD,
+        RevisionType.DEL,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
           TemporaryAbsenceOccurrence::class.simpleName!!,
