@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetPrisonOvervi
 
 @RestController
 @RequestMapping("prisons")
-@PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
+@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_UI}', '${Roles.EM_UI_TEMP}')")
 class PrisonController(private val overview: GetPrisonOverview) {
   @GetMapping("/{prisonIdentifier}/external-movements/overview")
   fun getPrisonerOverview(@PathVariable prisonIdentifier: String): PrisonExternalMovementOverview = overview.forPrison(prisonIdentifier)

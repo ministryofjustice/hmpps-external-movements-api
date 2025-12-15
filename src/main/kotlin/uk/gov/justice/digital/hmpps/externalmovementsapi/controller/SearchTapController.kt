@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.search.SearchTa
 
 @RestController
 @RequestMapping("/search")
-@PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
+@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_UI}', '${Roles.EM_UI_TEMP}')")
 class SearchTapController(private val authorisations: SearchTapAuthorisation, private val occurrences: SearchTapOccurrence) {
   @GetMapping("/temporary-absence-authorisations")
   fun findTapAuthorisations(@Valid request: TapAuthorisationSearchRequest): TapAuthorisationSearchResponse = authorisations.find(request)

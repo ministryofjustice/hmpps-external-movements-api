@@ -27,7 +27,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/temporary-absence-authorisations")
-@PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
+@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_UI}', '${Roles.EM_UI_TEMP}')")
 class TapAuthorisationController(
   private val create: CreateScheduledAbsence,
   private val get: GetTapAuthorisation,
