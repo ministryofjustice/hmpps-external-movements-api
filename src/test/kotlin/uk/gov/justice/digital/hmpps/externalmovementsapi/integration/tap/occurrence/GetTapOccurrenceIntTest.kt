@@ -194,6 +194,48 @@ class GetTapOccurrenceIntTest(
     assertThat(response.status.code).isEqualTo("COMPLETED")
   }
 
+  @Test
+  fun `can retrieve occurrence with position and total count`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occ1 =
+      givenTemporaryAbsenceOccurrence(
+        temporaryAbsenceOccurrence(
+          auth,
+          start = LocalDateTime.now().plusHours(1),
+          end = LocalDateTime.now().plusHours(3),
+        ),
+      )
+    val occ2 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().plusHours(6),
+        end = LocalDateTime.now().plusHours(8),
+      ),
+    )
+    val occ3 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().plusHours(10),
+        end = LocalDateTime.now().plusHours(12),
+      ),
+    )
+
+    val res1 = getTapOccurrence(occ1.id).successResponse<TapOccurrence>()
+    occ1.verifyAgainst(res1)
+    assertThat(res1.occurrencePosition).isEqualTo(1)
+    assertThat(res1.totalOccurrences).isEqualTo(3)
+
+    val res2 = getTapOccurrence(occ2.id).successResponse<TapOccurrence>()
+    occ2.verifyAgainst(res2)
+    assertThat(res2.occurrencePosition).isEqualTo(2)
+    assertThat(res2.totalOccurrences).isEqualTo(3)
+
+    val res3 = getTapOccurrence(occ3.id).successResponse<TapOccurrence>()
+    occ3.verifyAgainst(res3)
+    assertThat(res3.occurrencePosition).isEqualTo(3)
+    assertThat(res3.totalOccurrences).isEqualTo(3)
+  }
+
   private fun getTapOccurrence(
     id: UUID,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,

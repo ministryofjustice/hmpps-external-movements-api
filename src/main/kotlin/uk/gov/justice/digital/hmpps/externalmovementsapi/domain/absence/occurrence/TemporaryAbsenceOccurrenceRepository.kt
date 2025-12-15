@@ -36,12 +36,6 @@ import java.util.UUID
 interface TemporaryAbsenceOccurrenceRepository :
   JpaRepository<TemporaryAbsenceOccurrence, UUID>,
   JpaSpecificationExecutor<TemporaryAbsenceOccurrence> {
-  fun findByAuthorisationPersonIdentifierAndStartAndEnd(
-    personIdentifier: String,
-    start: LocalDateTime,
-    end: LocalDateTime,
-  ): TemporaryAbsenceOccurrence?
-
   @Query(
     """
     select 
@@ -57,6 +51,19 @@ interface TemporaryAbsenceOccurrenceRepository :
 
   fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
   fun findByAuthorisationIdIn(authorisationIds: Set<UUID>): List<TemporaryAbsenceOccurrence>
+
+  @Query(
+    """
+     with occurrences as (
+      select ao.id as occurrenceId, row_number() over (partition by ao.authorisation.id order by ao.start, ao.end) as pos
+      from TemporaryAbsenceOccurrence ao 
+      where ao.authorisation.id = :authorisationId
+    )
+    select o.pos as position, (select count(1) from occurrences) as total
+    from occurrences o where o.occurrenceId = :occurrenceId
+    """,
+  )
+  fun getPosition(authorisationId: UUID, occurrenceId: UUID): TapOccurrencePosition
 
   @Query(
     """
@@ -115,6 +122,11 @@ interface PrisonLeaverCounts {
     override val leavingToday: Int = 0
     override val leavingNextSevenDays: Int = 0
   }
+}
+
+interface TapOccurrencePosition {
+  val position: Int
+  val total: Int
 }
 
 fun TemporaryAbsenceOccurrenceRepository.getOccurrence(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence occurrence not found")
