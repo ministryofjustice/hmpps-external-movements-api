@@ -28,6 +28,7 @@ class GetTapAuthorisation(
 ) {
   fun byId(id: UUID, start: LocalDate?, end: LocalDate?): TapAuthorisation {
     val authorisation = authorisationRepository.getAuthorisation(id)
+    val totalOccurrences = occurrenceRepository.count(forAuthorisation(authorisation.id))
     val occurrences: List<TemporaryAbsenceOccurrence> = occurrenceRepository.findAll(
       listOfNotNull(
         forAuthorisation(authorisation.id),
@@ -35,12 +36,13 @@ class GetTapAuthorisation(
         end?.let { startBefore(it.plusDays(1).atStartOfDay()) },
       ).reduce(Specification<TemporaryAbsenceOccurrence>::and),
     )
-    return authorisation.with(authorisation.person.asPerson(), occurrences.map { o -> o.asOccurrence() })
+    return authorisation.with(authorisation.person.asPerson(), totalOccurrences, occurrences.map { o -> o.asOccurrence() })
   }
 }
 
 private fun TemporaryAbsenceAuthorisation.with(
   person: Person,
+  totalOccurrences: Long,
   occurrences: List<TapAuthorisation.Occurrence>,
 ) = TapAuthorisation(
   id = id,
@@ -56,6 +58,7 @@ private fun TemporaryAbsenceAuthorisation.with(
   repeat = repeat,
   start = start,
   end = end,
+  totalOccurrenceCount = totalOccurrences,
   occurrences = occurrences,
   locations = occurrences.map { it.location }.distinct(),
   schedule = schedule,

@@ -104,6 +104,7 @@ class GetTapAuthorisationIntTest(
     ).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
     assertThat(response.occurrences).hasSize(2)
+    assertThat(response.totalOccurrenceCount).isEqualTo(4)
   }
 
   @Test
