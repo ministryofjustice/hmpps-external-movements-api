@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundExcep
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.SequencedSet
 import java.util.UUID
 
 interface TemporaryAbsenceOccurrenceRepository :
@@ -129,6 +130,13 @@ fun occurrenceMatchesPersonIdentifier(personIdentifier: String) = Specification<
   authorisation.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesIdentifier(cb, personIdentifier)
 }
 
+fun occurrencePersonIdentifierIn(personIdentifiers: SequencedSet<String>) = Specification<TemporaryAbsenceOccurrence> { tao, _, _ ->
+  val authorisation =
+    tao.join<TemporaryAbsenceOccurrence, TemporaryAbsenceAuthorisation>(AUTHORISATION, JoinType.INNER)
+  val person = authorisation.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
+  person.get<String>(PersonSummary.IDENTIFIER).`in`(personIdentifiers)
+}
+
 fun occurrenceMatchesPersonName(name: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   val authorisation =
     tao.join<TemporaryAbsenceOccurrence, TemporaryAbsenceAuthorisation>(AUTHORISATION, JoinType.INNER)
@@ -155,10 +163,10 @@ fun forAuthorisation(authorisationId: UUID) = Specification<TemporaryAbsenceOccu
   cb.equal(authorisation.get<UUID>(TemporaryAbsenceAuthorisation.ID), authorisationId)
 }
 
-fun startAfter(start: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.greaterThanOrEqualTo(tao.get(START), start.atStartOfDay())
+fun startAfter(start: LocalDateTime) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  cb.greaterThanOrEqualTo(tao.get(START), start)
 }
 
-fun startBefore(end: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun startBefore(end: LocalDateTime) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.lessThan(tao.get(START), end)
 }

@@ -5,3 +5,6 @@ integration:
     url:  "https://manage-users-api.hmpps.service.justice.gov.uk"
   prisoner-search:
     url: "https://prisoner-search.prison.service.justice.gov.uk"
+
+service:
+  ui-base-url: "https://external-movements.hmpps.service.justice.gov.uk"

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
@@ -27,12 +28,12 @@ class GetTapAuthorisation(
 ) {
   fun byId(id: UUID, start: LocalDate?, end: LocalDate?): TapAuthorisation {
     val authorisation = authorisationRepository.getAuthorisation(id)
-    val occurrences = occurrenceRepository.findAll(
+    val occurrences: List<TemporaryAbsenceOccurrence> = occurrenceRepository.findAll(
       listOfNotNull(
         forAuthorisation(authorisation.id),
-        start?.let { startAfter(it) },
-        end?.let { startBefore(it.plusDays(1)) },
-      ).reduce { spec, current -> spec.and(current) },
+        start?.let { startAfter(it.atStartOfDay()) },
+        end?.let { startBefore(it.plusDays(1).atStartOfDay()) },
+      ).reduce(Specification<TemporaryAbsenceOccurrence>::and),
     )
     return authorisation.with(authorisation.person.asPerson(), occurrences.map { o -> o.asOccurrence() })
   }

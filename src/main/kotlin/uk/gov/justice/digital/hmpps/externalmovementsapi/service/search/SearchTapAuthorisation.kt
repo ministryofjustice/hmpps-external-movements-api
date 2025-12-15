@@ -50,7 +50,7 @@ class SearchTapAuthorisation(
         authorisationMatchesPersonName(it)
       }
     },
-  ).reduce { spec, current -> spec.and(current) }
+  ).reduce(Specification<TemporaryAbsenceAuthorisation>::and)
 
   private fun TemporaryAbsenceAuthorisation.with(
     person: Person,
