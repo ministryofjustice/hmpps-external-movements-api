@@ -359,6 +359,9 @@
             <column ascending="true" name="person_identifier"/>
             <column ascending="true" name="occurred_at"/>
          </index>
+         <index name="idx_temporary_absence_movement_occurrence_id" unique="false">
+            <column ascending="true" name="occurrence_id"/>
+         </index>
          <index name="uq_temporary_absence_movement_legacy_id" unique="true">
             <column ascending="true" name="legacy_id"/>
          </index>
