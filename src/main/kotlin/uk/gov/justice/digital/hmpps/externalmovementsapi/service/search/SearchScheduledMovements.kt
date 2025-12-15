@@ -67,7 +67,6 @@ private fun TemporaryAbsenceOccurrence.isToday() = LocalDate.now().isEqual(start
 
 private fun TemporaryAbsenceOccurrence.isNotSensitive(): Boolean = isToday() ||
   accompaniedBy.code in listOf(
-    AccompaniedBy.Code.NOT_PROVIDED.value,
     AccompaniedBy.Code.ACCOMPANIED.value,
     AccompaniedBy.Code.UNACCOMPANIED.value,
   )
