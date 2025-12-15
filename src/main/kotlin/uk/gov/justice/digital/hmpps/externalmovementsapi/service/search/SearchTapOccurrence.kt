@@ -45,7 +45,7 @@ class SearchTapOccurrence(
         occurrenceMatchesPersonName(it)
       }
     },
-  ).reduce { spec, current -> spec.and(current) }
+  ).reduce(Specification<TemporaryAbsenceOccurrence>::and)
 
   private fun TemporaryAbsenceOccurrence.toModel() = TapOccurrenceResult(
     id = id,

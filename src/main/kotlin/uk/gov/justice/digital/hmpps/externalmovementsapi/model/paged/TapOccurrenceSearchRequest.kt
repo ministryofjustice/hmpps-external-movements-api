@@ -20,20 +20,24 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSum
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.LAST_NAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.SEQUENCE_NUMBER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.StartAndEnd
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ValidStartAndEnd
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.removeNullChar
 import java.time.LocalDate
 
+@ValidStartAndEnd
 data class TapOccurrenceSearchRequest(
   @NotBlank
   val prisonCode: String,
-  val start: LocalDate?,
-  val end: LocalDate?,
+  override val start: LocalDate?,
+  override val end: LocalDate?,
   val status: Set<TapOccurrenceStatus.Code> = emptySet(),
   val query: String? = null,
   override val page: Int = 1,
   override val size: Int = 10,
   override val sort: String = START,
-) : PagedRequest {
+) : PagedRequest,
+  StartAndEnd<LocalDate> {
   override fun validSortFields(): Set<String> = setOf(START, END, STATUS, FIRST_NAME, LAST_NAME, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT, LOCATION)
 
   private fun sortByDate(direction: Direction, first: String, second: String) = by(direction, first, second).and(sortByPersonName())

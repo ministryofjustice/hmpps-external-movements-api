@@ -14,3 +14,4 @@ service:
     poll-interval: PT60s
   authorisation-expiration:
     cron: "0 30 0 * * *"
+  ui-base-url: "https://external-movements-dev.hmpps.service.justice.gov.uk"

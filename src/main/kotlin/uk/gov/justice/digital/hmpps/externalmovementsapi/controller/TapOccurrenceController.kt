@@ -19,7 +19,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/temporary-absence-occurrences")
-@PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
+@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_UI}', '${Roles.EM_UI_TEMP}')")
 class TapOccurrenceController(
   private val get: GetTapOccurrence,
   private val history: OccurrenceHistory,

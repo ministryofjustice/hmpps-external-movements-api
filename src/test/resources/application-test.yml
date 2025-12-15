@@ -44,3 +44,4 @@ service:
     poll-interval: PT0s
   occurrence-status:
     poll-interval: PT0s
+  ui-base-url: "https://local-ui"

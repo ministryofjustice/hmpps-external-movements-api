@@ -20,6 +20,7 @@ data class ServiceConfig(
   val activePrisons: Set<String>,
   val domainEvents: DomainEventConfig,
   val occurrenceStatus: OccurrenceStatusConfig,
+  val uiBaseUrl: String,
 ) {
   data class DomainEventConfig(val pollInterval: Duration)
   data class OccurrenceStatusConfig(val pollInterval: Duration)

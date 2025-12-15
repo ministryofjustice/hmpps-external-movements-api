@@ -8,3 +8,4 @@ integration:
 
 service:
   active-prisons: "FDI,LYI,SPI"
+  ui-base-url: "https://external-movements-preprod.hmpps.service.justice.gov.uk"

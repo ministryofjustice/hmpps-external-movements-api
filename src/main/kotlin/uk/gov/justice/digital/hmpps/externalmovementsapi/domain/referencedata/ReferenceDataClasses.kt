@@ -57,8 +57,10 @@ class AccompaniedBy(
   active: Boolean,
   id: Long,
 ) : ReferenceData(key, description, hintText, sequenceNumber, active, id) {
-  enum class Code {
-    NOT_PROVIDED,
+  enum class Code(val value: String) {
+    NOT_PROVIDED("NOT_PROVIDED"),
+    ACCOMPANIED("A"),
+    UNACCOMPANIED("U"),
   }
 }
 
