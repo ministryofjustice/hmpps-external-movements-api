@@ -142,7 +142,7 @@ class MigrateTapHierarchyIntTest(
 
       verifyAudit(
         auth,
-        RevisionType.DEL,
+        RevisionType.ADD,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
           TemporaryAbsenceOccurrence::class.simpleName!!,

@@ -38,7 +38,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEventRepository
@@ -87,7 +86,6 @@ class MigrateTapHierarchy(
     movementRepository.deleteByPersonIdentifier(personIdentifier)
     occurrenceRepository.deleteByAuthorisationPersonIdentifier(personIdentifier)
     authorisationRepository.deleteByPersonIdentifier(personIdentifier)
-    authorisationRepository.flush()
   }
 
   private fun TapAuthorisation.migrate(
@@ -111,7 +109,7 @@ class MigrateTapHierarchy(
     val rdPaths = rdPaths(rdWithDomainLinks, findLinked)
     val occurrence = occurrenceRepository.save(
       asEntity(authorisation, rdPaths).calculateStatus {
-        referenceDataRepository.findByKey(TAP_OCCURRENCE_STATUS of it) as TapOccurrenceStatus
+        rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
       },
     )
     migrationSystemAuditRepository.save(
@@ -137,7 +135,7 @@ class MigrateTapHierarchy(
     val movement = movementRepository.save(asEntity(person.identifier, occurrence, rdPaths))
     occurrence?.also { occ ->
       occ.addMovement(movement) {
-        referenceDataRepository.findByKey(TAP_OCCURRENCE_STATUS of it) as TapOccurrenceStatus
+        rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
       }
     }
     migrationSystemAuditRepository.save(
@@ -229,7 +227,7 @@ class MigrateTapHierarchy(
   ) = TemporaryAbsenceMovement(
     personIdentifier = personIdentifier,
     occurrence = occurrence?.calculateStatus {
-      referenceDataRepository.findByKey(TAP_OCCURRENCE_STATUS of it) as TapOccurrenceStatus
+      rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
     },
     occurredAt = occurredAt,
     direction = valueOf(direction.name),

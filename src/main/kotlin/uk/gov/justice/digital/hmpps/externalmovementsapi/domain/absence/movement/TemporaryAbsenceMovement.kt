@@ -18,6 +18,7 @@ import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.valueOf
@@ -147,5 +148,6 @@ interface TemporaryAbsenceMovementRepository :
   fun findByOccurrenceIdIn(ids: Set<UUID>): List<TemporaryAbsenceMovement>
 
   @Modifying
+  @Query("delete from TemporaryAbsenceMovement tam where tam.personIdentifier = :personIdentifier")
   fun deleteByPersonIdentifier(personIdentifier: String)
 }
