@@ -38,8 +38,8 @@ spring:
       hibernate:
         jdbc:
           lob.non_contextual_creation: true
-          batch_size: 100
-          fetch_size: 100
+          batch_size: 1000
+          fetch_size: 1000
         globally_quoted_identifiers: true
         globally_quoted_identifiers_skip_column_definitions: true
         order_inserts: true

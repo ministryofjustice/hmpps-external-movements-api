@@ -137,5 +137,8 @@ data class TapMovement(
   val legacyId: String,
 ) : ReferenceDataRequired {
 
-  override fun requiredReferenceData() = setOfNotNull(ABSENCE_REASON of absenceReasonCode, ACCOMPANIED_BY of accompaniedByCode)
+  override fun requiredReferenceData() = setOfNotNull(
+    ABSENCE_REASON of absenceReasonCode,
+    ACCOMPANIED_BY of accompaniedByCode,
+  ) + TapOccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name }
 }
