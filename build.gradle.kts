@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.2.0"
-  kotlin("plugin.spring") version "2.2.21"
-  kotlin("plugin.jpa") version "2.2.21"
+  kotlin("plugin.spring") version "2.3.0"
+  kotlin("plugin.jpa") version "2.3.0"
 }
 
 configurations {
@@ -12,10 +12,10 @@ configurations {
 }
 
 val hmppsKotlinVersion = "1.8.2"
-val sentryVersion = "8.28.0"
+val sentryVersion = "8.29.0"
 val springDocVersion = "2.8.14"
 val sqsStarterVersion = "5.6.3"
-val testContainersVersion = "1.21.3"
+val testContainersVersion = "1.21.4"
 val uuidGeneratorVersion = "5.2.0"
 val wiremockVersion = "3.13.2"
 
