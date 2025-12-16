@@ -11,7 +11,9 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
+val docx4jVersion = "11.5.8"
 val hmppsKotlinVersion = "1.8.2"
+val jakartaXmlVersion = "3.0.1"
 val sentryVersion = "8.28.0"
 val springDocVersion = "2.8.14"
 val sqsStarterVersion = "5.6.3"
@@ -31,6 +33,11 @@ dependencies {
   implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:$sqsStarterVersion")
+
+  implementation("org.docx4j:docx4j-core:$docx4jVersion")
+  implementation("org.docx4j:docx4j-JAXB-ReferenceImpl:$docx4jVersion")
+  implementation("org.docx4j:docx4j-export-fo:$docx4jVersion")
+  implementation("jakarta.xml.bind:jakarta.xml.bind-api:$jakartaXmlVersion")
 
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
