@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
@@ -68,7 +67,6 @@ class MigrateTapHierarchy(
   private val personSummaryService: PersonSummaryService,
   private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
   private val domainEventRepository: HmppsDomainEventRepository,
-  private val telemetryClient: TelemetryClient,
 ) {
   fun migrate(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
     ExternalMovementContext.get().copy(source = DataSource.NOMIS, migratingData = true).set()
@@ -116,7 +114,15 @@ class MigrateTapHierarchy(
         referenceDataRepository.findByKey(TAP_OCCURRENCE_STATUS of it) as TapOccurrenceStatus
       },
     )
-    migrationSystemAuditRepository.save(MigrationSystemAudit(occurrence.id, created.at, created.by, updated?.at, updated?.by))
+    migrationSystemAuditRepository.save(
+      MigrationSystemAudit(
+        occurrence.id,
+        created.at,
+        created.by,
+        updated?.at,
+        updated?.by,
+      ),
+    )
     val movements = movements.map { it.migrate(person, occurrence, rdWithDomainLinks, findLinked) }
     return MigratedOccurrence(legacyId, occurrence.id, movements)
   }
@@ -134,7 +140,15 @@ class MigrateTapHierarchy(
         referenceDataRepository.findByKey(TAP_OCCURRENCE_STATUS of it) as TapOccurrenceStatus
       }
     }
-    migrationSystemAuditRepository.save(MigrationSystemAudit(movement.id, created.at, created.by, updated?.at, updated?.by))
+    migrationSystemAuditRepository.save(
+      MigrationSystemAudit(
+        movement.id,
+        created.at,
+        created.by,
+        updated?.at,
+        updated?.by,
+      ),
+    )
     return MigratedMovement(legacyId, movement.id)
   }
 
@@ -144,17 +158,17 @@ class MigrateTapHierarchy(
   ): TemporaryAbsenceAuthorisation {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
-      rdPaths.getReferenceData(it.domain, it.code)
+      rdPaths.findReferenceData(it.domain, it.code) as? AbsenceReasonCategory
     }
     val status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus
     return TemporaryAbsenceAuthorisation(
       person = person,
       prisonCode = prisonCode,
-      absenceType = absenceTypeCode?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType },
+      absenceType = absenceTypeCode?.let { rdPaths.findReferenceData(ABSENCE_TYPE, it) as? AbsenceType },
       absenceSubType = absenceSubTypeCode?.let {
-        rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType
+        rdPaths.findReferenceData(ABSENCE_SUB_TYPE, it) as? AbsenceSubType
       },
-      absenceReasonCategory = category as? AbsenceReasonCategory,
+      absenceReasonCategory = category,
       absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
       accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
       transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
@@ -179,25 +193,15 @@ class MigrateTapHierarchy(
   ): TemporaryAbsenceOccurrence {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
-      val cat = rdPaths.findReferenceData(it.domain, it.code) as? AbsenceReasonCategory
-      telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_REASON_CATEGORY.name to it.code), null)
-      cat
+      rdPaths.findReferenceData(it.domain, it.code) as? AbsenceReasonCategory
     }
     return TemporaryAbsenceOccurrence(
       authorisation = authorisation,
       absenceType = absenceTypeCode?.let {
-        val type = rdPaths.findReferenceData(ABSENCE_TYPE, it) as? AbsenceType
-        if (type == null) {
-          telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_TYPE.name to it), null)
-        }
-        type
+        rdPaths.findReferenceData(ABSENCE_TYPE, it) as? AbsenceType
       },
       absenceSubType = absenceSubTypeCode?.let {
-        val subType = rdPaths.findReferenceData(ABSENCE_SUB_TYPE, it) as? AbsenceSubType
-        if (subType == null) {
-          telemetryClient.trackEvent("UnrecognisedReferenceData", mapOf(ABSENCE_SUB_TYPE.name to it), null)
-        }
-        subType
+        rdPaths.findReferenceData(ABSENCE_SUB_TYPE, it) as? AbsenceSubType
       },
       absenceReasonCategory = category,
       absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,

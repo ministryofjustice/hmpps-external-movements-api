@@ -52,7 +52,6 @@ class PrisonerSearchServer : WireMockServer(9000) {
       lastName,
       dateOfBirth,
       prisonCode,
-      prisonCode,
       cellLocation,
     )
   }

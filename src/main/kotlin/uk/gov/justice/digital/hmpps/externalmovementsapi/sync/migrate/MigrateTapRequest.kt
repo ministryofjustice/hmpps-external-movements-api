@@ -28,7 +28,15 @@ data class MigrateTapRequest(
   val temporaryAbsences: List<TapAuthorisation>,
   val unscheduledMovements: List<TapMovement>,
 ) {
-  fun requiredReferenceData(): Set<ReferenceDataKey> = (temporaryAbsences.flatMap { auth -> auth.requiredReferenceData() + auth.occurrences.flatMap { it.requiredReferenceData() } } + unscheduledMovements.flatMap { it.requiredReferenceData() }).toSet()
+  fun requiredReferenceData(): Set<ReferenceDataKey> = (
+    temporaryAbsences.flatMap { auth ->
+      auth.requiredReferenceData() +
+        auth.occurrences.flatMap { occ ->
+          occ.requiredReferenceData() +
+            occ.movements.flatMap { it.requiredReferenceData() }
+        }
+    } + unscheduledMovements.flatMap { it.requiredReferenceData() }
+    ).toSet()
 }
 
 data class MigrateTapResponse(
@@ -112,7 +120,7 @@ data class TapOccurrence(
     ABSENCE_REASON of absenceReasonCode,
     absenceTypeCode?.let { ABSENCE_TYPE of it },
     absenceSubTypeCode?.let { ABSENCE_SUB_TYPE of it },
-  ) + TapOccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name } + movements.flatMap { it.requiredReferenceData() }
+  ) + TapOccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name }
 }
 
 @Schema(name = "MigrateTapMovement")

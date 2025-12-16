@@ -226,6 +226,68 @@ class MigrateTapHierarchyIntTest(
   }
 
   @Test
+  fun `200 ok - can migrate with reason only categorisation`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = migrateTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          typeCode = null,
+          subTypeCode = null,
+          reasonCode = "R17",
+          occurrences = listOf(
+            tapOccurrence(
+              typeCode = null,
+              subTypeCode = null,
+              reasonCode = "R17",
+            ),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    val response = migrateTap(pi, request).successResponse<MigrateTapResponse>()
+
+    response.temporaryAbsences.first().also { ma ->
+      val auth = requireNotNull(findTemporaryAbsenceAuthorisation(ma.id))
+      val authRequest = request.temporaryAbsences.single { it.legacyId == auth.legacyId }
+      val amsa = requireNotNull(msaRepository.findByIdOrNull(auth.id))
+      auth.verifyAgainst(auth.person.identifier, authRequest, amsa)
+      assertThat(auth.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON of "R17")
+      ma.occurrences.forEach { mo ->
+        val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
+        val occRequest = authRequest.occurrences.single { it.legacyId == occurrence.legacyId }
+        val omsa = requireNotNull(msaRepository.findByIdOrNull(occurrence.id))
+        occurrence.verifyAgainst(occRequest, omsa)
+        assertThat(occurrence.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON of "R17")
+        mo.movements.forEach { mm ->
+          val movement = requireNotNull(findTemporaryAbsenceMovement(mm.id))
+          val movementRequest = occRequest.movements.single { it.legacyId == movement.legacyId }
+          val mmsa = requireNotNull(msaRepository.findByIdOrNull(movement.id))
+          movement.verifyAgainst(auth.person.identifier, movementRequest, mmsa)
+        }
+      }
+
+      verifyAudit(
+        auth,
+        RevisionType.ADD,
+        setOf(
+          TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
+          TemporaryAbsenceMovement::class.simpleName!!,
+          HmppsDomainEvent::class.simpleName!!,
+        ),
+        ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
+      )
+
+      val domainEvents = latestRevisionDomainEvents(auth)
+      assertThat(domainEvents).hasSize(3)
+      domainEvents.forEach { domainEvent -> assertThat(domainEvent.published).isTrue }
+    }
+  }
+
+  @Test
   fun `200 ok - historic absences with movements get correct status`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()
