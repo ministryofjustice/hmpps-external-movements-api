@@ -22,6 +22,8 @@ data class TapOccurrence(
   val contactInformation: String?,
   val scheduleReference: JsonNode?,
   val comments: String?,
+  val occurrencePosition: Int,
+  val totalOccurrences: Int,
 ) {
   data class Authorisation(
     val id: UUID,
