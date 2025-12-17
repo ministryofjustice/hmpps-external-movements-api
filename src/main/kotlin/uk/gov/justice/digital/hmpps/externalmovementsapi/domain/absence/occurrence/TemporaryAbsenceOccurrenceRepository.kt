@@ -111,7 +111,14 @@ interface TemporaryAbsenceOccurrenceRepository :
   fun findReturningTodayCount(prisonIdentifier: String): Int
 
   @Modifying
-  @Query("delete from TemporaryAbsenceOccurrence tao where tao.authorisation.person.identifier = :personIdentifier")
+  @Query(
+    """
+    delete from temporary_absence_occurrence tao
+    using temporary_absence_authorisation taa
+    where tao.authorisation_id = taa.id and taa.person_identifier = :personIdentifier
+  """,
+    nativeQuery = true,
+  )
   fun deleteByAuthorisationPersonIdentifier(personIdentifier: String)
 }
 
