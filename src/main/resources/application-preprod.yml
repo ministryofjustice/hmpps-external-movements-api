@@ -7,5 +7,5 @@ integration:
     url: "https://prisoner-search-preprod.prison.service.justice.gov.uk"
 
 service:
-  active-prisons: "FDI,LYI,SPI"
+  active-prisons: "***"
   ui-base-url: "https://external-movements-preprod.hmpps.service.justice.gov.uk"

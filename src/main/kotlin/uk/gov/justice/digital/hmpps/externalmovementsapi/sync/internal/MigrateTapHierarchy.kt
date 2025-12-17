@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ab
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.RdWithDomainLink
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
@@ -77,7 +78,7 @@ class MigrateTapHierarchy(
 
     val person = personSummaryService.save(prisoner)
     val tap = request.temporaryAbsences.map { it.migrate(person, rdWithDomainLinks, findLinkedFrom) }
-    val unscheduled = request.unscheduledMovements.map { it.migrate(person, null, rdWithDomainLinks, findLinkedFrom) }
+    val unscheduled = request.unscheduledMovements.map { it.migrate(person, null, rdWithDomainLinks) }
     persistMigrationEvents(personIdentifier, tap, unscheduled)
     return MigrateTapResponse(tap, unscheduled)
   }
@@ -121,7 +122,7 @@ class MigrateTapHierarchy(
         updated?.by,
       ),
     )
-    val movements = movements.map { it.migrate(person, occurrence, rdWithDomainLinks, findLinked) }
+    val movements = movements.map { it.migrate(person, occurrence, rdWithDomainLinks) }
     return MigratedOccurrence(legacyId, occurrence.id, movements)
   }
 
@@ -129,13 +130,13 @@ class MigrateTapHierarchy(
     person: PersonSummary,
     occurrence: TemporaryAbsenceOccurrence?,
     rdWithDomainLinks: List<RdWithDomainLink>,
-    findLinked: (Long) -> List<ReferenceData>,
   ): MigratedMovement {
-    val rdPaths = rdPaths(rdWithDomainLinks, findLinked)
-    val movement = movementRepository.save(asEntity(person.identifier, occurrence, rdPaths))
+    val rdSupplier =
+      { domain: ReferenceDataDomain.Code, code: String -> rdWithDomainLinks.first { it.referenceData.domain == domain && it.referenceData.code == code }.referenceData }
+    val movement = movementRepository.save(asEntity(person.identifier, occurrence, rdSupplier))
     occurrence?.also { occ ->
       occ.addMovement(movement) {
-        rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
+        rdSupplier(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
       }
     }
     migrationSystemAuditRepository.save(
@@ -223,16 +224,16 @@ class MigrateTapHierarchy(
   private fun TapMovement.asEntity(
     personIdentifier: String,
     occurrence: TemporaryAbsenceOccurrence?,
-    rdPaths: ReferenceDataPaths,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
   ) = TemporaryAbsenceMovement(
     personIdentifier = personIdentifier,
     occurrence = occurrence?.calculateStatus {
-      rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
+      rdSupplier(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
     },
     occurredAt = occurredAt,
     direction = valueOf(direction.name),
-    absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
-    accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
+    absenceReason = rdSupplier(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
+    accompaniedBy = rdSupplier(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
     accompaniedByComments = accompaniedByComments,
     comments = comments,
     recordedByPrisonCode = created.prisonCode,
