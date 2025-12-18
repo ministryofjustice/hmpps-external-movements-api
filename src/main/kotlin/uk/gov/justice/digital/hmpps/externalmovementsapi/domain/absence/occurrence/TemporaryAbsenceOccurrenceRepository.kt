@@ -86,9 +86,11 @@ interface TemporaryAbsenceOccurrenceRepository :
     sum(case when tao.start between (current_date + 1) and (current_date + 8) then 1 else 0 end) as leavingNextSevenDays
     from temporary_absence_occurrence tao
         join temporary_absence_authorisation taa on taa.id = tao.authorisation_id
-        join reference_data st on st.id = taa.status_id
+        join reference_data ast on ast.id = taa.status_id
+        join reference_data ost on ost.id = tao.status_id
     where taa.prison_code = :prisonIdentifier
-      and st.code = 'APPROVED'
+      and ast.code = 'APPROVED'
+      and ost.code <> 'CANCELLED'
       and tao.start between current_date and (current_date + 8)
     group by taa.prison_code
   """,
@@ -101,9 +103,11 @@ interface TemporaryAbsenceOccurrenceRepository :
     select count(1) as returningToday
     from temporary_absence_occurrence tao
         join temporary_absence_authorisation taa on taa.id = tao.authorisation_id
-        join reference_data st on st.id = taa.status_id
+        join reference_data ast on ast.id = taa.status_id
+        join reference_data ost on ost.id = tao.status_id
     where taa.prison_code = :prisonIdentifier
-      and st.code = 'APPROVED'
+      and ast.code = 'APPROVED'
+      and ost.code <> 'CANCELLED'
       and tao.end between current_date and (current_date + 1)
   """,
     nativeQuery = true,

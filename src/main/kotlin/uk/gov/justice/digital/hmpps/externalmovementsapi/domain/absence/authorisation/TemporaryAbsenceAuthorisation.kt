@@ -49,6 +49,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
@@ -66,6 +67,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import java.time.LocalDate
+import java.time.LocalDate.now
 import java.util.UUID
 import kotlin.reflect.KProperty1
 
@@ -228,11 +230,17 @@ class TemporaryAbsenceAuthorisation(
     }
   }
 
-  fun amendDateRange(action: ChangeAuthorisationDateRange) {
+  fun applyDateRange(
+    action: ChangeAuthorisationDateRange,
+    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+  ) {
     if (!start.isEqual(action.start) || !end.isEqual(action.end)) {
       start = action.start
       end = action.end
       appliedActions += action
+      if (end.isBefore(now())) {
+        expire(ExpireAuthorisation(), rdSupplier)
+      }
     }
   }
 
@@ -276,7 +284,9 @@ class TemporaryAbsenceAuthorisation(
   }
 
   fun expire(action: ExpireAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
-    applyStatus(TapAuthorisationStatus.Code.EXPIRED, rdSupplier, action)
+    if (status.code == TapOccurrenceStatus.Code.PENDING.name) {
+      applyStatus(TapAuthorisationStatus.Code.EXPIRED, rdSupplier, action)
+    }
   }
 
   private fun applyStatus(
@@ -326,7 +336,7 @@ interface TemporaryAbsenceAuthorisationRepository :
     select count(1) as approvalsRequired
     from TemporaryAbsenceAuthorisation taa
     where taa.prisonCode = :prisonIdentifier 
-    and taa.status.key.code = 'PENDING' and taa.start >= current_date
+    and taa.status.key.code = 'PENDING' and taa.end >= current_date
   """,
   )
   fun findApprovalsRequiredCount(prisonIdentifier: String): Int

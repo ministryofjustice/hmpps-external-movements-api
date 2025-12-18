@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataLinkRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
@@ -61,6 +62,7 @@ import java.time.LocalDate
 class MigrateTapHierarchy(
   private val prisonerSearch: PrisonerSearchClient,
   private val referenceDataRepository: ReferenceDataRepository,
+  private val referenceDataLinkRepository: ReferenceDataLinkRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
@@ -74,7 +76,9 @@ class MigrateTapHierarchy(
     removeTapForPersonIdentifier(personIdentifier)
 
     val rdWithDomainLinks = referenceDataRepository.findMatchingWithDomainLink(request.requiredReferenceData())
-    val findLinkedFrom = { id: Long -> referenceDataRepository.findLinkedFrom(id) }
+    val rdLinks = referenceDataLinkRepository.findAll().groupBy({ it.rd2.id to it.rd1.domain }, { it.rd1 })
+    val findLinkedFrom: (Long, ReferenceDataDomain.Code) -> List<ReferenceData> =
+      { id: Long, domainCode: ReferenceDataDomain.Code -> (rdLinks[id to domainCode]) ?: emptyList() }
 
     val person = personSummaryService.save(prisoner)
     val tap = request.temporaryAbsences.map { it.migrate(person, rdWithDomainLinks, findLinkedFrom) }
@@ -92,7 +96,7 @@ class MigrateTapHierarchy(
   private fun TapAuthorisation.migrate(
     person: PersonSummary,
     rdWithDomainLinks: List<RdWithDomainLink>,
-    findLinked: (Long) -> List<ReferenceData>,
+    findLinked: (Long, ReferenceDataDomain.Code) -> List<ReferenceData>,
   ): MigratedAuthorisation {
     val rdPaths = rdPaths(rdWithDomainLinks, findLinked)
     val auth = authorisationRepository.save(asEntity(person, rdPaths))
@@ -105,7 +109,7 @@ class MigrateTapHierarchy(
     person: PersonSummary,
     authorisation: TemporaryAbsenceAuthorisation,
     rdWithDomainLinks: List<RdWithDomainLink>,
-    findLinked: (Long) -> List<ReferenceData>,
+    findLinked: (Long, ReferenceDataDomain.Code) -> List<ReferenceData>,
   ): MigratedOccurrence {
     val rdPaths = rdPaths(rdWithDomainLinks, findLinked)
     val occ = asEntity(authorisation, rdPaths)
@@ -256,7 +260,7 @@ class MigrateTapHierarchy(
 
   private fun ReferenceDataRequired.rdPaths(
     rdWithDomainLinks: List<RdWithDomainLink>,
-    findLinked: (Long) -> List<ReferenceData>,
+    findLinked: (Long, ReferenceDataDomain.Code) -> List<ReferenceData>,
   ): ReferenceDataPaths = ReferenceDataPaths(rdWithDomainLinks.filter { it.referenceData.key in requiredReferenceData() }, findLinked)
 
   private fun List<MigratedAuthorisation>.scheduledEvents(personIdentifier: String): List<DomainEvent<*>> = flatMap { ma ->

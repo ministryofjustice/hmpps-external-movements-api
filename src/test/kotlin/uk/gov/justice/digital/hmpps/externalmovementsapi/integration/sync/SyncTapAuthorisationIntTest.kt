@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
@@ -29,6 +30,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate
+import java.time.LocalDate.now
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -71,6 +73,45 @@ class SyncTapAuthorisationIntTest(
     assertThat(saved.reasonPath.path).containsExactly(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
       ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "RDR",
+      ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "PW",
+      ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
+    )
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(
+      saved,
+      setOf(TemporaryAbsenceAuthorisationPending(saved.person.identifier, saved.id, DataSource.NOMIS)),
+    )
+  }
+
+  @Test
+  fun `200 ok application created where category is required but type and sub type missing`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = tapAuthorisation(
+      prisonCode = prisonCode,
+      statusCode = "PENDING",
+      end = now().minusDays(1),
+      typeCode = null,
+      subTypeCode = null,
+      updated = null,
+    )
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.status.code).isEqualTo(TapAuthorisationStatus.Code.EXPIRED.name)
+    assertThat(saved.reasonPath.path).containsExactly(
       ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "PW",
       ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
     )
@@ -326,7 +367,7 @@ class SyncTapAuthorisationIntTest(
     repeat: Boolean = false,
     comments: String? = "Some comments about the application",
     start: LocalDate = LocalDate.now().minusDays(7),
-    end: LocalDate = LocalDate.now().minusDays(1),
+    end: LocalDate = LocalDate.now(),
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), DEFAULT_USERNAME),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), SYSTEM_USERNAME),
     legacyId: Long = newId(),
@@ -367,7 +408,11 @@ class SyncTapAuthorisationIntTest(
 private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: TapAuthorisation) {
   assertThat(person.identifier).isEqualTo(personIdentifier)
   assertThat(legacyId).isEqualTo(request.legacyId)
-  assertThat(status.code).isEqualTo(request.statusCode)
+  if (request.statusCode == TapAuthorisationStatus.Code.PENDING.name && request.end.isBefore(now())) {
+    assertThat(status.code).isEqualTo(TapAuthorisationStatus.Code.EXPIRED.name)
+  } else {
+    assertThat(status.code).isEqualTo(request.statusCode)
+  }
   assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
   assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
   assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)

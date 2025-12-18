@@ -6,6 +6,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
@@ -34,6 +35,9 @@ interface ReferenceDataLinkRepository : JpaRepository<ReferenceDataLink, Long> {
     """,
   )
   fun findLinksByIdAndNextDomain(id: Long, code: ReferenceDataDomain.Code): List<SequencedRdWithDomainLink>
+
+  @EntityGraph(attributePaths = ["rd1", "rd2"])
+  override fun findAll(): List<ReferenceDataLink>
 }
 
 interface SequencedRdWithDomainLink : RdWithDomainLink {
