@@ -108,8 +108,10 @@ class MigrateTapHierarchy(
     findLinked: (Long) -> List<ReferenceData>,
   ): MigratedOccurrence {
     val rdPaths = rdPaths(rdWithDomainLinks, findLinked)
+    val occ = asEntity(authorisation, rdPaths)
+    val movements = movements.map { it.migrate(person, occ, rdWithDomainLinks) }
     val occurrence = occurrenceRepository.save(
-      asEntity(authorisation, rdPaths).calculateStatus {
+      occ.calculateStatus {
         rdPaths.getReferenceData(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
       },
     )
@@ -122,7 +124,6 @@ class MigrateTapHierarchy(
         updated?.by,
       ),
     )
-    val movements = movements.map { it.migrate(person, occurrence, rdWithDomainLinks) }
     return MigratedOccurrence(legacyId, occurrence.id, movements)
   }
 
@@ -133,11 +134,14 @@ class MigrateTapHierarchy(
   ): MigratedMovement {
     val rdSupplier =
       { domain: ReferenceDataDomain.Code, code: String -> rdWithDomainLinks.first { it.referenceData.domain == domain && it.referenceData.code == code }.referenceData }
-    val movement = movementRepository.save(asEntity(person.identifier, occurrence, rdSupplier))
+    val movement = asEntity(person.identifier, occurrence, rdSupplier)
     occurrence?.also { occ ->
       occ.addMovement(movement) {
         rdSupplier(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus
       }
+    }
+    if (occurrence == null) {
+      movementRepository.save(movement)
     }
     migrationSystemAuditRepository.save(
       MigrationSystemAudit(
