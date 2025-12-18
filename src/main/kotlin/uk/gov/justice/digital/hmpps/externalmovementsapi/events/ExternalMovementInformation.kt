@@ -4,6 +4,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import java.util.UUID
 
 data class ExternalMovementInformation(
-  val id: UUID,
+  override val id: UUID,
   override val source: DataSource,
-) : AdditionalInformation
+) : AdditionalInformation, IdInformation
