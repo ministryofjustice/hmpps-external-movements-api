@@ -235,12 +235,12 @@ class MigrateTapHierarchyIntTest(
         tapAuthorisation(
           typeCode = null,
           subTypeCode = null,
-          reasonCode = "R17",
+          reasonCode = "ET",
           occurrences = listOf(
             tapOccurrence(
               typeCode = null,
               subTypeCode = null,
-              reasonCode = "R17",
+              reasonCode = "ET",
             ),
           ),
         ),
@@ -254,13 +254,13 @@ class MigrateTapHierarchyIntTest(
       val authRequest = request.temporaryAbsences.single { it.legacyId == auth.legacyId }
       val amsa = requireNotNull(msaRepository.findByIdOrNull(auth.id))
       auth.verifyAgainst(auth.person.identifier, authRequest, amsa)
-      assertThat(auth.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON of "R17")
+      assertThat(auth.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "ET")
       ma.occurrences.forEach { mo ->
         val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
         val occRequest = authRequest.occurrences.single { it.legacyId == occurrence.legacyId }
         val omsa = requireNotNull(msaRepository.findByIdOrNull(occurrence.id))
         occurrence.verifyAgainst(occRequest, omsa)
-        assertThat(occurrence.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON of "R17")
+        assertThat(occurrence.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "ET")
         mo.movements.forEach { mm ->
           val movement = requireNotNull(findTemporaryAbsenceMovement(mm.id))
           val movementRequest = occRequest.movements.single { it.legacyId == movement.legacyId }

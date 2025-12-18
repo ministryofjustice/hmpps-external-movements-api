@@ -100,7 +100,7 @@ class TapAuthorisationModifications(
           check(!odr.start.isBefore(action.start) && !odr.end.isAfter(action.end)) {
             "Authorisation date range cannot be less than the date range of absences"
           }
-          authorisation.amendDateRange(action)
+          authorisation.applyDateRange(action, rdSupplier)
         }
 
         is RecategoriseAuthorisation -> {

@@ -58,7 +58,7 @@ class TapOccurrenceModifications(
               action.end?.toLocalDate() ?: it.end,
               action.reason,
             )
-            it.amendDateRange(cadr)
+            it.applyDateRange(cadr, rdSupplier)
           } ?: occurrence.validateDateRange(action)
           occurrence.reschedule(action)
         }

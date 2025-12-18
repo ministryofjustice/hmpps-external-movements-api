@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Ta
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.CANCELLED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.DENIED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.EXPIRED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
@@ -43,6 +44,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
+import java.time.LocalDate.now
 import java.util.UUID
 
 @Transactional
@@ -105,7 +107,11 @@ class SyncTapAuthorisation(
       accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
       transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
       repeat = repeat,
-      status = rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus,
+      status = if (end.isBefore(now()) && statusCode == TapAuthorisationStatus.Code.PENDING.name) {
+        rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, EXPIRED.name) as TapAuthorisationStatus
+      } else {
+        rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus
+      },
       comments = comments,
       start = start,
       end = end,
@@ -122,7 +128,7 @@ class SyncTapAuthorisation(
   ) = apply {
     applyPrisonPerson(ChangePrisonPerson(person.identifier, request.prisonCode)) { person }
     applyAbsenceCategorisation(request, rdPaths)
-    checkSchedule(request)
+    checkSchedule(request, rdPaths)
     checkStatus(request, rdPaths)
     request.comments?.also { applyComments(ChangeAuthorisationComments(it)) }
   }
@@ -152,7 +158,7 @@ class SyncTapAuthorisation(
     }
   }
 
-  private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation) {
-    amendDateRange(ChangeAuthorisationDateRange(request.start, request.end))
+  private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
+    applyDateRange(ChangeAuthorisationDateRange(request.start, request.end), rdPaths::getReferenceData)
   }
 }

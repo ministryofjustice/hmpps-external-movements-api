@@ -109,15 +109,17 @@ interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
     """
     select rdl.rd1 as referenceData from ReferenceDataLink rdl
     left join ReferenceDataDomainLink dl on rdl.rd1.id = dl.id
-    where rdl.rd2.id = :id
+    where rdl.rd2.id = :id and rdl.rd1.key.domain = :domainCode
     """,
   )
-  fun findLinkedFrom(id: Long): List<ReferenceData>
+  fun findLinkedFrom(id: Long, domainCode: ReferenceDataDomain.Code): List<ReferenceData>
 }
 
 fun ReferenceDataRepository.getByKey(key: ReferenceDataKey): ReferenceData = findByKey(key) ?: throw NotFoundException("${key.domain} not found")
 
-fun ReferenceDataRepository.findRdWithPaths(rdr: ReferenceDataRequired): ReferenceDataPaths = ReferenceDataPaths(findMatchingWithDomainLink(rdr.requiredReferenceData())) { id: Long -> findLinkedFrom(id) }
+fun ReferenceDataRepository.findRdWithPaths(rdr: ReferenceDataRequired): ReferenceDataPaths = ReferenceDataPaths(findMatchingWithDomainLink(rdr.requiredReferenceData())) { id: Long, domainCode: ReferenceDataDomain.Code ->
+  findLinkedFrom(id, domainCode)
+}
 
 fun ReferenceDataRepository.rdProvider(rdr: ReferenceDataRequired): (ReferenceDataDomain.Code, String) -> ReferenceData {
   val rdMap = findByKeyIn(rdr.requiredReferenceData()).associateBy { it.key }

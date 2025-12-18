@@ -58,6 +58,7 @@ class GetPrisonExternalMovementsOverviewIntTest(
       temporaryAbsenceAuthorisation(
         prisonCode,
         status = TapAuthorisationStatus.Code.PENDING,
+        end = LocalDate.now().minusDays(1),
       ),
     )
 
