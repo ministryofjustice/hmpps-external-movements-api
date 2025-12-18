@@ -5,13 +5,17 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.referencedata.ReferenceDataIntegrationTest.Companion.REFERENCE_DATA_URL
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
@@ -37,14 +41,16 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
       .isUnauthorized
   }
 
-  @Test
-  fun `403 forbidden domain without correct role`() {
-    getDomainSpec("any-domain", "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+  @ParameterizedTest
+  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI, "ROLE_ANY__OTHER_RW"])
+  fun `403 forbidden domain without correct role`(role: String) {
+    getDomainSpec("any-domain", role).expectStatus().isForbidden
   }
 
-  @Test
-  fun `403 forbidden reference data without correct role`() {
-    getLinksSpec("any-domain", "anycode", "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+  @ParameterizedTest
+  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI, "ROLE_ANY__OTHER_RW"])
+  fun `403 forbidden reference data without correct role`(role: String) {
+    getLinksSpec("any-domain", "anycode", role).expectStatus().isForbidden
   }
 
   @Test
@@ -112,7 +118,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
 
   private fun getDomainSpec(
     domain: String,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = listOf(Roles.TEMPORARY_ABSENCE_RO, Roles.TEMPORARY_ABSENCE_RW).random(),
   ) = webTestClient
     .get()
     .uri(REFERENCE_DATA_URL, domain)
@@ -122,7 +128,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
   private fun getLinksSpec(
     domain: String,
     code: String,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = listOf(Roles.TEMPORARY_ABSENCE_RO, Roles.TEMPORARY_ABSENCE_RW).random(),
   ) = webTestClient
     .get()
     .uri(LINKED_RD_URL, domain, code)
