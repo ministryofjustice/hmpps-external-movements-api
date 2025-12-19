@@ -4,9 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
@@ -51,12 +56,13 @@ class CreateTapAuthorisationIntTest(
       .isUnauthorized
   }
 
-  @Test
-  fun `403 forbidden without correct role`() {
+  @ParameterizedTest
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  fun `403 forbidden without correct role`(role: String) {
     createTapAuthorisation(
       personIdentifier(),
       createTapAuthorisationRequest(),
-      role = "ROLE_ANY__OTHER_RW",
+      role = role,
     ).expectStatus().isForbidden
   }
 
@@ -319,7 +325,7 @@ class CreateTapAuthorisationIntTest(
     personIdentifier: String,
     request: CreateTapAuthorisationRequest,
     username: String = DEFAULT_USERNAME,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .post()
     .uri(CREATE_TAP_AUTH_URL, personIdentifier)

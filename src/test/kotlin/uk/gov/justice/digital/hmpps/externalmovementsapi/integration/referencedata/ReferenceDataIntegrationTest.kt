@@ -110,7 +110,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
 
   private fun getReferenceDataSpec(
     domain: String,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = listOf(Roles.TEMPORARY_ABSENCE_RO, Roles.TEMPORARY_ABSENCE_RW).random(),
   ) = webTestClient
     .get()
     .uri(REFERENCE_DATA_URL, domain)
