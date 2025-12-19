@@ -10,12 +10,13 @@ interface DocumentTemplateHandler {
 
   fun apply(wordprocessingMLPackage: WordprocessingMLPackage, documentData: DocumentData) {
     DocxTemplateEngine.replaceTextPlaceholders(wordprocessingMLPackage, documentData.textVariables)
+    DocxTemplateEngine.replaceImagePlaceholders(wordprocessingMLPackage, documentData.imageData)
   }
 }
 
 @Component
-class RotlDocumentTemplateHandler : DocumentTemplateHandler {
-  override val templateName = "ROTL"
+class RotlLicenceTemplateHandler : DocumentTemplateHandler {
+  override val templateName = "ROTL_LICENCE"
 
   override fun buildDocumentData(): DocumentData {
     // Fetch data from database
@@ -24,8 +25,11 @@ class RotlDocumentTemplateHandler : DocumentTemplateHandler {
     // E.G "PRISONER_NAME" -> "John Smith"
     val textVariables = mapOf<String, String>()
 
-    return DocumentData(textVariables)
+    // Build map of image data. Key is the placeholder present in the word document, value is the image data bytes.
+    val imageData = mapOf<String, ByteArray>()
+
+    return DocumentData(textVariables, imageData)
   }
 }
 
-data class DocumentData(val textVariables: Map<String, String>)
+data class DocumentData(val textVariables: Map<String, String>, val imageData: Map<String, ByteArray>)
