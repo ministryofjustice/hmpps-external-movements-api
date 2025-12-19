@@ -6,8 +6,7 @@ import org.springframework.stereotype.Component
 class TemplateHandlerRegistry(templateHandlers: List<DocumentTemplateHandler>) {
   private val handlerMap = templateHandlers.associateBy { it.templateName }
 
-  fun getHandler(templateName: String): DocumentTemplateHandler =
-    handlerMap[templateName] ?: error("No handler found for template $templateName")
+  fun getHandler(templateName: String): DocumentTemplateHandler = handlerMap[templateName] ?: error("No handler found for template $templateName")
 
   fun getSupportedTemplates() = handlerMap.keys
 }

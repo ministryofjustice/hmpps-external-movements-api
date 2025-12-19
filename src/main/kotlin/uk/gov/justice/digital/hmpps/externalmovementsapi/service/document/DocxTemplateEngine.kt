@@ -16,43 +16,50 @@ object DocxTemplateEngine {
   private const val MAX_IMAGE_SIZE_INCHES = 1.0
   private const val EMU_PER_INCH = 914400L
 
-  fun replaceTextPlaceholders(wordprocessingMLPackage: WordprocessingMLPackage, data: Map<String, String>) {
-    if (data.isEmpty()) return
+  fun replaceTextPlaceholders(wordprocessingMLPackage: WordprocessingMLPackage, textData: Map<String, String>) {
+    if (textData.isEmpty()) return
 
-    wordprocessingMLPackage.mainDocumentPart.variableReplace(data)
+    wordprocessingMLPackage.mainDocumentPart.variableReplace(textData)
   }
 
-  fun replaceImagePlaceholder(wordprocessingMLPackage: WordprocessingMLPackage, placeHolder: String, imageBytes: ByteArray) {
-    val emuSize = calculateImageSize(imageBytes)
+  fun replaceImagePlaceholders(wordprocessingMLPackage: WordprocessingMLPackage, imageData: Map<String, ByteArray>) {
+    if (imageData.isEmpty()) return
 
-    val imagePart = BinaryPartAbstractImage.createImagePart(wordprocessingMLPackage, imageBytes)
+    for ((placeHolder, imageBytes) in imageData) {
+      val emuSize = calculateImageSize(imageBytes)
 
-    val inline = imagePart.createImageInline(placeHolder, placeHolder, 0, 1, emuSize.width, emuSize.height, false)
+      val imagePart = BinaryPartAbstractImage.createImagePart(wordprocessingMLPackage, imageBytes)
 
-    var targetText: Text? = null
+      val inline = imagePart.createImageInline(placeHolder, placeHolder, 0, 1, emuSize.width, emuSize.height, false)
 
-    TraversalUtil(wordprocessingMLPackage.mainDocumentPart.content, object : TraversalUtil.CallbackImpl() {
-      override fun apply(o: Any?): List<Any?>? {
-        val unwrapped = if (o is JAXBElement<*>) o.value else o
+      var targetText: Text? = null
 
-        if (unwrapped is Text && unwrapped.value == placeHolder) {
-          targetText = unwrapped
-        }
+      TraversalUtil(
+        wordprocessingMLPackage.mainDocumentPart.content,
+        object : TraversalUtil.CallbackImpl() {
+          override fun apply(o: Any?): List<Any?>? {
+            val unwrapped = if (o is JAXBElement<*>) o.value else o
 
-        return null
+            if (unwrapped is Text && unwrapped.value == placeHolder) {
+              targetText = unwrapped
+            }
+
+            return null
+          }
+        },
+      )
+
+      targetText!!.value = ""
+
+      val run = targetText.parent as R
+
+      val drawing = Drawing().apply {
+        anchorOrInline.add(inline)
       }
-    })
 
-    targetText!!.value = ""
-
-    val run = targetText.parent as R
-
-    val drawing = Drawing().apply {
-      anchorOrInline.add(inline)
+      run.content.clear()
+      run.content.add(drawing)
     }
-
-    run.content.clear()
-    run.content.add(drawing)
   }
 
   private fun calculateImageSize(imageBytes: ByteArray, maxSizeEmu: Long = (MAX_IMAGE_SIZE_INCHES * EMU_PER_INCH).toLong()): ImageScale {
