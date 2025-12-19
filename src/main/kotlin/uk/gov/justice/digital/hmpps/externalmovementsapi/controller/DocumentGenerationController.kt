@@ -14,8 +14,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.document.Docume
 
 @RestController
 @RequestMapping("/temporary-absence-authorisations")
-@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_UI}', '${Roles.EM_UI_TEMP}')")
 class DocumentGenerationController(private val documentGenerationService: DocumentGenerationService) {
+
+  @GetMapping("/supported-templates")
+  fun getSupportedTemplates(): Set<String> = documentGenerationService.getSupportedTemplates()
 
   @GetMapping("/{id}/documents")
   fun generateDocument(@PathVariable id: String, @RequestParam format: String): ResponseEntity<ByteArray> {

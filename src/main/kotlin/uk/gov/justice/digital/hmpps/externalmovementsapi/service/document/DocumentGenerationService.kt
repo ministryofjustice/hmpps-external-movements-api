@@ -9,9 +9,13 @@ import java.io.ByteArrayOutputStream
 @Service
 class DocumentGenerationService(private val templateHandlerRegistry: TemplateHandlerRegistry) {
 
+  fun getSupportedTemplates() = templateHandlerRegistry.getSupportedTemplates()
+
   fun generateDocumentFromTemplate(templateName: String, format: String): ByteArray {
     try {
       val handler = templateHandlerRegistry.getHandler(templateName)
+
+      // TODO: Replace with a call to S3 to fetch the template
       val templateStream = ClassPathResource("$templateName.docx").inputStream
 
       val wordPackage = WordprocessingMLPackage.load(templateStream)
