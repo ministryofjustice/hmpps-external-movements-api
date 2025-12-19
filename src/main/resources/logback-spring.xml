@@ -12,6 +12,14 @@
     </encoder>
   </appender>
 
+  <logger name="org.apache.fop.apps.FOUserAgent" additivity="false" level="ERROR">
+    <appender-ref ref="consoleAppender"/>
+  </logger>
+
+  <logger name="org.docx4j" additivity="false" level="ERROR">
+    <appender-ref ref="consoleAppender"/>
+  </logger>
+
   <logger name="uk.gov.justice.digital.hmpps.externalmovementsapi.ExternalMovementsApiKt" additivity="false" level="DEBUG">
     <appender-ref ref="consoleAppender"/>
   </logger>
