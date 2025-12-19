@@ -19,15 +19,17 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/temporary-absence-occurrences")
-@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_UI}', '${Roles.EM_UI_TEMP}')")
+@PreAuthorize("hasRole('${Roles.TEMPORARY_ABSENCE_RW}')")
 class TapOccurrenceController(
   private val get: GetTapOccurrence,
   private val history: OccurrenceHistory,
   private val modify: TapOccurrenceModifications,
 ) {
+  @PreAuthorize("hasAnyRole('${Roles.TEMPORARY_ABSENCE_RO}', '${Roles.TEMPORARY_ABSENCE_RW}')")
   @GetMapping("/{id}")
   fun getTapOccurrence(@PathVariable id: UUID): TapOccurrence = get.byId(id)
 
+  @PreAuthorize("hasAnyRole('${Roles.TEMPORARY_ABSENCE_RO}', '${Roles.TEMPORARY_ABSENCE_RW}')")
   @GetMapping("/{id}/history")
   fun getTapOccurrenceHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
