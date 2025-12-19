@@ -8,11 +8,30 @@ services:
     container_name: hmpps-external-movements-api
     ports:
       - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/ping"]
     environment:
       - SERVER_PORT=8080
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=dev,local
+      - DB_SERVER=host.docker.internal:5432
+      - HMPPS_SQS_LOCALSTACK_URL=http://localstack:4566
+      - HMPPS_SQS_REGION=eu-west-2
+
+  localstack:
+    image: localstack/localstack:latest
+    networks:
+      - hmpps
+    container_name: localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,sns
+      - DEBUG=${DEBUG-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
 
 networks:
   hmpps:
