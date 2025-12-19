@@ -19,10 +19,11 @@ class RotlLicenceTemplateHandler : DocumentTemplateHandler {
   override val templateName = "ROTL_LICENCE"
 
   override fun buildDocumentData(): DocumentData {
-    // Fetch data from database
+    // TODO: Fetch data from database
 
     // Build map of text variables. Key is the placeholder present in the word document, value is the value from the db.
     // E.G "PRISONER_NAME" -> "John Smith"
+    // Also certain characters need to be escaped in the document, e.g. "&" -> "&amp; using the escapeXml function"
     val textVariables = mapOf<String, String>()
 
     // Build map of image data. Key is the placeholder present in the word document, value is the image data bytes.
@@ -33,3 +34,5 @@ class RotlLicenceTemplateHandler : DocumentTemplateHandler {
 }
 
 data class DocumentData(val textVariables: Map<String, String>, val imageData: Map<String, ByteArray>)
+
+private fun escapeXml(text: String): String = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
