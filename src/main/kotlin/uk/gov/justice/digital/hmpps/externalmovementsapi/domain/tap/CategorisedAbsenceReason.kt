@@ -1,11 +1,11 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 
 interface CategorisedAbsenceReason {
   val absenceType: AbsenceType?

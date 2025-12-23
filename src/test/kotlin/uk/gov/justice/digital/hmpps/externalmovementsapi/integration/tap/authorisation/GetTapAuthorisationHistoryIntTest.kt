@@ -13,8 +13,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
@@ -62,17 +62,17 @@ class GetTapAuthorisationHistoryIntTest(
   @Test
   fun `can retrieve history for authorisation`() {
     val auth = givenTemporaryAbsenceAuthorisation(
-      TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation(
-        status = TapAuthorisationStatus.Code.PENDING,
+      TempAbsenceAuthorisationOperations.temporaryAbsenceAuthorisation(
+        status = AuthorisationStatus.Code.PENDING,
       ),
     )
-    givenTemporaryAbsenceOccurrence(TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence(auth))
-    ManageUsersExtension.Companion.manageUsers.findUser(
+    givenTemporaryAbsenceOccurrence(TempAbsenceOccurrenceOperations.temporaryAbsenceOccurrence(auth))
+    ManageUsersExtension.manageUsers.findUser(
       DEFAULT_USERNAME,
-      ManageUsersServer.Companion.user(DEFAULT_USERNAME, DEFAULT_NAME),
+      ManageUsersServer.user(DEFAULT_USERNAME, DEFAULT_NAME),
     )
-    val approvingUser = ManageUsersServer.Companion.user("ApprovingUser", "Approved By")
-    ManageUsersExtension.Companion.manageUsers.findUser(approvingUser.username, approvingUser)
+    val approvingUser = ManageUsersServer.user("ApprovingUser", "Approved By")
+    ManageUsersExtension.manageUsers.findUser(approvingUser.username, approvingUser)
 
     transactionTemplate.executeWithoutResult {
       findTemporaryAbsenceAuthorisation(auth.id)?.applyAbsenceCategorisation(
@@ -85,36 +85,36 @@ class GetTapAuthorisationHistoryIntTest(
           reasonPath = ReasonPath(listOf(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")),
         ),
       ) { domain, code ->
-        requireNotNull(referenceDataRepository.findByKey(domain of code))
+        requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
     val approveAction = ApproveAuthorisation(reason = "A reason for approving")
     transactionTemplate.executeWithoutResult {
-      ExternalMovementContext.Companion.get().copy(username = approvingUser.username, reason = approveAction.reason).set()
+      ExternalMovementContext.get().copy(username = approvingUser.username, reason = approveAction.reason).set()
       findTemporaryAbsenceAuthorisation(auth.id)?.approve(approveAction) { domain, code ->
-        requireNotNull(referenceDataRepository.findByKey(domain of code))
+        requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
     val cancelAction = CancelAuthorisation(reason = "A reason for cancelling")
     transactionTemplate.executeWithoutResult {
-      ExternalMovementContext.Companion.get().copy(username = DEFAULT_USERNAME, reason = cancelAction.reason).set()
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = cancelAction.reason).set()
       findTemporaryAbsenceAuthorisation(auth.id)?.cancel(cancelAction) { domain, code ->
-        requireNotNull(referenceDataRepository.findByKey(domain of code))
+        requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
-    ExternalMovementContext.Companion.clear()
+    ExternalMovementContext.clear()
 
     val history = getTapAuthHistory(auth.id).successResponse<AuditHistory>()
     Assertions.assertThat(history.content).hasSize(4)
     with(history.content.first()) {
       Assertions.assertThat(user)
-        .isEqualTo(AuditedAction.User(ExternalMovementContext.Companion.SYSTEM_USERNAME, "User ${ExternalMovementContext.Companion.SYSTEM_USERNAME}"))
-      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationPending.Companion.EVENT_TYPE)
+        .isEqualTo(AuditedAction.User(ExternalMovementContext.SYSTEM_USERNAME, "User ${ExternalMovementContext.SYSTEM_USERNAME}"))
+      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationPending.EVENT_TYPE)
     }
     with(history.content[1]) {
       Assertions.assertThat(user)
-        .isEqualTo(AuditedAction.User(ExternalMovementContext.Companion.SYSTEM_USERNAME, "User ${ExternalMovementContext.Companion.SYSTEM_USERNAME}"))
-      Assertions.assertThat(domainEvents).contains(TemporaryAbsenceAuthorisationRecategorised.Companion.EVENT_TYPE)
+        .isEqualTo(AuditedAction.User(ExternalMovementContext.SYSTEM_USERNAME, "User ${ExternalMovementContext.SYSTEM_USERNAME}"))
+      Assertions.assertThat(domainEvents).contains(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
       Assertions.assertThat(changes).containsExactlyInAnyOrder(
         AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Police production"),
         AuditedAction.Change("absenceSubType", "RDR (Resettlement Day Release)", "Police production"),

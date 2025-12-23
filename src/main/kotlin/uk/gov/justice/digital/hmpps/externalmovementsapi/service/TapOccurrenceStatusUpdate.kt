@@ -9,31 +9,29 @@ import org.springframework.data.domain.PageRequest.ofSize
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
 import java.time.Duration
 import java.time.LocalDateTime.now
 
 @Transactional
 @Service
 class OccurrenceStatusUpdate(
-  private val referenceDataRepository: ReferenceDataRepository,
+  private val occurrenceStatusRepository: OccurrenceStatusRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
   fun pastOccurrencesOfInterest() {
-    val rd = referenceDataRepository.findByKeyDomainAndActiveTrue(TAP_OCCURRENCE_STATUS).associateBy { it.key.code }
-    occurrenceRepository.findPastOccurrences(statusKeys, now(), ofSize(100)).forEach {
-      it.calculateStatus { statusCode -> rd[statusCode] as TapOccurrenceStatus }
+    val rd = occurrenceStatusRepository.findAll().associateBy { it.code }
+    occurrenceRepository.findPastOccurrences(statusCodes, now(), ofSize(100)).forEach {
+      it.calculateStatus { statusCode -> rd[statusCode] as OccurrenceStatus }
     }
   }
 
   companion object {
-    private val statusKeys = setOf(
-      TAP_OCCURRENCE_STATUS of TapOccurrenceStatus.Code.SCHEDULED.name,
-      TAP_OCCURRENCE_STATUS of TapOccurrenceStatus.Code.IN_PROGRESS.name,
+    private val statusCodes = setOf(
+      OccurrenceStatus.Code.SCHEDULED.name,
+      OccurrenceStatus.Code.IN_PROGRESS.name,
     )
   }
 }

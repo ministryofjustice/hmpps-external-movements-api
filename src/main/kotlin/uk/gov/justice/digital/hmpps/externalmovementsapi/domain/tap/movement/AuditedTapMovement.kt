@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -14,9 +14,9 @@ import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
@@ -24,7 +24,7 @@ import java.util.UUID
 
 @Immutable
 @Entity
-@Table(name = "audited_tap_movement")
+@Table(schema = "tap", name = "audited_movement")
 class AuditedTapMovement(
   val personIdentifier: String,
   @ManyToOne

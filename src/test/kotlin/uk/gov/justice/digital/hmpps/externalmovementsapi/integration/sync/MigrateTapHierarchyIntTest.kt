@@ -14,16 +14,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -97,7 +97,7 @@ class MigrateTapHierarchyIntTest(
     val request = migrateTapRequest(
       temporaryAbsences = listOf(
         tapAuthorisation(),
-        tapAuthorisation(statusCode = TapAuthorisationStatus.Code.PENDING.name, occurrences = listOf()),
+        tapAuthorisation(statusCode = AuthorisationStatus.Code.PENDING.name, occurrences = listOf()),
       ),
     )
     val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
@@ -159,7 +159,7 @@ class MigrateTapHierarchyIntTest(
 
     with(response.temporaryAbsences.last()) {
       val expired = requireNotNull(findTemporaryAbsenceAuthorisation(id))
-      assertThat(expired.status.code).isEqualTo(TapAuthorisationStatus.Code.EXPIRED.name)
+      assertThat(expired.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
     }
   }
 
@@ -322,14 +322,14 @@ class MigrateTapHierarchyIntTest(
     response.temporaryAbsences.first().also { ma ->
       ma.occurrences.first().also { mo ->
         val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
-        assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.OVERDUE.name)
+        assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.OVERDUE.name)
       }
     }
 
     response.temporaryAbsences.last().also { ma ->
       ma.occurrences.first().also { mo ->
         val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
-        assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.EXPIRED.name)
+        assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
       }
     }
   }

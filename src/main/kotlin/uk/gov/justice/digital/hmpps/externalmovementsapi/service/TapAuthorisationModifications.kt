@@ -4,23 +4,21 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.getAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.forAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceStatusCodeIn
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.CANCELLED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.DENIED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getByKey
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.getAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.forAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceStatusCodeIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.APPROVED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.DENIED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
@@ -38,6 +36,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationHistory
 import java.util.UUID
+import kotlin.reflect.KClass
 
 @Service
 class TapAuthorisationModifications(
@@ -45,6 +44,7 @@ class TapAuthorisationModifications(
   private val taaRepository: TemporaryAbsenceAuthorisationRepository,
   private val taoRepository: TemporaryAbsenceOccurrenceRepository,
   private val referenceDataRepository: ReferenceDataRepository,
+  private val occurrenceStatusRepository: OccurrenceStatusRepository,
   private val acr: AbsenceCategorisationRetriever,
   private val authorisationHistory: AuthorisationHistory,
 ) {
@@ -53,8 +53,7 @@ class TapAuthorisationModifications(
     val (readVersion, writeVersion) = transactionTemplate.execute {
       val authorisation = taaRepository.getAuthorisation(id)
       val readVersion = authorisation.version
-      val rdSupplier =
-        { domain: ReferenceDataDomain.Code, code: String -> referenceDataRepository.getByKey(domain of code) }
+      val rdSupplier = referenceDataRepository.rdProvider()
       when (action) {
         is ApproveAuthorisation -> if (authorisation.status.code !in listOf(PENDING.name, APPROVED.name)) {
           throw ConflictException("Temporary absence authorisation not awaiting approval")
@@ -121,26 +120,24 @@ class TapAuthorisationModifications(
   private fun TemporaryAbsenceAuthorisation.affectedOccurrences() = taoRepository.findAll(
     forAuthorisation(id)
       .and(
-        occurrenceStatusCodeIn(TapOccurrenceStatus.Code.PENDING, TapOccurrenceStatus.Code.SCHEDULED),
+        occurrenceStatusCodeIn(OccurrenceStatus.Code.PENDING, OccurrenceStatus.Code.SCHEDULED),
       ),
   )
 
   private fun TemporaryAbsenceAuthorisation.updateOccurrenceStatus() {
     affectedOccurrences().forEach {
-      it.calculateStatus { statusCode ->
-        referenceDataRepository.findByKey(ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS of statusCode) as TapOccurrenceStatus
-      }
+      it.calculateStatus { statusCode -> occurrenceStatusRepository.getByCode(statusCode) }
     }
   }
 
-  private fun RecategoriseAuthorisation.recalculateCategorisation(): Pair<RecategoriseAuthorisation, (ReferenceDataDomain.Code, String) -> ReferenceData> {
-    val ca = acr.getReasonCategorisation(this)
+  private fun RecategoriseAuthorisation.recalculateCategorisation(): Pair<RecategoriseAuthorisation, (KClass<out ReferenceData>, String) -> ReferenceData> {
+    val (ca, allRd) = acr.getReasonCategorisation(this)
     val newAction = copy(
       absenceTypeCode = ca.absenceType?.code,
       absenceSubTypeCode = ca.absenceSubType?.code,
       absenceReasonCategoryCode = ca.absenceReasonCategory?.code,
       absenceReasonCode = ca.absenceReason?.code,
     )
-    return newAction to referenceDataRepository.rdProvider(newAction)
+    return newAction to { domain: KClass<out ReferenceData>, code: String -> requireNotNull(allRd[domain to code]) }
   }
 }

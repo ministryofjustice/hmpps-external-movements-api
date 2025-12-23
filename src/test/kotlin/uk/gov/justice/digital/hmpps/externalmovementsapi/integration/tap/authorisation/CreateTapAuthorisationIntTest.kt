@@ -14,12 +14,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
@@ -144,7 +144,7 @@ class CreateTapAuthorisationIntTest(
         absenceSubTypeCode = null,
         absenceReasonCategoryCode = null,
         absenceReasonCode = null,
-        statusCode = TapAuthorisationStatus.Code.APPROVED,
+        statusCode = AuthorisationStatus.Code.APPROVED,
       )
     val username = word(8)
     val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
@@ -190,7 +190,7 @@ class CreateTapAuthorisationIntTest(
         absenceSubTypeCode = "RDR",
         absenceReasonCategoryCode = "ET",
         absenceReasonCode = null,
-        statusCode = TapAuthorisationStatus.Code.APPROVED,
+        statusCode = AuthorisationStatus.Code.APPROVED,
       )
     val username = word(8)
     val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
@@ -236,7 +236,7 @@ class CreateTapAuthorisationIntTest(
         absenceSubTypeCode = null,
         absenceReasonCategoryCode = null,
         absenceReasonCode = "C4",
-        statusCode = TapAuthorisationStatus.Code.APPROVED,
+        statusCode = AuthorisationStatus.Code.APPROVED,
       )
     val username = word(8)
     val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
@@ -300,7 +300,7 @@ class CreateTapAuthorisationIntTest(
     transportCode: String = "OD",
     start: LocalDate = LocalDate.now().minusDays(3),
     end: LocalDate = LocalDate.now().plusDays(1),
-    statusCode: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.PENDING,
+    statusCode: AuthorisationStatus.Code = AuthorisationStatus.Code.PENDING,
     occurrences: List<CreateTapAuthorisationRequest.OccurrenceRequest> = listOf(createTapOccurrenceRequest()),
     comments: String? = null,
     repeat: Boolean = false,

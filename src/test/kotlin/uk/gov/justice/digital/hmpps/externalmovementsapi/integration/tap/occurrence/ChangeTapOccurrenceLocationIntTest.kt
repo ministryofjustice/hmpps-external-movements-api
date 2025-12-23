@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word

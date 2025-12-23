@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence
 
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.CascadeType
@@ -22,30 +22,26 @@ import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.CategorisedAbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.CANCELLED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.COMPLETED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.EXPIRED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.IN_PROGRESS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.OVERDUE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.PENDING
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.SCHEDULED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.COMPLETED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.IN_PROGRESS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.OVERDUE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.PENDING
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.SCHEDULED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
@@ -66,12 +62,13 @@ import java.time.LocalDateTime.now
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.Collections.unmodifiableList
 import java.util.UUID
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty1
 
 @Audited
 @Entity
-@Table(name = "temporary_absence_occurrence")
+@Table(schema = "tap", name = "occurrence")
 class TemporaryAbsenceOccurrence(
   @Audited
   @ManyToOne
@@ -100,7 +97,7 @@ class TemporaryAbsenceOccurrence(
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(optional = false)
   @JoinColumn(name = "status_id", nullable = false)
-  lateinit var status: TapOccurrenceStatus
+  lateinit var status: OccurrenceStatus
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
@@ -189,13 +186,13 @@ class TemporaryAbsenceOccurrence(
   private val movements: MutableList<TemporaryAbsenceMovement> = mutableListOf()
   fun movements(): List<TemporaryAbsenceMovement> = unmodifiableList(movements)
 
-  fun addMovement(movement: TemporaryAbsenceMovement, statusProvider: (String) -> TapOccurrenceStatus) = apply {
+  fun addMovement(movement: TemporaryAbsenceMovement, statusProvider: (String) -> OccurrenceStatus) = apply {
     movements.add(movement)
     movement.occurrence = this
     calculateStatus(statusProvider)
   }
 
-  fun removeMovement(movement: TemporaryAbsenceMovement, statusProvider: (String) -> TapOccurrenceStatus) = apply {
+  fun removeMovement(movement: TemporaryAbsenceMovement, statusProvider: (String) -> OccurrenceStatus) = apply {
     movements.remove(movement)
     calculateStatus(statusProvider)
   }
@@ -221,16 +218,16 @@ class TemporaryAbsenceOccurrence(
 
   fun applyAbsenceCategorisation(
     action: RecategoriseOccurrence,
-    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) {
     if (action.changes(this)) {
       reasonPath = action.reasonPath
-      absenceType = action.absenceTypeCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_TYPE, it) as AbsenceType }
-      absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
+      absenceType = action.absenceTypeCode?.let { rdSupplier(AbsenceType::class, it) as AbsenceType }
+      absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(AbsenceSubType::class, it) as AbsenceSubType }
       absenceReasonCategory =
-        action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
+        action.absenceReasonCategoryCode?.let { rdSupplier(AbsenceReasonCategory::class, it) as AbsenceReasonCategory }
       absenceReason =
-        action.absenceReasonCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_REASON, it) as AbsenceReason }
+        action.absenceReasonCode?.let { rdSupplier(AbsenceReason::class, it) as AbsenceReason }
       appliedActions += action
     }
   }
@@ -252,20 +249,20 @@ class TemporaryAbsenceOccurrence(
 
   fun applyAccompaniment(
     action: ChangeOccurrenceAccompaniment,
-    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) {
     if (accompaniedBy.code != action.accompaniedByCode) {
-      accompaniedBy = rdSupplier(ReferenceDataDomain.Code.ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
+      accompaniedBy = rdSupplier(AccompaniedBy::class, action.accompaniedByCode) as AccompaniedBy
       appliedActions += action
     }
   }
 
   fun applyTransport(
     action: ChangeOccurrenceTransport,
-    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) {
     if (transport.code != action.transportCode) {
-      transport = rdSupplier(ReferenceDataDomain.Code.TRANSPORT, action.transportCode) as Transport
+      transport = rdSupplier(Transport::class, action.transportCode) as Transport
       appliedActions += action
     }
   }
@@ -284,25 +281,25 @@ class TemporaryAbsenceOccurrence(
     }
   }
 
-  fun cancel(action: CancelOccurrence, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
+  fun cancel(action: CancelOccurrence, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
     if (!::status.isInitialized || status.code != CANCELLED.name) {
-      status = rdSupplier(TAP_OCCURRENCE_STATUS, CANCELLED.name) as TapOccurrenceStatus
+      status = rdSupplier(OccurrenceStatus::class, CANCELLED.name) as OccurrenceStatus
       appliedActions += action
     }
   }
 
-  fun calculateStatus(statusProvider: (String) -> TapOccurrenceStatus) = apply {
+  fun calculateStatus(statusProvider: (String) -> OccurrenceStatus) = apply {
     status =
       statusProvider(listOfNotNull(movementStatus(), isCancelledStatus(), authorisationStatus()).first().name)
   }
 
-  private fun isCancelledStatus(): TapOccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
+  private fun isCancelledStatus(): OccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
     CANCELLED
   } else {
     null
   }
 
-  private fun movementStatus(): TapOccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
+  private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
     ?.map { it.direction }?.let {
       if (it.contains(TemporaryAbsenceMovement.Direction.IN)) {
         COMPLETED
@@ -316,10 +313,10 @@ class TemporaryAbsenceOccurrence(
       }
     }
 
-  private fun authorisationStatus(): TapOccurrenceStatus.Code = if (authorisation.status.code == APPROVED.name) {
+  private fun authorisationStatus(): OccurrenceStatus.Code = if (authorisation.status.code == AuthorisationStatus.Code.APPROVED.name) {
     approvedAuthorisationStatuses()
   } else {
-    val calculatedStatus = TapOccurrenceStatus.Code.valueOf(authorisation.status.code)
+    val calculatedStatus = OccurrenceStatus.Code.valueOf(authorisation.status.code)
     if (::status.isInitialized && status.code == SCHEDULED.name && calculatedStatus == CANCELLED) {
       appliedActions += CancelOccurrence()
     }

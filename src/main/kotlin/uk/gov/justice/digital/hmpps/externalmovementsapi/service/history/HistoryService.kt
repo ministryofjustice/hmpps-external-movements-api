@@ -8,7 +8,7 @@ import org.hibernate.envers.query.AuditEntity.revisionNumber
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers.ManageUsersClient

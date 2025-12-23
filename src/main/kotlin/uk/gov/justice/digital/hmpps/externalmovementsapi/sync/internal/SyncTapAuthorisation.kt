@@ -6,32 +6,22 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovementRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataPaths
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.CANCELLED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.DENIED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.EXPIRED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.findRdWithPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovementRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
@@ -59,7 +49,7 @@ class SyncTapAuthorisation(
 ) {
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
     val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
-    val rdPaths = referenceDataRepository.findRdWithPaths(request)
+    val rdPaths = referenceDataRepository.referenceDataFor(request)
     val person = personSummaryService.save(prisoner)
     val application = (
       request.id?.let { authorisationRepository.findByIdOrNull(it) }
@@ -92,32 +82,32 @@ class SyncTapAuthorisation(
   ): TemporaryAbsenceAuthorisation {
     val reasonPath = rdPaths.reasonPath()
     val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
-      rdPaths.getReferenceData(it.domain, it.code)
+      rdPaths.getReferenceData(it.domain.clazz, it.code)
     }
     return TemporaryAbsenceAuthorisation(
-      id = id ?: newUuid(),
       person = person,
       prisonCode = prisonCode,
-      absenceType = absenceTypeCode?.let { rdPaths.getReferenceData(ABSENCE_TYPE, it) as AbsenceType },
+      status = if (end.isBefore(now()) && statusCode == AuthorisationStatus.Code.PENDING.name) {
+        rdPaths.getReferenceData(AuthorisationStatus::class, EXPIRED.name) as AuthorisationStatus
+      } else {
+        rdPaths.getReferenceData(AuthorisationStatus::class, statusCode) as AuthorisationStatus
+      },
+      absenceType = absenceTypeCode?.let { rdPaths.getReferenceData(AbsenceType::class, it) as AbsenceType },
       absenceSubType = absenceSubTypeCode?.let {
-        rdPaths.getReferenceData(ABSENCE_SUB_TYPE, it) as AbsenceSubType
+        rdPaths.getReferenceData(AbsenceSubType::class, it) as AbsenceSubType
       },
       absenceReasonCategory = category as? AbsenceReasonCategory,
-      absenceReason = rdPaths.getReferenceData(ABSENCE_REASON, absenceReasonCode) as AbsenceReason,
-      accompaniedBy = rdPaths.getReferenceData(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
-      transport = rdPaths.getReferenceData(TRANSPORT, transportCode) as Transport,
+      absenceReason = rdPaths.getReferenceData(AbsenceReason::class, absenceReasonCode) as AbsenceReason,
+      accompaniedBy = rdPaths.getReferenceData(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
+      transport = rdPaths.getReferenceData(Transport::class, transportCode) as Transport,
       repeat = repeat,
-      status = if (end.isBefore(now()) && statusCode == TapAuthorisationStatus.Code.PENDING.name) {
-        rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, EXPIRED.name) as TapAuthorisationStatus
-      } else {
-        rdPaths.getReferenceData(TAP_AUTHORISATION_STATUS, statusCode) as TapAuthorisationStatus
-      },
       comments = comments,
       start = start,
       end = end,
-      schedule = null,
       reasonPath = reasonPath,
+      schedule = null,
       legacyId = legacyId,
+      id = id ?: newUuid(),
     )
   }
 
@@ -152,9 +142,9 @@ class SyncTapAuthorisation(
 
   private fun TemporaryAbsenceAuthorisation.checkStatus(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
     when (request.statusCode) {
-      APPROVED.name -> approve(ApproveAuthorisation(), rdPaths::getReferenceData)
-      CANCELLED.name -> cancel(CancelAuthorisation(), rdPaths::getReferenceData)
-      DENIED.name -> deny(DenyAuthorisation(), rdPaths::getReferenceData)
+      AuthorisationStatus.Code.APPROVED.name -> approve(ApproveAuthorisation(), rdPaths::getReferenceData)
+      AuthorisationStatus.Code.CANCELLED.name -> cancel(CancelAuthorisation(), rdPaths::getReferenceData)
+      AuthorisationStatus.Code.DENIED.name -> deny(DenyAuthorisation(), rdPaths::getReferenceData)
     }
   }
 
