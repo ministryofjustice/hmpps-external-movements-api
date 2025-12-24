@@ -14,6 +14,7 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
@@ -22,7 +23,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.ReferenceData.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
 import java.time.LocalDate

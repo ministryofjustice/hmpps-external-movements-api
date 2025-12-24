@@ -100,6 +100,7 @@ class MigrateTapHierarchyIntTest(
         tapAuthorisation(statusCode = AuthorisationStatus.Code.PENDING.name, occurrences = listOf()),
       ),
     )
+
     val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     // confirm existing tap hierarchy has been removed
