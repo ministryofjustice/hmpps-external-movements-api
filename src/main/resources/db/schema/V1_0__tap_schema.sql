@@ -352,10 +352,6 @@ from reference_data_link rdl
 on conflict do nothing
 ;
 
-drop view if exists audited_tap_authorisation;
-drop view if exists audited_tap_occurrence;
-drop view if exists audited_tap_movement;
-
 create or replace view tap.audited_authorisation as
 select created_revision.username                                as created_by,
        created_revision.timestamp                               as created_at,
