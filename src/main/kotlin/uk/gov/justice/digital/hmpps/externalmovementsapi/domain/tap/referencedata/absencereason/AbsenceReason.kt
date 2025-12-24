@@ -1,12 +1,16 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason
 
+import jakarta.persistence.Cacheable
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import org.hibernate.annotations.Cache
+import org.hibernate.annotations.CacheConcurrencyStrategy
 import org.hibernate.annotations.Immutable
-import org.springframework.data.jpa.repository.JpaRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.ReferenceDataBase
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataBase
 import java.util.UUID
 
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 @Immutable
 @Entity
 @Table(schema = "tap", name = "absence_reason")
@@ -17,5 +21,3 @@ class AbsenceReason(
   active: Boolean,
   id: UUID,
 ) : ReferenceDataBase(code, description, sequenceNumber, active, id)
-
-interface AbsenceReasonRepository : JpaRepository<AbsenceReason, UUID>
