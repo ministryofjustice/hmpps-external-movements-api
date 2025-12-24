@@ -20,7 +20,11 @@ spring:
     password: movements
   flyway:
     locations: classpath:db/schema,classpath:db/data
-  jpa.show-sql: true
+  jpa:
+    show-sql: true
+    properties:
+      hibernate.generate_statistics: true
+
 
 hmpps.sqs:
   provider: localstack

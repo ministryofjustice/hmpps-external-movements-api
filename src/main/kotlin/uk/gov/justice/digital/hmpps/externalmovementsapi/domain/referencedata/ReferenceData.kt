@@ -1,12 +1,11 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
 import jakarta.persistence.EntityManager
 import jakarta.persistence.Id
 import jakarta.persistence.MappedSuperclass
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.cache.cacheable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceCategorisationLinkRepository
 import java.util.UUID
@@ -43,10 +42,10 @@ class ReferenceDataRepository(
 ) {
 
   fun findAll(): List<ReferenceData> = entityManager.createQuery(
-    "from uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.ReferenceData",
-  ).resultList.filterIsInstance<ReferenceData>()
+    "from uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData",
+  ).cacheable().resultList.filterIsInstance<ReferenceData>()
 
-  fun findAllByType(clazz: KClass<out ReferenceData>): List<ReferenceData> = entityManager.createQuery("from ${clazz.qualifiedName}", clazz.java).resultList
+  fun findAllByType(clazz: KClass<out ReferenceData>): List<ReferenceData> = entityManager.createQuery("from ${clazz.qualifiedName}", clazz.java).cacheable().resultList
 
   fun rdProvider(): (KClass<out ReferenceData>, String) -> ReferenceData {
     val allRd = findAll().associateBy { it::class to it.code }
