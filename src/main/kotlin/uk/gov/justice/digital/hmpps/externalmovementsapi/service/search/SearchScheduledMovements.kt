@@ -4,14 +4,13 @@ import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.ServiceConfig
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrenceMatchesPrisonCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.occurrencePersonIdentifierIn
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.startAfter
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.startBefore
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrencePersonIdentifierIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.startAfter
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.startBefore
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement.Detail
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement.Detail.Companion.buildUiUrl
@@ -20,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovements
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.SearchScheduledMovementsRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.asCodedDescription
 import java.time.LocalDate
 
 @Service

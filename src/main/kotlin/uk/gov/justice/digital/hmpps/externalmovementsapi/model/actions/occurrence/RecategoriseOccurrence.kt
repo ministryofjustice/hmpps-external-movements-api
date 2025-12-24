@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurren
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.AbsenceCategorisationAction

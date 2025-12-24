@@ -15,12 +15,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.PENDING
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
@@ -67,8 +66,8 @@ class ApproveTapAuthorisationIntTest(
   }
 
   @ParameterizedTest
-  @EnumSource(TapAuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "APPROVED"])
-  fun `409 - authorisation not awaiting approval cannot be approved`(status: TapAuthorisationStatus.Code) {
+  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "APPROVED"])
+  fun `409 - authorisation not awaiting approval cannot be approved`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
     val res = approveAuthorisation(auth.id, approveAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
@@ -89,9 +88,9 @@ class ApproveTapAuthorisationIntTest(
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    assertThat(saved.status.code).isEqualTo(APPROVED.name)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.APPROVED.name)
     val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(absence.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
+    assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
 
     verifyAudit(
       saved,

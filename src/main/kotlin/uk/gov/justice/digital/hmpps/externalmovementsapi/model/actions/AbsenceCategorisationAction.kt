@@ -1,11 +1,11 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.CategorisedAbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
 
 interface AbsenceCategorisationAction :
   Action,

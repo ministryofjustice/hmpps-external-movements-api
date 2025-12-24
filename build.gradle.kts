@@ -11,6 +11,8 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
+val ehcacheVersion = "3.11.1"
+val hibernateJcacheVersion = "7.2.0.Final"
 val hmppsKotlinVersion = "1.8.2"
 val sentryVersion = "8.29.0"
 val springDocVersion = "2.8.14"
@@ -27,6 +29,7 @@ dependencies {
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.hibernate.orm:hibernate-envers")
+  implementation("org.hibernate:hibernate-jcache:$hibernateJcacheVersion")
   implementation("org.springframework.data:spring-data-envers")
   implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
@@ -35,6 +38,7 @@ dependencies {
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
   runtimeOnly("org.postgresql:postgresql")
+  runtimeOnly("org.ehcache:ehcache:$ehcacheVersion")
 
   testImplementation("org.testcontainers:postgresql:$testContainersVersion")
   testImplementation("org.testcontainers:localstack:$testContainersVersion")

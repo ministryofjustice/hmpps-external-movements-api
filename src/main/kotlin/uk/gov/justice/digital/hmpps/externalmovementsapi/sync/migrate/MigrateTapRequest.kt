@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
@@ -11,9 +10,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.EXPIRED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.ExternalMovementMigrated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationMigrated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceMigrated
@@ -92,7 +92,7 @@ data class TapAuthorisation(
     absenceSubTypeCode?.let { ABSENCE_SUB_TYPE of it },
     ACCOMPANIED_BY of accompaniedByCode,
     TRANSPORT of transportCode,
-    TAP_AUTHORISATION_STATUS of EXPIRED.name,
+    TAP_AUTHORISATION_STATUS of AuthorisationStatus.Code.EXPIRED.name,
   )
 }
 
@@ -120,7 +120,7 @@ data class TapOccurrence(
     ABSENCE_REASON of absenceReasonCode,
     absenceTypeCode?.let { ABSENCE_TYPE of it },
     absenceSubTypeCode?.let { ABSENCE_SUB_TYPE of it },
-  ) + TapOccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name }
+  ) + OccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name }
 }
 
 @Schema(name = "MigrateTapMovement")
@@ -140,5 +140,5 @@ data class TapMovement(
   override fun requiredReferenceData() = setOfNotNull(
     ABSENCE_REASON of absenceReasonCode,
     ACCOMPANIED_BY of accompaniedByCode,
-  ) + TapOccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name }
+  ) + OccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name }
 }

@@ -4,17 +4,13 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.getOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.CANCELLED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.SCHEDULED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getByKey
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.rdProvider
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.getOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.SCHEDULED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
@@ -33,6 +29,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.OccurrenceHistory
 import java.util.UUID
+import kotlin.reflect.KClass
 
 @Service
 class TapOccurrenceModifications(
@@ -48,8 +45,7 @@ class TapOccurrenceModifications(
       val occurrence = taoRepository.getOccurrence(id)
       val single = occurrence.authorisation.takeIf { !it.repeat }
       val readVersion = occurrence.version
-      val rdSupplier =
-        { domain: ReferenceDataDomain.Code, code: String -> referenceDataRepository.getByKey(domain of code) }
+      val rdSupplier = referenceDataRepository.rdProvider()
       when (action) {
         is RescheduleOccurrence -> {
           single?.also {
@@ -117,14 +113,14 @@ class TapOccurrenceModifications(
     }
   }
 
-  private fun RecategoriseOccurrence.recalculateCategorisation(): Pair<RecategoriseOccurrence, (ReferenceDataDomain.Code, String) -> ReferenceData> {
-    val ca = acr.getReasonCategorisation(this)
+  private fun RecategoriseOccurrence.recalculateCategorisation(): Pair<RecategoriseOccurrence, (KClass<out ReferenceData>, String) -> ReferenceData> {
+    val (ca, allRd) = acr.getReasonCategorisation(this)
     val newAction = copy(
       absenceTypeCode = ca.absenceType?.code,
       absenceSubTypeCode = ca.absenceSubType?.code,
       absenceReasonCategoryCode = ca.absenceReasonCategory?.code,
       absenceReasonCode = ca.absenceReason?.code,
     )
-    return newAction to referenceDataRepository.rdProvider(newAction)
+    return newAction to { domain: KClass<out ReferenceData>, code: String -> requireNotNull(allRd[domain to code]) }
   }
 }

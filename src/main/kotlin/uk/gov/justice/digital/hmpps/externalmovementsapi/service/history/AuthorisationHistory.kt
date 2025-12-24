@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.service.history
 
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers.ManageUsersClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 

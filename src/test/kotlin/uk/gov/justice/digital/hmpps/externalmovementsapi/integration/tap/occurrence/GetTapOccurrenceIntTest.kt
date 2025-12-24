@@ -10,9 +10,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.IN
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.OUT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.IN
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.OUT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -98,7 +98,7 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve pending occurrence`() {
     val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.PENDING))
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.PENDING))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
@@ -111,7 +111,7 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve cancelled occurrence from cancelled authorisation`() {
     val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.CANCELLED))
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.CANCELLED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
@@ -124,7 +124,7 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve denied occurrence`() {
     val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.DENIED))
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.DENIED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 

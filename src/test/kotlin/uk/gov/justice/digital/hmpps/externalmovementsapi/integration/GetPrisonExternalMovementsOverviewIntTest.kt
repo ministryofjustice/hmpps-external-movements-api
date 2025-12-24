@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -57,7 +57,7 @@ class GetPrisonExternalMovementsOverviewIntTest(
     givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         end = LocalDate.now().minusDays(1),
       ),
     )
@@ -125,7 +125,7 @@ class GetPrisonExternalMovementsOverviewIntTest(
         temporaryAbsenceAuthorisation(
           prisonCode,
           personIdentifier,
-          status = TapAuthorisationStatus.Code.PENDING,
+          status = AuthorisationStatus.Code.PENDING,
           start = start,
           end = start.plusDays(1),
         ),

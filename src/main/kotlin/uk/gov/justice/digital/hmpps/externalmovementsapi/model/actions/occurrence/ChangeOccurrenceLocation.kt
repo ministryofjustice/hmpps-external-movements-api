@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence
 
 import jakarta.validation.Valid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location

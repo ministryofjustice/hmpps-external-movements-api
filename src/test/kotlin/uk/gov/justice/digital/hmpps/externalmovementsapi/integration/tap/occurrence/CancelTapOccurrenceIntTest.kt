@@ -13,10 +13,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
@@ -83,8 +83,8 @@ class CancelTapOccurrenceIntTest(
     assertThat(res.changes).isEmpty()
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
-    assertThat(saved.authorisation.status.code).isEqualTo(TapAuthorisationStatus.Code.CANCELLED.name)
+    assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.authorisation.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
 
     verifyAudit(
       saved,
@@ -117,7 +117,7 @@ class CancelTapOccurrenceIntTest(
     assertThat(res.changes).isEmpty()
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
     assertThat(saved.authorisation.status.code).isEqualTo(auth.status.code)
 
     verifyAudit(

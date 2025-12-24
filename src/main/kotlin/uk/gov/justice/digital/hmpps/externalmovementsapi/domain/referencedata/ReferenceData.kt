@@ -1,140 +1,61 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
-import jakarta.persistence.Column
-import jakarta.persistence.DiscriminatorColumn
-import jakarta.persistence.DiscriminatorType
-import jakarta.persistence.Embeddable
-import jakarta.persistence.Embedded
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.Id
-import jakarta.persistence.Inheritance
-import jakarta.persistence.InheritanceType
-import jakarta.persistence.Table
-import org.hibernate.annotations.Immutable
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Query
-import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
+import jakarta.persistence.Cacheable
+import jakarta.persistence.EntityManager
+import org.hibernate.annotations.Cache
+import org.hibernate.annotations.CacheConcurrencyStrategy
+import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.cache.cacheable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceCategorisationLinkRepository
+import java.util.UUID
+import kotlin.reflect.KClass
 
-@Immutable
-@Entity
-@Table(name = "reference_data")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "domain", discriminatorType = DiscriminatorType.STRING)
-open class ReferenceData(
-  @Embedded
-  val key: ReferenceDataKey,
-  val description: String,
-  val hintText: String?,
-  val sequenceNumber: Int,
-  val active: Boolean,
-  @Id
-  val id: Long,
-) : ReferenceDataLookup by key {
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+interface ReferenceData {
+  val code: String
+  val description: String
+  val sequenceNumber: Int
+  val active: Boolean
+  val id: UUID
+
   companion object {
-    val KEY = ReferenceData::key.name
+    val CODE = ReferenceData::code.name
     val SEQUENCE_NUMBER = ReferenceData::sequenceNumber.name
   }
 }
 
-interface ReferenceDataLookup {
-  val domain: ReferenceDataDomain.Code
-  val code: String
-}
+@Transactional(readOnly = true)
+@Repository
+class ReferenceDataRepository(
+  private val entityManager: EntityManager,
+  private val linkRepository: AbsenceCategorisationLinkRepository,
+) {
 
-@Embeddable
-data class ReferenceDataKey(
-  @Enumerated(EnumType.STRING)
-  @Column(insertable = false, updatable = false)
-  override val domain: ReferenceDataDomain.Code,
-  @Column(insertable = false, updatable = false)
-  override val code: String,
-) : ReferenceDataLookup {
-  companion object {
-    val CODE = ReferenceDataKey::code.name
+  fun findAll(): List<ReferenceData> = entityManager.createQuery(
+    "from uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData",
+  ).cacheable().resultList.filterIsInstance<ReferenceData>()
+
+  fun findAllByType(clazz: KClass<out ReferenceData>): List<ReferenceData> = entityManager.createQuery("from ${clazz.qualifiedName}", clazz.java).cacheable().resultList
+
+  fun rdProvider(): (KClass<out ReferenceData>, String) -> ReferenceData {
+    val allRd = findAll().associateBy { it::class to it.code }
+    return { domain: KClass<out ReferenceData>, code: String -> requireNotNull(allRd[domain to code]) }
+  }
+
+  fun referenceDataFor(required: ReferenceDataRequired): ReferenceDataPaths = with(required) {
+    val allRd = findAll()
+    val rdLinks =
+      linkRepository.findAll().groupBy({ it.id2 to it.domain1 }, { link -> allRd.first { it.id == link.id1 } })
+    val findLinkedFrom: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData> =
+      { id: UUID, domainCode: ReferenceDataDomain.Code -> rdLinks[id to domainCode] ?: emptyList() }
+    return ReferenceDataPaths(
+      allRd.filter { rd ->
+        rd::class to rd.code in requiredReferenceData().map { it.domain.clazz to it.code }
+      },
+      findLinkedFrom,
+    )
   }
 }
-
-infix fun ReferenceDataDomain.Code.of(code: String) = ReferenceDataKey(this, code)
-
-interface ReferenceDataRepository : JpaRepository<ReferenceData, Long> {
-  @Query(
-    """
-    select rd as referenceData, rddl.domain as nextDomain
-    from ReferenceData rd
-    left join fetch ReferenceDataDomainLink rddl on rd.id = rddl.id
-    where rd.key.domain = :domain and rd.active = true
-    """,
-  )
-  fun findWithDomainLink(domain: ReferenceDataDomain.Code): List<RdWithDomainLink>
-
-  @Query(
-    """
-    select rd as referenceData, rddl.domain as nextDomain
-    from ReferenceData rd
-    left join fetch ReferenceDataDomainLink rddl on rd.id = rddl.id
-    where rd.key in :keys
-    """,
-  )
-  fun findMatchingWithDomainLink(keys: Set<ReferenceDataKey>): List<RdWithDomainLink>
-
-  @Query(
-    """
-    select rd as referenceData, rddl.domain as nextDomain
-    from ReferenceData rd
-    left join fetch ReferenceDataDomainLink rddl on rd.id = rddl.id
-    where rd.key.domain = :domain and rd.key.code = :code
-    """,
-  )
-  fun findByCodeWithDomainLink(domain: ReferenceDataDomain.Code, code: String): RdWithDomainLink?
-
-  fun findByKeyDomainAndActiveTrue(domain: ReferenceDataDomain.Code): List<ReferenceData>
-
-  fun findByKeyIn(keys: Set<ReferenceDataKey>): List<ReferenceData>
-
-  fun findByKey(key: ReferenceDataKey): ReferenceData?
-
-  @Query(
-    """
-    select rdl.rd2 as referenceData from ReferenceDataLink rdl
-    left join ReferenceDataDomainLink dl on rdl.rd2.id = dl.id
-    where rdl.rd1.id = :id and rdl.rd2.key.domain = :nextDomain
-    """,
-  )
-  fun findLinkedItems(nextDomain: ReferenceDataDomain.Code, id: Long): List<ReferenceData>
-
-  @Query(
-    """
-    select rdl.rd1 as referenceData from ReferenceDataLink rdl
-    left join ReferenceDataDomainLink dl on rdl.rd1.id = dl.id
-    where rdl.rd2.id = :id and rdl.rd1.key.domain = :domainCode
-    """,
-  )
-  fun findLinkedFrom(id: Long, domainCode: ReferenceDataDomain.Code): List<ReferenceData>
-}
-
-fun ReferenceDataRepository.getByKey(key: ReferenceDataKey): ReferenceData = findByKey(key) ?: throw NotFoundException("${key.domain} not found")
-
-fun ReferenceDataRepository.findRdWithPaths(rdr: ReferenceDataRequired): ReferenceDataPaths = ReferenceDataPaths(findMatchingWithDomainLink(rdr.requiredReferenceData())) { id: Long, domainCode: ReferenceDataDomain.Code ->
-  findLinkedFrom(id, domainCode)
-}
-
-fun ReferenceDataRepository.rdProvider(rdr: ReferenceDataRequired): (ReferenceDataDomain.Code, String) -> ReferenceData {
-  val rdMap = findByKeyIn(rdr.requiredReferenceData()).associateBy { it.key }
-  return { dc: ReferenceDataDomain.Code, c: String -> requireNotNull(rdMap[dc of c]) }
-}
-
-fun ReferenceData.asCodedDescription() = CodedDescription(code, description, hintText)
-
-interface RdWithDomainLink {
-  val referenceData: ReferenceData
-  val nextDomain: ReferenceDataDomain.Code?
-  val domain: ReferenceDataDomain.Code get() = referenceData.domain
-}
-
-fun ReferenceDataRepository.getByDomainAndCodeWithDomainLink(
-  domain: ReferenceDataDomain.Code,
-  code: String,
-): RdWithDomainLink = findByCodeWithDomainLink(domain, code) ?: throw NotFoundException("Reference data not found")

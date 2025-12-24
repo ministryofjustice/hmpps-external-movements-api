@@ -3,26 +3,26 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.service.search
 import org.springframework.data.domain.Page
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationMatchesDateRange
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationMatchesPersonIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationMatchesPersonName
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationMatchesPrisonCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.authorisationStatusCodeIn
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationStatusCodeIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationResult
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerson
 
 @Service

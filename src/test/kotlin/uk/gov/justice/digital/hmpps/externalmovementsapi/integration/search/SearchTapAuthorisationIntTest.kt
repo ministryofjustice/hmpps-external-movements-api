@@ -7,11 +7,10 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
-import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -88,7 +87,7 @@ class SearchTapAuthorisationIntTest(
     givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.APPROVED,
+        status = AuthorisationStatus.Code.APPROVED,
         start = start,
         end = end.minusDays(1),
       ),
@@ -96,7 +95,7 @@ class SearchTapAuthorisationIntTest(
     givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.APPROVED,
+        status = AuthorisationStatus.Code.APPROVED,
         start = start.plusDays(1),
         end = end,
       ),
@@ -106,7 +105,7 @@ class SearchTapAuthorisationIntTest(
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           prisonCode,
-          status = TapAuthorisationStatus.Code.PENDING,
+          status = AuthorisationStatus.Code.PENDING,
           start = start,
           end = end.minusDays(1),
         ),
@@ -114,14 +113,14 @@ class SearchTapAuthorisationIntTest(
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           prisonCode,
-          status = TapAuthorisationStatus.Code.PENDING,
+          status = AuthorisationStatus.Code.PENDING,
           start = start.plusDays(1),
           end = end,
         ),
       ),
     )
 
-    val res = searchTapAuthorisations(prisonCode, start, end, TapAuthorisationStatus.Code.PENDING)
+    val res = searchTapAuthorisations(prisonCode, start, end, AuthorisationStatus.Code.PENDING)
       .successResponse<TapAuthorisationSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(2)
@@ -137,7 +136,7 @@ class SearchTapAuthorisationIntTest(
     val toFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -145,7 +144,7 @@ class SearchTapAuthorisationIntTest(
     givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -167,7 +166,7 @@ class SearchTapAuthorisationIntTest(
     val toFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -175,7 +174,7 @@ class SearchTapAuthorisationIntTest(
     givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -253,7 +252,7 @@ class SearchTapAuthorisationIntTest(
     val pending = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -261,7 +260,7 @@ class SearchTapAuthorisationIntTest(
     val cancelled = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.CANCELLED,
+        status = AuthorisationStatus.Code.CANCELLED,
         start = start,
         end = end,
       ),
@@ -269,7 +268,7 @@ class SearchTapAuthorisationIntTest(
     val denied = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.DENIED,
+        status = AuthorisationStatus.Code.DENIED,
         start = start,
         end = end,
       ),
@@ -277,7 +276,7 @@ class SearchTapAuthorisationIntTest(
     val approved = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.APPROVED,
+        status = AuthorisationStatus.Code.APPROVED,
         start = start,
         end = end,
       ),
@@ -381,7 +380,7 @@ class SearchTapAuthorisationIntTest(
     prisonCode: String,
     start: LocalDate? = null,
     end: LocalDate? = null,
-    status: TapAuthorisationStatus.Code? = null,
+    status: AuthorisationStatus.Code? = null,
     query: String? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,

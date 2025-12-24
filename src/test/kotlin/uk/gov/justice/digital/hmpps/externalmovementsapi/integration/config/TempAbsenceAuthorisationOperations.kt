@@ -5,27 +5,24 @@ import org.assertj.core.api.Assertions.assertThat
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
@@ -33,16 +30,17 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.reflect.KClass
 
 interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
-  fun givenTemporaryAbsenceAuthorisation(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation
+  fun givenTemporaryAbsenceAuthorisation(tas: ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation
   fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation?
 
   companion object {
     fun temporaryAbsenceAuthorisation(
       prisonCode: String = prisonCode(),
       personIdentifier: String = personIdentifier(),
-      status: TapAuthorisationStatus.Code = TapAuthorisationStatus.Code.APPROVED,
+      status: AuthorisationStatus.Code = AuthorisationStatus.Code.APPROVED,
       absenceType: String? = "SR",
       absenceSubType: String? = "RDR",
       absenceReasonCategory: String? = "PW",
@@ -64,18 +62,18 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
       ),
       schedule: JsonNode? = null,
       legacyId: Long? = null,
-    ): ((ReferenceDataDomain.Code, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation = { rdSupplier, personSupplier ->
+    ): ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation = { rdSupplier, personSupplier ->
       TemporaryAbsenceAuthorisation(
         personSupplier(personIdentifier),
         prisonCode,
-        absenceType?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType },
-        absenceSubType?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
-        absenceReasonCategory?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory },
-        absenceReason?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason },
-        rdSupplier(ACCOMPANIED_BY, accompaniedByCode) as AccompaniedBy,
-        rdSupplier(TRANSPORT, transportCode) as Transport,
+        rdSupplier(AuthorisationStatus::class, status.name) as AuthorisationStatus,
+        absenceType?.let { rdSupplier(AbsenceType::class, it) as AbsenceType },
+        absenceSubType?.let { rdSupplier(AbsenceSubType::class, it) as AbsenceSubType },
+        absenceReasonCategory?.let { rdSupplier(AbsenceReasonCategory::class, it) as AbsenceReasonCategory },
+        absenceReason?.let { rdSupplier(AbsenceReason::class, it) as AbsenceReason },
+        rdSupplier(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
+        rdSupplier(Transport::class, transportCode) as Transport,
         repeat,
-        rdSupplier(TAP_AUTHORISATION_STATUS, status.name) as TapAuthorisationStatus,
         comments,
         start,
         end,
@@ -137,12 +135,10 @@ class TempAbsenceAuthorisationOperationsImpl(
   private val psOperations: PersonSummaryOperations,
 ) : TempAbsenceAuthorisationOperations,
   PersonSummaryOperations by psOperations {
-  override fun givenTemporaryAbsenceAuthorisation(tas: ((ReferenceDataDomain.Code, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation = transactionTemplate.execute {
-    val rdMap = referenceDataRepository.findAll().associateBy { it.key.domain of it.key.code }
+  override fun givenTemporaryAbsenceAuthorisation(tas: ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation = transactionTemplate.execute {
+    val rdMap = referenceDataRepository.findAll().associateBy { it::class to it.code }
     val authorisation: TemporaryAbsenceAuthorisation = tas(
-      { dc: ReferenceDataDomain.Code, c: String ->
-        requireNotNull(rdMap[dc of c])
-      },
+      { dc: KClass<out ReferenceData>, c: String -> requireNotNull(rdMap[dc to c]) },
       { psOperations.findPersonSummary(it) ?: psOperations.givenPersonSummary(personSummary(it)) },
     )
     temporaryAbsenceAuthorisationRepository.save(authorisation)

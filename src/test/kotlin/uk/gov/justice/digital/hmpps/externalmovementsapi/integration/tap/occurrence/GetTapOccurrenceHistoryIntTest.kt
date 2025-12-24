@@ -84,7 +84,7 @@ class GetTapOccurrenceHistoryIntTest(
           reasonPath = ReasonPath(listOf(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")),
         ),
       ) { domain, code ->
-        requireNotNull(referenceDataRepository.findByKey(domain of code))
+        requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
     val originalLocation = occurrence.location
@@ -97,7 +97,7 @@ class GetTapOccurrenceHistoryIntTest(
       val cancelAction = CancelOccurrence(reason = "A reason for cancelling")
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = cancelAction.reason).set()
       findTemporaryAbsenceOccurrence(occurrence.id)?.cancel(cancelAction) { domain, code ->
-        requireNotNull(referenceDataRepository.findByKey(domain of code))
+        requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
     ExternalMovementContext.clear()

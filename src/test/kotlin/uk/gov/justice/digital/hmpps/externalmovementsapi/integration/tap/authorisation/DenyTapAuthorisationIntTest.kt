@@ -14,10 +14,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDenied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -61,8 +61,8 @@ class DenyTapAuthorisationIntTest(
   }
 
   @ParameterizedTest
-  @EnumSource(TapAuthorisationStatus.Code::class, mode = EnumSource.Mode.EXCLUDE, names = ["PENDING", "DENIED"])
-  fun `409 - authorisation not awaiting approval cannot be denied`(status: TapAuthorisationStatus.Code) {
+  @EnumSource(AuthorisationStatus.Code::class, mode = EnumSource.Mode.EXCLUDE, names = ["PENDING", "DENIED"])
+  fun `409 - authorisation not awaiting approval cannot be denied`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(
       TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation(
         status = status,
@@ -77,7 +77,7 @@ class DenyTapAuthorisationIntTest(
   fun `200 ok - authorisation denied`() {
     val auth = givenTemporaryAbsenceAuthorisation(
       TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation(
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(
@@ -94,9 +94,9 @@ class DenyTapAuthorisationIntTest(
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    Assertions.assertThat(saved.status.code).isEqualTo(TapAuthorisationStatus.Code.DENIED.name)
+    Assertions.assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.DENIED.name)
     val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    Assertions.assertThat(absence.status.code).isEqualTo(TapOccurrenceStatus.Code.DENIED.name)
+    Assertions.assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
 
     verifyAudit(
       saved,

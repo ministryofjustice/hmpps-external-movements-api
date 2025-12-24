@@ -14,10 +14,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus.Code.APPROVED
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.ValidDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -33,7 +32,7 @@ data class CreateTapAuthorisationRequest(
   val absenceReasonCode: String?,
   @Valid
   val occurrences: List<OccurrenceRequest>,
-  val statusCode: TapAuthorisationStatus.Code,
+  val statusCode: AuthorisationStatus.Code,
   val accompaniedByCode: String,
   val transportCode: String,
   val comments: String?,
@@ -46,9 +45,9 @@ data class CreateTapAuthorisationRequest(
   @JsonIgnore
   val submittedBy: String = ExternalMovementContext.get().username,
   @JsonIgnore
-  val approvedAt: LocalDateTime? = if (statusCode == APPROVED) ExternalMovementContext.get().requestAt else null,
+  val approvedAt: LocalDateTime? = if (statusCode == AuthorisationStatus.Code.APPROVED) ExternalMovementContext.get().requestAt else null,
   @JsonIgnore
-  val approvedBy: String? = if (statusCode == APPROVED) ExternalMovementContext.get().username else null,
+  val approvedBy: String? = if (statusCode == AuthorisationStatus.Code.APPROVED) ExternalMovementContext.get().username else null,
   val schedule: JsonNode? = null,
 ) : ReferenceDataRequired,
   DateRange,
@@ -59,7 +58,7 @@ data class CreateTapAuthorisationRequest(
     add(TAP_AUTHORISATION_STATUS of statusCode.name)
     add(ACCOMPANIED_BY of accompaniedByCode)
     add(TRANSPORT of transportCode)
-    addAll(TapOccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name })
+    addAll(OccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name })
   }
 
   fun reasonPath(): List<ReferenceDataKey> = buildList {

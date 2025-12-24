@@ -11,10 +11,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.IN_PROGRESS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus.Code.SCHEDULED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -79,7 +78,7 @@ class SyncTapMovementIntTest(
   fun `200 ok temporary absence created successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
-    assertThat(occurrence.status.code).isEqualTo(SCHEDULED.name)
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
     val request = tapMovement(
       direction = TemporaryAbsenceMovement.Direction.OUT,
       occurrenceId = occurrence.id,
@@ -94,7 +93,7 @@ class SyncTapMovementIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceMovement(res.id))
     saved.verifyAgainst(authorisation.person.identifier, request)
-    assertThat(saved.occurrence?.status?.code).isEqualTo(IN_PROGRESS.name)
+    assertThat(saved.occurrence?.status?.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
 
     verifyAudit(
       saved,

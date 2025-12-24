@@ -2,9 +2,9 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.AuditedTapMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.AuditedTapMovementRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.getMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.AuditedTapMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.AuditedTapMovementRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.getMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndByWithPrison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapMovement

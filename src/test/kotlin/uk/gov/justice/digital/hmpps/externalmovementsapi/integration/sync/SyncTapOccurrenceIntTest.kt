@@ -12,10 +12,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
@@ -109,7 +109,7 @@ class SyncTapOccurrenceIntTest(
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(existing.id))
     saved.verifyAgainst(request)
-    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
 
     verifyAudit(
       saved,
@@ -142,7 +142,7 @@ class SyncTapOccurrenceIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(res.id))
     saved.verifyAgainst(request)
-    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
 
     verifyAudit(
       saved,
