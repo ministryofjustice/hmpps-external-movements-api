@@ -4,9 +4,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceExpired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceOverdue
@@ -46,13 +46,13 @@ class TapOccurrenceStatusIntTest(
         ),
       ),
     )
-    assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.IN_PROGRESS.name)
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
 
     TimeUnit.MILLISECONDS.sleep(durationAhead.toMillis() + 100)
     update.pastOccurrencesOfInterest()
 
     val updated = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(updated.status.code).isEqualTo(TapOccurrenceStatus.Code.OVERDUE.name)
+    assertThat(updated.status.code).isEqualTo(OccurrenceStatus.Code.OVERDUE.name)
 
     verifyAudit(updated, RevisionType.MOD, setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!))
     verifyEvents(updated, setOf(TemporaryAbsenceOverdue(occurrence.authorisation.person.identifier, occurrence.id)))
@@ -69,13 +69,13 @@ class TapOccurrenceStatusIntTest(
         end = LocalDateTime.now().plus(durationAhead),
       ),
     )
-    assertThat(occurrence.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
 
     TimeUnit.MILLISECONDS.sleep(durationAhead.toMillis() + 100)
     update.pastOccurrencesOfInterest()
 
     val updated = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(updated.status.code).isEqualTo(TapOccurrenceStatus.Code.EXPIRED.name)
+    assertThat(updated.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
 
     verifyAudit(updated, RevisionType.MOD, setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!))
     verifyEvents(updated, setOf(TemporaryAbsenceExpired(occurrence.authorisation.person.identifier, occurrence.id)))

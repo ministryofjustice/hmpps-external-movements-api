@@ -9,10 +9,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
@@ -110,7 +110,7 @@ class SyncTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
-    assertThat(saved.status.code).isEqualTo(TapAuthorisationStatus.Code.EXPIRED.name)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
     assertThat(saved.reasonPath.path).containsExactly(
       ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "PW",
       ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
@@ -408,8 +408,8 @@ class SyncTapAuthorisationIntTest(
 private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String, request: TapAuthorisation) {
   assertThat(person.identifier).isEqualTo(personIdentifier)
   assertThat(legacyId).isEqualTo(request.legacyId)
-  if (request.statusCode == TapAuthorisationStatus.Code.PENDING.name && request.end.isBefore(now())) {
-    assertThat(status.code).isEqualTo(TapAuthorisationStatus.Code.EXPIRED.name)
+  if (request.statusCode == AuthorisationStatus.Code.PENDING.name && request.end.isBefore(now())) {
+    assertThat(status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
   } else {
     assertThat(status.code).isEqualTo(request.statusCode)
   }

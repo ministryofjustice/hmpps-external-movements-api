@@ -7,28 +7,24 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ACCOMPANIED_BY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
@@ -39,9 +35,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
+import kotlin.reflect.KClass
 
 interface TempAbsenceOccurrenceOperations {
-  fun givenTemporaryAbsenceOccurrence(tao: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceOccurrence): TemporaryAbsenceOccurrence
+  fun givenTemporaryAbsenceOccurrence(tao: ((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceOccurrence): TemporaryAbsenceOccurrence
   fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence?
   fun findForAuthorisation(id: UUID): List<TemporaryAbsenceOccurrence>
 
@@ -79,25 +76,22 @@ interface TempAbsenceOccurrenceOperations {
       ),
       scheduleReference: JsonNode? = null,
       legacyId: Long? = null,
-      movements: List<((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceMovement> = listOf(),
-    ): ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceOccurrence = { rdSupplier ->
+      movements: List<((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceMovement> = listOf(),
+    ): ((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceOccurrence = { rdSupplier ->
       val occurrence = TemporaryAbsenceOccurrence(
         authorisation = authorisation,
-        absenceType = absenceType?.let { rdSupplier(ABSENCE_TYPE, it) as AbsenceType },
-        absenceSubType = absenceSubType?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType },
+        absenceType = absenceType?.let { rdSupplier(AbsenceType::class, it) as AbsenceType },
+        absenceSubType = absenceSubType?.let { rdSupplier(AbsenceSubType::class, it) as AbsenceSubType },
         absenceReasonCategory = absenceReasonCategory?.let {
-          rdSupplier(
-            ABSENCE_REASON_CATEGORY,
-            it,
-          ) as AbsenceReasonCategory
+          rdSupplier(AbsenceReasonCategory::class, it) as AbsenceReasonCategory
         },
-        absenceReason = absenceReason?.let { rdSupplier(ABSENCE_REASON, it) as AbsenceReason },
+        absenceReason = absenceReason?.let { rdSupplier(AbsenceReason::class, it) as AbsenceReason },
         start = start,
         end = end,
         location = location,
         contactInformation = contactInformation,
-        accompaniedBy = rdSupplier(ACCOMPANIED_BY, accompaniedBy) as AccompaniedBy,
-        transport = rdSupplier(TRANSPORT, transport) as Transport,
+        accompaniedBy = rdSupplier(AccompaniedBy::class, accompaniedBy) as AccompaniedBy,
+        transport = rdSupplier(Transport::class, transport) as Transport,
         comments = comments,
         reasonPath = reasonPath,
         scheduleReference = scheduleReference,
@@ -105,14 +99,14 @@ interface TempAbsenceOccurrenceOperations {
       )
       movements.forEach {
         occurrence.addMovement(it(rdSupplier)) { statusCode ->
-          rdSupplier(TAP_OCCURRENCE_STATUS, statusCode) as TapOccurrenceStatus
+          rdSupplier(OccurrenceStatus::class, statusCode) as OccurrenceStatus
         }
       }
       if (cancelledAt != null && cancelledBy != null) {
         occurrence.cancel(CancelOccurrence(), rdSupplier)
       }
       if (movements.isEmpty()) {
-        occurrence.calculateStatus { rdSupplier(TAP_OCCURRENCE_STATUS, it) as TapOccurrenceStatus }
+        occurrence.calculateStatus { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
       } else {
         occurrence
       }
@@ -167,10 +161,10 @@ class TempAbsenceOccurrenceOperationsImpl(
   private val referenceDataRepository: ReferenceDataRepository,
   private val temporaryAbsenceOccurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) : TempAbsenceOccurrenceOperations {
-  override fun givenTemporaryAbsenceOccurrence(tao: ((ReferenceDataDomain.Code, String) -> ReferenceData) -> TemporaryAbsenceOccurrence): TemporaryAbsenceOccurrence = transactionTemplate.execute {
-    val rdMap = referenceDataRepository.findAll().associateBy { it.key.domain of it.key.code }
-    val occurrence: TemporaryAbsenceOccurrence = tao { dc: ReferenceDataDomain.Code, c: String ->
-      requireNotNull(rdMap[dc of c])
+  override fun givenTemporaryAbsenceOccurrence(tao: ((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceOccurrence): TemporaryAbsenceOccurrence = transactionTemplate.execute {
+    val rdMap = referenceDataRepository.findAll().associateBy { it::class to it.code }
+    val occurrence: TemporaryAbsenceOccurrence = tao { dc: KClass<out ReferenceData>, c: String ->
+      requireNotNull(rdMap[dc to c])
     }
     temporaryAbsenceOccurrenceRepository.save(occurrence)
   }!!
