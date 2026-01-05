@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.getOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.SCHEDULED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
@@ -57,6 +58,7 @@ class TapOccurrenceModifications(
             it.applyDateRange(cadr, rdSupplier)
           } ?: occurrence.validateDateRange(action)
           occurrence.reschedule(action)
+          occurrence.calculateStatus { rdSupplier.invoke(OccurrenceStatus::class, it) as OccurrenceStatus }
         }
 
         is CancelOccurrence -> {
