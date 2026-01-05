@@ -11,6 +11,9 @@
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_authorisation_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_authorisation_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_movement_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_movement_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="temporary_absence_occurrence_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="temporary_absence_occurrence_audit"/>
+            <child catalog="movements" column="rev_id" foreignKey="authorisation_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="tap" table="authorisation_audit"/>
+            <child catalog="movements" column="rev_id" foreignKey="movement_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="tap" table="movement_audit"/>
+            <child catalog="movements" column="rev_id" foreignKey="occurrence_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="tap" table="occurrence_audit"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="timestamp" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="username" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
@@ -207,6 +210,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="code" nullable="false" remarks="" size="32" type="varchar" typeCode="12">
             <child catalog="movements" column="domain" foreignKey="fk_reference_data_domain" implied="false" onDeleteCascade="false" schema="public" table="reference_data"/>
             <child catalog="movements" column="domain" foreignKey="fk_reference_data_domain_link_domain" implied="false" onDeleteCascade="false" schema="public" table="reference_data_domain_link"/>
+            <child catalog="movements" column="domain" foreignKey="fk_tap_absence_categorisation_domain_link_domain" implied="false" onDeleteCascade="false" schema="tap" table="absence_categorisation_domain_link"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="description" nullable="false" remarks="" size="255" type="varchar" typeCode="12"/>
          <primaryKey column="code" sequenceNumberInPK="1"/>

@@ -1,5 +1,5 @@
-person_summary
 audit_revision
+person_summary
 reference_data_domain
 reference_data
 temporary_absence_authorisation

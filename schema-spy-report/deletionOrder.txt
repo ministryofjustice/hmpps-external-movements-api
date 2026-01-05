@@ -11,5 +11,5 @@ temporary_absence_occurrence
 temporary_absence_authorisation
 reference_data
 reference_data_domain
-audit_revision
 person_summary
+audit_revision
