@@ -42,6 +42,7 @@ spring:
           region:
             factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
           provider_class: org.hibernate.cache.EhCacheProvider
+        javax.cache.missing_cache_strategy: create
         jdbc:
           lob.non_contextual_creation: true
           batch_size: 1000
