@@ -10,7 +10,7 @@
       "level": "WARN"
     },
     "springScheduling": {
-      "enabled": false
+      "enabled": true
     }
   },
   "selfDiagnostics": {
