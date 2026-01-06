@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
@@ -73,7 +74,7 @@ class TapAuthorisationModifications(
           throw ConflictException("Temporary absence authorisation not approved")
         } else {
           authorisation.cancel(action, rdSupplier)
-          authorisation.updateOccurrenceStatus()
+          authorisation.affectedOccurrences().forEach { it.cancel(CancelOccurrence(), rdSupplier) }
         }
 
         is ChangeAuthorisationAccompaniment -> {

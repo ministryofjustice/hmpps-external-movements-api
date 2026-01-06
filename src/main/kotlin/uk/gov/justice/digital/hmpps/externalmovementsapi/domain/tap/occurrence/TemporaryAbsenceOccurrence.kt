@@ -290,13 +290,14 @@ class TemporaryAbsenceOccurrence(
 
   fun calculateStatus(statusProvider: (String) -> OccurrenceStatus) = apply {
     status =
-      statusProvider(listOfNotNull(movementStatus(), isCancelledStatus(), authorisationStatus()).first().name)
-  }
-
-  private fun isCancelledStatus(): OccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
-    CANCELLED
-  } else {
-    null
+      statusProvider(
+        listOfNotNull(
+          movementStatus(),
+          expiredStatus(),
+          isCancelledStatus(),
+          authorisationStatus(),
+        ).first().name,
+      )
   }
 
   private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
@@ -313,27 +314,44 @@ class TemporaryAbsenceOccurrence(
       }
     }
 
-  private fun authorisationStatus(): OccurrenceStatus.Code = if (authorisation.status.code == AuthorisationStatus.Code.APPROVED.name) {
-    approvedAuthorisationStatuses()
-  } else {
-    val calculatedStatus = OccurrenceStatus.Code.valueOf(authorisation.status.code)
-    if (::status.isInitialized && status.code == SCHEDULED.name && calculatedStatus == CANCELLED) {
-      appliedActions += CancelOccurrence()
-    }
-    calculatedStatus
-  }
-
-  private fun approvedAuthorisationStatuses() = if (movements.isEmpty() && end.isBefore(now())) {
-    if (::status.isInitialized && status.code == SCHEDULED.name) {
+  private fun expiredStatus(): OccurrenceStatus.Code? = if (isExpired() || (authorisation.canExpire() && shouldExpire())) {
+    if (!isExpired()) {
       appliedActions += ExpireOccurrence()
     }
     EXPIRED
   } else {
+    null
+  }
+
+  private fun isCancelledStatus(): OccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
+    CANCELLED
+  } else {
+    null
+  }
+
+  private fun authorisationStatus(): OccurrenceStatus.Code = if (authorisation.status.code == AuthorisationStatus.Code.APPROVED.name) {
+    approvedAuthorisationStatuses()
+  } else {
+    OccurrenceStatus.Code.valueOf(authorisation.status.code)
+  }
+
+  private fun approvedAuthorisationStatuses(): OccurrenceStatus.Code {
     if (::status.isInitialized && status.code == PENDING.name) {
       appliedActions += ScheduleOccurrence()
     }
-    SCHEDULED
+    return SCHEDULED
   }
+
+  private fun isExpired() = ::status.isInitialized && status.code == EXPIRED.name
+
+  private fun TemporaryAbsenceAuthorisation.canExpire(): Boolean = status.code in listOf(
+    AuthorisationStatus.Code.PENDING.name,
+    AuthorisationStatus.Code.APPROVED.name,
+    AuthorisationStatus.Code.EXPIRED.name,
+  )
+
+  private fun shouldExpire(): Boolean = (::status.isInitialized.not() || status.code in listOf(PENDING.name, SCHEDULED.name, EXPIRED.name)) &&
+    end.isBefore(now())
 
   companion object {
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
@@ -358,6 +376,7 @@ class TemporaryAbsenceOccurrence(
       TemporaryAbsenceOccurrence::absenceSubType,
       TemporaryAbsenceOccurrence::absenceReasonCategory,
       TemporaryAbsenceOccurrence::absenceReason,
+      TemporaryAbsenceOccurrence::status,
     )
   }
 }

@@ -1,9 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
-import jakarta.persistence.Cacheable
 import jakarta.persistence.EntityManager
-import org.hibernate.annotations.Cache
-import org.hibernate.annotations.CacheConcurrencyStrategy
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.cache.cacheable
@@ -12,8 +9,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import java.util.UUID
 import kotlin.reflect.KClass
 
-@Cacheable
-@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 interface ReferenceData {
   val code: String
   val description: String

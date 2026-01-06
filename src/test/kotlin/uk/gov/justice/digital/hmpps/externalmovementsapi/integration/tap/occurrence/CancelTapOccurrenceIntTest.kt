@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import java.time.LocalDateTime
 import java.util.UUID
@@ -80,7 +81,7 @@ class CancelTapOccurrenceIntTest(
     val res = cancelOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).isEmpty()
+    assertThat(res.changes).containsExactly(AuditedAction.Change("status", "Scheduled", "Cancelled"))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
     assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
@@ -114,7 +115,7 @@ class CancelTapOccurrenceIntTest(
     val res = cancelOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactlyInAnyOrder(TemporaryAbsenceCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).isEmpty()
+    assertThat(res.changes).containsExactly(AuditedAction.Change("status", "Scheduled", "Cancelled"))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
     assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
