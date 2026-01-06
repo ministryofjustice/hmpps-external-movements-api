@@ -300,12 +300,6 @@ class TemporaryAbsenceOccurrence(
       )
   }
 
-  private fun isCancelledStatus(): OccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
-    CANCELLED
-  } else {
-    null
-  }
-
   private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
     ?.map { it.direction }?.let {
       if (it.contains(TemporaryAbsenceMovement.Direction.IN)) {
@@ -329,7 +323,11 @@ class TemporaryAbsenceOccurrence(
     null
   }
 
-  private fun isExpired() = ::status.isInitialized && status.code == EXPIRED.name
+  private fun isCancelledStatus(): OccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
+    CANCELLED
+  } else {
+    null
+  }
 
   private fun authorisationStatus(): OccurrenceStatus.Code = if (authorisation.status.code == AuthorisationStatus.Code.APPROVED.name) {
     approvedAuthorisationStatuses()
@@ -343,6 +341,8 @@ class TemporaryAbsenceOccurrence(
     }
     return SCHEDULED
   }
+
+  private fun isExpired() = ::status.isInitialized && status.code == EXPIRED.name
 
   private fun TemporaryAbsenceAuthorisation.canExpire(): Boolean = status.code in listOf(
     AuthorisationStatus.Code.PENDING.name,
