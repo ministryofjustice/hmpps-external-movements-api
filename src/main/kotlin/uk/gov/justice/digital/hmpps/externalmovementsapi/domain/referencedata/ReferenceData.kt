@@ -33,8 +33,7 @@ class ReferenceDataRepository(
     "from uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData",
   ).cacheable().resultList.filterIsInstance<ReferenceData>()
 
-  fun findAllByType(clazz: KClass<out ReferenceData>): List<ReferenceData> =
-    entityManager.createQuery("from ${clazz.qualifiedName}", clazz.java).cacheable().resultList
+  fun findAllByType(clazz: KClass<out ReferenceData>): List<ReferenceData> = entityManager.createQuery("from ${clazz.qualifiedName}", clazz.java).cacheable().resultList
 
   fun rdProvider(): (KClass<out ReferenceData>, String) -> ReferenceData {
     val allRd = findAll().associateBy { it::class to it.code }

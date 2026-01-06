@@ -300,12 +300,11 @@ class TemporaryAbsenceOccurrence(
       )
   }
 
-  private fun isCancelledStatus(): OccurrenceStatus.Code? =
-    if (::status.isInitialized && status.code == CANCELLED.name) {
-      CANCELLED
-    } else {
-      null
-    }
+  private fun isCancelledStatus(): OccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
+    CANCELLED
+  } else {
+    null
+  }
 
   private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
     ?.map { it.direction }?.let {
@@ -321,24 +320,22 @@ class TemporaryAbsenceOccurrence(
       }
     }
 
-  private fun expiredStatus(): OccurrenceStatus.Code? =
-    if (isExpired() || (authorisation.canExpire() && shouldExpire())) {
-      if (!isExpired()) {
-        appliedActions += ExpireOccurrence()
-      }
-      EXPIRED
-    } else {
-      null
+  private fun expiredStatus(): OccurrenceStatus.Code? = if (isExpired() || (authorisation.canExpire() && shouldExpire())) {
+    if (!isExpired()) {
+      appliedActions += ExpireOccurrence()
     }
+    EXPIRED
+  } else {
+    null
+  }
 
   private fun isExpired() = ::status.isInitialized && status.code == EXPIRED.name
 
-  private fun authorisationStatus(): OccurrenceStatus.Code =
-    if (authorisation.status.code == AuthorisationStatus.Code.APPROVED.name) {
-      approvedAuthorisationStatuses()
-    } else {
-      OccurrenceStatus.Code.valueOf(authorisation.status.code)
-    }
+  private fun authorisationStatus(): OccurrenceStatus.Code = if (authorisation.status.code == AuthorisationStatus.Code.APPROVED.name) {
+    approvedAuthorisationStatuses()
+  } else {
+    OccurrenceStatus.Code.valueOf(authorisation.status.code)
+  }
 
   private fun approvedAuthorisationStatuses(): OccurrenceStatus.Code {
     if (::status.isInitialized && status.code == PENDING.name) {
@@ -353,9 +350,8 @@ class TemporaryAbsenceOccurrence(
     AuthorisationStatus.Code.EXPIRED.name,
   )
 
-  private fun shouldExpire(): Boolean =
-    (::status.isInitialized.not() || status.code in listOf(PENDING.name, SCHEDULED.name, EXPIRED.name))
-      && end.isBefore(now())
+  private fun shouldExpire(): Boolean = (::status.isInitialized.not() || status.code in listOf(PENDING.name, SCHEDULED.name, EXPIRED.name)) &&
+    end.isBefore(now())
 
   companion object {
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
@@ -385,10 +381,9 @@ class TemporaryAbsenceOccurrence(
   }
 }
 
-private fun LocalDateTime?.ifChanges(property: KMutableProperty0<LocalDateTime>): Boolean =
-  if (this == null || truncatedTo(SECONDS).isEqual(property.get().truncatedTo(SECONDS))) {
-    false
-  } else {
-    property.set(this)
-    true
-  }
+private fun LocalDateTime?.ifChanges(property: KMutableProperty0<LocalDateTime>): Boolean = if (this == null || truncatedTo(SECONDS).isEqual(property.get().truncatedTo(SECONDS))) {
+  false
+} else {
+  property.set(this)
+  true
+}
