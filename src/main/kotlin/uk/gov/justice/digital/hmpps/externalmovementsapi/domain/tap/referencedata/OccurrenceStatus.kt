@@ -1,9 +1,12 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata
 
+import jakarta.persistence.Cacheable
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.QueryHint
 import jakarta.persistence.Table
+import org.hibernate.annotations.Cache
+import org.hibernate.annotations.CacheConcurrencyStrategy
 import org.hibernate.annotations.Immutable
 import org.hibernate.jpa.AvailableHints
 import org.springframework.data.jpa.repository.JpaRepository
@@ -13,6 +16,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundExcep
 import java.util.UUID
 
 @Immutable
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 @Entity
 @Table(schema = "tap", name = "occurrence_status")
 class OccurrenceStatus(

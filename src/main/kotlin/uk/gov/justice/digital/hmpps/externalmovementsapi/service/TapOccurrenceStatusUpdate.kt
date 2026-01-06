@@ -30,6 +30,7 @@ class OccurrenceStatusUpdate(
 
   companion object {
     private val statusCodes = setOf(
+      OccurrenceStatus.Code.PENDING.name,
       OccurrenceStatus.Code.SCHEDULED.name,
       OccurrenceStatus.Code.IN_PROGRESS.name,
     )
