@@ -123,21 +123,6 @@
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                             <tr>
-                                                <td title="temporary_absence_authorisation_audit.rev_id references audit_revision.id via temporary_absence_authorisation_audit_rev_id_fkey"><a href='temporary_absence_authorisation_audit.html'>temporary_absence_authorisation_audit</a><span class='relatedKey'>.rev_id</span></td>
-                                                <td class="constraint detail">temporary_absence_authorisation_audit_rev_id_fkey</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_movement_audit.rev_id references audit_revision.id via temporary_absence_movement_audit_rev_id_fkey"><a href='temporary_absence_movement_audit.html'>temporary_absence_movement_audit</a><span class='relatedKey'>.rev_id</span></td>
-                                                <td class="constraint detail">temporary_absence_movement_audit_rev_id_fkey</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_occurrence_audit.rev_id references audit_revision.id via temporary_absence_occurrence_audit_rev_id_fkey"><a href='temporary_absence_occurrence_audit.html'>temporary_absence_occurrence_audit</a><span class='relatedKey'>.rev_id</span></td>
-                                                <td class="constraint detail">temporary_absence_occurrence_audit_rev_id_fkey</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
                                                 <td title="authorisation_audit.rev_id references audit_revision.id via authorisation_audit_rev_id_fkey"><a href='../../tap/tables/authorisation_audit.html'>authorisation_audit</a><span class='relatedKey'>.rev_id</span></td>
                                                 <td class="constraint detail">authorisation_audit_rev_id_fkey</td>
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
@@ -331,21 +316,11 @@
                                 <h5>Close relationships within degrees of separation</h5>
                                 <ul class="nav nav-tabs pull-left ui-sortable-handle">
                                     <li class="active"><a href="#oneDegreeImg-chart" data-toggle="tab" aria-expanded="true">One</a></li>
-                                    <li class=""><a href="#oneimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">One implied</a></li>
-                                    <li class=""><a href="#twoimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two implied</a></li>
                                 </ul>
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         
                                         <a name='diagram'><object type="image/svg+xml" id="oneDegreeImg" data="../diagrams/tables/audit_revision.1degree.svg" class="diagram" border="0" align="left"></object></a>
-                                    </div>
-                                    <div class="chart tab-pane " id="oneimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
-                                        
-                                        <a name='diagram'><object type="image/svg+xml" id="oneimpliedDegreeImg" data="../diagrams/tables/audit_revision.implied1degrees.svg" class="diagram" border="0" align="left"></object></a>
-                                    </div>
-                                    <div class="chart tab-pane " id="twoimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
-                                        
-                                        <a name='diagram'><object type="image/svg+xml" id="twoimpliedDegreeImg" data="../diagrams/tables/audit_revision.implied2degrees.svg" class="diagram" border="0" align="left"></object></a>
                                     </div>
                                 </div>
                             </div>

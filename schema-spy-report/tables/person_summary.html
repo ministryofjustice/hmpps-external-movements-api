@@ -117,36 +117,6 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
-                                            <tr>
-                                                <td title="audited_tap_authorisation.person_identifier&#39;s name implies that it&#39;s a child of person_summary.person_identifier, but it doesn&#39;t reference that column."><a href='audited_tap_authorisation.html'>audited_tap_authorisation</a><span class='relatedKey'>.person_identifier</span></td>
-                                                <td class="constraint detail">Implied Constraint</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="audited_tap_movement.person_identifier&#39;s name implies that it&#39;s a child of person_summary.person_identifier, but it doesn&#39;t reference that column."><a href='audited_tap_movement.html'>audited_tap_movement</a><span class='relatedKey'>.person_identifier</span></td>
-                                                <td class="constraint detail">Implied Constraint</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_authorisation.person_identifier references person_summary.person_identifier via fk_temporary_absence_authorisation_person_identifier"><a href='temporary_absence_authorisation.html'>temporary_absence_authorisation</a><span class='relatedKey'>.person_identifier</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_authorisation_person_identifier</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_authorisation_audit.person_identifier&#39;s name implies that it&#39;s a child of person_summary.person_identifier, but it doesn&#39;t reference that column."><a href='temporary_absence_authorisation_audit.html'>temporary_absence_authorisation_audit</a><span class='relatedKey'>.person_identifier</span></td>
-                                                <td class="constraint detail">Implied Constraint</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_movement.person_identifier references person_summary.person_identifier via fk_temporary_absence_movement_person_identifier"><a href='temporary_absence_movement.html'>temporary_absence_movement</a><span class='relatedKey'>.person_identifier</span></td>
-                                                <td class="constraint detail">fk_temporary_absence_movement_person_identifier</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
-                                                <td title="temporary_absence_movement_audit.person_identifier&#39;s name implies that it&#39;s a child of person_summary.person_identifier, but it doesn&#39;t reference that column."><a href='temporary_absence_movement_audit.html'>temporary_absence_movement_audit</a><span class='relatedKey'>.person_identifier</span></td>
-                                                <td class="constraint detail">Implied Constraint</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -300,26 +270,11 @@
                                 <h5>Close relationships within degrees of separation</h5>
                                 <ul class="nav nav-tabs pull-left ui-sortable-handle">
                                     <li class="active"><a href="#oneDegreeImg-chart" data-toggle="tab" aria-expanded="true">One</a></li>
-                                    <li class=""><a href="#twodegreesDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two degrees</a></li>
-                                    <li class=""><a href="#oneimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">One implied</a></li>
-                                    <li class=""><a href="#twoimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two implied</a></li>
                                 </ul>
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         
                                         <a name='diagram'><object type="image/svg+xml" id="oneDegreeImg" data="../diagrams/tables/person_summary.1degree.svg" class="diagram" border="0" align="left"></object></a>
-                                    </div>
-                                    <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
-                                        
-                                        <a name='diagram'><object type="image/svg+xml" id="twodegreesDegreeImg" data="../diagrams/tables/person_summary.2degrees.svg" class="diagram" border="0" align="left"></object></a>
-                                    </div>
-                                    <div class="chart tab-pane " id="oneimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
-                                        
-                                        <a name='diagram'><object type="image/svg+xml" id="oneimpliedDegreeImg" data="../diagrams/tables/person_summary.implied1degrees.svg" class="diagram" border="0" align="left"></object></a>
-                                    </div>
-                                    <div class="chart tab-pane " id="twoimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
-                                        
-                                        <a name='diagram'><object type="image/svg+xml" id="twoimpliedDegreeImg" data="../diagrams/tables/person_summary.implied2degrees.svg" class="diagram" border="0" align="left"></object></a>
                                     </div>
                                 </div>
                             </div>
