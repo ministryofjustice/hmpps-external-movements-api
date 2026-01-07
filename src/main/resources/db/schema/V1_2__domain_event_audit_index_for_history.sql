@@ -1,0 +1,1 @@
+create index if not exists idx_hmpps_domain_event_audit_revision_entity on hmpps_domain_event_audit(rev_id, entity_id, rev_type);
