@@ -53,6 +53,11 @@
             <column ascending="true" name="id"/>
             <column ascending="true" name="rev_id"/>
          </index>
+         <index name="idx_hmpps_domain_event_audit_revision_entity" unique="false">
+            <column ascending="true" name="rev_id"/>
+            <column ascending="true" name="entity_id"/>
+            <column ascending="true" name="rev_type"/>
+         </index>
       </table>
       <table catalog="movements" name="migration_system_audit" remarks="" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>

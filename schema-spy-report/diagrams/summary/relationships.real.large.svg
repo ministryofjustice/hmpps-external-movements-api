@@ -22,6 +22,7 @@
 <polygon fill="none" stroke="#000000" points="297,-1610.2 297,-1632.2 522,-1632.2 522,-1610.2 297,-1610.2"/>
 <image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="302" y="-1627.2"/>
 <text text-anchor="start" x="326" y="-1617.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_id</text>
+<polygon fill="#ffffff" stroke="transparent" points="297,-1588.2 297,-1610.2 522,-1610.2 522,-1588.2 297,-1588.2"/>
 <polygon fill="none" stroke="#000000" points="297,-1588.2 297,-1610.2 522,-1610.2 522,-1588.2 297,-1588.2"/>
 <text text-anchor="start" x="326" y="-1595.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_type</text>
 <polygon fill="none" stroke="#000000" points="297,-1566.2 297,-1588.2 522,-1588.2 522,-1566.2 297,-1566.2"/>
@@ -35,6 +36,7 @@
 <text text-anchor="start" x="326" y="-1507.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">published</text>
 <polygon fill="none" stroke="#000000" points="297,-1478.2 297,-1500.2 522,-1500.2 522,-1478.2 297,-1478.2"/>
 <text text-anchor="start" x="326" y="-1485.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">version</text>
+<polygon fill="#ffffff" stroke="transparent" points="297,-1456.2 297,-1478.2 522,-1478.2 522,-1456.2 297,-1456.2"/>
 <polygon fill="none" stroke="#000000" points="297,-1456.2 297,-1478.2 522,-1478.2 522,-1456.2 297,-1456.2"/>
 <text text-anchor="start" x="326" y="-1463.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">entity_id</text>
 <polygon fill="#ffffff" stroke="transparent" points="297,-1437.2 297,-1456.2 408,-1456.2 408,-1437.2 297,-1437.2"/>
