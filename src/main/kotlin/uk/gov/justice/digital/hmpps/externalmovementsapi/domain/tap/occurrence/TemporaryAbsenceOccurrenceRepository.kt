@@ -111,6 +111,8 @@ interface TemporaryAbsenceOccurrenceRepository :
   )
   fun findReturningTodayCount(prisonIdentifier: String): Int
 
+  fun countByAuthorisationPersonIdentifier(personIdentifier: String): Int
+
   @Modifying
   @Query(
     """

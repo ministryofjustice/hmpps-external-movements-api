@@ -147,7 +147,27 @@ interface TemporaryAbsenceMovementRepository :
   fun findByOccurrenceId(occurrenceId: UUID): List<TemporaryAbsenceMovement>
   fun findByOccurrenceIdIn(ids: Set<UUID>): List<TemporaryAbsenceMovement>
 
+  @Query(
+    """
+      select 
+        coalesce(sum(case when tam.occurrence is not null and tam.direction = 'OUT' then 1 else 0 end),0) as schOut,
+        coalesce(sum(case when tam.occurrence is not null and tam.direction = 'IN' then 1 else 0 end),0) as schIn,
+        coalesce(sum(case when tam.occurrence is null and tam.direction = 'OUT' then 1 else 0 end),0) as adocOut,
+        coalesce(sum(case when tam.occurrence is null and tam.direction = 'IN' then 1 else 0 end),0) as adhocIn
+      from TemporaryAbsenceMovement tam
+      where tam.personIdentifier = :personIdentifier
+    """,
+  )
+  fun summaryForPerson(personIdentifier: String): PersonMovementSummary
+
   @Modifying
   @Query("delete from TemporaryAbsenceMovement tam where tam.personIdentifier = :personIdentifier")
   fun deleteByPersonIdentifier(personIdentifier: String)
+}
+
+interface PersonMovementSummary {
+  val schOut: Int
+  val schIn: Int
+  val adocOut: Int
+  val adhocIn: Int
 }

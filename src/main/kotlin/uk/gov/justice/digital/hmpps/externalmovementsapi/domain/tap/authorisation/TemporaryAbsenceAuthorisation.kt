@@ -346,6 +346,8 @@ interface TemporaryAbsenceAuthorisationRepository :
   )
   fun findRecentlyExpired(): List<TemporaryAbsenceAuthorisation>
 
+  fun countByPersonIdentifier(personIdentifier: String): Int
+
   @Modifying
   @Query("delete from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier")
   fun deleteByPersonIdentifier(personIdentifier: String)
