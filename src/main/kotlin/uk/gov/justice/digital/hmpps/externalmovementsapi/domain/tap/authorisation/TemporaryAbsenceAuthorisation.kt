@@ -211,6 +211,10 @@ class TemporaryAbsenceAuthorisation(
     prisonCode = action.prisonCode
   }
 
+  fun moveTo(person: PersonSummary) = apply {
+    this.person = person
+  }
+
   fun applyAbsenceCategorisation(
     action: RecategoriseAuthorisation,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,

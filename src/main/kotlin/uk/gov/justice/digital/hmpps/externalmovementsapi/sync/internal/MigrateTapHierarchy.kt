@@ -33,8 +33,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEventRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapRequest
@@ -52,7 +50,6 @@ import kotlin.reflect.KClass
 @Transactional
 @Service
 class MigrateTapHierarchy(
-  private val prisonerSearch: PrisonerSearchClient,
   private val referenceDataRepository: ReferenceDataRepository,
   private val linkRepository: AbsenceCategorisationLinkRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
@@ -64,7 +61,7 @@ class MigrateTapHierarchy(
 ) {
   fun migrate(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
     ExternalMovementContext.get().copy(source = DataSource.NOMIS, migratingData = true).set()
-    val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
+    val person = personSummaryService.getWithSave(personIdentifier)
     removeTapForPersonIdentifier(personIdentifier)
 
     val allRd = referenceDataRepository.findAll()
@@ -73,7 +70,6 @@ class MigrateTapHierarchy(
     val findLinkedFrom: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData> =
       { id: UUID, domainCode: ReferenceDataDomain.Code -> rdLinks[id to domainCode] ?: emptyList() }
 
-    val person = personSummaryService.save(prisoner)
     val tap = request.temporaryAbsences.map { it.migrate(person, allRd, findLinkedFrom) }
     val unscheduled = request.unscheduledMovements.map { it.migrate(person, null, allRd) }
     persistMigrationEvents(personIdentifier, tap, unscheduled)
