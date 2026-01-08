@@ -119,6 +119,10 @@ class TemporaryAbsenceMovement(
     OUT,
   }
 
+  fun moveTo(personIdentifier: String) = apply {
+    this.personIdentifier = personIdentifier
+  }
+
   fun update(
     personIdentifier: String,
     occurrence: TemporaryAbsenceOccurrence?,

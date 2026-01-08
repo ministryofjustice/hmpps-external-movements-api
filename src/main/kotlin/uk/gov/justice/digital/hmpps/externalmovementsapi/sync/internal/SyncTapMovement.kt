@@ -19,8 +19,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.getByCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
@@ -30,7 +28,6 @@ import kotlin.reflect.KClass
 @Transactional
 @Service
 class SyncTapMovement(
-  private val prisonerSearch: PrisonerSearchClient,
   private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
   private val occurrenceStatusRepository: OccurrenceStatusRepository,
@@ -42,10 +39,7 @@ class SyncTapMovement(
       require(personIdentifier == it.authorisation.person.identifier) { "Person identifier does not match occurrence" }
     }
     val rdProvider = referenceDataRepository.rdProvider()
-    val person = occurrence?.authorisation?.person ?: let {
-      val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
-      personSummaryService.save(prisoner)
-    }
+    val person = occurrence?.authorisation?.person ?: let { personSummaryService.getWithSave(personIdentifier) }
     val movement =
       (request.id?.let { movementRepository.findByIdOrNull(it) } ?: movementRepository.findByLegacyId(request.legacyId))
         ?.also {

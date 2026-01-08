@@ -272,7 +272,6 @@ class SyncTapAuthorisationIntTest(
     val legacyId = newId()
     val prisonCode = prisonCode()
     val ps = givenPersonSummary(personSummary())
-    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(ps.identifier))
     val existing = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         legacyId = legacyId,
@@ -286,8 +285,6 @@ class SyncTapAuthorisationIntTest(
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
     saved.verifyAgainst(existing.person.identifier, request)
-    val person = requireNotNull(findPersonSummary(ps.identifier))
-    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -309,17 +306,13 @@ class SyncTapAuthorisationIntTest(
   fun `200 ok application created if authorisation with the given uuid does not exist`() {
     val pi = personIdentifier()
     val uuid = newUuid()
-    val prisonCode = prisonCode()
     givenPersonSummary(personSummary(personIdentifier = pi))
-    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = tapAuthorisation(id = uuid)
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(uuid)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
-    val person = requireNotNull(findPersonSummary(pi))
-    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
@@ -334,16 +327,12 @@ class SyncTapAuthorisationIntTest(
   @Test
   fun `200 ok - can create authorisation with date range over 6 months`() {
     val pi = personIdentifier()
-    val prisonCode = prisonCode()
     givenPersonSummary(personSummary(personIdentifier = pi))
-    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val request = tapAuthorisation(start = LocalDate.now(), end = LocalDate.now().plusMonths(6).plusDays(1))
+    val request = tapAuthorisation(start = now(), end = now().plusMonths(6).plusDays(1))
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
-    val person = requireNotNull(findPersonSummary(pi))
-    person.verifyAgainst(prisoners.first())
 
     verifyAudit(
       saved,
