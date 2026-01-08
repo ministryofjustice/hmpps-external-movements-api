@@ -18,7 +18,7 @@ class PersonSummaryService(
   fun findPersonSummary(personIdentifier: String): PersonSummary? = personSummaryRepository.findByIdOrNull(personIdentifier)
 
   fun getWithSave(personIdentifier: String): PersonSummary = findPersonSummary(personIdentifier)
-    ?: (prisonerSearch.getPrisoner(personIdentifier)?.let { save(it) })
+    ?: (prisonerSearch.getPrisoner(personIdentifier)?.let { personSummaryRepository.save(it.summary()) })
     ?: throw NotFoundException("Prisoner not found")
 
   fun updateExistingDetails(prisonNumber: String) {

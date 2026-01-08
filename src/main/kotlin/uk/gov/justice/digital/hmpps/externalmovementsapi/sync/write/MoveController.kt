@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.MoveTemporaryAbsences
@@ -20,7 +21,7 @@ class MoveController(private val temporaryAbsences: MoveTemporaryAbsences) {
 
   @PutMapping("/temporary-absences")
   fun moveTemporaryAbsences(@RequestBody request: MoveTemporaryAbsencesRequest) {
-    ExternalMovementContext.get().copy(reason = "Prisoner booking moved").set()
+    ExternalMovementContext.get().copy(reason = "Prisoner booking moved", source = DataSource.NOMIS).set()
     temporaryAbsences.move(request)
   }
 }

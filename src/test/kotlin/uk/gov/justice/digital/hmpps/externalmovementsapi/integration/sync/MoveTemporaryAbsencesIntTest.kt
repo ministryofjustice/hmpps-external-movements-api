@@ -5,6 +5,7 @@ import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
@@ -102,7 +103,7 @@ class MoveTemporaryAbsencesIntTest(
       assertThat(authorisation.person.identifier).isEqualTo(p1)
     }
 
-    val context = ExternalMovementContext.get().copy(reason = "Prisoner booking moved")
+    val context = ExternalMovementContext.get().copy(reason = "Prisoner booking moved", source = DataSource.NOMIS)
     with(requireNotNull(findTemporaryAbsenceOccurrence(p1Occ2.id))) {
       assertThat(authorisation.person.identifier).isEqualTo(p2)
       verifyAudit(
