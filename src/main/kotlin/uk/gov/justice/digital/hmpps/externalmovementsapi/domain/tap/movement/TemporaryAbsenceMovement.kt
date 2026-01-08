@@ -150,6 +150,7 @@ interface TemporaryAbsenceMovementRepository :
 
   fun findByOccurrenceId(occurrenceId: UUID): List<TemporaryAbsenceMovement>
   fun findByOccurrenceIdIn(ids: Set<UUID>): List<TemporaryAbsenceMovement>
+  fun findAllByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceMovement>
 
   @Query(
     """
