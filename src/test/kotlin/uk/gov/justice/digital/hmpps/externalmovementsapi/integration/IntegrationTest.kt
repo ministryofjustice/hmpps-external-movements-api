@@ -8,6 +8,7 @@ import org.hibernate.envers.AuditReaderFactory
 import org.hibernate.envers.RevisionType
 import org.hibernate.envers.query.AuditEntity.revisionNumber
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -19,6 +20,7 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.support.TransactionTemplate
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
@@ -189,8 +191,13 @@ abstract class IntegrationTest {
     .returnResult().responseBody!!
 
   protected final fun WebTestClient.ResponseSpec.errorResponse(status: HttpStatus): ErrorResponse = expectStatus().isEqualTo(status)
-    .expectBody(ErrorResponse::class.java)
+    .expectBody<ErrorResponse>()
     .returnResult().responseBody!!
+
+  @BeforeEach
+  fun clearContext() {
+    ExternalMovementContext.clear()
+  }
 
   companion object {
     private val pgContainer = PostgresContainer.instance
