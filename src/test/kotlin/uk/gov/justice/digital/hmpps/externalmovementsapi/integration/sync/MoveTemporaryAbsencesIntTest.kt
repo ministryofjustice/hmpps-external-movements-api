@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.MoveTemporaryAbsencesRequest
 import java.util.SequencedSet
 import java.util.UUID
@@ -57,10 +58,25 @@ class MoveTemporaryAbsencesIntTest(
   }
 
   @Test
+  fun `400 bad request if id not linked to from person identifier`() {
+    val toPersonIdentifier = personIdentifier()
+    prisonerSearch.getPrisoners(prisonCode(), setOf(toPersonIdentifier))
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    moveTap(moveTapRequest(toPersonIdentifier = toPersonIdentifier, authorisationIds = sortedSetOf(auth.id)))
+      .expectStatus().isBadRequest
+
+    val unchanged = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(unchanged.person.identifier).isEqualTo(auth.person.identifier)
+  }
+
+  @Test
   fun `200 ok - can move selected absence details to another person identifier`() {
     val prisonCode = prisonCode()
     val p1 = personIdentifier()
+    givenPersonSummary(personSummary(p1))
     val p2 = personIdentifier()
+    givenPersonSummary(personSummary(p2))
 
     val p1Auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, p1))
     val p1Occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(p1Auth1))

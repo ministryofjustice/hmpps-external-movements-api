@@ -17,11 +17,21 @@ class MoveTemporaryAbsences(
   fun move(request: MoveTemporaryAbsencesRequest) {
     val moveTo = personSummaryService.getWithSave(request.toPersonIdentifier)
     occurrenceRepository.findByAuthorisationIdIn(request.authorisationIds).forEach { tao ->
+      check(request contains tao.authorisation.person.identifier) { EXCEPTION_MESSAGE }
       tao.authorisation.moveTo(moveTo)
-      tao.movements().forEach { it.moveTo(moveTo.identifier) }
+      tao.movements().forEach {
+        check(request contains it.personIdentifier) { EXCEPTION_MESSAGE }
+        it.moveTo(moveTo.identifier)
+      }
     }
     movementRepository.findAllById(request.unscheduledMovementIds).forEach {
       it.moveTo(moveTo.identifier)
     }
+  }
+
+  private infix fun MoveTemporaryAbsencesRequest.contains(personIdentifier: String): Boolean = fromPersonIdentifier == personIdentifier || toPersonIdentifier == personIdentifier
+
+  companion object {
+    const val EXCEPTION_MESSAGE = "Assigned to the wrong person and cannot be moved"
   }
 }
