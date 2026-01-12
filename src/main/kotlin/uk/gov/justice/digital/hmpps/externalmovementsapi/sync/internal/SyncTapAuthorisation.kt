@@ -22,8 +22,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
@@ -40,7 +38,6 @@ import java.util.UUID
 @Transactional
 @Service
 class SyncTapAuthorisation(
-  private val prisonerSearch: PrisonerSearchClient,
   private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
@@ -48,9 +45,8 @@ class SyncTapAuthorisation(
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
-    val prisoner = prisonerSearch.getPrisoner(personIdentifier) ?: throw NotFoundException("Prisoner not found")
+    val person = personSummaryService.getWithSave(personIdentifier)
     val rdPaths = referenceDataRepository.referenceDataFor(request)
-    val person = personSummaryService.save(prisoner)
     val application = (
       request.id?.let { authorisationRepository.findByIdOrNull(it) }
         ?: authorisationRepository.findByLegacyId(request.legacyId)

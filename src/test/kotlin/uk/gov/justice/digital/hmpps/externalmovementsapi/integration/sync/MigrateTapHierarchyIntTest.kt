@@ -150,7 +150,7 @@ class MigrateTapHierarchyIntTest(
           TemporaryAbsenceMovement::class.simpleName!!,
           HmppsDomainEvent::class.simpleName!!,
         ),
-        ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
+        ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, reason = null),
       )
 
       val domainEvents = latestRevisionDomainEvents(auth)

@@ -139,12 +139,13 @@ jib {
   extraDirectories {
     paths {
       path {
-        setFrom(layout.buildDirectory)
-        includes.add("agent/agent.jar")
+        setFrom(layout.buildDirectory.dir("agent").get().asFile)
+        includes.add("agent.jar")
+        into = "/agent"
       }
       path {
-        setFrom(layout.projectDirectory)
-        includes.add("applicationinsights*.json")
+        setFrom(layout.projectDirectory.asFile)
+        includes.add("applicationinsights.json")
         into = "/agent"
       }
       path {

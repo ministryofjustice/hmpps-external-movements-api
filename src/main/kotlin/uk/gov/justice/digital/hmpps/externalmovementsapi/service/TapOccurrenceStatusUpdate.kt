@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest.ofSize
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
@@ -30,6 +31,7 @@ class OccurrenceStatusUpdate(
 
   companion object {
     private val statusCodes = setOf(
+      OccurrenceStatus.Code.PENDING.name,
       OccurrenceStatus.Code.SCHEDULED.name,
       OccurrenceStatus.Code.IN_PROGRESS.name,
     )
@@ -40,8 +42,10 @@ class OccurrenceStatusUpdate(
 @Service
 class PastOccurrencesPoller(private val update: OccurrenceStatusUpdate) {
   @Scheduled(fixedDelayString = $$"${service.occurrence-status.poll-interval}")
-  fun recalculatePastOccurrences() {
+  fun recalculatePastOccurrences() = try {
     update.pastOccurrencesOfInterest()
+  } finally {
+    ExternalMovementContext.clear()
   }
 }
 

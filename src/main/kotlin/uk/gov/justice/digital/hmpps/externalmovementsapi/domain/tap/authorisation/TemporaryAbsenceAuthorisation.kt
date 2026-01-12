@@ -40,7 +40,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.APPROVED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.DENIED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
@@ -186,7 +190,7 @@ class TemporaryAbsenceAuthorisation(
   override var version: Int? = null
     private set
 
-  override fun initialEvent(): DomainEvent<*>? = if (status.code == AuthorisationStatus.Code.APPROVED.name) {
+  override fun initialEvent(): DomainEvent<*>? = if (status.code == APPROVED.name) {
     TemporaryAbsenceAuthorisationApproved(person.identifier, id)
   } else {
     TemporaryAbsenceAuthorisationPending(person.identifier, id)
@@ -209,6 +213,10 @@ class TemporaryAbsenceAuthorisation(
   fun applyPrisonPerson(action: ChangePrisonPerson, person: (String) -> PersonSummary) {
     this.person = person(action.personIdentifier)
     prisonCode = action.prisonCode
+  }
+
+  fun moveTo(person: PersonSummary) = apply {
+    this.person = person
   }
 
   fun applyAbsenceCategorisation(
@@ -269,20 +277,20 @@ class TemporaryAbsenceAuthorisation(
   }
 
   fun approve(action: ApproveAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    applyStatus(AuthorisationStatus.Code.APPROVED, rdSupplier, action)
+    applyStatus(APPROVED, rdSupplier, action)
   }
 
   fun deny(action: DenyAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    applyStatus(AuthorisationStatus.Code.DENIED, rdSupplier, action)
+    applyStatus(DENIED, rdSupplier, action)
   }
 
   fun cancel(action: CancelAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    applyStatus(AuthorisationStatus.Code.CANCELLED, rdSupplier, action)
+    applyStatus(CANCELLED, rdSupplier, action)
   }
 
   fun expire(action: ExpireAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    if (status.code == OccurrenceStatus.Code.PENDING.name) {
-      applyStatus(AuthorisationStatus.Code.EXPIRED, rdSupplier, action)
+    if (status.code == PENDING.name) {
+      applyStatus(EXPIRED, rdSupplier, action)
     }
   }
 
@@ -345,6 +353,8 @@ interface TemporaryAbsenceAuthorisationRepository :
     """,
   )
   fun findRecentlyExpired(): List<TemporaryAbsenceAuthorisation>
+
+  fun countByPersonIdentifier(personIdentifier: String): Int
 
   @Modifying
   @Query("delete from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier")
