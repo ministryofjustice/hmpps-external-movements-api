@@ -12,8 +12,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceInProgress
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -75,7 +79,7 @@ class SyncTapMovementIntTest(
   }
 
   @Test
-  fun `200 ok temporary absence created successfully`() {
+  fun `200 ok temporary absence started successfully`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
     assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
@@ -101,10 +105,57 @@ class SyncTapMovementIntTest(
       setOf(
         TemporaryAbsenceMovement::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf())
+    verifyEvents(
+      saved,
+      setOf(TemporaryAbsenceInProgress(authorisation.person.identifier, occurrence.id, DataSource.NOMIS)),
+    )
+  }
+
+  @Test
+  fun `200 ok temporary absence completed successfully`() {
+    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authorisation,
+        movements = listOf(temporaryAbsenceMovement(Direction.OUT, personIdentifier = authorisation.person.identifier)),
+      ),
+    )
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
+
+    val request = tapMovement(
+      direction = Direction.IN,
+      occurrenceId = occurrence.id,
+      prisonCode = authorisation.prisonCode,
+    )
+    val res = syncTapMovement(authorisation.person.identifier, request)
+      .expectStatus().isOk
+      .expectBody<SyncResponse>()
+      .returnResult()
+      .responseBody!!
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceMovement(res.id))
+    saved.verifyAgainst(authorisation.person.identifier, request)
+    assertThat(saved.occurrence?.status?.code).isEqualTo(OccurrenceStatus.Code.COMPLETED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceMovement::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+    )
+    verifyEvents(
+      saved,
+      setOf(TemporaryAbsenceCompleted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS)),
+    )
   }
 
   @Test
