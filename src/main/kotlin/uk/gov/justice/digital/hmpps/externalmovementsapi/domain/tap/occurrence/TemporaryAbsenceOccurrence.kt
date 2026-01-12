@@ -19,6 +19,8 @@ import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
@@ -27,6 +29,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Companion.formattedReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
@@ -192,6 +195,9 @@ class TemporaryAbsenceOccurrence(
   fun addMovement(movement: TemporaryAbsenceMovement, statusProvider: (String) -> OccurrenceStatus) = apply {
     movements.add(movement)
     movement.occurrence = this
+    ExternalMovementContext.get().takeIf { !it.migratingData }?.also {
+      it.copy(reason = formattedReason(movement)).set()
+    }
     calculateStatus(statusProvider)
   }
 
@@ -340,7 +346,11 @@ class TemporaryAbsenceOccurrence(
       OccurrenceStatus.Code.DENIED -> DenyOccurrence()
       else -> null
     }
-    action?.also { appliedActions += action }
+    action?.also {
+      if (::status.isInitialized && this.status.code != status.name) {
+        appliedActions += action
+      }
+    }
     status
   }
 

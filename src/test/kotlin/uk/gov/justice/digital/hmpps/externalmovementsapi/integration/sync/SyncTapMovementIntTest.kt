@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceInProgress
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -107,11 +107,15 @@ class SyncTapMovementIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(
+        username = DEFAULT_USERNAME,
+        source = DataSource.NOMIS,
+        reason = TemporaryAbsenceMovement.formattedReason(saved),
+      ),
     )
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceInProgress(authorisation.person.identifier, occurrence.id, DataSource.NOMIS)),
+      setOf(TemporaryAbsenceStarted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS)),
     )
   }
 
@@ -150,7 +154,11 @@ class SyncTapMovementIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(
+        username = DEFAULT_USERNAME,
+        source = DataSource.NOMIS,
+        reason = TemporaryAbsenceMovement.formattedReason(saved),
+      ),
     )
     verifyEvents(
       saved,
@@ -164,7 +172,7 @@ class SyncTapMovementIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
     val existing = givenTemporaryAbsenceMovement(
       temporaryAbsenceMovement(
-        TemporaryAbsenceMovement.Direction.OUT,
+        Direction.OUT,
         authorisation.person.identifier,
         occurrence,
         legacyId = newId().toString(),

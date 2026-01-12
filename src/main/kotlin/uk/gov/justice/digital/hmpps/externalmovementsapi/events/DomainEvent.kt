@@ -32,7 +32,7 @@ import java.util.UUID
     Type(value = TemporaryAbsenceCommentsChanged::class, name = TemporaryAbsenceCommentsChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceRecategorised::class, name = TemporaryAbsenceRecategorised.EVENT_TYPE),
     Type(value = TemporaryAbsenceRelocated::class, name = TemporaryAbsenceRelocated.EVENT_TYPE),
-    Type(value = TemporaryAbsenceInProgress::class, name = TemporaryAbsenceInProgress.EVENT_TYPE),
+    Type(value = TemporaryAbsenceStarted::class, name = TemporaryAbsenceStarted.EVENT_TYPE),
     Type(value = TemporaryAbsenceCompleted::class, name = TemporaryAbsenceCompleted.EVENT_TYPE),
 
     Type(value = PrisonerUpdated::class, name = PrisonerUpdated.EVENT_TYPE),

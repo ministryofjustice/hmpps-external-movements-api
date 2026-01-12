@@ -230,7 +230,7 @@ data class TemporaryAbsenceRelocated(
   }
 }
 
-data class TemporaryAbsenceInProgress(
+data class TemporaryAbsenceStarted(
   override val additionalInformation: TemporaryAbsenceInformation,
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceInformation> {
@@ -238,12 +238,12 @@ data class TemporaryAbsenceInProgress(
   override val description: String = "A temporary absence has started."
 
   companion object {
-    const val EVENT_TYPE: String = "person.temporary-absence.in-progress"
+    const val EVENT_TYPE: String = "person.temporary-absence.started"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
       dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = TemporaryAbsenceInProgress(
+    ) = TemporaryAbsenceStarted(
       TemporaryAbsenceInformation(id, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
