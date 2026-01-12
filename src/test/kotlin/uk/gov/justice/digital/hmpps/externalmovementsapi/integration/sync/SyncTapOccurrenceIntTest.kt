@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceContactInfoChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -123,7 +122,6 @@ class SyncTapOccurrenceIntTest(
       setOf(
         TemporaryAbsenceRescheduled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceCancelled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceContactInfoChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
       ),
     )

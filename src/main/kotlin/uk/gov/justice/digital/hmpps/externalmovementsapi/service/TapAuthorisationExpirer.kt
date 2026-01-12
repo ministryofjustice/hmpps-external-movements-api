@@ -8,6 +8,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatusRepository
@@ -33,8 +34,10 @@ class AuthorisationExpirer(
 @Service
 class AuthorisationExpiringPoller(private val authorisationExpirer: AuthorisationExpirer) {
   @Scheduled(cron = $$"${service.authorisation-expiration.cron}")
-  fun recalculatePastOccurrences() {
+  fun recalculatePastOccurrences() = try {
     authorisationExpirer.expireUnapprovedAuthorisations()
+  } finally {
+    ExternalMovementContext.clear()
   }
 }
 

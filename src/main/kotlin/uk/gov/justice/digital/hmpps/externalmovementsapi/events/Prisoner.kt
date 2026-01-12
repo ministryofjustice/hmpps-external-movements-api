@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PrisonerUpdated.Companion.EVENT_TYPE
 
 data class PrisonerUpdatedInformation(
   val nomsNumber: String,

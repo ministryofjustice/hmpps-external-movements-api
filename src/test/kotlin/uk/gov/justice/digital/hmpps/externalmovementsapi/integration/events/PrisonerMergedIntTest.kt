@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PersonReference
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PrisonerMerged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PrisonerMergedInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -38,7 +39,7 @@ class PrisonerMergedIntTest(
     val toPi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(toPi))
 
-    mergedHandler.handle(PrisonerMergedInformation(fromPi, toPi))
+    mergedHandler.handle(prisonerMergedEvent(fromPi, toPi))
   }
 
   @Test
@@ -56,7 +57,7 @@ class PrisonerMergedIntTest(
       temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.IN, fromPi),
     )
 
-    mergedHandler.handle(PrisonerMergedInformation(fromPi, toPi))
+    mergedHandler.handle(prisonerMergedEvent(fromPi, toPi))
 
     val context = ExternalMovementContext.get().copy(reason = PrisonerMerged.DESCRIPTION)
     with(requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))) {
@@ -96,4 +97,9 @@ class PrisonerMergedIntTest(
       )
     }
   }
+
+  private fun prisonerMergedEvent(from: String, to: String): PrisonerMerged = PrisonerMerged(
+    PrisonerMergedInformation(from, to),
+    PersonReference.withIdentifier(to),
+  )
 }
