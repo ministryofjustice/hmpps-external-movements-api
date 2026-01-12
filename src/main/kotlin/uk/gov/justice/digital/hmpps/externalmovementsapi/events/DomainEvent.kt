@@ -36,6 +36,7 @@ import java.util.UUID
     Type(value = TemporaryAbsenceCompleted::class, name = TemporaryAbsenceCompleted.EVENT_TYPE),
 
     Type(value = PrisonerUpdated::class, name = PrisonerUpdated.EVENT_TYPE),
+    Type(value = PrisonerMerged::class, name = PrisonerMerged.EVENT_TYPE),
 
     Type(value = TemporaryAbsenceAuthorisationMigrated::class, name = TemporaryAbsenceAuthorisationMigrated.EVENT_TYPE),
     Type(value = TemporaryAbsenceMigrated::class, name = TemporaryAbsenceMigrated.EVENT_TYPE),
