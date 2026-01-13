@@ -78,9 +78,7 @@ interface TemporaryAbsenceOccurrenceRepository :
 
   @Query(
     """
-    select
-    sum(case when tao.start between current_date and (current_date + 1) then 1 else 0 end) as leavingToday,
-    sum(case when tao.start between (current_date + 1) and (current_date + 8) then 1 else 0 end) as leavingNextSevenDays
+    select count(1) as leavingToday
     from tap.occurrence tao
         join tap.authorisation taa on taa.id = tao.authorisation_id
         join tap.authorisation_status ast on ast.id = taa.status_id
@@ -88,12 +86,11 @@ interface TemporaryAbsenceOccurrenceRepository :
     where taa.prison_code = :prisonIdentifier
       and ast.code = 'APPROVED'
       and ost.code <> 'CANCELLED'
-      and tao.start between current_date and (current_date + 8)
-    group by taa.prison_code
+      and tao.start between current_date and (current_date + 1)
   """,
     nativeQuery = true,
   )
-  fun findUpcomingLeaverCounts(prisonIdentifier: String): PrisonLeaverCounts?
+  fun findLeavingTodayCount(prisonIdentifier: String): Int
 
   @Query(
     """
@@ -123,16 +120,6 @@ interface TemporaryAbsenceOccurrenceRepository :
     nativeQuery = true,
   )
   fun deleteByAuthorisationPersonIdentifier(personIdentifier: String)
-}
-
-interface PrisonLeaverCounts {
-  val leavingToday: Int
-  val leavingNextSevenDays: Int
-
-  data object Default : PrisonLeaverCounts {
-    override val leavingToday: Int = 0
-    override val leavingNextSevenDays: Int = 0
-  }
 }
 
 interface TapOccurrencePosition {
@@ -166,10 +153,10 @@ fun occurrenceMatchesPersonName(name: String) = Specification<TemporaryAbsenceOc
   authorisation.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
-fun occurrenceMatchesDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun occurrenceOverlapsDateRange(start: LocalDate, end: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.and(
-    start?.let { cb.greaterThanOrEqualTo(tao.get(START), it.atStartOfDay()) } ?: cb.conjunction(),
-    end?.let { cb.lessThanOrEqualTo(tao.get(END), it.plusDays(1).atStartOfDay()) } ?: cb.conjunction(),
+    cb.greaterThanOrEqualTo(tao.get(END), start),
+    cb.lessThanOrEqualTo(tao.get(START), end.plusDays(1)),
   )
 }
 

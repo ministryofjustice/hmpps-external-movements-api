@@ -26,8 +26,8 @@ import java.time.LocalDate
 data class TapAuthorisationSearchRequest(
   @NotBlank
   val prisonCode: String,
-  override val start: LocalDate?,
-  override val end: LocalDate?,
+  override val start: LocalDate,
+  override val end: LocalDate,
   val status: Set<AuthorisationStatus.Code> = emptySet(),
   val query: String? = null,
   override val page: Int = 1,

@@ -9,10 +9,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationOverlapsDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
@@ -41,7 +41,7 @@ class SearchTapAuthorisation(
 
   private fun TapAuthorisationSearchRequest.asSpecification(): Specification<TemporaryAbsenceAuthorisation> = listOfNotNull(
     authorisationMatchesPrisonCode(prisonCode),
-    authorisationMatchesDateRange(start, end),
+    authorisationOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { authorisationStatusCodeIn(it) },
     queryString?.let {
       if (it.matches(Prisoner.PATTERN.toRegex())) {
