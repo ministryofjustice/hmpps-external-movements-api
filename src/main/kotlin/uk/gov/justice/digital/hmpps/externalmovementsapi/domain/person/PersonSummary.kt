@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDate
 
 @Entity
-@Table
+@Table(name = "person_summary")
 class PersonSummary(
   firstName: String,
   lastName: String,
@@ -21,12 +21,19 @@ class PersonSummary(
   @Column(name = "person_identifier")
   val identifier: String,
 ) {
+  @Column(name = "first_name")
   var firstName: String = firstName
     private set
+
+  @Column(name = "last_name")
   var lastName: String = lastName
     private set
+
+  @Column(name = "date_of_birth")
   var dateOfBirth: LocalDate = dateOfBirth
     private set
+
+  @Column(name = "cell_location")
   var cellLocation: String? = cellLocation
     private set
 

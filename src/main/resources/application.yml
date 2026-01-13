@@ -24,10 +24,11 @@ spring:
     locations: classpath:db/schema,classpath:db/data
 
   jackson:
+    datatype:
+      datetime:
+        write-dates-as-timestamps: false
     date-format: "yyyy-MM-dd HH:mm:ss"
     default-property-inclusion: non_null
-    serialization:
-      WRITE_DATES_AS_TIMESTAMPS: false
 
   jpa:
     show-sql: false

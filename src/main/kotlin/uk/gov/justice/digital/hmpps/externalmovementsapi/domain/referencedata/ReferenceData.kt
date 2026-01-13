@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
+import jakarta.persistence.Column
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
@@ -12,6 +13,8 @@ import kotlin.reflect.KClass
 interface ReferenceData {
   val code: String
   val description: String
+
+  @get:Column(name = "sequence_number")
   val sequenceNumber: Int
   val active: Boolean
   val id: UUID

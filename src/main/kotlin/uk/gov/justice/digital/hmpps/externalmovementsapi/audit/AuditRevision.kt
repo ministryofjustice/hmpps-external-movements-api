@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.audit
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -20,7 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import java.time.LocalDateTime
 
 @Entity
-@Table
+@Table(name = "audit_revision")
 @RevisionEntity(AuditRevisionEntityListener::class)
 @SequenceGenerator(name = "audit_revision_id_seq", sequenceName = "audit_revision_id_seq", allocationSize = 1)
 class AuditRevision {
@@ -41,6 +42,7 @@ class AuditRevision {
   var reason: String? = null
 
   @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "affected_entities")
   var affectedEntities: MutableSet<String> = sortedSetOf(String.CASE_INSENSITIVE_ORDER)
 }
 

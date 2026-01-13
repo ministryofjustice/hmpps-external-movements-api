@@ -62,7 +62,7 @@ class TempAbsenceMovementOperationsImpl(
       requireNotNull(rdMap[dc to c])
     }
     temporaryAbsenceMovementRepository.save(movement)
-  }!!
+  }
 
   override fun findTemporaryAbsenceMovement(id: UUID): TemporaryAbsenceMovement? = temporaryAbsenceMovementRepository.findByIdOrNull(id)
 }

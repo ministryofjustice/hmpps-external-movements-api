@@ -167,7 +167,7 @@ class TempAbsenceOccurrenceOperationsImpl(
       requireNotNull(rdMap[dc to c])
     }
     temporaryAbsenceOccurrenceRepository.save(occurrence)
-  }!!
+  }
 
   override fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence? = temporaryAbsenceOccurrenceRepository.findByIdOrNull(id)
 

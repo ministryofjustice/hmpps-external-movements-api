@@ -30,7 +30,11 @@ class HmppsDomainEvent(
 ) {
   @Version
   val version: Int? = null
+
+  @Column(name = "event_type")
   val eventType: String = event.eventType
+
+  @Column(name = "entity_id")
   val entityId: UUID? = when (val additionalInformation = event.additionalInformation) {
     is IdInformation -> additionalInformation.id
     else -> null
