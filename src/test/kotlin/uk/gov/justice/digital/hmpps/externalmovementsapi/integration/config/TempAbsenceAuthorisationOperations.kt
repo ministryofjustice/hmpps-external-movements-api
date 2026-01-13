@@ -142,7 +142,7 @@ class TempAbsenceAuthorisationOperationsImpl(
       { psOperations.findPersonSummary(it) ?: psOperations.givenPersonSummary(personSummary(it)) },
     )
     temporaryAbsenceAuthorisationRepository.save(authorisation)
-  }!!
+  }
 
   override fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation? = temporaryAbsenceAuthorisationRepository.findByIdOrNull(id)
 }

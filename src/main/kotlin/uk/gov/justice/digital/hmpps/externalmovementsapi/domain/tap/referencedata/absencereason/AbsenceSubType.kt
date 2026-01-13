@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason
 
 import jakarta.persistence.Cacheable
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -25,10 +26,13 @@ class AbsenceSubType(
   override val id: UUID,
   override val code: String,
   override val description: String,
+  @Column(name = "sequence_number")
   override val sequenceNumber: Int,
   override val active: Boolean,
   @Enumerated(EnumType.STRING)
+  @Column(name = "next_domain")
   override val nextDomain: ReferenceDataDomain.Code?,
+  @Column(name = "hint_text")
   override val hintText: String?,
 ) : ReferenceData,
   DomainLinkedReferenceData,

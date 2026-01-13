@@ -18,37 +18,42 @@ configurations {
 
 val ehcacheVersion = "3.11.1"
 val hibernateJcacheVersion = "7.2.0.Final"
-val hmppsKotlinVersion = "1.8.2"
+val hmppsKotlinVersion = "2.0.0"
 val sentryVersion = "8.29.0"
-val springDocVersion = "2.8.15"
-val sqsStarterVersion = "5.6.3"
+val springDocVersion = "3.0.1"
+val sqsStarterVersion = "6.0.0"
 val testContainersVersion = "1.21.4"
 val uuidGeneratorVersion = "5.2.0"
 val wiremockVersion = "3.13.2"
 
 dependencies {
-  implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("org.springframework.boot:spring-boot-starter-webmvc")
+  implementation("org.springframework.boot:spring-boot-starter-webclient")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:$hmppsKotlinVersion")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:$sqsStarterVersion")
   implementation("io.sentry:sentry-spring-boot-starter-jakarta:$sentryVersion")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
+  implementation("tools.jackson.module:jackson-module-kotlin")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+  implementation("org.springframework.data:spring-data-envers")
+  implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.hibernate.orm:hibernate-envers")
   implementation("org.hibernate:hibernate-jcache:$hibernateJcacheVersion")
-  implementation("org.springframework.data:spring-data-envers")
   implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:$sqsStarterVersion")
-
-  runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
   runtimeOnly("org.postgresql:postgresql")
   runtimeOnly("org.ehcache:ehcache:$ehcacheVersion")
 
+  testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
+  testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   testImplementation("org.testcontainers:postgresql:$testContainersVersion")
   testImplementation("org.testcontainers:localstack:$testContainersVersion")
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:$hmppsKotlinVersion")
   testImplementation("org.wiremock:wiremock-standalone:$wiremockVersion")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 dependencyCheck {

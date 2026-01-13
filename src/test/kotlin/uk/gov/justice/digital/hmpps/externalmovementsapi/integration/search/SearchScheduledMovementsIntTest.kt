@@ -190,7 +190,7 @@ class SearchScheduledMovementsIntTest(
       uri.path(SEARCH_EM_URL)
       start?.also { uri.queryParam("start", ISO_DATE_TIME.format(it)) }
       end?.also { uri.queryParam("end", ISO_DATE_TIME.format(it)) }
-      personIdentifiers.takeIf { it.isNotEmpty() }?.also { uri.queryParam("personIdentifiers", it) }
+      personIdentifiers.takeIf { it.isNotEmpty() }?.also { uri.queryParam("personIdentifiers", it.toTypedArray()) }
       if (includeLocation) {
         uri.queryParam("includeLocation", true)
       }

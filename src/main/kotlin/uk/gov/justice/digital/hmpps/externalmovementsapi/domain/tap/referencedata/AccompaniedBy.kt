@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata
 
 import jakarta.persistence.Cacheable
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -20,6 +21,7 @@ class AccompaniedBy(
   override val id: UUID,
   override val code: String,
   override val description: String,
+  @Column(name = "sequence_number")
   override val sequenceNumber: Int,
   override val active: Boolean,
 ) : ReferenceData {
