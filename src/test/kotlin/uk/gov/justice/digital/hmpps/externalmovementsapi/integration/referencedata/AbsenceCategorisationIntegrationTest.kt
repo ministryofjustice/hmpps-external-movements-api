@@ -75,8 +75,8 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
 
     assertThat(rd.domain).isEqualTo(CodedDescription("ABSENCE_TYPE", "Absence type"))
     assertThat(rd.items).containsExactly(
-      AbsenceCategorisation("SR", "Standard ROTL (Release on Temporary Licence)", null, ABSENCE_SUB_TYPE),
-      AbsenceCategorisation("RR", "Restricted ROTL (Release on Temporary Licence)", null, ABSENCE_SUB_TYPE),
+      AbsenceCategorisation("SR", "Standard ROTL (release on temporary licence)", null, ABSENCE_SUB_TYPE),
+      AbsenceCategorisation("RR", "Restricted ROTL (release on temporary licence)", null, ABSENCE_SUB_TYPE),
       AbsenceCategorisation("PP", "Police production", null, null),
       AbsenceCategorisation("SE", "Security escort", null, ABSENCE_REASON),
       AbsenceCategorisation("YT", "Youth temporary release", null, ABSENCE_SUB_TYPE),
@@ -173,25 +173,25 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
           listOf(
             AbsenceCategorisation(
               "CRL",
-              "CRL (Childcare Resettlement Licence)",
+              "CRL (childcare resettlement licence)",
               "To help prisoners prepare for parenting when they are released and support ties between primary carers and their children.",
               null,
             ),
             AbsenceCategorisation(
               "RDR",
-              "RDR (Resettlement Day Release)",
+              "RDR (resettlement day release)",
               "For prisoners to carry out activities linked to objectives in their sentence plan.",
               ABSENCE_REASON_CATEGORY,
             ),
             AbsenceCategorisation(
               "ROR",
-              "ROR (Resettlement Overnight Release)",
+              "ROR (resettlement overnight release)",
               "For prisoners to spend time at their release address to re-establish links with family and the local community.",
               null,
             ),
             AbsenceCategorisation(
               "SPL",
-              "SPL (Special Purpose Licence)",
+              "SPL (special purpose licence)",
               "A short release in response to exceptional or personal circumstances, such as medical appointments, or wider criminal justice needs.",
               ABSENCE_REASON,
             ),
@@ -207,25 +207,25 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
           listOf(
             AbsenceCategorisation(
               "CRL",
-              "CRL (Childcare Resettlement Licence)",
+              "CRL (childcare resettlement licence)",
               "To help prisoners prepare for parenting when they are released and support ties between primary carers and their children.",
               null,
             ),
             AbsenceCategorisation(
               "RDR",
-              "RDR (Resettlement Day Release)",
+              "RDR (resettlement day release)",
               "For prisoners to carry out activities linked to objectives in their sentence plan.",
               ABSENCE_REASON_CATEGORY,
             ),
             AbsenceCategorisation(
               "ROR",
-              "ROR (Resettlement Overnight Release)",
+              "ROR (resettlement overnight release)",
               "For prisoners to spend time at their release address to re-establish links with family and the local community.",
               null,
             ),
             AbsenceCategorisation(
               "SPL",
-              "SPL (Special Purpose Licence)",
+              "SPL (special purpose licence)",
               "A short release in response to exceptional or personal circumstances, such as medical appointments, or wider criminal justice needs.",
               ABSENCE_REASON,
             ),

@@ -116,8 +116,8 @@ class GetTapAuthorisationHistoryIntTest(
         .isEqualTo(AuditedAction.User(ExternalMovementContext.SYSTEM_USERNAME, "User ${ExternalMovementContext.SYSTEM_USERNAME}"))
       Assertions.assertThat(domainEvents).contains(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
       Assertions.assertThat(changes).containsExactlyInAnyOrder(
-        AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Police production"),
-        AuditedAction.Change("absenceSubType", "RDR (Resettlement Day Release)", "Police production"),
+        AuditedAction.Change("absenceType", "Standard ROTL (release on temporary licence)", "Police production"),
+        AuditedAction.Change("absenceSubType", "RDR (resettlement day release)", "Police production"),
         AuditedAction.Change("absenceReasonCategory", "Paid work", null),
         AuditedAction.Change("absenceReason", "IT and communication", "Police Production"),
       )
