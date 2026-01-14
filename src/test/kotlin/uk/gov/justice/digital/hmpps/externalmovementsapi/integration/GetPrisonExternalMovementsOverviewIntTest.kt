@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.PrisonExternalMovementOverview
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.PrisonExternalMovementOverview.TapOverview
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -45,7 +46,7 @@ class GetPrisonExternalMovementsOverviewIntTest(
     val response = getPrisonEmOverview(prisonCode).successResponse<PrisonExternalMovementOverview>()
 
     assertThat(response.configuration).isEqualTo(PrisonExternalMovementOverview.Configuration.DEFAULT)
-    assertThat(response.tapOverview).isEqualTo(PrisonExternalMovementOverview.TapOverview(0, 0, 0, 0))
+    assertThat(response.tapOverview).isEqualTo(TapOverview(0, 0, 0))
   }
 
   @Test
@@ -66,10 +67,9 @@ class GetPrisonExternalMovementsOverviewIntTest(
 
     assertThat(response.configuration).isEqualTo(PrisonExternalMovementOverview.Configuration.DEFAULT)
     assertThat(response.tapOverview).isEqualTo(
-      PrisonExternalMovementOverview.TapOverview(
+      TapOverview(
         leavingToday = 2,
         returningToday = 1,
-        leavingNextSevenDays = 4,
         approvalsRequired = 3,
       ),
     )
@@ -99,7 +99,7 @@ class GetPrisonExternalMovementsOverviewIntTest(
     val dateRange = (1L..7L).map { LocalDate.now().plusDays(it) }
     val start = dateRange.random()
     val end = start.plusDays(1)
-    personIdentifiers.forEachIndexed { idx, personIdentifier ->
+    personIdentifiers.forEach { personIdentifier ->
       val authorisation = givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           prisonCode,

@@ -392,6 +392,8 @@ class TemporaryAbsenceOccurrence(
     val END = TemporaryAbsenceOccurrence::end.name
     val STATUS = TemporaryAbsenceOccurrence::status.name
     val ABSENCE_TYPE = TemporaryAbsenceOccurrence::absenceType.name
+    val ABSENCE_SUB_TYPE = TemporaryAbsenceOccurrence::absenceSubType.name
+    val ABSENCE_REASON_CATEGORY = TemporaryAbsenceOccurrence::absenceReasonCategory.name
     val ABSENCE_REASON = TemporaryAbsenceOccurrence::absenceReason.name
     val ACCOMPANIED_BY = TemporaryAbsenceOccurrence::accompaniedBy.name
     val TRANSPORT = TemporaryAbsenceOccurrence::transport.name

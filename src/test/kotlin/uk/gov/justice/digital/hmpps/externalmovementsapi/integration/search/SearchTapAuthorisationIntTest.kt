@@ -10,15 +10,19 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchResponse
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter.ISO_DATE
 
 class SearchTapAuthorisationIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
@@ -49,34 +53,37 @@ class SearchTapAuthorisationIntTest(
   }
 
   @Test
-  fun `can find authorisations by prison code and date`() {
+  fun `can find authorisations by date`() {
     val prisonCode = prisonCode()
-    val alternativePrisonCode = prisonCode()
     val start = LocalDate.now().plusDays(1)
     val end = LocalDate.now().plusDays(3)
-    givenTemporaryAbsenceAuthorisation(
-      temporaryAbsenceAuthorisation(alternativePrisonCode, start = start, end = end),
-    )
-    givenTemporaryAbsenceAuthorisation(
-      temporaryAbsenceAuthorisation(prisonCode, start = start.minusDays(1), end = end),
-    )
-    givenTemporaryAbsenceAuthorisation(
-      temporaryAbsenceAuthorisation(prisonCode, start = start, end = end.plusDays(1)),
-    )
 
-    listOf(
-      givenTemporaryAbsenceAuthorisation(
-        temporaryAbsenceAuthorisation(prisonCode, start = start, end = end.minusDays(1)),
-      ),
-      givenTemporaryAbsenceAuthorisation(
-        temporaryAbsenceAuthorisation(prisonCode, start = start.plusDays(1), end = end),
-      ),
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode, start = start.minusDays(3), end = start.minusDays(1)),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode, start = start.minusDays(3), end = start),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode, start = start, end = end),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode, start = start.minusDays(1), end = end.minusDays(1)),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode, start = start.plusDays(1), end = end.plusDays(1)),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode, start = end, end = end.plusDays(2)),
+    )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode, start = end.plusDays(1), end = end.plusDays(2)),
     )
 
     val res = searchTapAuthorisations(prisonCode, start, end).successResponse<TapAuthorisationSearchResponse>()
 
-    assertThat(res.content.size).isEqualTo(2)
-    assertThat(res.metadata.totalElements).isEqualTo(2)
+    assertThat(res.content.size).isEqualTo(5)
+    assertThat(res.metadata.totalElements).isEqualTo(5)
   }
 
   @Test
@@ -125,6 +132,71 @@ class SearchTapAuthorisationIntTest(
 
     assertThat(res.content.size).isEqualTo(2)
     assertThat(res.metadata.totalElements).isEqualTo(2)
+  }
+
+  @Test
+  fun `can filter by absence categorisation`() {
+    val prisonCode = prisonCode()
+
+    val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    val auth2 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        absenceType = "PP",
+        absenceSubType = "PP",
+        absenceReasonCategory = null,
+        absenceReason = "PC",
+        reasonPath = ReasonPath(absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCategoryCode = null, absenceReasonCode = null),
+      ),
+    )
+
+    val res1 = searchTapAuthorisations(
+      prisonCode,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_TYPE,
+        sortedSetOf(auth1.absenceType!!.code),
+      ),
+    ).successResponse<TapAuthorisationSearchResponse>()
+
+    assertThat(res1.content.size).isEqualTo(1)
+    assertThat(res1.metadata.totalElements).isEqualTo(1)
+    assertThat(res1.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
+
+    val res2 = searchTapAuthorisations(
+      prisonCode,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_SUB_TYPE,
+        sortedSetOf(auth1.absenceSubType!!.code),
+      ),
+    ).successResponse<TapAuthorisationSearchResponse>()
+
+    assertThat(res2.content.size).isEqualTo(1)
+    assertThat(res2.metadata.totalElements).isEqualTo(1)
+    assertThat(res2.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
+
+    val res3 = searchTapAuthorisations(
+      prisonCode,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_REASON,
+        sortedSetOf(auth2.absenceReason!!.code),
+      ),
+    ).successResponse<TapAuthorisationSearchResponse>()
+
+    assertThat(res3.content.size).isEqualTo(1)
+    assertThat(res3.metadata.totalElements).isEqualTo(1)
+    assertThat(res3.content.first().absenceCategorisation).isEqualTo("Police production")
+
+    val res4 = searchTapAuthorisations(
+      prisonCode,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY,
+        sortedSetOf(auth1.absenceReasonCategory!!.code),
+      ),
+    ).successResponse<TapAuthorisationSearchResponse>()
+
+    assertThat(res4.content.size).isEqualTo(1)
+    assertThat(res4.metadata.totalElements).isEqualTo(1)
+    assertThat(res4.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
   }
 
   @Test
@@ -335,25 +407,37 @@ class SearchTapAuthorisationIntTest(
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res1.content.size).isEqualTo(2)
     assertThat(res1.metadata.totalElements).isEqualTo(2)
-    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(pp.absenceType?.description, sr.absenceType?.description)
+    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(
+      pp.absenceType?.description,
+      sr.absenceType?.description,
+    )
 
     val res2 = searchTapAuthorisations(prisonCode, start, end, sort = "absenceType,desc")
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res2.content.size).isEqualTo(2)
     assertThat(res2.metadata.totalElements).isEqualTo(2)
-    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(sr.absenceType?.description, pp.absenceType?.description)
+    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(
+      sr.absenceType?.description,
+      pp.absenceType?.description,
+    )
 
     val res3 = searchTapAuthorisations(prisonCode, start, end, sort = "absenceReason,asc")
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res3.content.size).isEqualTo(2)
     assertThat(res3.metadata.totalElements).isEqualTo(2)
-    assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(sr.absenceReason?.description, pp.absenceReason?.description)
+    assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(
+      sr.absenceReason?.description,
+      pp.absenceReason?.description,
+    )
 
     val res4 = searchTapAuthorisations(prisonCode, start, end, sort = "absenceReason,desc")
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res4.content.size).isEqualTo(2)
     assertThat(res4.metadata.totalElements).isEqualTo(2)
-    assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(pp.absenceReason?.description, sr.absenceReason?.description)
+    assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(
+      pp.absenceReason?.description,
+      sr.absenceReason?.description,
+    )
   }
 
   @Test
@@ -367,35 +451,34 @@ class SearchTapAuthorisationIntTest(
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res1.content.size).isEqualTo(2)
     assertThat(res1.metadata.totalElements).isEqualTo(2)
-    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(repeat.absenceType?.description, single.absenceType?.description)
+    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(
+      repeat.absenceType?.description,
+      single.absenceType?.description,
+    )
 
     val res2 = searchTapAuthorisations(prisonCode, sort = "repeat,desc")
       .successResponse<TapAuthorisationSearchResponse>()
     assertThat(res2.content.size).isEqualTo(2)
     assertThat(res2.metadata.totalElements).isEqualTo(2)
-    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(single.absenceType?.description, repeat.absenceType?.description)
+    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(
+      single.absenceType?.description,
+      repeat.absenceType?.description,
+    )
   }
 
   private fun searchTapAuthorisations(
     prisonCode: String,
-    start: LocalDate? = null,
-    end: LocalDate? = null,
+    start: LocalDate = LocalDate.now(),
+    end: LocalDate = LocalDate.now().plusDays(1),
     status: AuthorisationStatus.Code? = null,
+    absenceCategorisation: AbsenceCategorisationFilter? = null,
     query: String? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
-    .get()
-    .uri { uri ->
-      uri.path(SEARCH_TAP_AUTH_URL)
-      uri.queryParam("prisonCode", prisonCode)
-      start?.also { uri.queryParam("start", ISO_DATE.format(it)) }
-      end?.also { uri.queryParam("end", ISO_DATE.format(it)) }
-      status?.also { uri.queryParam("status", it.name) }
-      query?.also { uri.queryParam("query", it) }
-      sort?.also { uri.queryParam("sort", it) }
-      uri.build()
-    }
+    .post()
+    .uri(SEARCH_TAP_AUTH_URL)
+    .bodyValue(TapAuthorisationSearchRequest(prisonCode, start, end, setOfNotNull(status), absenceCategorisation, query, sort = sort ?: START))
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

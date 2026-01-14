@@ -14,7 +14,9 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
@@ -25,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.SequencedSet
@@ -78,9 +81,7 @@ interface TemporaryAbsenceOccurrenceRepository :
 
   @Query(
     """
-    select
-    sum(case when tao.start between current_date and (current_date + 1) then 1 else 0 end) as leavingToday,
-    sum(case when tao.start between (current_date + 1) and (current_date + 8) then 1 else 0 end) as leavingNextSevenDays
+    select count(1) as leavingToday
     from tap.occurrence tao
         join tap.authorisation taa on taa.id = tao.authorisation_id
         join tap.authorisation_status ast on ast.id = taa.status_id
@@ -88,12 +89,11 @@ interface TemporaryAbsenceOccurrenceRepository :
     where taa.prison_code = :prisonIdentifier
       and ast.code = 'APPROVED'
       and ost.code <> 'CANCELLED'
-      and tao.start between current_date and (current_date + 8)
-    group by taa.prison_code
+      and tao.start between current_date and (current_date + 1)
   """,
     nativeQuery = true,
   )
-  fun findUpcomingLeaverCounts(prisonIdentifier: String): PrisonLeaverCounts?
+  fun findLeavingTodayCount(prisonIdentifier: String): Int
 
   @Query(
     """
@@ -123,16 +123,6 @@ interface TemporaryAbsenceOccurrenceRepository :
     nativeQuery = true,
   )
   fun deleteByAuthorisationPersonIdentifier(personIdentifier: String)
-}
-
-interface PrisonLeaverCounts {
-  val leavingToday: Int
-  val leavingNextSevenDays: Int
-
-  data object Default : PrisonLeaverCounts {
-    override val leavingToday: Int = 0
-    override val leavingNextSevenDays: Int = 0
-  }
 }
 
 interface TapOccurrencePosition {
@@ -166,10 +156,10 @@ fun occurrenceMatchesPersonName(name: String) = Specification<TemporaryAbsenceOc
   authorisation.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
-fun occurrenceMatchesDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun occurrenceOverlapsDateRange(start: LocalDate, end: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.and(
-    start?.let { cb.greaterThanOrEqualTo(tao.get(START), it.atStartOfDay()) } ?: cb.conjunction(),
-    end?.let { cb.lessThanOrEqualTo(tao.get(END), it.plusDays(1).atStartOfDay()) } ?: cb.conjunction(),
+    cb.greaterThanOrEqualTo(tao.get(END), start),
+    cb.lessThanOrEqualTo(tao.get(START), end.plusDays(1)),
   )
 }
 
@@ -192,4 +182,16 @@ fun startAfter(start: LocalDateTime) = Specification<TemporaryAbsenceOccurrence>
 
 fun startBefore(end: LocalDateTime) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.lessThan(tao.get(START), end)
+}
+
+fun AbsenceCategorisationFilter.matchesOccurrence() = Specification<TemporaryAbsenceOccurrence> { tao, _, _ ->
+  val fieldName = when (domainCode) {
+    ReferenceDataDomain.Code.ABSENCE_TYPE -> TemporaryAbsenceOccurrence.ABSENCE_TYPE
+    ReferenceDataDomain.Code.ABSENCE_SUB_TYPE -> TemporaryAbsenceOccurrence.ABSENCE_SUB_TYPE
+    ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY -> TemporaryAbsenceOccurrence.ABSENCE_REASON_CATEGORY
+    ReferenceDataDomain.Code.ABSENCE_REASON -> TemporaryAbsenceOccurrence.ABSENCE_REASON
+    else -> throw IllegalArgumentException("Not a valid absence categorisation filter")
+  }
+  val rd = tao.join<TemporaryAbsenceOccurrence, ReferenceData>(fieldName, JoinType.INNER)
+  rd.get<String>(CODE).`in`(codes)
 }
