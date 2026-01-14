@@ -63,6 +63,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
@@ -70,7 +71,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCate
 import java.time.LocalDate
 import java.time.LocalDate.now
 import java.util.UUID
-import kotlin.collections.map
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -278,6 +278,10 @@ class TemporaryAbsenceAuthorisation(
     }
   }
 
+  fun defer(action: DeferAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+    applyStatus(PENDING, rdSupplier, action)
+  }
+
   fun approve(action: ApproveAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
     applyStatus(APPROVED, rdSupplier, action)
   }
@@ -295,6 +299,8 @@ class TemporaryAbsenceAuthorisation(
       applyStatus(EXPIRED, rdSupplier, action)
     }
   }
+
+  fun permitsOccurrences(): Boolean = status.code in listOf(PENDING.name, APPROVED.name)
 
   private fun applyStatus(
     statusCode: AuthorisationStatus.Code,
