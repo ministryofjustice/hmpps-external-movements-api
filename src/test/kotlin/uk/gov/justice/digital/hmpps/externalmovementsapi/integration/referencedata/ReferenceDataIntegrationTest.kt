@@ -67,22 +67,22 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
     assertThat(rd.items).containsExactly(
       CodedDescription(
         "CRL",
-        "CRL (Childcare Resettlement Licence)",
+        "CRL (childcare resettlement licence)",
         "To help prisoners prepare for parenting when they are released and support ties between primary carers and their children.",
       ),
       CodedDescription(
         "RDR",
-        "RDR (Resettlement Day Release)",
+        "RDR (resettlement day release)",
         "For prisoners to carry out activities linked to objectives in their sentence plan.",
       ),
       CodedDescription(
         "ROR",
-        "ROR (Resettlement Overnight Release)",
+        "ROR (resettlement overnight release)",
         "For prisoners to spend time at their release address to re-establish links with family and the local community.",
       ),
       CodedDescription(
         "SPL",
-        "SPL (Special Purpose Licence)",
+        "SPL (special purpose licence)",
         "A short release in response to exceptional or personal circumstances, such as medical appointments, or wider criminal justice needs.",
       ),
       CodedDescription("PP", "Police production"),

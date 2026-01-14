@@ -112,8 +112,8 @@ class GetTapOccurrenceHistoryIntTest(
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
       assertThat(domainEvents).contains(TemporaryAbsenceRecategorised.EVENT_TYPE)
       assertThat(changes).containsExactlyInAnyOrder(
-        AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Police production"),
-        AuditedAction.Change("absenceSubType", "RDR (Resettlement Day Release)", "Police production"),
+        AuditedAction.Change("absenceType", "Standard ROTL (release on temporary licence)", "Police production"),
+        AuditedAction.Change("absenceSubType", "RDR (resettlement day release)", "Police production"),
         AuditedAction.Change("absenceReasonCategory", "Paid work", null),
         AuditedAction.Change("absenceReason", "IT and communication", "Police Production"),
       )
