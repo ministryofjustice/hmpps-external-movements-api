@@ -303,6 +303,44 @@ class SyncTapAuthorisationIntTest(
   }
 
   @Test
+  fun `200 ok approved authorisation returned to pending`() {
+    val legacyId = newId()
+    val prisonCode = prisonCode()
+    val ps = givenPersonSummary(personSummary())
+    val existing = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        legacyId = legacyId,
+        prisonCode = prisonCode,
+        personIdentifier = ps.identifier,
+      ),
+    )
+    val request = tapAuthorisation(
+      id = existing.id,
+      prisonCode = existing.prisonCode,
+      legacyId = legacyId,
+      statusCode = "PENDING",
+      comments = existing.comments,
+      start = existing.start,
+      end = existing.end,
+    )
+    val res = syncAuthorisation(existing.person.identifier, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isEqualTo(existing.id)
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
+    saved.verifyAgainst(existing.person.identifier, request)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf())
+  }
+
+  @Test
   fun `200 ok application created if authorisation with the given uuid does not exist`() {
     val pi = personIdentifier()
     val uuid = newUuid()

@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
@@ -55,6 +56,9 @@ class SyncTapOccurrence(
         }
         ?.update(request, rdPaths)
         ?: let {
+          if (!authorisation.permitsOccurrences()) {
+            throw ConflictException("Cannot add a new occurrence to a non active authorisation")
+          }
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
           occurrenceRepository.save(
             request.asEntity(authorisation, rdPaths).calculateStatus {
