@@ -275,7 +275,7 @@ class SearchTapOccurrenceIntTest(
 
     assertThat(res1.content.size).isEqualTo(1)
     assertThat(res1.metadata.totalElements).isEqualTo(1)
-    assertThat(res1.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
+    assertThat(res1.content.first().absenceCategorisation).isEqualTo("Standard ROTL (release on temporary licence) > RDR (resettlement day release) > Paid work > IT and communication")
 
     val res2 = searchTapOccurrences(
       prisonCode,
@@ -287,7 +287,7 @@ class SearchTapOccurrenceIntTest(
 
     assertThat(res2.content.size).isEqualTo(1)
     assertThat(res2.metadata.totalElements).isEqualTo(1)
-    assertThat(res2.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
+    assertThat(res2.content.first().absenceCategorisation).isEqualTo("Standard ROTL (release on temporary licence) > RDR (resettlement day release) > Paid work > IT and communication")
 
     val res3 = searchTapOccurrences(
       prisonCode,
@@ -311,7 +311,7 @@ class SearchTapOccurrenceIntTest(
 
     assertThat(res4.content.size).isEqualTo(1)
     assertThat(res4.metadata.totalElements).isEqualTo(1)
-    assertThat(res4.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
+    assertThat(res4.content.first().absenceCategorisation).isEqualTo("Standard ROTL (release on temporary licence) > RDR (resettlement day release) > Paid work > IT and communication")
   }
 
   @Test
