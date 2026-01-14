@@ -4,7 +4,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
@@ -15,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
@@ -61,6 +66,16 @@ class SyncTapOccurrenceIntTest(
       tapOccurrence(),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
+  }
+
+  @ParameterizedTest
+  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "APPROVED"])
+  fun `409 conflict attempting to add a new occurrence to a non-active authorisation`(statusCode: AuthorisationStatus.Code) {
+    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = statusCode))
+    val request = tapOccurrence()
+    val res = syncTapOccurrence(authorisation.id, request).errorResponse(HttpStatus.CONFLICT)
+
+    assertThat(res.userMessage).isEqualTo("Cannot add a new occurrence to a non active authorisation")
   }
 
   @Test

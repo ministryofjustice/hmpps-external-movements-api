@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Sort
 import org.springframework.data.domain.Sort.Direction
@@ -26,9 +27,11 @@ import java.time.LocalDate
 data class TapAuthorisationSearchRequest(
   @NotBlank
   val prisonCode: String,
-  override val start: LocalDate?,
-  override val end: LocalDate?,
+  override val start: LocalDate,
+  override val end: LocalDate,
   val status: Set<AuthorisationStatus.Code> = emptySet(),
+  @Valid
+  val absenceCategorisation: AbsenceCategorisationFilter? = null,
   val query: String? = null,
   override val page: Int = 1,
   override val size: Int = 10,

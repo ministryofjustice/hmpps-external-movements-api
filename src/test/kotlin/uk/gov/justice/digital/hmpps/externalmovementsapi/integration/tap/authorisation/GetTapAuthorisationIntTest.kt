@@ -132,7 +132,12 @@ class GetTapAuthorisationIntTest(
     assertThat(response.absenceReasonCategory).isNull()
     assertThat(response.absenceReason).isNull()
     response.verifyAgainst(auth)
-    occurrence.verifyAgainst(response.occurrences.first())
+    val occ = response.occurrences.first()
+    occurrence.verifyAgainst(occ)
+    assertThat(occ.absenceType?.code).isEqualTo("PP")
+    assertThat(occ.absenceSubType).isNull()
+    assertThat(occ.absenceReasonCategory).isNull()
+    assertThat(occ.absenceReason).isNull()
   }
 
   private fun getTapAuthorisation(
