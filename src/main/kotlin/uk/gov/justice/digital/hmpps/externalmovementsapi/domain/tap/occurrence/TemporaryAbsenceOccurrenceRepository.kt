@@ -14,7 +14,9 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
@@ -25,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.SequencedSet
@@ -179,4 +182,16 @@ fun startAfter(start: LocalDateTime) = Specification<TemporaryAbsenceOccurrence>
 
 fun startBefore(end: LocalDateTime) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.lessThan(tao.get(START), end)
+}
+
+fun AbsenceCategorisationFilter.matchesOccurrence() = Specification<TemporaryAbsenceOccurrence> { tao, _, _ ->
+  val fieldName = when (domainCode) {
+    ReferenceDataDomain.Code.ABSENCE_TYPE -> TemporaryAbsenceOccurrence.ABSENCE_TYPE
+    ReferenceDataDomain.Code.ABSENCE_SUB_TYPE -> TemporaryAbsenceOccurrence.ABSENCE_SUB_TYPE
+    ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY -> TemporaryAbsenceOccurrence.ABSENCE_REASON_CATEGORY
+    ReferenceDataDomain.Code.ABSENCE_REASON -> TemporaryAbsenceOccurrence.ABSENCE_REASON
+    else -> throw IllegalArgumentException("Not a valid absence categorisation filter")
+  }
+  val rd = tao.join<TemporaryAbsenceOccurrence, ReferenceData>(fieldName, JoinType.INNER)
+  rd.get<String>(CODE).`in`(codes)
 }

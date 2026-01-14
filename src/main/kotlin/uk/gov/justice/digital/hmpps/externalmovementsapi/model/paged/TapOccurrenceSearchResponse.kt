@@ -25,6 +25,7 @@ data class TapOccurrenceResult(
   val transport: CodedDescription,
   val location: Location,
   val isCancelled: Boolean,
+  val absenceCategorisation: String,
 )
 
 data class TapOccurrenceAuthorisation(

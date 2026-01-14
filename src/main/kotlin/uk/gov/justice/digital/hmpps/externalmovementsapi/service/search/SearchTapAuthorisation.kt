@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationOverlapsDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationStatusCodeIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.matchesAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
@@ -43,6 +44,7 @@ class SearchTapAuthorisation(
     authorisationMatchesPrisonCode(prisonCode),
     authorisationOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { authorisationStatusCodeIn(it) },
+    absenceCategorisation?.matchesAuthorisation(),
     queryString?.let {
       if (it.matches(Prisoner.PATTERN.toRegex())) {
         authorisationMatchesPersonIdentifier(it)
@@ -58,17 +60,18 @@ class SearchTapAuthorisation(
   ): TapAuthorisationResult = TapAuthorisationResult(
     id = id,
     person = person,
-    status.asCodedDescription(),
+    status = status.asCodedDescription(),
     absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
     absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
     absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
       ?.asCodedDescription(),
     absenceReason = absenceReason?.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
-    repeat,
-    start,
-    end,
-    occurrences.map { it.location }.distinct(),
-    occurrences.size,
+    repeat = repeat,
+    start = start,
+    end = end,
+    locations = occurrences.map { it.location }.distinct(),
+    occurrenceCount = occurrences.size,
+    absenceCategorisation = hierarchyDescription(reasonPath),
   )
 }
 

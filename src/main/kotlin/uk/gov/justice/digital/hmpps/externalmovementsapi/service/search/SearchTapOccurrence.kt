@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.matchesOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPrisonCode
@@ -38,6 +39,7 @@ class SearchTapOccurrence(
     occurrenceMatchesPrisonCode(prisonCode),
     occurrenceOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
+    absenceCategorisation?.matchesOccurrence(),
     queryString?.let {
       if (it.matches(Prisoner.PATTERN.toRegex())) {
         occurrenceMatchesPersonIdentifier(it)
@@ -60,7 +62,8 @@ class SearchTapOccurrence(
     accompaniedBy = accompaniedBy.asCodedDescription(),
     transport = transport.asCodedDescription(),
     location = location,
-    status.code == OccurrenceStatus.Code.CANCELLED.name,
+    isCancelled = status.code == OccurrenceStatus.Code.CANCELLED.name,
+    absenceCategorisation = hierarchyDescription(reasonPath),
   )
 }
 

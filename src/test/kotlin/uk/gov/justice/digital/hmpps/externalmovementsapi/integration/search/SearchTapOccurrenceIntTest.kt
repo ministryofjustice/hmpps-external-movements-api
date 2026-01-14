@@ -10,6 +10,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
@@ -23,6 +26,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -240,6 +245,73 @@ class SearchTapOccurrenceIntTest(
     assertThat(single.content.size).isEqualTo(1)
     assertThat(single.metadata.totalElements).isEqualTo(1)
     assertThat(single.content.map { it.status.code }).containsExactlyInAnyOrder(OccurrenceStatus.Code.DENIED.name)
+  }
+
+  @Test
+  fun `can filter occurrences by absence categorisation`() {
+    val prisonCode = prisonCode()
+
+    val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1))
+    val auth2 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        absenceType = "PP",
+        absenceSubType = "PP",
+        absenceReasonCategory = null,
+        absenceReason = "PC",
+        reasonPath = ReasonPath(absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCategoryCode = null, absenceReasonCode = null),
+      ),
+    )
+    val occ2 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2))
+
+    val res1 = searchTapOccurrences(
+      prisonCode,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_TYPE,
+        sortedSetOf(occ1.absenceType!!.code),
+      ),
+    ).successResponse<TapOccurrenceSearchResponse>()
+
+    assertThat(res1.content.size).isEqualTo(1)
+    assertThat(res1.metadata.totalElements).isEqualTo(1)
+    assertThat(res1.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
+
+    val res2 = searchTapOccurrences(
+      prisonCode,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_SUB_TYPE,
+        sortedSetOf(occ1.absenceSubType!!.code),
+      ),
+    ).successResponse<TapOccurrenceSearchResponse>()
+
+    assertThat(res2.content.size).isEqualTo(1)
+    assertThat(res2.metadata.totalElements).isEqualTo(1)
+    assertThat(res2.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
+
+    val res3 = searchTapOccurrences(
+      prisonCode,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_REASON,
+        sortedSetOf(occ2.absenceReason!!.code),
+      ),
+    ).successResponse<TapOccurrenceSearchResponse>()
+
+    assertThat(res3.content.size).isEqualTo(1)
+    assertThat(res3.metadata.totalElements).isEqualTo(1)
+    assertThat(res3.content.first().absenceCategorisation).isEqualTo("Police production")
+
+    val res4 = searchTapOccurrences(
+      prisonCode,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY,
+        sortedSetOf(occ1.absenceReasonCategory!!.code),
+      ),
+    ).successResponse<TapOccurrenceSearchResponse>()
+
+    assertThat(res4.content.size).isEqualTo(1)
+    assertThat(res4.metadata.totalElements).isEqualTo(1)
+    assertThat(res4.content.first().absenceCategorisation).isEqualTo("Standard ROTL (Release on Temporary Licence) > RDR (Resettlement Day Release) > Paid work > IT and communication")
   }
 
   @Test
@@ -560,20 +632,23 @@ class SearchTapOccurrenceIntTest(
     end: LocalDate = LocalDate.now().plusDays(1),
     query: String? = null,
     statuses: List<OccurrenceStatus.Code>? = null,
+    absenceCategorisation: AbsenceCategorisationFilter? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
-    .get()
-    .uri { uri ->
-      uri.path(SEARCH_TAP_OCCURRENCES_URL)
-      uri.queryParam("prisonCode", prisonCode)
-      uri.queryParam("start", start)
-      uri.queryParam("end", end)
-      statuses?.also { uri.queryParam("status", *it.toTypedArray()) }
-      sort?.also { uri.queryParam("sort", it) }
-      query?.let { uri.queryParam("query", it) }
-      uri.build()
-    }
+    .post()
+    .uri(SEARCH_TAP_OCCURRENCES_URL)
+    .bodyValue(
+      TapOccurrenceSearchRequest(
+        prisonCode,
+        start,
+        end,
+        statuses?.toSet() ?: emptySet(),
+        absenceCategorisation,
+        query,
+        sort = sort ?: START,
+      ),
+    )
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

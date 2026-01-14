@@ -14,9 +14,9 @@ interface CategorisedAbsenceReason {
   val absenceReason: AbsenceReason?
 
   fun hierarchyDescription(reasonPath: ReasonPath): String = listOfNotNull(
-    absenceType?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_TYPE) },
-    absenceSubType?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_SUB_TYPE) },
-    absenceReasonCategory?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY) },
-    absenceReason?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON) },
+    absenceType?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_TYPE) }?.description,
+    absenceSubType?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_SUB_TYPE) }?.description,
+    absenceReasonCategory?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY) }?.description,
+    absenceReason?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON) }?.description,
   ).joinToString(" > ")
 }

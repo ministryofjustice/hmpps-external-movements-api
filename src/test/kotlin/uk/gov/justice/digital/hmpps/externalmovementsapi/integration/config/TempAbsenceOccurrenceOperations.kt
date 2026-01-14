@@ -8,12 +8,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
@@ -66,14 +61,7 @@ interface TempAbsenceOccurrenceOperations {
       comments: String? = "Some comments on the occurrence",
       cancelledAt: LocalDateTime? = null,
       cancelledBy: String? = null,
-      reasonPath: ReasonPath = ReasonPath(
-        buildList {
-          absenceType?.also { add(ABSENCE_TYPE of it) }
-          absenceSubType?.also { add(ABSENCE_SUB_TYPE of it) }
-          absenceReasonCategory?.also { add(ABSENCE_REASON_CATEGORY of it) }
-          absenceReason?.also { add(ABSENCE_REASON of it) }
-        },
-      ),
+      reasonPath: ReasonPath = authorisation.reasonPath,
       scheduleReference: JsonNode? = null,
       legacyId: Long? = null,
       movements: List<((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceMovement> = listOf(),
@@ -134,10 +122,6 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(transport.code).isEqualTo(occurrence.transport.code)
     assertThat(start).isCloseTo(occurrence.start, within(2, SECONDS))
     assertThat(end).isCloseTo(occurrence.end, within(2, SECONDS))
-    assertThat(absenceType?.code).isEqualTo(occurrence.absenceType?.code)
-    assertThat(absenceSubType?.code).isEqualTo(occurrence.absenceSubType?.code)
-    assertThat(absenceReasonCategory?.code).isEqualTo(occurrence.absenceReasonCategory?.code)
-    assertThat(absenceReason?.code).isEqualTo(occurrence.absenceReason?.code)
   }
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {

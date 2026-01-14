@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
@@ -65,6 +66,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDate.now
 import java.util.UUID
@@ -313,6 +315,8 @@ class TemporaryAbsenceAuthorisation(
     val STATUS = TemporaryAbsenceAuthorisation::status.name
     val REPEAT = TemporaryAbsenceAuthorisation::repeat.name
     val ABSENCE_TYPE = TemporaryAbsenceAuthorisation::absenceType.name
+    val ABSENCE_SUB_TYPE = TemporaryAbsenceAuthorisation::absenceSubType.name
+    val ABSENCE_REASON_CATEGORY = TemporaryAbsenceAuthorisation::absenceReasonCategory.name
     val ABSENCE_REASON = TemporaryAbsenceAuthorisation::absenceReason.name
     val ID = TemporaryAbsenceAuthorisation::id.name
 
@@ -386,4 +390,16 @@ fun authorisationOverlapsDateRange(start: LocalDate, end: LocalDate) = Specifica
 fun authorisationStatusCodeIn(statusCodes: Set<AuthorisationStatus.Code>) = Specification<TemporaryAbsenceAuthorisation> { taa, _, _ ->
   val status = taa.join<TemporaryAbsenceAuthorisation, AuthorisationStatus>(STATUS, JoinType.INNER)
   status.get<String>(CODE).`in`(statusCodes.map { it.name })
+}
+
+fun AbsenceCategorisationFilter.matchesAuthorisation() = Specification<TemporaryAbsenceAuthorisation> { taa, _, _ ->
+  val fieldName = when (domainCode) {
+    ReferenceDataDomain.Code.ABSENCE_TYPE -> TemporaryAbsenceAuthorisation.ABSENCE_TYPE
+    ReferenceDataDomain.Code.ABSENCE_SUB_TYPE -> TemporaryAbsenceAuthorisation.ABSENCE_SUB_TYPE
+    ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY -> TemporaryAbsenceAuthorisation.ABSENCE_REASON_CATEGORY
+    ReferenceDataDomain.Code.ABSENCE_REASON -> TemporaryAbsenceAuthorisation.ABSENCE_REASON
+    else -> throw IllegalArgumentException("Not a valid absence categorisation filter")
+  }
+  val rd = taa.join<TemporaryAbsenceAuthorisation, ReferenceData>(fieldName, JoinType.INNER)
+  rd.get<String>(CODE).`in`(codes)
 }

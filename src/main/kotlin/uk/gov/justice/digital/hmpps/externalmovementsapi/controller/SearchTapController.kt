@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.controller
 import jakarta.validation.Valid
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
@@ -20,6 +22,12 @@ class SearchTapController(private val authorisations: SearchTapAuthorisation, pr
   @GetMapping("/temporary-absence-authorisations")
   fun findTapAuthorisations(@Valid request: TapAuthorisationSearchRequest): TapAuthorisationSearchResponse = authorisations.find(request)
 
+  @PostMapping("/temporary-absence-authorisations")
+  fun searchTapAuthorisations(@Valid @RequestBody request: TapAuthorisationSearchRequest): TapAuthorisationSearchResponse = authorisations.find(request)
+
   @GetMapping("/temporary-absence-occurrences")
   fun findTapOccurrences(@Valid request: TapOccurrenceSearchRequest): TapOccurrenceSearchResponse = occurrences.find(request)
+
+  @PostMapping("/temporary-absence-occurrences")
+  fun searchTapOccurrences(@Valid @RequestBody request: TapOccurrenceSearchRequest): TapOccurrenceSearchResponse = occurrences.find(request)
 }
