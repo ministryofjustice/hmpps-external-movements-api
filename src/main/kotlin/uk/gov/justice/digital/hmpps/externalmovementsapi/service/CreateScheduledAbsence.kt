@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.AbsenceCategorisationException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
@@ -71,6 +72,9 @@ class CreateScheduledAbsence(
 
   fun tapOccurrence(authorisationId: UUID, request: CreateOccurrenceRequest): ReferenceId {
     val authorisation = tapAuthRepository.getAuthorisation(authorisationId)
+    if (!authorisation.permitsOccurrences()) {
+      throw ConflictException("Cannot add a new occurrence to a non active authorisation")
+    }
     check(
       !request.start.toLocalDate().isBefore(authorisation.start) &&
         !request.end.toLocalDate().isAfter(authorisation.end),

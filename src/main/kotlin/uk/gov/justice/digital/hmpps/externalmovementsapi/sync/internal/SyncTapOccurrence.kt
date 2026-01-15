@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Tem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
@@ -45,6 +46,9 @@ class SyncTapOccurrence(
 ) {
   fun sync(authorisationId: UUID, request: TapOccurrence): SyncResponse {
     val authorisation = authorisationRepository.getAuthorisation(authorisationId)
+    if (authorisation.status.code == AuthorisationStatus.Code.PENDING.name) {
+      throw ConflictException("Attempt to add occurrence to pending authorisation")
+    }
     val rdPaths = referenceDataRepository.referenceDataFor(request)
     val occurrence =
       (

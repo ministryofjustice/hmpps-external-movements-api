@@ -291,8 +291,8 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
         AbsenceCategorisations(
           CodedDescription("ABSENCE_REASON", "Absence reason"),
           listOf(
-            AbsenceCategorisation("YRDR", "RDR (Resettlement Day Release)", null, null),
-            AbsenceCategorisation("RO", "ROR (Resettlement Overnight Release)", null, null),
+            AbsenceCategorisation("YRDR", "RDR (resettlement day release)", null, null),
+            AbsenceCategorisation("RO", "ROR (resettlement overnight release)", null, null),
           ),
         ),
       ),
