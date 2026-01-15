@@ -69,13 +69,17 @@ class SyncTapOccurrenceIntTest(
   }
 
   @ParameterizedTest
-  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "APPROVED"])
+  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED"])
   fun `409 conflict attempting to add a new occurrence to a non-active authorisation`(statusCode: AuthorisationStatus.Code) {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = statusCode))
     val request = tapOccurrence()
     val res = syncTapOccurrence(authorisation.id, request).errorResponse(HttpStatus.CONFLICT)
 
-    assertThat(res.userMessage).isEqualTo("Cannot add a new occurrence to a non active authorisation")
+    if (statusCode == AuthorisationStatus.Code.PENDING) {
+      assertThat(res.userMessage).isEqualTo("Attempt to add occurrence to pending authorisation")
+    } else {
+      assertThat(res.userMessage).isEqualTo("Cannot add a new occurrence to a non active authorisation")
+    }
   }
 
   @Test
