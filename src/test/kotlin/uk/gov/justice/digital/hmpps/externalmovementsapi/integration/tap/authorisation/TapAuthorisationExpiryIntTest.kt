@@ -3,7 +3,8 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.author
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -22,7 +23,7 @@ class TapAuthorisationExpiryIntTest(
     val toExpire =
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
-          status = AuthorisationStatus.Code.PENDING,
+          status = PENDING,
           start = yesterday.minusDays(1),
           end = yesterday,
         ),
@@ -30,14 +31,14 @@ class TapAuthorisationExpiryIntTest(
     val noExpire = listOf(
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
-          status = AuthorisationStatus.Code.PENDING,
+          status = PENDING,
           start = yesterday,
           end = today,
         ),
       ),
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
-          status = AuthorisationStatus.Code.PENDING,
+          status = PENDING,
           start = today,
           end = today.plusDays(1),
         ),
@@ -47,11 +48,11 @@ class TapAuthorisationExpiryIntTest(
     authorisationExpirer.expireUnapprovedAuthorisations()
 
     val expired = requireNotNull(findTemporaryAbsenceAuthorisation(toExpire.id))
-    assertThat(expired.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
+    assertThat(expired.status.code).isEqualTo(EXPIRED.name)
 
     noExpire.forEach {
       requireNotNull(findTemporaryAbsenceAuthorisation(it.id))
-      assertThat(it.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+      assertThat(it.status.code).isEqualTo(PENDING.name)
     }
   }
 }

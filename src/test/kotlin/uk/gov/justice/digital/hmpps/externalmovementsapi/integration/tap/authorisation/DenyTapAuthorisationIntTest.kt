@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.authorisation
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDenied
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceDenied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -69,8 +70,8 @@ class DenyTapAuthorisationIntTest(
       ),
     )
     val res = denyAuthorisation(auth.id, denyAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
-    Assertions.assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    Assertions.assertThat(res.userMessage).isEqualTo("Temporary absence authorisation not awaiting approval")
+    assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
+    assertThat(res.userMessage).isEqualTo("Temporary absence authorisation not awaiting approval")
   }
 
   @Test
@@ -87,16 +88,16 @@ class DenyTapAuthorisationIntTest(
     )
     val request = denyAuthorisationRequest()
     val res = denyAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    Assertions.assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDenied.Companion.EVENT_TYPE)
-    Assertions.assertThat(res.reason).isEqualTo(request.reason)
-    Assertions.assertThat(res.changes).containsExactly(
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDenied.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "To be reviewed", "Denied"),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    Assertions.assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.DENIED.name)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.DENIED.name)
     val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    Assertions.assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
+    assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
 
     verifyAudit(
       saved,
@@ -111,7 +112,10 @@ class DenyTapAuthorisationIntTest(
 
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceAuthorisationDenied.Companion(auth.person.identifier, auth.id)),
+      setOf(
+        TemporaryAbsenceAuthorisationDenied(auth.person.identifier, auth.id),
+        TemporaryAbsenceDenied(auth.person.identifier, occurrence.id),
+      ),
     )
   }
 

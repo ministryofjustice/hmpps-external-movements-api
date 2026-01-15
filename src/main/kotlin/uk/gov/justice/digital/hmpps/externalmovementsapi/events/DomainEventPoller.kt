@@ -7,14 +7,17 @@ import org.springframework.core.env.getProperty
 import org.springframework.core.type.AnnotatedTypeMetadata
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import java.time.Duration
 
 @Conditional(PollDomainEventsCondition::class)
 @Service
 class DomainEventPoller(private val domainEventPublisher: DomainEventPublisher) {
   @Scheduled(fixedDelayString = $$"${service.domain-events.poll-interval}")
-  fun publishUnpublishedEvents() {
+  fun publishUnpublishedEvents() = try {
     domainEventPublisher.publishUnpublishedEvents()
+  } finally {
+    ExternalMovementContext.clear()
   }
 }
 

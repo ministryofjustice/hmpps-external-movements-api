@@ -10,10 +10,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.matchesOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPrisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceOverlapsDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
@@ -36,8 +37,9 @@ class SearchTapOccurrence(
 
   private fun TapOccurrenceSearchRequest.asSpecification(): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
     occurrenceMatchesPrisonCode(prisonCode),
-    occurrenceMatchesDateRange(start, end),
+    occurrenceOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
+    absenceCategorisation?.matchesOccurrence(),
     queryString?.let {
       if (it.matches(Prisoner.PATTERN.toRegex())) {
         occurrenceMatchesPersonIdentifier(it)
@@ -60,7 +62,8 @@ class SearchTapOccurrence(
     accompaniedBy = accompaniedBy.asCodedDescription(),
     transport = transport.asCodedDescription(),
     location = location,
-    status.code == OccurrenceStatus.Code.CANCELLED.name,
+    isCancelled = status.code == OccurrenceStatus.Code.CANCELLED.name,
+    absenceCategorisation = hierarchyDescription(reasonPath),
   )
 }
 

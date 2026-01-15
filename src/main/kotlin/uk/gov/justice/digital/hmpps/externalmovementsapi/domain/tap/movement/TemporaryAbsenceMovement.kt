@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.reflect.KClass
 
@@ -140,6 +141,18 @@ class TemporaryAbsenceMovement(
     recordedByPrisonCode = request.created.prisonCode
     location = request.location
     legacyId = request.legacyId
+  }
+
+  companion object {
+    val formattedReason: (TemporaryAbsenceMovement) -> String = {
+      val date = DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy")
+      val time = DateTimeFormatter.ofPattern("HH:mm")
+      val format = date.format(it.occurredAt) + " at " + time.format(it.occurredAt)
+      when (it.direction) {
+        Direction.IN -> "Recorded as having gone out of the prison on $format."
+        Direction.OUT -> "Recorded as having returned in to the prison on $format."
+      }
+    }
   }
 }
 

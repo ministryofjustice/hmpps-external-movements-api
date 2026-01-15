@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
@@ -40,7 +41,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.APPROVED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.DENIED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
@@ -58,13 +63,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDate.now
 import java.util.UUID
-import kotlin.collections.map
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -186,7 +192,7 @@ class TemporaryAbsenceAuthorisation(
   override var version: Int? = null
     private set
 
-  override fun initialEvent(): DomainEvent<*>? = if (status.code == AuthorisationStatus.Code.APPROVED.name) {
+  override fun initialEvent(): DomainEvent<*>? = if (status.code == APPROVED.name) {
     TemporaryAbsenceAuthorisationApproved(person.identifier, id)
   } else {
     TemporaryAbsenceAuthorisationPending(person.identifier, id)
@@ -272,23 +278,29 @@ class TemporaryAbsenceAuthorisation(
     }
   }
 
+  fun defer(action: DeferAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+    applyStatus(PENDING, rdSupplier, action)
+  }
+
   fun approve(action: ApproveAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    applyStatus(AuthorisationStatus.Code.APPROVED, rdSupplier, action)
+    applyStatus(APPROVED, rdSupplier, action)
   }
 
   fun deny(action: DenyAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    applyStatus(AuthorisationStatus.Code.DENIED, rdSupplier, action)
+    applyStatus(DENIED, rdSupplier, action)
   }
 
   fun cancel(action: CancelAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    applyStatus(AuthorisationStatus.Code.CANCELLED, rdSupplier, action)
+    applyStatus(CANCELLED, rdSupplier, action)
   }
 
   fun expire(action: ExpireAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    if (status.code == OccurrenceStatus.Code.PENDING.name) {
-      applyStatus(AuthorisationStatus.Code.EXPIRED, rdSupplier, action)
+    if (status.code == PENDING.name) {
+      applyStatus(EXPIRED, rdSupplier, action)
     }
   }
+
+  fun permitsOccurrences(): Boolean = status.code in listOf(PENDING.name, APPROVED.name)
 
   private fun applyStatus(
     statusCode: AuthorisationStatus.Code,
@@ -309,6 +321,8 @@ class TemporaryAbsenceAuthorisation(
     val STATUS = TemporaryAbsenceAuthorisation::status.name
     val REPEAT = TemporaryAbsenceAuthorisation::repeat.name
     val ABSENCE_TYPE = TemporaryAbsenceAuthorisation::absenceType.name
+    val ABSENCE_SUB_TYPE = TemporaryAbsenceAuthorisation::absenceSubType.name
+    val ABSENCE_REASON_CATEGORY = TemporaryAbsenceAuthorisation::absenceReasonCategory.name
     val ABSENCE_REASON = TemporaryAbsenceAuthorisation::absenceReason.name
     val ID = TemporaryAbsenceAuthorisation::id.name
 
@@ -372,14 +386,26 @@ fun authorisationMatchesPersonName(name: String) = Specification<TemporaryAbsenc
   taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
-fun authorisationMatchesDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+fun authorisationOverlapsDateRange(start: LocalDate, end: LocalDate) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
   cb.and(
-    start?.let { cb.greaterThanOrEqualTo(taa.get(START), it) } ?: cb.conjunction(),
-    end?.let { cb.lessThanOrEqualTo(taa.get(END), it) } ?: cb.conjunction(),
+    cb.greaterThanOrEqualTo(taa.get(END), start),
+    cb.lessThanOrEqualTo(taa.get(START), end),
   )
 }
 
 fun authorisationStatusCodeIn(statusCodes: Set<AuthorisationStatus.Code>) = Specification<TemporaryAbsenceAuthorisation> { taa, _, _ ->
   val status = taa.join<TemporaryAbsenceAuthorisation, AuthorisationStatus>(STATUS, JoinType.INNER)
   status.get<String>(CODE).`in`(statusCodes.map { it.name })
+}
+
+fun AbsenceCategorisationFilter.matchesAuthorisation() = Specification<TemporaryAbsenceAuthorisation> { taa, _, _ ->
+  val fieldName = when (domainCode) {
+    ReferenceDataDomain.Code.ABSENCE_TYPE -> TemporaryAbsenceAuthorisation.ABSENCE_TYPE
+    ReferenceDataDomain.Code.ABSENCE_SUB_TYPE -> TemporaryAbsenceAuthorisation.ABSENCE_SUB_TYPE
+    ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY -> TemporaryAbsenceAuthorisation.ABSENCE_REASON_CATEGORY
+    ReferenceDataDomain.Code.ABSENCE_REASON -> TemporaryAbsenceAuthorisation.ABSENCE_REASON
+    else -> throw IllegalArgumentException("Not a valid absence categorisation filter")
+  }
+  val rd = taa.join<TemporaryAbsenceAuthorisation, ReferenceData>(fieldName, JoinType.INNER)
+  rd.get<String>(CODE).`in`(codes)
 }

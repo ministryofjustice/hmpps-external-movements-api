@@ -69,10 +69,10 @@ class RecategoriseAuthorisationIntTest(
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Police production"),
-      AuditedAction.Change("absenceSubType", "RDR (Resettlement Day Release)", "Police production"),
+      AuditedAction.Change("absenceType", "Standard ROTL (release on temporary licence)", "Police production"),
+      AuditedAction.Change("absenceSubType", "RDR (resettlement day release)", "Police production"),
       AuditedAction.Change("absenceReasonCategory", "Paid work", null),
-      AuditedAction.Change("absenceReason", "IT and communication", "Police Production"),
+      AuditedAction.Change("absenceReason", "IT and communication", "Police production"),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
@@ -111,8 +111,8 @@ class RecategoriseAuthorisationIntTest(
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("absenceType", "Standard ROTL (Release on Temporary Licence)", "Security escort"),
-      AuditedAction.Change("absenceSubType", "RDR (Resettlement Day Release)", null),
+      AuditedAction.Change("absenceType", "Standard ROTL (release on temporary licence)", "Security escort"),
+      AuditedAction.Change("absenceSubType", "RDR (resettlement day release)", null),
       AuditedAction.Change("absenceReasonCategory", "Paid work", null),
       AuditedAction.Change("absenceReason", "IT and communication", "Inpatient medical or dental appointment"),
     )

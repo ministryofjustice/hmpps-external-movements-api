@@ -23,7 +23,6 @@ data class PrisonExternalMovementOverview(
   data class TapOverview(
     val leavingToday: Int,
     val returningToday: Int,
-    val leavingNextSevenDays: Int,
     val approvalsRequired: Int,
   )
 }

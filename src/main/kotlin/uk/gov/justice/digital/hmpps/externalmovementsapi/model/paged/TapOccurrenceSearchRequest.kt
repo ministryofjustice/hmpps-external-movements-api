@@ -29,9 +29,10 @@ import java.time.LocalDate
 data class TapOccurrenceSearchRequest(
   @NotBlank
   val prisonCode: String,
-  override val start: LocalDate?,
-  override val end: LocalDate?,
+  override val start: LocalDate,
+  override val end: LocalDate,
   val status: Set<OccurrenceStatus.Code> = emptySet(),
+  val absenceCategorisation: AbsenceCategorisationFilter? = null,
   val query: String? = null,
   override val page: Int = 1,
   override val size: Int = 10,

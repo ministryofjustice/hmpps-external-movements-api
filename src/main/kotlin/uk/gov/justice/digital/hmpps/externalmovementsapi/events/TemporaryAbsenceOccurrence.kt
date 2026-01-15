@@ -70,6 +70,26 @@ data class TemporaryAbsenceCancelled(
   }
 }
 
+data class TemporaryAbsenceDenied(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "A temporary absence has been denied."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.denied"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceDenied(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
 data class TemporaryAbsenceExpired(
   override val additionalInformation: TemporaryAbsenceInformation,
   override val personReference: PersonReference,
@@ -210,21 +230,40 @@ data class TemporaryAbsenceRelocated(
   }
 }
 
-// TODO: verify if still required
-data class TemporaryAbsenceContactInfoChanged(
+data class TemporaryAbsenceStarted(
   override val additionalInformation: TemporaryAbsenceInformation,
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The contact information for a temporary absence has been changed."
+  override val description: String = "A temporary absence has started."
 
   companion object {
-    const val EVENT_TYPE: String = "person.temporary-absence.contact-information-changed"
+    const val EVENT_TYPE: String = "person.temporary-absence.started"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
       dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = TemporaryAbsenceContactInfoChanged(
+    ) = TemporaryAbsenceStarted(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceCompleted(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "A temporary absence has completed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.completed"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceCompleted(
       TemporaryAbsenceInformation(id, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
