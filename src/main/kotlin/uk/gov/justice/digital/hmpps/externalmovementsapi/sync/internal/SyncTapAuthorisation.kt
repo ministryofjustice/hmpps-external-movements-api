@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
@@ -65,11 +66,12 @@ class SyncTapAuthorisation(
 
   fun deleteById(id: UUID) {
     authorisationRepository.findByIdOrNull(id)?.also { authorisation ->
-      val occurrences = occurrenceRepository.findByAuthorisationId(authorisation.id)
-      val occurrenceIds = occurrences.map { it.id }.toSet()
-      movementRepository.findByOccurrenceIdIn(occurrenceIds).also { movementRepository.deleteAll(it) }
-      occurrenceRepository.deleteAll(occurrences)
-      authorisationRepository.delete(authorisation)
+      val occurrenceCount = occurrenceRepository.countByAuthorisationId(authorisation.id)
+      if (occurrenceCount > 0) {
+        throw ConflictException("Cannot delete an authorisation with a scheduled occurrence")
+      } else {
+        authorisationRepository.delete(authorisation)
+      }
     }
   }
 

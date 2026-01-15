@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
@@ -45,6 +46,21 @@ class DeleteTapOccurrenceIntTest(
   }
 
   @Test
+  fun `409 cannot delete occurrence with movement`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occurrence =
+      requireNotNull(findTemporaryAbsenceOccurrence(givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth)).id))
+    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, occurrence.authorisation.person.identifier, occurrence))
+
+    val res = deleteTapOccurrence(occurrence.id).errorResponse(HttpStatus.CONFLICT)
+
+    val saved = findTemporaryAbsenceOccurrence(occurrence.id)
+    assertThat(saved).isNotNull
+
+    assertThat(res.userMessage).isEqualTo("Cannot delete an occurrence with a movement")
+  }
+
+  @Test
   fun `204 no content when id invalid or already deleted`() {
     deleteTapOccurrence(newUuid()).expectStatus().isNoContent
   }
@@ -54,8 +70,6 @@ class DeleteTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
       requireNotNull(findTemporaryAbsenceOccurrence(givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth)).id))
-    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, occurrence.authorisation.person.identifier, occurrence))
-    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.IN, occurrence.authorisation.person.identifier, occurrence))
 
     deleteTapOccurrence(occurrence.id).expectStatus().isNoContent
 
@@ -65,7 +79,7 @@ class DeleteTapOccurrenceIntTest(
     verifyAudit(
       occurrence,
       RevisionType.DEL,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 

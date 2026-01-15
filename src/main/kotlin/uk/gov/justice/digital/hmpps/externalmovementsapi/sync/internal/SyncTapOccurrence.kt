@@ -46,9 +46,6 @@ class SyncTapOccurrence(
 ) {
   fun sync(authorisationId: UUID, request: TapOccurrence): SyncResponse {
     val authorisation = authorisationRepository.getAuthorisation(authorisationId)
-    if (authorisation.status.code == AuthorisationStatus.Code.PENDING.name) {
-      throw ConflictException("Attempt to add occurrence to pending authorisation")
-    }
     val rdPaths = referenceDataRepository.referenceDataFor(request)
     val occurrence =
       (
@@ -60,8 +57,8 @@ class SyncTapOccurrence(
         }
         ?.update(request, rdPaths)
         ?: let {
-          if (!authorisation.permitsOccurrences()) {
-            throw ConflictException("Cannot add a new occurrence to a non active authorisation")
+          if (authorisation.status.code != AuthorisationStatus.Code.APPROVED.name) {
+            throw ConflictException("Attempt to add occurrence to an inactive authorisation")
           }
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
           occurrenceRepository.save(
@@ -75,8 +72,12 @@ class SyncTapOccurrence(
 
   fun deleteById(id: UUID) {
     occurrenceRepository.findByIdOrNull(id)?.also { occurrence ->
-      movementRepository.findByOccurrenceId(occurrence.id).also { movementRepository.deleteAll(it) }
-      occurrenceRepository.delete(occurrence)
+      val movementCount = movementRepository.countByOccurrenceId(occurrence.id)
+      if (movementCount > 0) {
+        throw ConflictException("Cannot delete an occurrence with a movement")
+      } else {
+        occurrenceRepository.delete(occurrence)
+      }
     }
   }
 
