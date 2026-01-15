@@ -24,4 +24,4 @@ class LocationValidator : ConstraintValidator<ValidLocation, Location> {
   }
 }
 
-private fun String?.isPresent(): Boolean = this != null && isNotBlank()
+private fun String?.isPresent(): Boolean = !isNullOrBlank()

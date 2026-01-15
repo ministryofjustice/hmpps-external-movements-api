@@ -3,12 +3,17 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.occurr
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
@@ -40,12 +45,13 @@ class ChangeOccurrenceCommentsIntTest(
       .isUnauthorized
   }
 
-  @Test
-  fun `403 forbidden without correct role`() {
+  @ParameterizedTest
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  fun `403 forbidden without correct role`(role: String) {
     applyOccurrenceComments(
       newUuid(),
       action(),
-      "ROLE_ANY__OTHER_RW",
+      role,
     ).expectStatus().isForbidden
   }
 
@@ -60,10 +66,7 @@ class ChangeOccurrenceCommentsIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
     val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceCommentsChanged.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 
@@ -131,7 +134,7 @@ class ChangeOccurrenceCommentsIntTest(
   private fun applyOccurrenceComments(
     id: UUID,
     request: ChangeOccurrenceComments,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()
     .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)

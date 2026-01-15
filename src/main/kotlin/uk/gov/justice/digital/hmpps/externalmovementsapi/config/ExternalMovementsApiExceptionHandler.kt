@@ -124,7 +124,7 @@ class ExternalMovementsApiExceptionHandler {
         userMessage = "Unexpected error: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.error("Unexpected exception", e) }
+    ).also { log.error("Unexpected exception: ${e::class.simpleName}") }
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import java.time.LocalDate
 import java.util.UUID
@@ -33,6 +34,7 @@ data class TapAuthorisation(
 ) : ReferenceDataRequired {
   override fun requiredReferenceData() = setOfNotNull(
     TAP_AUTHORISATION_STATUS of statusCode,
+    TAP_AUTHORISATION_STATUS of AuthorisationStatus.Code.EXPIRED.name,
     ABSENCE_REASON of absenceReasonCode,
     absenceTypeCode?.let { ABSENCE_TYPE of it },
     absenceSubTypeCode?.let { ABSENCE_SUB_TYPE of it },

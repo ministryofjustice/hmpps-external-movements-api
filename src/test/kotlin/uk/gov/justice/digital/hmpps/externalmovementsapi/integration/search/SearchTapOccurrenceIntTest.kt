@@ -2,12 +2,17 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.search
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -22,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurren
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime.now
+import kotlin.collections.toTypedArray
 
 class SearchTapOccurrenceIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
@@ -42,13 +48,14 @@ class SearchTapOccurrenceIntTest(
       .isUnauthorized
   }
 
-  @Test
-  fun `403 forbidden without correct role`() {
+  @ParameterizedTest
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, TEMPORARY_ABSENCE_RW, EXTERNAL_MOVEMENTS_RO])
+  fun `403 forbidden without correct role`(role: String) {
     searchTapOccurrences(
       prisonCode(),
       LocalDate.now(),
       LocalDate.now(),
-      role = "ROLE_ANY__OTHER_RW",
+      role = role,
     ).expectStatus().isForbidden
   }
 
@@ -92,7 +99,7 @@ class SearchTapOccurrenceIntTest(
     val toFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -107,7 +114,7 @@ class SearchTapOccurrenceIntTest(
     val doNotFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -136,7 +143,7 @@ class SearchTapOccurrenceIntTest(
     val toFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -151,7 +158,7 @@ class SearchTapOccurrenceIntTest(
     val doNotFind = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
         start = start,
         end = end,
       ),
@@ -181,17 +188,17 @@ class SearchTapOccurrenceIntTest(
     val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
     val occ1 =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1, start = start, end = end))
-    assertThat(occ1.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
+    assertThat(occ1.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
 
     val auth2 = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
       ),
     )
     val occ2 =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2, start = start, end = end))
-    assertThat(occ2.status.code).isEqualTo(TapOccurrenceStatus.Code.PENDING.name)
+    assertThat(occ2.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
 
     val auth3 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
     val occ3 = givenTemporaryAbsenceOccurrence(
@@ -201,38 +208,38 @@ class SearchTapOccurrenceIntTest(
         end = LocalDateTime.now().minusDays(1),
       ),
     )
-    assertThat(occ3.status.code).isEqualTo(TapOccurrenceStatus.Code.EXPIRED.name)
+    assertThat(occ3.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
 
     val auth4 = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.DENIED,
+        status = AuthorisationStatus.Code.DENIED,
       ),
     )
     val occ4 =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth4, start = start, end = end))
-    assertThat(occ4.status.code).isEqualTo(TapOccurrenceStatus.Code.DENIED.name)
+    assertThat(occ4.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
 
     val res = searchTapOccurrences(
       prisonCode,
-      statuses = listOf(TapOccurrenceStatus.Code.SCHEDULED, TapOccurrenceStatus.Code.EXPIRED),
+      statuses = listOf(OccurrenceStatus.Code.SCHEDULED, OccurrenceStatus.Code.EXPIRED),
     ).successResponse<TapOccurrenceSearchResponse>()
 
     assertThat(res.content.size).isEqualTo(2)
     assertThat(res.metadata.totalElements).isEqualTo(2)
     assertThat(res.content.map { it.status.code }).containsExactlyInAnyOrder(
-      TapOccurrenceStatus.Code.SCHEDULED.name,
-      TapOccurrenceStatus.Code.EXPIRED.name,
+      OccurrenceStatus.Code.SCHEDULED.name,
+      OccurrenceStatus.Code.EXPIRED.name,
     )
 
     val single = searchTapOccurrences(
       prisonCode,
-      statuses = listOf(TapOccurrenceStatus.Code.DENIED),
+      statuses = listOf(OccurrenceStatus.Code.DENIED),
     ).successResponse<TapOccurrenceSearchResponse>()
 
     assertThat(single.content.size).isEqualTo(1)
     assertThat(single.metadata.totalElements).isEqualTo(1)
-    assertThat(single.content.map { it.status.code }).containsExactlyInAnyOrder(TapOccurrenceStatus.Code.DENIED.name)
+    assertThat(single.content.map { it.status.code }).containsExactlyInAnyOrder(OccurrenceStatus.Code.DENIED.name)
   }
 
   @Test
@@ -243,17 +250,17 @@ class SearchTapOccurrenceIntTest(
     val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
     val occ1 =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1, start = start, end = end))
-    assertThat(occ1.status.code).isEqualTo(TapOccurrenceStatus.Code.SCHEDULED.name)
+    assertThat(occ1.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
 
     val auth2 = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
       ),
     )
     val occ2 =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2, start = start, end = end))
-    assertThat(occ2.status.code).isEqualTo(TapOccurrenceStatus.Code.PENDING.name)
+    assertThat(occ2.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
 
     val auth3 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
     val occ3 = givenTemporaryAbsenceOccurrence(
@@ -263,17 +270,17 @@ class SearchTapOccurrenceIntTest(
         end = LocalDateTime.now().minusDays(1),
       ),
     )
-    assertThat(occ3.status.code).isEqualTo(TapOccurrenceStatus.Code.EXPIRED.name)
+    assertThat(occ3.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
 
     val auth4 = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
-        status = TapAuthorisationStatus.Code.DENIED,
+        status = AuthorisationStatus.Code.DENIED,
       ),
     )
     val occ4 =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth4, start = start, end = end))
-    assertThat(occ4.status.code).isEqualTo(TapOccurrenceStatus.Code.DENIED.name)
+    assertThat(occ4.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
 
     val auth5 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
     val occ5 = givenTemporaryAbsenceOccurrence(
@@ -291,7 +298,7 @@ class SearchTapOccurrenceIntTest(
         ),
       ),
     )
-    assertThat(occ5.status.code).isEqualTo(TapOccurrenceStatus.Code.OVERDUE.name)
+    assertThat(occ5.status.code).isEqualTo(OccurrenceStatus.Code.OVERDUE.name)
 
     val auth6 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
     val occ6 = givenTemporaryAbsenceOccurrence(
@@ -309,30 +316,30 @@ class SearchTapOccurrenceIntTest(
         ),
       ),
     )
-    assertThat(occ6.status.code).isEqualTo(TapOccurrenceStatus.Code.IN_PROGRESS.name)
+    assertThat(occ6.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
 
     val res1 = searchTapOccurrences(prisonCode, sort = "status,asc").successResponse<TapOccurrenceSearchResponse>()
     assertThat(res1.content.size).isEqualTo(6)
     assertThat(res1.metadata.totalElements).isEqualTo(6)
     assertThat(res1.content.map { it.status.code }).containsExactly(
-      TapOccurrenceStatus.Code.OVERDUE.name,
-      TapOccurrenceStatus.Code.IN_PROGRESS.name,
-      TapOccurrenceStatus.Code.SCHEDULED.name,
-      TapOccurrenceStatus.Code.PENDING.name,
-      TapOccurrenceStatus.Code.EXPIRED.name,
-      TapOccurrenceStatus.Code.DENIED.name,
+      OccurrenceStatus.Code.OVERDUE.name,
+      OccurrenceStatus.Code.IN_PROGRESS.name,
+      OccurrenceStatus.Code.SCHEDULED.name,
+      OccurrenceStatus.Code.PENDING.name,
+      OccurrenceStatus.Code.EXPIRED.name,
+      OccurrenceStatus.Code.DENIED.name,
     )
 
     val res2 = searchTapOccurrences(prisonCode, sort = "status,desc").successResponse<TapOccurrenceSearchResponse>()
     assertThat(res2.content.size).isEqualTo(6)
     assertThat(res2.metadata.totalElements).isEqualTo(6)
     assertThat(res2.content.map { it.status.code }).containsExactly(
-      TapOccurrenceStatus.Code.DENIED.name,
-      TapOccurrenceStatus.Code.EXPIRED.name,
-      TapOccurrenceStatus.Code.PENDING.name,
-      TapOccurrenceStatus.Code.SCHEDULED.name,
-      TapOccurrenceStatus.Code.IN_PROGRESS.name,
-      TapOccurrenceStatus.Code.OVERDUE.name,
+      OccurrenceStatus.Code.DENIED.name,
+      OccurrenceStatus.Code.EXPIRED.name,
+      OccurrenceStatus.Code.PENDING.name,
+      OccurrenceStatus.Code.SCHEDULED.name,
+      OccurrenceStatus.Code.IN_PROGRESS.name,
+      OccurrenceStatus.Code.OVERDUE.name,
     )
   }
 
@@ -498,7 +505,7 @@ class SearchTapOccurrenceIntTest(
     start: LocalDate? = null,
     end: LocalDate? = null,
     query: String? = null,
-    statuses: List<TapOccurrenceStatus.Code>? = null,
+    statuses: List<OccurrenceStatus.Code>? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient

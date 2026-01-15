@@ -30,7 +30,7 @@ abstract class HistoryService<T : Identifiable>(
     if (audited.isEmpty()) {
       throw NotFoundException("History not found")
     }
-    val domainEvents = getDomainEvents(audited.mapNotNull { it.revision.id }.toSet())
+    val domainEvents = getDomainEvents(id, audited.mapNotNull { it.revision.id }.toSet())
     val users =
       managerUsers.getUsersDetails(audited.mapNotNull { it.revision.username }.toSet()).associateBy { it.username }
     return AuditHistory(
@@ -44,9 +44,9 @@ abstract class HistoryService<T : Identifiable>(
       0 -> throw IllegalStateException("History not found")
       1 -> null
       else -> {
-        val domainEvents = getDomainEvents(setOf(audited.last().revision.id!!))
+        val domainEvents = getDomainEvents(id, setOf(audited.last().revision.id!!))
         val user = managerUsers.getUserDetails(audited.last().revision.username!!)
-        return audited.actions({ domainEvents[it] ?: emptyList() }, { user }).lastOrNull()
+        audited.actions({ domainEvents[it] ?: emptyList() }, { user }).lastOrNull()
       }
     }
   }
@@ -70,14 +70,15 @@ abstract class HistoryService<T : Identifiable>(
     return AuditedEntity(type, revision, entity)
   }
 
-  private fun getDomainEvents(revisionIds: Set<Long>): Map<Long, List<String>> {
+  private fun getDomainEvents(id: UUID, revisionIds: Set<Long>): Map<Long, List<String>> {
     val auditReader = AuditReaderFactory.get(entityManager)
     return auditReader
       .createQuery()
       .forRevisionsOfEntity(HmppsDomainEvent::class.java, false, false)
       .add(revisionNumber().`in`(revisionIds))
+      .add(AuditEntity.property(HmppsDomainEvent::entityId.name).eq(id))
       .addProjection(revisionNumber())
-      .addProjection(AuditEntity.property("eventType"))
+      .addProjection(AuditEntity.property(HmppsDomainEvent::eventType.name))
       .resultList.filterIsInstance<Array<*>>()
       .map { it[0] as Long to it[1] as String }.groupBy({ it.first }, { it.second })
   }

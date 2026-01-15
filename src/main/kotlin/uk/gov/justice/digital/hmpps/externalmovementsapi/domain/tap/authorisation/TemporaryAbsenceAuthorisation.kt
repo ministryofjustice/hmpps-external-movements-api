@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation
 
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.Column
@@ -26,30 +26,26 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.CategorisedAbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.END
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.START
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReasonCategory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceSubType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.KEY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey.Companion.CODE
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.END
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
@@ -66,15 +62,19 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import java.time.LocalDate
+import java.time.LocalDate.now
 import java.util.UUID
+import kotlin.collections.map
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 @Audited
 @Entity
-@Table(name = "temporary_absence_authorisation")
+@Table(schema = "tap", name = "authorisation")
 class TemporaryAbsenceAuthorisation(
   person: PersonSummary,
   prisonCode: String,
+  status: AuthorisationStatus,
   absenceType: AbsenceType?,
   absenceSubType: AbsenceSubType?,
   absenceReasonCategory: AbsenceReasonCategory?,
@@ -82,7 +82,6 @@ class TemporaryAbsenceAuthorisation(
   accompaniedBy: AccompaniedBy,
   transport: Transport,
   repeat: Boolean,
-  status: TapAuthorisationStatus,
   comments: String?,
   start: LocalDate,
   end: LocalDate,
@@ -152,7 +151,7 @@ class TemporaryAbsenceAuthorisation(
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne(optional = false)
   @JoinColumn(name = "status_id", nullable = false)
-  var status: TapAuthorisationStatus = status
+  var status: AuthorisationStatus = status
     private set
 
   @Column(name = "comments")
@@ -187,7 +186,7 @@ class TemporaryAbsenceAuthorisation(
   override var version: Int? = null
     private set
 
-  override fun initialEvent(): DomainEvent<*>? = if (status.code == TapAuthorisationStatus.Code.APPROVED.name) {
+  override fun initialEvent(): DomainEvent<*>? = if (status.code == AuthorisationStatus.Code.APPROVED.name) {
     TemporaryAbsenceAuthorisationApproved(person.identifier, id)
   } else {
     TemporaryAbsenceAuthorisationPending(person.identifier, id)
@@ -212,27 +211,37 @@ class TemporaryAbsenceAuthorisation(
     prisonCode = action.prisonCode
   }
 
+  fun moveTo(person: PersonSummary) = apply {
+    this.person = person
+  }
+
   fun applyAbsenceCategorisation(
     action: RecategoriseAuthorisation,
-    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) {
     if (action.changes(this)) {
       reasonPath = action.reasonPath
       absenceReason =
-        action.absenceReasonCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_REASON, it) as AbsenceReason }
+        action.absenceReasonCode?.let { rdSupplier(AbsenceReason::class, it) as AbsenceReason }
       absenceReasonCategory =
-        action.absenceReasonCategoryCode?.let { rdSupplier(ABSENCE_REASON_CATEGORY, it) as AbsenceReasonCategory }
-      absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(ABSENCE_SUB_TYPE, it) as AbsenceSubType }
-      absenceType = action.absenceTypeCode?.let { rdSupplier(ReferenceDataDomain.Code.ABSENCE_TYPE, it) as AbsenceType }
+        action.absenceReasonCategoryCode?.let { rdSupplier(AbsenceReasonCategory::class, it) as AbsenceReasonCategory }
+      absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(AbsenceSubType::class, it) as AbsenceSubType }
+      absenceType = action.absenceTypeCode?.let { rdSupplier(AbsenceType::class, it) as AbsenceType }
       appliedActions += action
     }
   }
 
-  fun amendDateRange(action: ChangeAuthorisationDateRange) {
+  fun applyDateRange(
+    action: ChangeAuthorisationDateRange,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+  ) {
     if (!start.isEqual(action.start) || !end.isEqual(action.end)) {
       start = action.start
       end = action.end
       appliedActions += action
+      if (end.isBefore(now())) {
+        expire(ExpireAuthorisation(), rdSupplier)
+      }
     }
   }
 
@@ -245,47 +254,49 @@ class TemporaryAbsenceAuthorisation(
 
   fun applyAccompaniment(
     action: ChangeAuthorisationAccompaniment,
-    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) {
     if (action.accompaniedByCode != accompaniedBy.code) {
-      accompaniedBy = rdSupplier(ReferenceDataDomain.Code.ACCOMPANIED_BY, action.accompaniedByCode) as AccompaniedBy
+      accompaniedBy = rdSupplier(AccompaniedBy::class, action.accompaniedByCode) as AccompaniedBy
       appliedActions += action
     }
   }
 
   fun applyTransport(
     action: ChangeAuthorisationTransport,
-    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) {
     if (action.transportCode != transport.code) {
-      transport = rdSupplier(ReferenceDataDomain.Code.TRANSPORT, action.transportCode) as Transport
+      transport = rdSupplier(Transport::class, action.transportCode) as Transport
       appliedActions += action
     }
   }
 
-  fun approve(action: ApproveAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
-    applyStatus(TapAuthorisationStatus.Code.APPROVED, rdSupplier, action)
+  fun approve(action: ApproveAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+    applyStatus(AuthorisationStatus.Code.APPROVED, rdSupplier, action)
   }
 
-  fun deny(action: DenyAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
-    applyStatus(TapAuthorisationStatus.Code.DENIED, rdSupplier, action)
+  fun deny(action: DenyAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+    applyStatus(AuthorisationStatus.Code.DENIED, rdSupplier, action)
   }
 
-  fun cancel(action: CancelAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
-    applyStatus(TapAuthorisationStatus.Code.CANCELLED, rdSupplier, action)
+  fun cancel(action: CancelAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+    applyStatus(AuthorisationStatus.Code.CANCELLED, rdSupplier, action)
   }
 
-  fun expire(action: ExpireAuthorisation, rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData) {
-    applyStatus(TapAuthorisationStatus.Code.EXPIRED, rdSupplier, action)
+  fun expire(action: ExpireAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+    if (status.code == OccurrenceStatus.Code.PENDING.name) {
+      applyStatus(AuthorisationStatus.Code.EXPIRED, rdSupplier, action)
+    }
   }
 
   private fun applyStatus(
-    statusCode: TapAuthorisationStatus.Code,
-    rdSupplier: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    statusCode: AuthorisationStatus.Code,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
     action: AuthorisationAction,
   ) {
     if (status.code != statusCode.name) {
-      status = rdSupplier(TAP_AUTHORISATION_STATUS, statusCode.name) as TapAuthorisationStatus
+      status = rdSupplier(AuthorisationStatus::class, statusCode.name) as AuthorisationStatus
       appliedActions += action
     }
   }
@@ -326,7 +337,7 @@ interface TemporaryAbsenceAuthorisationRepository :
     select count(1) as approvalsRequired
     from TemporaryAbsenceAuthorisation taa
     where taa.prisonCode = :prisonIdentifier 
-    and taa.status.key.code = 'PENDING' and taa.start >= current_date
+    and taa.status.code = 'PENDING' and taa.end >= current_date
   """,
   )
   fun findApprovalsRequiredCount(prisonIdentifier: String): Int
@@ -334,12 +345,15 @@ interface TemporaryAbsenceAuthorisationRepository :
   @Query(
     """
       select taa from TemporaryAbsenceAuthorisation taa
-      where taa.status.key.code = 'PENDING' and taa.end < current_date
+      where taa.status.code = 'PENDING' and taa.end < current_date
     """,
   )
   fun findRecentlyExpired(): List<TemporaryAbsenceAuthorisation>
 
+  fun countByPersonIdentifier(personIdentifier: String): Int
+
   @Modifying
+  @Query("delete from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier")
   fun deleteByPersonIdentifier(personIdentifier: String)
 }
 
@@ -365,7 +379,7 @@ fun authorisationMatchesDateRange(start: LocalDate?, end: LocalDate?) = Specific
   )
 }
 
-fun authorisationStatusCodeIn(statusCodes: Set<TapAuthorisationStatus.Code>) = Specification<TemporaryAbsenceAuthorisation> { taa, _, _ ->
-  val status = taa.join<TemporaryAbsenceAuthorisation, ReferenceData>(STATUS, JoinType.INNER)
-  status.get<String>(KEY).get<String>(CODE).`in`(statusCodes.map { it.name })
+fun authorisationStatusCodeIn(statusCodes: Set<AuthorisationStatus.Code>) = Specification<TemporaryAbsenceAuthorisation> { taa, _, _ ->
+  val status = taa.join<TemporaryAbsenceAuthorisation, AuthorisationStatus>(STATUS, JoinType.INNER)
+  status.get<String>(CODE).`in`(statusCodes.map { it.name })
 }

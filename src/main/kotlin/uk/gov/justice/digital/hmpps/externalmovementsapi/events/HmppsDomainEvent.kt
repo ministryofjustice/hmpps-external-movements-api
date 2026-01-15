@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.QueryHint
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
 import org.hibernate.jpa.HibernateHints
@@ -27,7 +28,13 @@ class HmppsDomainEvent(
   @Column(name = "id", nullable = false)
   val id: UUID = newUuid(),
 ) {
+  @Version
+  val version: Int? = null
   val eventType: String = event.eventType
+  val entityId: UUID? = when (val additionalInformation = event.additionalInformation) {
+    is IdInformation -> additionalInformation.id
+    else -> null
+  }
   var published: Boolean = false
 }
 

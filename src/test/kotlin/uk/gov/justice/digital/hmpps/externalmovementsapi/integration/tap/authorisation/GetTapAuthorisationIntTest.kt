@@ -2,8 +2,12 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.author
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
@@ -14,6 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync.RetrieveTapAuthorisationIntTest.Companion.GET_TAP_AUTH_URL
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -36,9 +41,10 @@ class GetTapAuthorisationIntTest(
       .isUnauthorized
   }
 
-  @Test
-  fun `403 forbidden without correct role`() {
-    getTapAuthorisation(newUuid(), role = "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+  @ParameterizedTest
+  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI, "ROLE_ANY__OTHER_RW"])
+  fun `403 forbidden without correct role`(role: String) {
+    getTapAuthorisation(newUuid(), role = role).expectStatus().isForbidden
   }
 
   @Test
@@ -104,6 +110,7 @@ class GetTapAuthorisationIntTest(
     ).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
     assertThat(response.occurrences).hasSize(2)
+    assertThat(response.totalOccurrenceCount).isEqualTo(4)
   }
 
   @Test
@@ -132,7 +139,7 @@ class GetTapAuthorisationIntTest(
     id: UUID,
     start: LocalDate? = null,
     end: LocalDate? = null,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = listOf(Roles.TEMPORARY_ABSENCE_RO, Roles.TEMPORARY_ABSENCE_RW).random(),
   ) = webTestClient
     .get()
     .uri { builder ->

@@ -3,15 +3,20 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.occurr
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
@@ -21,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import java.time.LocalDateTime
 import java.util.UUID
@@ -42,12 +48,13 @@ class CancelTapOccurrenceIntTest(
       .isUnauthorized
   }
 
-  @Test
-  fun `403 forbidden without correct role`() {
+  @ParameterizedTest
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  fun `403 forbidden without correct role`(role: String) {
     cancelOccurrence(
       newUuid(),
       cancelOccurrenceRequest(),
-      "ROLE_ANY__OTHER_RW",
+      role,
     ).expectStatus().isForbidden
   }
 
@@ -72,16 +79,13 @@ class CancelTapOccurrenceIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = cancelOccurrenceRequest()
     val res = cancelOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactlyInAnyOrder(
-      TemporaryAbsenceCancelled.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE,
-    )
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).isEmpty()
+    assertThat(res.changes).containsExactly(AuditedAction.Change("status", "Scheduled", "Cancelled"))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
-    assertThat(saved.authorisation.status.code).isEqualTo(TapAuthorisationStatus.Code.CANCELLED.name)
+    assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.authorisation.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
 
     verifyAudit(
       saved,
@@ -111,10 +115,10 @@ class CancelTapOccurrenceIntTest(
     val res = cancelOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactlyInAnyOrder(TemporaryAbsenceCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).isEmpty()
+    assertThat(res.changes).containsExactly(AuditedAction.Change("status", "Scheduled", "Cancelled"))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(saved.status.code).isEqualTo(TapOccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
     assertThat(saved.authorisation.status.code).isEqualTo(auth.status.code)
 
     verifyAudit(
@@ -142,7 +146,7 @@ class CancelTapOccurrenceIntTest(
   private fun cancelOccurrence(
     id: UUID,
     request: CancelOccurrence,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()
     .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)

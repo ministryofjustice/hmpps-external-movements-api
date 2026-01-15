@@ -7,10 +7,11 @@ integration:
     url: "https://prisoner-search-dev.prison.service.justice.gov.uk"
 
 service:
-  active-prisons: "LEI,MDI"
+  active-prisons: "***"
   domain-events:
     poll-interval: PT10s
   occurrence-status:
     poll-interval: PT60s
   authorisation-expiration:
     cron: "0 30 0 * * *"
+  ui-base-url: "https://external-movements-dev.hmpps.service.justice.gov.uk"

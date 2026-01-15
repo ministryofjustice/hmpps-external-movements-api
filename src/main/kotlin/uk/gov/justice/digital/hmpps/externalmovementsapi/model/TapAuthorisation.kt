@@ -20,6 +20,7 @@ data class TapAuthorisation(
   val repeat: Boolean,
   val start: LocalDate,
   val end: LocalDate,
+  val totalOccurrenceCount: Long,
   val occurrences: List<Occurrence>,
   val locations: List<Location>,
   val schedule: JsonNode?,

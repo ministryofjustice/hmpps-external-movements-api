@@ -11,7 +11,6 @@ data class Prisoner(
   val firstName: String,
   val lastName: String,
   val dateOfBirth: LocalDate,
-  val prisonId: String,
   val lastPrisonId: String,
   val cellLocation: String?,
 ) {
@@ -21,7 +20,6 @@ data class Prisoner(
       Prisoner::firstName.name,
       Prisoner::lastName.name,
       Prisoner::dateOfBirth.name,
-      Prisoner::prisonId.name,
       Prisoner::lastPrisonId.name,
       Prisoner::cellLocation.name,
     )

@@ -2,13 +2,17 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.occurr
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.IN
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.OUT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.IN
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.OUT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -39,9 +43,10 @@ class GetTapOccurrenceIntTest(
       .isUnauthorized
   }
 
-  @Test
-  fun `403 forbidden without correct role`() {
-    getTapOccurrence(newUuid(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+  @ParameterizedTest
+  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI, "ROLE_ANY__OTHER_RW"])
+  fun `403 forbidden without correct role`(role: String) {
+    getTapOccurrence(newUuid(), role).expectStatus().isForbidden
   }
 
   @Test
@@ -93,7 +98,7 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve pending occurrence`() {
     val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.PENDING))
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.PENDING))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
@@ -106,7 +111,7 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve cancelled occurrence from cancelled authorisation`() {
     val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.CANCELLED))
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.CANCELLED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
@@ -119,7 +124,7 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve denied occurrence`() {
     val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = TapAuthorisationStatus.Code.DENIED))
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.DENIED))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
@@ -194,9 +199,51 @@ class GetTapOccurrenceIntTest(
     assertThat(response.status.code).isEqualTo("COMPLETED")
   }
 
+  @Test
+  fun `can retrieve occurrence with position and total count`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occ1 =
+      givenTemporaryAbsenceOccurrence(
+        temporaryAbsenceOccurrence(
+          auth,
+          start = LocalDateTime.now().plusHours(1),
+          end = LocalDateTime.now().plusHours(3),
+        ),
+      )
+    val occ2 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().plusHours(6),
+        end = LocalDateTime.now().plusHours(8),
+      ),
+    )
+    val occ3 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().plusHours(10),
+        end = LocalDateTime.now().plusHours(12),
+      ),
+    )
+
+    val res1 = getTapOccurrence(occ1.id).successResponse<TapOccurrence>()
+    occ1.verifyAgainst(res1)
+    assertThat(res1.occurrencePosition).isEqualTo(1)
+    assertThat(res1.totalOccurrences).isEqualTo(3)
+
+    val res2 = getTapOccurrence(occ2.id).successResponse<TapOccurrence>()
+    occ2.verifyAgainst(res2)
+    assertThat(res2.occurrencePosition).isEqualTo(2)
+    assertThat(res2.totalOccurrences).isEqualTo(3)
+
+    val res3 = getTapOccurrence(occ3.id).successResponse<TapOccurrence>()
+    occ3.verifyAgainst(res3)
+    assertThat(res3.occurrencePosition).isEqualTo(3)
+    assertThat(res3.totalOccurrences).isEqualTo(3)
+  }
+
   private fun getTapOccurrence(
     id: UUID,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = listOf(Roles.TEMPORARY_ABSENCE_RO, Roles.TEMPORARY_ABSENCE_RW).random(),
   ) = webTestClient
     .get()
     .uri(GET_TAP_OCCURRENCE_URL, id)

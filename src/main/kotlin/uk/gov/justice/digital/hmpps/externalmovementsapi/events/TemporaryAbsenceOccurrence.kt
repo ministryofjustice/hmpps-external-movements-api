@@ -5,9 +5,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import java.util.UUID
 
 data class TemporaryAbsenceInformation(
-  val id: UUID,
+  override val id: UUID,
   override val source: DataSource,
-) : AdditionalInformation
+) : AdditionalInformation,
+  IdInformation
 
 data class TemporaryAbsenceScheduled(
   override val additionalInformation: TemporaryAbsenceInformation,
@@ -215,7 +216,7 @@ data class TemporaryAbsenceContactInfoChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The contact information for a temporary absence has been updated."
+  override val description: String = "The contact information for a temporary absence has been changed."
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.contact-information-changed"

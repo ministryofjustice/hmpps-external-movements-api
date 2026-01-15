@@ -1,15 +1,29 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
+import jakarta.persistence.Cacheable
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.hibernate.annotations.Cache
+import org.hibernate.annotations.CacheConcurrencyStrategy
 import org.hibernate.annotations.Immutable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.repository.findByIdOrNull
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import kotlin.reflect.KClass
 
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 @Immutable
 @Entity
 @Table(name = "reference_data_domain")
@@ -19,16 +33,16 @@ class ReferenceDataDomain(
   val code: Code,
   val description: String,
 ) {
-  enum class Code {
-    ABSENCE_TYPE,
-    ABSENCE_SUB_TYPE,
-    ABSENCE_REASON_CATEGORY,
-    ABSENCE_REASON,
+  enum class Code(val clazz: KClass<out ReferenceData>) {
+    ABSENCE_TYPE(AbsenceType::class),
+    ABSENCE_SUB_TYPE(AbsenceSubType::class),
+    ABSENCE_REASON_CATEGORY(AbsenceReasonCategory::class),
+    ABSENCE_REASON(AbsenceReason::class),
 
-    ACCOMPANIED_BY,
-    TRANSPORT,
-    TAP_AUTHORISATION_STATUS,
-    TAP_OCCURRENCE_STATUS,
+    ACCOMPANIED_BY(AccompaniedBy::class),
+    TRANSPORT(Transport::class),
+    TAP_AUTHORISATION_STATUS(AuthorisationStatus::class),
+    TAP_OCCURRENCE_STATUS(OccurrenceStatus::class),
     ;
 
     companion object {

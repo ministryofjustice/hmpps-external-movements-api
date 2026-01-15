@@ -14,15 +14,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -77,21 +78,29 @@ class MigrateTapHierarchyIntTest(
 
   @Test
   fun `200 ok - can migrate tap for a person`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
+        legacyId = newId(),
         movements = listOf(
           temporaryAbsenceMovement(
             personIdentifier = auth.person.identifier,
             direction = Direction.OUT,
+            legacyId = newId().toString(),
           ),
         ),
       ),
     )
     val um = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(Direction.IN, auth.person.identifier))
     prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.person.identifier))
-    val request = migrateTapRequest(temporaryAbsences = listOf(tapAuthorisation(), tapAuthorisation(statusCode = TapAuthorisationStatus.Code.PENDING.name, occurrences = listOf())))
+    val request = migrateTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(),
+        tapAuthorisation(statusCode = AuthorisationStatus.Code.PENDING.name, occurrences = listOf()),
+      ),
+    )
+
     val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     // confirm existing tap hierarchy has been removed
@@ -151,7 +160,7 @@ class MigrateTapHierarchyIntTest(
 
     with(response.temporaryAbsences.last()) {
       val expired = requireNotNull(findTemporaryAbsenceAuthorisation(id))
-      assertThat(expired.status.code).isEqualTo(TapAuthorisationStatus.Code.EXPIRED.name)
+      assertThat(expired.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
     }
   }
 
@@ -214,6 +223,115 @@ class MigrateTapHierarchyIntTest(
       val domainEvents = latestRevisionDomainEvents(auth)
       assertThat(domainEvents).hasSize(3)
       domainEvents.forEach { domainEvent -> assertThat(domainEvent.published).isTrue }
+    }
+  }
+
+  @Test
+  fun `200 ok - can migrate with reason only categorisation`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = migrateTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          typeCode = null,
+          subTypeCode = null,
+          reasonCode = "ET",
+          occurrences = listOf(
+            tapOccurrence(
+              typeCode = null,
+              subTypeCode = null,
+              reasonCode = "ET",
+            ),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    val response = migrateTap(pi, request).successResponse<MigrateTapResponse>()
+
+    response.temporaryAbsences.first().also { ma ->
+      val auth = requireNotNull(findTemporaryAbsenceAuthorisation(ma.id))
+      val authRequest = request.temporaryAbsences.single { it.legacyId == auth.legacyId }
+      val amsa = requireNotNull(msaRepository.findByIdOrNull(auth.id))
+      auth.verifyAgainst(auth.person.identifier, authRequest, amsa)
+      assertThat(auth.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "ET")
+      ma.occurrences.forEach { mo ->
+        val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
+        val occRequest = authRequest.occurrences.single { it.legacyId == occurrence.legacyId }
+        val omsa = requireNotNull(msaRepository.findByIdOrNull(occurrence.id))
+        occurrence.verifyAgainst(occRequest, omsa)
+        assertThat(occurrence.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "ET")
+        mo.movements.forEach { mm ->
+          val movement = requireNotNull(findTemporaryAbsenceMovement(mm.id))
+          val movementRequest = occRequest.movements.single { it.legacyId == movement.legacyId }
+          val mmsa = requireNotNull(msaRepository.findByIdOrNull(movement.id))
+          movement.verifyAgainst(auth.person.identifier, movementRequest, mmsa)
+        }
+      }
+
+      verifyAudit(
+        auth,
+        RevisionType.ADD,
+        setOf(
+          TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
+          TemporaryAbsenceMovement::class.simpleName!!,
+          HmppsDomainEvent::class.simpleName!!,
+        ),
+        ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
+      )
+
+      val domainEvents = latestRevisionDomainEvents(auth)
+      assertThat(domainEvents).hasSize(3)
+      domainEvents.forEach { domainEvent -> assertThat(domainEvent.published).isTrue }
+    }
+  }
+
+  @Test
+  fun `200 ok - historic absences with movements get correct status`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = migrateTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          occurrences = listOf(
+            tapOccurrence(
+              start = LocalDateTime.now().minusDays(3),
+              end = LocalDateTime.now().minusDays(2),
+              movements = listOf(
+                tapMovement(occurredAt = LocalDateTime.now().minusDays(1)),
+              ),
+            ),
+          ),
+        ),
+        tapAuthorisation(
+          occurrences = listOf(
+            tapOccurrence(
+              start = LocalDateTime.now().minusDays(3),
+              end = LocalDateTime.now().minusDays(2),
+              movements = listOf(),
+            ),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    val response = migrateTap(pi, request).successResponse<MigrateTapResponse>()
+
+    response.temporaryAbsences.first().also { ma ->
+      ma.occurrences.first().also { mo ->
+        val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
+        assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.OVERDUE.name)
+      }
+    }
+
+    response.temporaryAbsences.last().also { ma ->
+      ma.occurrences.first().also { mo ->
+        val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
+        assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+      }
     }
   }
 
@@ -311,7 +429,7 @@ class MigrateTapHierarchyIntTest(
   private fun tapMovement(
     direction: Direction = Direction.OUT,
     prisonCode: String = prisonCode(),
-    occurrenceAt: LocalDateTime = LocalDateTime.now().minusDays(7),
+    occurredAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     reasonCode: String = "R15",
     accompaniedByCode: String = "L",
     accompaniedByComments: String? = "Information about the escort",
@@ -321,7 +439,7 @@ class MigrateTapHierarchyIntTest(
     recordedBy: String = username(),
     recordedAt: LocalDateTime = LocalDateTime.now().minusDays(7),
   ) = TapMovement(
-    occurrenceAt,
+    occurredAt,
     direction,
     reasonCode,
     location,

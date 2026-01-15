@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import java.time.ZonedDateTime
+import java.util.UUID
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "eventType")
 @JsonSubTypes(
@@ -13,6 +14,7 @@ import java.time.ZonedDateTime
     Type(value = TemporaryAbsenceAuthorisationApproved::class, name = TemporaryAbsenceAuthorisationApproved.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDenied::class, name = TemporaryAbsenceAuthorisationDenied.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationCancelled::class, name = TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationExpired::class, name = TemporaryAbsenceAuthorisationExpired.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDateRangeChanged::class, name = TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationAccompanimentChanged::class, name = TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationTransportChanged::class, name = TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE),
@@ -66,4 +68,8 @@ data class PersonReference(val identifiers: List<Identifier> = listOf()) {
 
 sealed interface AdditionalInformation {
   val source: DataSource
+}
+
+sealed interface IdInformation {
+  val id: UUID
 }

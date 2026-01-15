@@ -5,15 +5,19 @@ import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapAuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.TapOccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDenied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -41,12 +45,13 @@ class DenyTapAuthorisationIntTest(
       .isUnauthorized
   }
 
-  @Test
-  fun `403 forbidden without correct role`() {
+  @ParameterizedTest
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  fun `403 forbidden without correct role`(role: String) {
     denyAuthorisation(
       IdGenerator.newUuid(),
       denyAuthorisationRequest(),
-      "ROLE_ANY__OTHER_RW",
+      role,
     ).expectStatus().isForbidden
   }
 
@@ -56,8 +61,8 @@ class DenyTapAuthorisationIntTest(
   }
 
   @ParameterizedTest
-  @EnumSource(TapAuthorisationStatus.Code::class, mode = EnumSource.Mode.EXCLUDE, names = ["PENDING", "DENIED"])
-  fun `409 - authorisation not awaiting approval cannot be denied`(status: TapAuthorisationStatus.Code) {
+  @EnumSource(AuthorisationStatus.Code::class, mode = EnumSource.Mode.EXCLUDE, names = ["PENDING", "DENIED"])
+  fun `409 - authorisation not awaiting approval cannot be denied`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(
       TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation(
         status = status,
@@ -72,7 +77,7 @@ class DenyTapAuthorisationIntTest(
   fun `200 ok - authorisation denied`() {
     val auth = givenTemporaryAbsenceAuthorisation(
       TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation(
-        status = TapAuthorisationStatus.Code.PENDING,
+        status = AuthorisationStatus.Code.PENDING,
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(
@@ -89,9 +94,9 @@ class DenyTapAuthorisationIntTest(
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    Assertions.assertThat(saved.status.code).isEqualTo(TapAuthorisationStatus.Code.DENIED.name)
+    Assertions.assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.DENIED.name)
     val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    Assertions.assertThat(absence.status.code).isEqualTo(TapOccurrenceStatus.Code.DENIED.name)
+    Assertions.assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
 
     verifyAudit(
       saved,
@@ -117,7 +122,7 @@ class DenyTapAuthorisationIntTest(
   private fun denyAuthorisation(
     id: UUID,
     request: DenyAuthorisation,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)

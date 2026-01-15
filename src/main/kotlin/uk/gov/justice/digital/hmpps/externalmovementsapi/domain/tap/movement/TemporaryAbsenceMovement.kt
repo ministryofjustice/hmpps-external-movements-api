@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -18,22 +18,23 @@ import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.movement.TemporaryAbsenceMovement.Direction.valueOf
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.absence.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.valueOf
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.reflect.KClass
 
 @Audited
 @Entity
-@Table(name = "temporary_absence_movement")
+@Table(schema = "tap", name = "movement")
 class TemporaryAbsenceMovement(
   personIdentifier: String,
   occurrence: TemporaryAbsenceOccurrence?,
@@ -118,18 +119,22 @@ class TemporaryAbsenceMovement(
     OUT,
   }
 
+  fun moveTo(personIdentifier: String) = apply {
+    this.personIdentifier = personIdentifier
+  }
+
   fun update(
     personIdentifier: String,
     occurrence: TemporaryAbsenceOccurrence?,
     request: TapMovement,
-    rdProvider: (ReferenceDataDomain.Code, String) -> ReferenceData,
+    rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) = apply {
     this.personIdentifier = personIdentifier
     this.occurrence = occurrence
     occurredAt = request.occurredAt
     direction = valueOf(request.direction.name)
-    absenceReason = rdProvider(ReferenceDataDomain.Code.ABSENCE_REASON, request.absenceReasonCode) as AbsenceReason
-    accompaniedBy = rdProvider(ReferenceDataDomain.Code.ACCOMPANIED_BY, request.accompaniedByCode) as AccompaniedBy
+    absenceReason = rdProvider(AbsenceReason::class, request.absenceReasonCode) as AbsenceReason
+    accompaniedBy = rdProvider(AccompaniedBy::class, request.accompaniedByCode) as AccompaniedBy
     accompaniedByComments = request.accompaniedByComments
     comments = request.comments
     recordedByPrisonCode = request.created.prisonCode
@@ -145,7 +150,29 @@ interface TemporaryAbsenceMovementRepository :
 
   fun findByOccurrenceId(occurrenceId: UUID): List<TemporaryAbsenceMovement>
   fun findByOccurrenceIdIn(ids: Set<UUID>): List<TemporaryAbsenceMovement>
+  fun findAllByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceMovement>
+
+  @Query(
+    """
+      select 
+        coalesce(sum(case when tam.occurrence is not null and tam.direction = 'OUT' then 1 else 0 end),0) as schOut,
+        coalesce(sum(case when tam.occurrence is not null and tam.direction = 'IN' then 1 else 0 end),0) as schIn,
+        coalesce(sum(case when tam.occurrence is null and tam.direction = 'OUT' then 1 else 0 end),0) as adocOut,
+        coalesce(sum(case when tam.occurrence is null and tam.direction = 'IN' then 1 else 0 end),0) as adhocIn
+      from TemporaryAbsenceMovement tam
+      where tam.personIdentifier = :personIdentifier
+    """,
+  )
+  fun summaryForPerson(personIdentifier: String): PersonMovementSummary
 
   @Modifying
+  @Query("delete from TemporaryAbsenceMovement tam where tam.personIdentifier = :personIdentifier")
   fun deleteByPersonIdentifier(personIdentifier: String)
+}
+
+interface PersonMovementSummary {
+  val schOut: Int
+  val schIn: Int
+  val adocOut: Int
+  val adhocIn: Int
 }
