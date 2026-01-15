@@ -49,6 +49,7 @@ interface TemporaryAbsenceOccurrenceRepository :
 
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceOccurrence?
 
+  fun countByAuthorisationId(authorisationId: UUID): Int
   fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
   fun findByAuthorisationIdIn(authorisationIds: Set<UUID>): List<TemporaryAbsenceOccurrence>
 

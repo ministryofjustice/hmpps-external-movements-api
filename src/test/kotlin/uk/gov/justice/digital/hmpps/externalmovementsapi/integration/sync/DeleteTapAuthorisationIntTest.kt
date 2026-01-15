@@ -4,13 +4,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -41,6 +41,19 @@ class DeleteTapAuthorisationIntTest(
   }
 
   @Test
+  fun `409 cannot delete tap authorisation with an occurrence`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+
+    val res = deleteTapAuthorisation(auth.id).errorResponse(HttpStatus.CONFLICT)
+
+    val saved = findTemporaryAbsenceAuthorisation(auth.id)
+    assertThat(saved).isNotNull
+
+    assertThat(res.userMessage).isEqualTo("Cannot delete an authorisation with a scheduled occurrence")
+  }
+
+  @Test
   fun `204 no content when id invalid or already deleted`() {
     deleteTapAuthorisation(newUuid()).expectStatus().isNoContent
   }
@@ -48,7 +61,6 @@ class DeleteTapAuthorisationIntTest(
   @Test
   fun `204 can delete tap authorisation and occurrences`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
     deleteTapAuthorisation(auth.id).expectStatus().isNoContent
 
@@ -58,7 +70,7 @@ class DeleteTapAuthorisationIntTest(
     verifyAudit(
       auth,
       RevisionType.DEL,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, TemporaryAbsenceAuthorisation::class.simpleName!!),
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 

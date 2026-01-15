@@ -75,11 +75,7 @@ class SyncTapOccurrenceIntTest(
     val request = tapOccurrence()
     val res = syncTapOccurrence(authorisation.id, request).errorResponse(HttpStatus.CONFLICT)
 
-    if (statusCode == AuthorisationStatus.Code.PENDING) {
-      assertThat(res.userMessage).isEqualTo("Attempt to add occurrence to pending authorisation")
-    } else {
-      assertThat(res.userMessage).isEqualTo("Cannot add a new occurrence to a non active authorisation")
-    }
+    assertThat(res.userMessage).isEqualTo("Attempt to add occurrence to a non-approved authorisation")
   }
 
   @Test
