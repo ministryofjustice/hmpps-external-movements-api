@@ -115,7 +115,7 @@ class GetTapOccurrenceHistoryIntTest(
         AuditedAction.Change("absenceType", "Standard ROTL (release on temporary licence)", "Police production"),
         AuditedAction.Change("absenceSubType", "RDR (resettlement day release)", "Police production"),
         AuditedAction.Change("absenceReasonCategory", "Paid work", null),
-        AuditedAction.Change("absenceReason", "IT and communication", "Police Production"),
+        AuditedAction.Change("absenceReason", "IT and communication", "Police production"),
       )
     }
     with(history.content[2]) {
