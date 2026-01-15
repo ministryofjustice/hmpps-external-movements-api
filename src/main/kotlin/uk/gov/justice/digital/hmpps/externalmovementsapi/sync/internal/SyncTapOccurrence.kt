@@ -58,7 +58,7 @@ class SyncTapOccurrence(
         ?.update(request, rdPaths)
         ?: let {
           if (authorisation.status.code != AuthorisationStatus.Code.APPROVED.name) {
-            throw ConflictException("Attempt to add occurrence to an inactive authorisation")
+            throw ConflictException("Attempt to add occurrence to a non-approved authorisation")
           }
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
           occurrenceRepository.save(
