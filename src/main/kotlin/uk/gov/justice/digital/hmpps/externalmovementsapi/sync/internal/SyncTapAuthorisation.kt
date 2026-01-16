@@ -25,8 +25,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
@@ -119,6 +121,7 @@ class SyncTapAuthorisation(
     applyAbsenceCategorisation(request, rdPaths)
     checkSchedule(request, rdPaths)
     checkStatus(request, rdPaths)
+    applyLogistics(request, rdPaths)
     request.comments?.also { applyComments(ChangeAuthorisationComments(it)) }
   }
 
@@ -137,6 +140,11 @@ class SyncTapAuthorisation(
       ),
       rdPaths::getReferenceData,
     )
+  }
+
+  private fun TemporaryAbsenceAuthorisation.applyLogistics(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
+    applyAccompaniment(ChangeAuthorisationAccompaniment(request.accompaniedByCode), rdPaths::getReferenceData)
+    applyTransport(ChangeAuthorisationTransport(request.transportCode), rdPaths::getReferenceData)
   }
 
   private fun TemporaryAbsenceAuthorisation.checkStatus(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
