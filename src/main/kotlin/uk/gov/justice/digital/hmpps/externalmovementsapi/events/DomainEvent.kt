@@ -12,6 +12,7 @@ import java.util.UUID
   value = [
     Type(value = TemporaryAbsenceAuthorisationPending::class, name = TemporaryAbsenceAuthorisationPending.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationApproved::class, name = TemporaryAbsenceAuthorisationApproved.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationDeferred::class, name = TemporaryAbsenceAuthorisationDeferred.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDenied::class, name = TemporaryAbsenceAuthorisationDenied.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationCancelled::class, name = TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationExpired::class, name = TemporaryAbsenceAuthorisationExpired.EVENT_TYPE),

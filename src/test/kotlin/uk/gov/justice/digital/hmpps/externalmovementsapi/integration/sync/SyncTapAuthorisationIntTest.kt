@@ -14,10 +14,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationAccompanimentChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDeferred
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationTransportChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -277,6 +280,8 @@ class SyncTapAuthorisationIntTest(
         legacyId = legacyId,
         prisonCode = prisonCode,
         personIdentifier = ps.identifier,
+        accompaniedByCode = "U",
+        transportCode = "TNR",
       ),
     )
     val request = tapAuthorisation(id = existing.id, existing.prisonCode, legacyId = legacyId)
@@ -296,8 +301,10 @@ class SyncTapAuthorisationIntTest(
     verifyEvents(
       saved,
       setOf(
+        TemporaryAbsenceAuthorisationAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceAuthorisationDateRangeChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceAuthorisationCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceAuthorisationTransportChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
       ),
     )
   }
@@ -333,11 +340,11 @@ class SyncTapAuthorisationIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationDeferred(saved.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   @Test
@@ -393,8 +400,8 @@ class SyncTapAuthorisationIntTest(
     transportCode: String = "OD",
     repeat: Boolean = false,
     comments: String? = "Some comments about the application",
-    start: LocalDate = LocalDate.now().minusDays(7),
-    end: LocalDate = LocalDate.now(),
+    start: LocalDate = now().minusDays(7),
+    end: LocalDate = now(),
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), DEFAULT_USERNAME),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), SYSTEM_USERNAME),
     legacyId: Long = newId(),
@@ -449,4 +456,6 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   assertThat(comments).isEqualTo(request.comments)
   assertThat(start).isEqualTo(request.start)
   assertThat(end).isEqualTo(request.end)
+  assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
+  assertThat(transport.code).isEqualTo(request.transportCode)
 }

@@ -94,6 +94,27 @@ data class TemporaryAbsenceAuthorisationCancelled(
   }
 }
 
+data class TemporaryAbsenceAuthorisationDeferred(
+  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "A temporary absence authorisation has been deferred."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.deferred"
+
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorisationDeferred(
+      TemporaryAbsenceAuthorisationInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
 data class TemporaryAbsenceAuthorisationExpired(
   override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
   override val personReference: PersonReference,
