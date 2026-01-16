@@ -149,8 +149,8 @@ class TemporaryAbsenceMovement(
       val time = DateTimeFormatter.ofPattern("HH:mm")
       val format = date.format(it.occurredAt) + " at " + time.format(it.occurredAt)
       when (it.direction) {
-        Direction.IN -> "Recorded as having gone out of the prison on $format."
-        Direction.OUT -> "Recorded as having returned in to the prison on $format."
+        Direction.IN -> "Recorded as having returned in to the prison on $format."
+        Direction.OUT -> "Recorded as having gone out of the prison on $format."
       }
     }
   }
