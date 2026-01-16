@@ -113,6 +113,7 @@ interface TemporaryAbsenceOccurrenceRepository :
   fun findReturningTodayCount(prisonIdentifier: String): Int
 
   fun countByAuthorisationPersonIdentifier(personIdentifier: String): Int
+  fun findByAuthorisationPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceOccurrence>
 
   @Modifying
   @Query(

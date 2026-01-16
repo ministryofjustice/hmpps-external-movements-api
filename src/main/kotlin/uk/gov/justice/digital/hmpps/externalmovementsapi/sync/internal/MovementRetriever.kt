@@ -12,8 +12,10 @@ import java.util.UUID
 
 @Transactional(readOnly = true)
 @Service
-class MovementRetriever(private val movementRepository: AuditedTapMovementRepository) {
-  fun getById(id: UUID): TapMovement = movementRepository.getMovement(id).forSync()
+class MovementRetriever(
+  private val auditedMovements: AuditedTapMovementRepository,
+) {
+  fun getById(id: UUID): TapMovement = auditedMovements.getMovement(id).forSync()
 }
 
 private fun AuditedTapMovement.forSync() = TapMovement(

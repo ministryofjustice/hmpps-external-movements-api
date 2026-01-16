@@ -153,7 +153,12 @@ class TempAbsenceOccurrenceOperationsImpl(
     temporaryAbsenceOccurrenceRepository.save(occurrence)
   }!!
 
-  override fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence? = temporaryAbsenceOccurrenceRepository.findByIdOrNull(id)
+  override fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence? = transactionTemplate.execute {
+    val occurrence = temporaryAbsenceOccurrenceRepository.findByIdOrNull(id)
+    // force getting related movements inside transaction to avoid lazy loading exception in tests
+    occurrence?.movements()?.forEach { it.id }
+    occurrence
+  }
 
   override fun findForAuthorisation(id: UUID): List<TemporaryAbsenceOccurrence> = temporaryAbsenceOccurrenceRepository.findByAuthorisationId(id)
 }
