@@ -32,7 +32,7 @@ private fun AuditedTapAuthorisation.with(
   prisonCode = prisonCode,
   statusCode = status.code,
   absenceTypeCode = absenceType?.code,
-  absenceSubTypeCode = absenceSubType?.code,
+  absenceSubTypeCode = absenceSubType?.code ?: if (absenceType?.code == "SE") "SE" else null,
   absenceReasonCode = requireNotNull(absenceReason).code,
   accompaniedByCode = accompaniedBy.code,
   transportCode = transport.code,
