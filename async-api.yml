@@ -1,0 +1,88 @@
+asyncapi: 3.0.0
+info:
+  title: HMPPS External Movements
+  version: 1.0.0
+  description: Reflect changes to External Movements
+
+servers:
+  development:
+    host: "hmpps-domain-events-dev.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Development Environment
+  preproduction:
+    host: "hmpps-domain-events-preprod.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Pre-production Environment
+  production:
+    host: "hmpps-domain-events-prod.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Production Environment
+
+components:
+  messages:
+    person.temporary-absence-authorisation.accompaniment-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-accompaniment-changed.yaml
+    person.temporary-absence-authorisation.approved:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-approved.yaml
+    person.temporary-absence-authorisation.cancelled:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-cancelled.yaml
+    person.temporary-absence-authorisation.comments-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-comments-changed.yaml
+    person.temporary-absence-authorisation.date-range-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-date-range-changed.yaml
+    person.temporary-absence-authorisation.denied:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-denied.yaml
+    person.temporary-absence-authorisation.expired:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-expired.yaml
+    person.temporary-absence-authorisation.pending:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-pending.yaml
+    person.temporary-absence-authorisation.recategorised:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-recategorised.yaml
+    person.temporary-absence-authorisation.transport-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-transport-changed.yaml
+
+
+channels:
+  hmpps-domain-events:
+    description: HMPPS domain events SNS topic
+    bindings:
+      sns:
+        name: domainevents
+    messages:
+      person.temporary-absence-authorisation.accompaniment-changed:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.accompaniment-changed'
+      person.temporary-absence-authorisation.approved:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.approved'
+      person.temporary-absence-authorisation.cancelled:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.cancelled'
+      person.temporary-absence-authorisation.comments-changed:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.comments-changed'
+      person.temporary-absence-authorisation.date-range-changed:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.date-range-changed'
+      person.temporary-absence-authorisation.denied:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.denied'
+      person.temporary-absence-authorisation.expired:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.expired'
+      person.temporary-absence-authorisation.pending:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.pending'
+      person.temporary-absence-authorisation.recategorised:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.recategorised'
+      person.temporary-absence-authorisation.transport-changed:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.transport-changed'
+
+operations:
+  publish-event:
+    action: send
+    channel:
+      $ref: '#/channels/hmpps-domain-events'
+    messages:
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.accompaniment-changed'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.approved'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.cancelled'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.comments-changed'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.date-range-changed'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.denied'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.expired'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.pending'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.recategorised'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.transport-changed'
