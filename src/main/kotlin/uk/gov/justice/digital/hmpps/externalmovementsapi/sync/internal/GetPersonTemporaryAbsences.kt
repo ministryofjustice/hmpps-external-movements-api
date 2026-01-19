@@ -1,22 +1,26 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.MovementInOutCount
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.PersonAuthorisationCount
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.PersonMovementsCount
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.PersonOccurrenceCount
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.PersonTapCounts
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.PersonTapDetail
 
 @Service
-class CountPersonTemporaryAbsences(
+class GetPersonTemporaryAbsences(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
-  fun temporaryAbsences(personIdentifier: String): PersonTapCounts {
+  fun count(personIdentifier: String): PersonTapCounts {
     val authCount = authorisationRepository.countByPersonIdentifier(personIdentifier)
     val occCount = occurrenceRepository.countByAuthorisationPersonIdentifier(personIdentifier)
     val movementSummary = movementRepository.summaryForPerson(personIdentifier)
@@ -27,6 +31,32 @@ class CountPersonTemporaryAbsences(
         MovementInOutCount(movementSummary.schOut, movementSummary.schIn),
         MovementInOutCount(movementSummary.adocOut, movementSummary.adhocIn),
       ),
+    )
+  }
+
+  fun detail(personIdentifier: String): PersonTapDetail {
+    val occurrences =
+      occurrenceRepository.findByAuthorisationPersonIdentifier(personIdentifier).groupBy { it.authorisation }
+    val unscheduledKey = newUuid()
+    val movements =
+      movementRepository.findAllByPersonIdentifier(personIdentifier).groupBy { it.occurrence?.id ?: unscheduledKey }
+    val authorisations = occurrences.map { e ->
+      PersonTapDetail.Authorisation(
+        e.key.id,
+        AuthorisationStatus.Code.valueOf(e.key.status.code),
+        e.value.map { occ ->
+          PersonTapDetail.Occurrence(
+            occ.id,
+            OccurrenceStatus.Code.valueOf(occ.status.code),
+            movements[occ.id]?.map { m -> PersonTapDetail.Movement(m.id, m.direction) } ?: emptyList(),
+          )
+        },
+      )
+    }
+    val unscheduled = movements[unscheduledKey]?.map { PersonTapDetail.Movement(it.id, it.direction) } ?: emptyList()
+    return PersonTapDetail(
+      authorisations,
+      unscheduled,
     )
   }
 }
