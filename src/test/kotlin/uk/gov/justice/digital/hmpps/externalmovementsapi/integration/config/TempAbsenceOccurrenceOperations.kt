@@ -106,7 +106,7 @@ interface TempAbsenceOccurrenceOperations {
     request: CreateTapAuthorisationRequest.OccurrenceRequest,
     authRequest: CreateTapAuthorisationRequest,
   ) {
-    assertThat(authorisation.person.identifier).isEqualTo(personIdentifier)
+    assertThat(person.identifier).isEqualTo(personIdentifier)
     assertThat(comments).isEqualTo(authRequest.comments)
     assertThat(legacyId).isNull()
     assertThat(location).isEqualTo(request.location)
@@ -125,7 +125,7 @@ interface TempAbsenceOccurrenceOperations {
   }
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {
-    assertThat(authorisation.person.identifier).isEqualTo(occurrence.authorisation.person.personIdentifier)
+    assertThat(person.identifier).isEqualTo(occurrence.authorisation.person.personIdentifier)
     assertThat(absenceType?.code).isEqualTo(occurrence.absenceType?.code)
     assertThat(absenceSubType?.code).isEqualTo(occurrence.absenceSubType?.code)
     assertThat(absenceReasonCategory?.code).isEqualTo(occurrence.absenceReasonCategory?.code)

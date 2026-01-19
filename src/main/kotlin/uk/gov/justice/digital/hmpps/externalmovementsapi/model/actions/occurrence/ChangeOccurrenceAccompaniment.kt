@@ -8,5 +8,5 @@ data class ChangeOccurrenceAccompaniment(
   val accompaniedByCode: String,
   override val reason: String? = null,
 ) : OccurrenceAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceAccompanimentChanged(tao.authorisation.person.identifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceAccompanimentChanged(tao.person.identifier, tao.id)
 }

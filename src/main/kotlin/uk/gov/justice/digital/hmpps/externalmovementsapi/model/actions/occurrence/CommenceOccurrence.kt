@@ -7,5 +7,5 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 data class CommenceOccurrence(
   override val reason: String? = null,
 ) : OccurrenceAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceStarted(tao.authorisation.person.identifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceStarted(tao.person.identifier, tao.id)
 }

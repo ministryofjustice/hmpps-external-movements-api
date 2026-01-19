@@ -78,7 +78,7 @@ class MigrateTapHierarchy(
 
   private fun removeTapForPersonIdentifier(personIdentifier: String) {
     movementRepository.deleteByPersonIdentifier(personIdentifier)
-    occurrenceRepository.deleteByAuthorisationPersonIdentifier(personIdentifier)
+    occurrenceRepository.deleteByPersonIdentifier(personIdentifier)
     authorisationRepository.deleteByPersonIdentifier(personIdentifier)
   }
 

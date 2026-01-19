@@ -157,7 +157,7 @@ class SearchScheduledMovementsIntTest(
 
   private fun ScheduledMovement.verifyAgainst(tao: TemporaryAbsenceOccurrence) {
     assertThat(id).isEqualTo(tao.id)
-    assertThat(personIdentifier).isEqualTo(tao.authorisation.person.identifier)
+    assertThat(personIdentifier).isEqualTo(tao.person.identifier)
     assertThat(domain).isEqualTo(
       CodedDescription(
         ScheduledMovementDomain.EXTERNAL_MOVEMENTS.name,

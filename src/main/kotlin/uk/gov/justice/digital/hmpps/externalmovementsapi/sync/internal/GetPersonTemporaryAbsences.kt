@@ -22,7 +22,7 @@ class GetPersonTemporaryAbsences(
 ) {
   fun count(personIdentifier: String): PersonTapCounts {
     val authCount = authorisationRepository.countByPersonIdentifier(personIdentifier)
-    val occCount = occurrenceRepository.countByAuthorisationPersonIdentifier(personIdentifier)
+    val occCount = occurrenceRepository.countByPersonIdentifier(personIdentifier)
     val movementSummary = movementRepository.summaryForPerson(personIdentifier)
     return PersonTapCounts(
       PersonAuthorisationCount(authCount),
@@ -36,7 +36,7 @@ class GetPersonTemporaryAbsences(
 
   fun detail(personIdentifier: String): PersonTapDetail {
     val occurrences =
-      occurrenceRepository.findByAuthorisationPersonIdentifier(personIdentifier).groupBy { it.authorisation }
+      occurrenceRepository.findByPersonIdentifier(personIdentifier).groupBy { it.authorisation }
     val unscheduledKey = newUuid()
     val movements =
       movementRepository.findAllByPersonIdentifier(personIdentifier).groupBy { it.occurrence?.id ?: unscheduledKey }

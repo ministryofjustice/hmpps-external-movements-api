@@ -19,7 +19,7 @@ data class RescheduleOccurrence(
   override val reason: String? = null,
 ) : OccurrenceAction,
   StartAndEnd<LocalDateTime> {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceRescheduled(tao.authorisation.person.identifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceRescheduled(tao.person.identifier, tao.id)
 }
 
 @Target(AnnotationTarget.CLASS)

@@ -10,5 +10,5 @@ data class ChangeOccurrenceLocation(
   @Valid val location: Location,
   override val reason: String? = null,
 ) : OccurrenceAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceRelocated(tao.authorisation.person.identifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceRelocated(tao.person.identifier, tao.id)
 }

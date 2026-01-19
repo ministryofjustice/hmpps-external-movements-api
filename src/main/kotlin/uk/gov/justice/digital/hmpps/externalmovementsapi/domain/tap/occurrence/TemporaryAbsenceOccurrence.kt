@@ -13,6 +13,7 @@ import jakarta.persistence.Table
 import jakarta.persistence.Transient
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Size
 import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
@@ -25,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
@@ -130,6 +132,18 @@ class TemporaryAbsenceOccurrence(
   override var absenceReason: AbsenceReason? = absenceReason
     private set
 
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne
+  @JoinColumn(name = "person_identifier")
+  var person: PersonSummary = authorisation.person
+    private set
+
+  @Size(max = 6)
+  @NotNull
+  @Column(name = "prison_code", nullable = false, length = 6)
+  var prisonCode: String = authorisation.prisonCode
+    private set
+
   @NotNull
   @Column(name = "start", nullable = false)
   var start: LocalDateTime = start
@@ -207,7 +221,7 @@ class TemporaryAbsenceOccurrence(
   }
 
   override fun initialEvent(): DomainEvent<*>? = when (status.code) {
-    SCHEDULED.name -> TemporaryAbsenceScheduled(authorisation.person.identifier, id)
+    SCHEDULED.name -> TemporaryAbsenceScheduled(person.identifier, id)
     else -> null
   }
 
@@ -387,6 +401,8 @@ class TemporaryAbsenceOccurrence(
   }
 
   companion object {
+    val PRISON_CODE = TemporaryAbsenceOccurrence::prisonCode.name
+    val PERSON = TemporaryAbsenceOccurrence::person.name
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name
     val START = TemporaryAbsenceOccurrence::start.name
     val END = TemporaryAbsenceOccurrence::end.name

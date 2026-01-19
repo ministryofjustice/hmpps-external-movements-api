@@ -10,5 +10,5 @@ data class ChangeOccurrenceComments(
   override val reason: String? = null,
 ) : OccurrenceAction,
   CommentsAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceCommentsChanged(tao.authorisation.person.identifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceCommentsChanged(tao.person.identifier, tao.id)
 }
