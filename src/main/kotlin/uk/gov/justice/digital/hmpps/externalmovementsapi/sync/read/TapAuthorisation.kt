@@ -17,6 +17,7 @@ data class TapAuthorisation(
   val absenceSubTypeCode: String?,
   val absenceReasonCode: String,
   val accompaniedByCode: String,
+  val transportCode: String,
   val repeat: Boolean,
   val start: LocalDate,
   val end: LocalDate,

@@ -87,7 +87,7 @@ interface TemporaryAbsenceOccurrenceRepository :
         join tap.authorisation taa on taa.id = tao.authorisation_id
         join tap.authorisation_status ast on ast.id = taa.status_id
         join tap.occurrence_status ost on ost.id = tao.status_id
-    where taa.prison_code = :prisonIdentifier
+    where tao.prison_code = :prisonIdentifier
       and ast.code = 'APPROVED'
       and ost.code <> 'CANCELLED'
       and tao.start between current_date and (current_date + 1)
@@ -103,7 +103,7 @@ interface TemporaryAbsenceOccurrenceRepository :
         join tap.authorisation taa on taa.id = tao.authorisation_id
         join tap.authorisation_status ast on ast.id = taa.status_id
         join tap.occurrence_status ost on ost.id = tao.status_id
-    where taa.prison_code = :prisonIdentifier
+    where tao.prison_code = :prisonIdentifier
       and ast.code = 'APPROVED'
       and ost.code <> 'CANCELLED'
       and tao.end between current_date and (current_date + 1)
