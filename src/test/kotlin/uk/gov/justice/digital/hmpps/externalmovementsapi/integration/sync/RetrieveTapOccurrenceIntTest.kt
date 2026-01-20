@@ -55,6 +55,23 @@ class RetrieveTapOccurrenceIntTest(
     response.verifyAgainst(occurrence)
   }
 
+  @Test
+  fun `200 ok returns SE subtype when type is SE`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        absenceType = "SE",
+        absenceSubType = null,
+        absenceReasonCategory = null,
+        absenceReason = "C6",
+      ),
+    )
+    val occurrence =
+      requireNotNull(findTemporaryAbsenceOccurrence(givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth)).id))
+
+    val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
+    response.verifyAgainst(occurrence)
+  }
+
   private fun getTapOccurrence(
     id: UUID,
     role: String? = Roles.NOMIS_SYNC,
@@ -73,7 +90,11 @@ private fun TapOccurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) 
   assertThat(id).isEqualTo(occurrence.id)
   authorisation.verifyAgainst(occurrence.authorisation)
   assertThat(absenceTypeCode).isEqualTo(occurrence.absenceType?.code)
-  assertThat(absenceSubTypeCode).isEqualTo(occurrence.absenceSubType?.code)
+  if (absenceTypeCode == "SE") {
+    assertThat(absenceSubTypeCode).isEqualTo("SE")
+  } else {
+    assertThat(absenceSubTypeCode).isEqualTo(occurrence.absenceSubType?.code)
+  }
   assertThat(absenceReasonCode).isEqualTo(occurrence.absenceReason?.code)
   assertThat(statusCode).isEqualTo(occurrence.status.code)
   assertThat(start).isCloseTo(occurrence.start, within(2, SECONDS))

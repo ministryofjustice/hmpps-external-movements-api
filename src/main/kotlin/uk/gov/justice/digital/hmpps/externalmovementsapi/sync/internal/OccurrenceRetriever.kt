@@ -26,7 +26,7 @@ private fun AuditedTapOccurrence.forSync() = TapOccurrence(
   end = end,
   location = location,
   absenceTypeCode = authorisation.absenceType?.code,
-  absenceSubTypeCode = authorisation.absenceSubType?.code,
+  absenceSubTypeCode = authorisation.absenceSubType?.code ?: if (absenceType?.code == "SE") "SE" else null,
   absenceReasonCode = requireNotNull(authorisation.absenceReason).code,
   accompaniedByCode = accompaniedBy.code,
   transportCode = transport.code,

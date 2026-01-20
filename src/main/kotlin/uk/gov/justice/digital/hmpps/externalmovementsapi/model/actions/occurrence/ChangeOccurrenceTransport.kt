@@ -8,5 +8,5 @@ data class ChangeOccurrenceTransport(
   val transportCode: String,
   override val reason: String? = null,
 ) : OccurrenceAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceTransportChanged(tao.authorisation.person.identifier, tao.id)
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceTransportChanged(tao.person.identifier, tao.id)
 }

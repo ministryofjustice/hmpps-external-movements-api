@@ -49,7 +49,7 @@ private fun TemporaryAbsenceOccurrence.scheduledMovement(
 ): ScheduledMovement? = if (includeSensitive || isNotSensitive()) {
   ScheduledMovement(
     id,
-    authorisation.person.identifier,
+    person.identifier,
     ScheduledMovementDomain.EXTERNAL_MOVEMENTS.asCodedDescription(),
     ScheduledMovementType.TEMPORARY_ABSENCE.asCodedDescription(),
     hierarchyDescription(reasonPath),
