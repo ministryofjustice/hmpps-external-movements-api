@@ -84,9 +84,7 @@
          <index name="idx_person_summary_name" unique="false"/>
       </table>
       <table catalog="movements" name="reference_data_domain" remarks="" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="code" nullable="false" remarks="" size="32" type="varchar" typeCode="12">
-            <child catalog="movements" column="domain" foreignKey="fk_tap_absence_categorisation_domain_link_domain" implied="false" onDeleteCascade="false" schema="tap" table="absence_categorisation_domain_link"/>
-         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="code" nullable="false" remarks="" size="32" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="description" nullable="false" remarks="" size="255" type="varchar" typeCode="12"/>
          <primaryKey column="code" sequenceNumberInPK="1"/>
          <index name="pk_reference_data_domain" unique="true">
