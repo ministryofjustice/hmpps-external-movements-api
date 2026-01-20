@@ -124,11 +124,6 @@ interface TemporaryAbsenceOccurrenceRepository :
   fun deleteByPersonIdentifier(personIdentifier: String)
 }
 
-interface TapOccurrencePosition {
-  val position: Int
-  val total: Int
-}
-
 fun TemporaryAbsenceOccurrenceRepository.getOccurrence(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence occurrence not found")
 
 fun occurrenceMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->

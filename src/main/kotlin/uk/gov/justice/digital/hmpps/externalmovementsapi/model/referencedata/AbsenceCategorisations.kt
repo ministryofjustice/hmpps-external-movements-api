@@ -9,3 +9,10 @@ data class AbsenceCategorisation(
   val hintText: String?,
   val nextDomain: ReferenceDataDomain.Code?,
 )
+
+data class PrisonAbsenceCategorisations(
+  val types: List<CodedDescription>,
+  val subTypes: List<CodedDescription>,
+  val reasonCategories: List<CodedDescription>,
+  val reasons: List<CodedDescription>,
+)
