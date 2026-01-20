@@ -55,6 +55,23 @@ class RetrieveTapAuthorisationIntTest(
     response.occurrences.first().verifyAgainst(occurrence)
   }
 
+  @Test
+  fun `200 ok returns SE subtype when type is SE`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        absenceType = "SE",
+        absenceSubType = null,
+        absenceReasonCategory = null,
+        absenceReason = "C6",
+      ),
+    )
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth)).id))
+
+    val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
+    response.verifyAgainst(auth)
+    response.occurrences.first().verifyAgainst(occurrence)
+  }
+
   private fun getTapAuthorisation(
     id: UUID,
     role: String? = Roles.NOMIS_SYNC,
@@ -74,7 +91,11 @@ private fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthor
   assertThat(prisonCode).isEqualTo(authorisation.prisonCode)
   assertThat(statusCode).isEqualTo(authorisation.status.code)
   assertThat(absenceTypeCode).isEqualTo(authorisation.absenceType?.code)
-  assertThat(absenceSubTypeCode).isEqualTo(authorisation.absenceSubType?.code)
+  if (absenceTypeCode == "SE") {
+    assertThat(absenceSubTypeCode).isEqualTo("SE")
+  } else {
+    assertThat(absenceSubTypeCode).isEqualTo(authorisation.absenceSubType?.code)
+  }
   assertThat(absenceReasonCode).isEqualTo(authorisation.absenceReason?.code)
   assertThat(accompaniedByCode).isEqualTo(authorisation.accompaniedBy.code)
   assertThat(transportCode).isEqualTo(authorisation.transport.code)
