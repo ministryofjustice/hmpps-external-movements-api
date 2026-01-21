@@ -28,7 +28,7 @@ class PrisonerMergedHandler(
       auth.moveTo(toPerson)
     }
     movementRepository.findAllByPersonIdentifier(pmi.removedNomsNumber).forEach { movement ->
-      movement.moveTo(toPerson.identifier)
+      movement.moveTo(toPerson)
     }
   }
 }

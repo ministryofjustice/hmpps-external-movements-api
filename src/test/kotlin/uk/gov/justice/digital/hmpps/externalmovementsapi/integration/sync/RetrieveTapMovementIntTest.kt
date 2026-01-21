@@ -80,7 +80,7 @@ class RetrieveTapMovementIntTest(
 private fun TapMovement.verifyAgainst(movement: TemporaryAbsenceMovement) {
   assertThat(id).isEqualTo(movement.id)
   assertThat(occurrenceId).isEqualTo(movement.occurrence?.id)
-  assertThat(personIdentifier).isEqualTo(movement.personIdentifier)
+  assertThat(personIdentifier).isEqualTo(movement.person.identifier)
   assertThat(direction).isEqualTo(movement.direction)
   assertThat(absenceReasonCode).isEqualTo(movement.absenceReason.code)
   assertThat(location).isEqualTo(movement.location)

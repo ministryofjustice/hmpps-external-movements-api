@@ -29,10 +29,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy

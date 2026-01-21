@@ -22,12 +22,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -181,10 +181,11 @@ class SyncTapMovementIntTest(
     val request = tapMovement(
       accompaniedByCode = "U",
       accompaniedByComments = "Updated the text about the escort",
-      direction = TemporaryAbsenceMovement.Direction.OUT,
+      direction = Direction.OUT,
       id = existing.id,
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
+      prisonCode = existing.recordedByPrisonCode,
     )
     val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
@@ -220,9 +221,10 @@ class SyncTapMovementIntTest(
     val request = tapMovement(
       accompaniedByCode = "U",
       accompaniedByComments = "Updated the text about the escort",
-      direction = TemporaryAbsenceMovement.Direction.IN,
+      direction = Direction.IN,
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
+      prisonCode = existing.recordedByPrisonCode,
     )
     val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
@@ -313,7 +315,7 @@ class SyncTapMovementIntTest(
 }
 
 private fun TemporaryAbsenceMovement.verifyAgainst(personIdentifier: String, request: TapMovement) {
-  assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+  assertThat(this.person.identifier).isEqualTo(personIdentifier)
   assertThat(direction.name).isEqualTo(request.direction.name)
   assertThat(occurrence?.id).isEqualTo(request.occurrenceId)
   assertThat(occurredAt).isCloseTo(request.occurredAt, within(2, SECONDS))
