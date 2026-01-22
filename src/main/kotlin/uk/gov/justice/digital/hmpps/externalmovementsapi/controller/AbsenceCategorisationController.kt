@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisationFilters
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.AbsenceCategorisationRetriever
 
@@ -55,4 +56,8 @@ class AbsenceCategorisationController(private val acRetriever: AbsenceCategorisa
   ): ResponseEntity<AbsenceCategorisations> = acRetriever.findOptions(ReferenceDataDomain.Code.of(domain), code)?.let {
     ResponseEntity.ok(it)
   } ?: ResponseEntity.noContent().build()
+
+  @GetMapping("/filters")
+  @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
+  fun getAbsenceCategorisationFilters(): AbsenceCategorisationFilters = acRetriever.getAbsenceCategorisationFilters()
 }

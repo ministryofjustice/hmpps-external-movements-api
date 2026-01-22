@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.AbsenceCategorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisationFilters
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import kotlin.reflect.KClass
@@ -26,7 +27,7 @@ import kotlin.reflect.KClass
 @Service
 class AbsenceCategorisationRetriever(
   private val domainRepository: ReferenceDataDomainRepository,
-  private val absenceCategorisationLinkRepository: AbsenceCategorisationLinkRepository,
+  private val acLinkRepository: AbsenceCategorisationLinkRepository,
   private val referenceDataRepository: ReferenceDataRepository,
 ) {
   fun findByDomain(code: ReferenceDataDomain.Code): AbsenceCategorisations {
@@ -44,7 +45,7 @@ class AbsenceCategorisationRetriever(
     return linked?.nextDomain?.let { dc ->
       val domain = domainRepository.getDomain(dc)
       val items = referenceDataRepository.findAllByType(dc.clazz).associateBy { it.id }
-      val links = absenceCategorisationLinkRepository.findById1AndDomain2(linked.id, dc)
+      val links = acLinkRepository.findById1AndDomain2(linked.id, dc)
         .sortedBy { it.sequenceNumber }
         .mapNotNull { items[it.id2]?.asAbsenceCategorisation() }
       AbsenceCategorisations(domain.asCodedDescription(), links)
@@ -55,7 +56,7 @@ class AbsenceCategorisationRetriever(
     val allRd = referenceDataRepository.findAll().associateBy { it::class to it.code }
     val rdProvider = { clazz: KClass<out ReferenceData>, code: String -> allRd[clazz to code] }
     val linkProvider = { nextDomain: ReferenceDataDomain.Code, previous: ReferenceData ->
-      absenceCategorisationLinkRepository.findById1AndDomain2(previous.id, nextDomain).let {
+      acLinkRepository.findById1AndDomain2(previous.id, nextDomain).let {
         when (it.size) {
           0 -> null
           1 -> it.single().let { link -> allRd.values.first { rd -> rd.id == link.id2 } }
@@ -80,6 +81,8 @@ class AbsenceCategorisationRetriever(
     }
     car to allRd
   }
+
+  fun getAbsenceCategorisationFilters(): AbsenceCategorisationFilters = AbsenceCategorisationFilters.from(referenceDataRepository.findAll(), acLinkRepository.findAll())
 }
 
 fun ReferenceDataDomain.asCodedDescription() = CodedDescription(code.name, description)
