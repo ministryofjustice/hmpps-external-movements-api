@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.Action
 @JsonSubTypes(
   value = [
     Type(value = ChangeMovementDirection::class, name = "ChangeMovementDirection"),
-    Type(value = ChangeMovementAccompaniedBy::class, name = "ChangeMovementAccompaniedBy"),
+    Type(value = ChangeMovementAccompaniment::class, name = "ChangeMovementAccompaniment"),
     Type(value = ChangeMovementLocation::class, name = "ChangeMovementLocation"),
     Type(value = ChangeMovementComments::class, name = "ChangeMovementComments"),
     Type(value = ChangeMovementOccurredAt::class, name = "ChangeMovementOccurredAt"),

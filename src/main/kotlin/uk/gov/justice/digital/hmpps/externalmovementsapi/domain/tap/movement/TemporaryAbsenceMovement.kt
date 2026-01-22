@@ -24,13 +24,17 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOut
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementDirection
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
@@ -62,7 +66,8 @@ class TemporaryAbsenceMovement(
   @Id
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
-) : Identifiable {
+) : Identifiable,
+  DomainEventProducer {
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
   @JoinColumn(name = "person_identifier")
@@ -134,6 +139,17 @@ class TemporaryAbsenceMovement(
     appliedActions = listOf()
   }
 
+  override fun domainEvents(): Set<DomainEvent<*>> {
+    val events = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+    appliedActions = emptyList()
+    return events
+  }
+
+  override fun initialEvent(): DomainEvent<*> = when (direction) {
+    Direction.OUT -> TapMovementOut(person.identifier, id)
+    Direction.IN -> TapMovementIn(person.identifier, id)
+  }
+
   enum class Direction {
     IN,
     OUT,
@@ -158,7 +174,7 @@ class TemporaryAbsenceMovement(
   }
 
   fun applyAccompaniedBy(
-    action: ChangeMovementAccompaniedBy,
+    action: ChangeMovementAccompaniment,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) {
     var changed = false

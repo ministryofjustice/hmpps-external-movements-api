@@ -69,6 +69,23 @@ components:
     person.temporary-absence.transport-changed:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-transport-changed.yaml
 
+    person.external-movement.recorded-out-temporarily:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-out.yaml
+    person.external-movement.recorded-in-from-out-temporarily:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-in.yaml
+    person.external-movement.reversed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-reversed.yaml
+    person.external-movement.accompaniment-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-accompaniment-changed.yaml
+    person.external-movement.comments-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-comments-changed.yaml
+    person.external-movement.recategorised:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-recategorised.yaml
+    person.external-movement.relocated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-relocated.yaml
+    person.external-movement.occurred-at-changed":
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-occurred-at-changed.yaml
+
 channels:
   hmpps-domain-events:
     description: HMPPS domain events SNS topic

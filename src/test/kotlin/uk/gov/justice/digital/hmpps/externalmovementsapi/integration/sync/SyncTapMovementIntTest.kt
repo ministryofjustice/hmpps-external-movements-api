@@ -16,6 +16,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Tem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementCommentsChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurredAtChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOut
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -61,7 +67,7 @@ class SyncTapMovementIntTest(
   fun `403 forbidden without correct role`() {
     syncTapMovement(
       personIdentifier(),
-      tapMovement(direction = TemporaryAbsenceMovement.Direction.OUT),
+      tapMovement(direction = Direction.OUT),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
@@ -71,7 +77,7 @@ class SyncTapMovementIntTest(
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
     val request = tapMovement(
-      direction = TemporaryAbsenceMovement.Direction.IN,
+      direction = Direction.IN,
       occurrenceId = occurrence.id,
       prisonCode = authorisation.prisonCode,
     )
@@ -84,7 +90,7 @@ class SyncTapMovementIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
     assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
     val request = tapMovement(
-      direction = TemporaryAbsenceMovement.Direction.OUT,
+      direction = Direction.OUT,
       occurrenceId = occurrence.id,
       prisonCode = authorisation.prisonCode,
     )
@@ -115,7 +121,10 @@ class SyncTapMovementIntTest(
     )
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceStarted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS)),
+      setOf(
+        TemporaryAbsenceStarted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS),
+        TapMovementOut(saved.person.identifier, saved.id, DataSource.NOMIS),
+      ),
     )
   }
 
@@ -162,7 +171,10 @@ class SyncTapMovementIntTest(
     )
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceCompleted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS)),
+      setOf(
+        TemporaryAbsenceCompleted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS),
+        TapMovementIn(saved.person.identifier, saved.id, DataSource.NOMIS),
+      ),
     )
   }
 
@@ -200,10 +212,18 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf())
+    verifyEvents(
+      saved,
+      setOf(
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS),
+      ),
+    )
   }
 
   @Test
@@ -212,7 +232,7 @@ class SyncTapMovementIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
     val existing = givenTemporaryAbsenceMovement(
       temporaryAbsenceMovement(
-        TemporaryAbsenceMovement.Direction.IN,
+        Direction.IN,
         authorisation.person.identifier,
         occurrence,
         legacyId = newId().toString(),
@@ -239,10 +259,18 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf())
+    verifyEvents(
+      saved,
+      setOf(
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS),
+      ),
+    )
   }
 
   @Test
@@ -263,10 +291,10 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TapMovementIn(saved.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
   private fun tapMovement(

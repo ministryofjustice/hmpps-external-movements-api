@@ -36,6 +36,15 @@ import java.util.UUID
     Type(value = TemporaryAbsenceStarted::class, name = TemporaryAbsenceStarted.EVENT_TYPE),
     Type(value = TemporaryAbsenceCompleted::class, name = TemporaryAbsenceCompleted.EVENT_TYPE),
 
+    Type(value = TapMovementOut::class, name = TapMovementOut.EVENT_TYPE),
+    Type(value = TapMovementIn::class, name = TapMovementIn.EVENT_TYPE),
+    Type(value = TapMovementReversed::class, name = TapMovementReversed.EVENT_TYPE),
+    Type(value = TapMovementAccompanimentChanged::class, name = TapMovementAccompanimentChanged.EVENT_TYPE),
+    Type(value = TapMovementCommentsChanged::class, name = TapMovementCommentsChanged.EVENT_TYPE),
+    Type(value = TapMovementRecategorised::class, name = TapMovementRecategorised.EVENT_TYPE),
+    Type(value = TapMovementRelocated::class, name = TapMovementRelocated.EVENT_TYPE),
+    Type(value = TapMovementOccurredAtChanged::class, name = TapMovementOccurredAtChanged.EVENT_TYPE),
+
     Type(value = PrisonerUpdated::class, name = PrisonerUpdated.EVENT_TYPE),
     Type(value = PrisonerMerged::class, name = PrisonerMerged.EVENT_TYPE),
 

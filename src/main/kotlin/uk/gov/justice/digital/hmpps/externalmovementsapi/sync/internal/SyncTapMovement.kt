@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.getByCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementDirection
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
@@ -103,7 +103,7 @@ class SyncTapMovement(
     applyLocation(ChangeMovementLocation(request.location))
     request.comments?.also { applyComments(ChangeMovementComments(it)) }
     applyAccompaniedBy(
-      ChangeMovementAccompaniedBy(
+      ChangeMovementAccompaniment(
         request.accompaniedByCode,
         request.accompaniedByComments,
       ),

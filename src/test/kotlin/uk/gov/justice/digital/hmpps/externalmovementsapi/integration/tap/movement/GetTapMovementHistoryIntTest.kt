@@ -14,6 +14,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOut
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -26,7 +29,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Ma
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersServer.Companion.user
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import java.util.UUID
 
@@ -87,7 +90,7 @@ class GetTapMovementHistoryIntTest(
       findTemporaryAbsenceMovement(movement.id)?.applyLocation(changeLocation)
     }
 
-    val accompaniedAction = ChangeMovementAccompaniedBy(
+    val accompaniedAction = ChangeMovementAccompaniment(
       "U",
       "This person can go unaccompanied now",
       "A reason the person can be unaccompanied",
@@ -104,12 +107,12 @@ class GetTapMovementHistoryIntTest(
     assertThat(history.content).hasSize(3)
     with(history.content.first()) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).containsExactly(TapMovementOut.EVENT_TYPE)
       assertThat(reason).startsWith("Recorded as having gone out of the prison on")
     }
     with(history.content[1]) {
       assertThat(user).isEqualTo(AuditedAction.User(locationUser.username, locationUser.name))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).containsExactly(TapMovementRelocated.EVENT_TYPE)
       assertThat(reason).isEqualTo("A reason for changing the location")
       with(changes.first()) {
         assertThat(previous).isEqualTo(originalLocation.toString())
@@ -118,7 +121,7 @@ class GetTapMovementHistoryIntTest(
     }
     with(history.content.last()) {
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).containsExactly(TapMovementAccompanimentChanged.EVENT_TYPE)
       assertThat(reason).isEqualTo(accompaniedAction.reason)
       assertThat(changes).containsExactlyInAnyOrder(
         AuditedAction.Change(
