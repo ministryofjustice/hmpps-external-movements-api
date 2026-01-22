@@ -14,7 +14,7 @@ data class AbsenceCategorisationFilters(
   val reasons: List<Option>,
   val workTypes: List<Option>,
 ) {
-  data class Option(val domainCode: String, val code: String, val description: String)
+  data class Option(val domainCode: ReferenceDataDomain.Code, val code: String, val description: String)
 
   companion object {
     fun from(
@@ -103,7 +103,7 @@ private fun ReferenceData.workTypePrefix(): String? = if (this is AbsenceReasonC
 private fun ReferenceData.isYouth() = this !is AbsenceType && code.startsWith("Y")
 
 private fun Hierarchy.asOption(): AbsenceCategorisationFilters.Option = AbsenceCategorisationFilters.Option(
-  domainCode.name,
+  domainCode,
   referenceData.code,
   parentPrefix?.let { "$parentPrefix - ${referenceData.description}" }
     ?: if (referenceData.isYouth()) {
