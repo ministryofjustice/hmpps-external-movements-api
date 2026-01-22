@@ -1,7 +1,7 @@
+reference_data_domain
 reference_data
 person_summary
 migration_system_audit
 hmpps_domain_event
 hmpps_domain_event_audit
-reference_data_domain
 audit_revision

@@ -91,9 +91,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="active" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
       </table>
       <table catalog="movements" name="reference_data_domain" remarks="" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="code" nullable="false" remarks="" size="32" type="varchar" typeCode="12">
-            <child catalog="movements" column="domain_code" foreignKey="fk_prison_absence_categorisation_domain_code" implied="false" onDeleteCascade="false" schema="tap" table="prison_absence_categorisation"/>
-         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="code" nullable="false" remarks="" size="32" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="description" nullable="false" remarks="" size="255" type="varchar" typeCode="12"/>
          <primaryKey column="code" sequenceNumberInPK="1"/>
          <index name="pk_reference_data_domain" unique="true">
