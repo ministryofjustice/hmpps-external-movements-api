@@ -84,7 +84,7 @@ class SyncTapMovement(
     accompaniedBy = rdProvider(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
     accompaniedByComments = accompaniedByComments,
     comments = comments,
-    recordedByPrisonCode = created.prisonCode,
+    directionPrisonCode = created.prisonCode,
     location = location,
     legacyId = legacyId,
     id = id ?: newUuid(),

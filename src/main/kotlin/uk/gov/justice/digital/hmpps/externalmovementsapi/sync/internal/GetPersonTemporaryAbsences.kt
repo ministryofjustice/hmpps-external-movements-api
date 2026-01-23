@@ -44,16 +44,18 @@ class GetPersonTemporaryAbsences(
       PersonTapDetail.Authorisation(
         e.key.id,
         AuthorisationStatus.Code.valueOf(e.key.status.code),
+        e.key.prisonCode,
         e.value.map { occ ->
           PersonTapDetail.Occurrence(
             occ.id,
             OccurrenceStatus.Code.valueOf(occ.status.code),
-            movements[occ.id]?.map { m -> PersonTapDetail.Movement(m.id, m.direction) } ?: emptyList(),
+            occ.prisonCode,
+            movements[occ.id]?.map { m -> PersonTapDetail.Movement(m.id, m.direction, m.directionPrisonCode) } ?: emptyList(),
           )
         },
       )
     }
-    val unscheduled = movements[unscheduledKey]?.map { PersonTapDetail.Movement(it.id, it.direction) } ?: emptyList()
+    val unscheduled = movements[unscheduledKey]?.map { PersonTapDetail.Movement(it.id, it.direction, it.directionPrisonCode) } ?: emptyList()
     return PersonTapDetail(
       authorisations,
       unscheduled,

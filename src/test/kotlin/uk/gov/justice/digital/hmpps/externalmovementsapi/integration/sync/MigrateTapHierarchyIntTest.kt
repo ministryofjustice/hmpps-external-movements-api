@@ -519,7 +519,7 @@ class MigrateTapHierarchyIntTest(
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
       assertThat(location).isEqualTo(request.location)
       assertThat(comments).isEqualTo(request.comments)
-      assertThat(recordedByPrisonCode).isEqualTo(request.created.prisonCode)
+      assertThat(directionPrisonCode).isEqualTo(request.created.prisonCode)
       assertThat(legacyId).isEqualTo(request.legacyId)
       assertThat(msa.createdBy).isEqualTo(request.created.by)
       assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))

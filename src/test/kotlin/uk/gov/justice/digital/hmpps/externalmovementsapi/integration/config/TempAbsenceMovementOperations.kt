@@ -48,7 +48,7 @@ interface TempAbsenceMovementOperations {
         accompaniedBy = rdSupplier(AccompaniedBy::class, accompaniedBy) as AccompaniedBy,
         accompaniedByComments = accompaniedByComments,
         comments = comments,
-        recordedByPrisonCode = recordedByPrison,
+        directionPrisonCode = recordedByPrison,
         location = location,
         legacyId = legacyId,
       )

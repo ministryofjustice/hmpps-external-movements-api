@@ -193,7 +193,7 @@ class SyncTapMovementIntTest(
       id = existing.id,
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
-      prisonCode = existing.recordedByPrisonCode,
+      prisonCode = existing.directionPrisonCode,
     )
     val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
@@ -240,7 +240,7 @@ class SyncTapMovementIntTest(
       direction = Direction.IN,
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
-      prisonCode = existing.recordedByPrisonCode,
+      prisonCode = existing.directionPrisonCode,
     )
     val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
@@ -347,6 +347,6 @@ private fun TemporaryAbsenceMovement.verifyAgainst(personIdentifier: String, req
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
   assertThat(location).isEqualTo(request.location)
   assertThat(comments).isEqualTo(request.comments)
-  assertThat(recordedByPrisonCode).isEqualTo(request.created.prisonCode)
+  assertThat(directionPrisonCode).isEqualTo(request.created.prisonCode)
   assertThat(legacyId).isEqualTo(request.legacyId)
 }
