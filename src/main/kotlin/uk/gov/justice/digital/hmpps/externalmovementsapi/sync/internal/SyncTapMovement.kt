@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
@@ -19,6 +20,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.getByCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementComments
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementDirection
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurredAt
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
@@ -45,10 +52,10 @@ class SyncTapMovement(
         ?.also {
           request.updated?.also { ExternalMovementContext.get().copy(requestAt = it.at, username = it.by).set() }
         }
-        ?.update(person.identifier, occurrence, request, rdProvider)
+        ?.update(occurrence, request, rdProvider)
         ?: let {
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
-          val movement = request.asEntity(person.identifier, occurrence, rdProvider)
+          val movement = request.asEntity(person, occurrence, rdProvider)
           occurrence?.addMovement(movement) {
             rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus
           }
@@ -65,11 +72,11 @@ class SyncTapMovement(
   }
 
   private fun TapMovement.asEntity(
-    personIdentifier: String,
+    person: PersonSummary,
     occurrence: TemporaryAbsenceOccurrence?,
     rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) = TemporaryAbsenceMovement(
-    personIdentifier = personIdentifier,
+    person = person,
     occurrence = occurrence?.calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus },
     occurredAt = occurredAt,
     direction = valueOf(direction.name),
@@ -82,4 +89,26 @@ class SyncTapMovement(
     legacyId = legacyId,
     id = id ?: newUuid(),
   )
+
+  private fun TemporaryAbsenceMovement.update(
+    occurrence: TemporaryAbsenceOccurrence?,
+    request: TapMovement,
+    rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
+  ) = apply {
+    check(occurrence?.id == this.occurrence?.id) {
+      "Attempt to move movement to another occurrence"
+    }
+    applyDirection(ChangeMovementDirection(request.direction))
+    applyOccurredAt(ChangeMovementOccurredAt(request.occurredAt))
+    applyLocation(ChangeMovementLocation(request.location))
+    request.comments?.also { applyComments(ChangeMovementComments(it)) }
+    applyAccompaniedBy(
+      ChangeMovementAccompaniment(
+        request.accompaniedByCode,
+        request.accompaniedByComments,
+      ),
+      rdProvider,
+    )
+    applyReason(ChangeMovementReason(request.absenceReasonCode), rdProvider)
+  }
 }

@@ -20,12 +20,12 @@ class MoveTemporaryAbsences(
       check(request contains tao.authorisation.person.identifier) { EXCEPTION_MESSAGE }
       tao.authorisation.moveTo(moveTo)
       tao.movements().forEach {
-        check(request contains it.personIdentifier) { EXCEPTION_MESSAGE }
-        it.moveTo(moveTo.identifier)
+        check(request contains it.person.identifier) { EXCEPTION_MESSAGE }
+        it.moveTo(moveTo)
       }
     }
     movementRepository.findAllById(request.unscheduledMovementIds).forEach {
-      it.moveTo(moveTo.identifier)
+      it.moveTo(moveTo)
     }
   }
 

@@ -48,8 +48,6 @@ components:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-cancelled.yaml
     person.temporary-absence.comments-changed:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-comments-changed.yaml
-    person.temporary-absence.completed:
-      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-completed.yaml
     person.temporary-absence.denied:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-denied.yaml
     person.temporary-absence.expired:
@@ -64,10 +62,24 @@ components:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-rescheduled.yaml
     person.temporary-absence.scheduled:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-scheduled.yaml
-    person.temporary-absence.started:
-      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-started.yaml
     person.temporary-absence.transport-changed:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-transport-changed.yaml
+    person.temporary-absence.started:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-started.yaml
+    person.temporary-absence.completed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-completed.yaml
+    person.temporary-absence-movement.reversed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-reversed.yaml
+    person.temporary-absence-movement.accompaniment-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-accompaniment-changed.yaml
+    person.temporary-absence-movement.comments-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-comments-changed.yaml
+    person.temporary-absence-movement.recategorised:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-recategorised.yaml
+    person.temporary-absence-movement.relocated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-relocated.yaml
+    person.temporary-absence-movement.occurred-at-changed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-occurred-at-changed.yaml
 
 channels:
   hmpps-domain-events:
@@ -104,8 +116,6 @@ channels:
         $ref: '#/components/messages/person.temporary-absence.cancelled'
       person.temporary-absence.comments-changed:
         $ref: '#/components/messages/person.temporary-absence.comments-changed'
-      person.temporary-absence.completed:
-        $ref: '#/components/messages/person.temporary-absence.completed'
       person.temporary-absence.denied:
         $ref: '#/components/messages/person.temporary-absence.denied'
       person.temporary-absence.expired:
@@ -120,10 +130,24 @@ channels:
         $ref: '#/components/messages/person.temporary-absence.rescheduled'
       person.temporary-absence.scheduled:
         $ref: '#/components/messages/person.temporary-absence.scheduled'
-      person.temporary-absence.started:
-        $ref: '#/components/messages/person.temporary-absence.started'
       person.temporary-absence.transport-changed:
         $ref: '#/components/messages/person.temporary-absence.transport-changed'
+      person.temporary-absence.started:
+        $ref: '#/components/messages/person.temporary-absence.started'
+      person.temporary-absence.completed:
+        $ref: '#/components/messages/person.temporary-absence.completed'
+      person.temporary-absence-movement.reversed:
+        $ref: '#/components/messages/person.temporary-absence-movement.reversed'
+      person.temporary-absence-movement.accompaniment-changed:
+        $ref: '#/components/messages/person.temporary-absence-movement.accompaniment-changed'
+      person.temporary-absence-movement.comments-changed:
+        $ref: '#/components/messages/person.temporary-absence-movement.comments-changed'
+      person.temporary-absence-movement.recategorised:
+        $ref: '#/components/messages/person.temporary-absence-movement.recategorised'
+      person.temporary-absence-movement.relocated:
+        $ref: '#/components/messages/person.temporary-absence-movement.relocated'
+      person.temporary-absence-movement.occurred-at-changed:
+        $ref: '#/components/messages/person.temporary-absence-movement.occurred-at-changed'
 
 operations:
   publish-event:
@@ -145,7 +169,6 @@ operations:
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.accompaniment-changed'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.cancelled'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.comments-changed'
-      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.completed'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.denied'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.expired'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.overdue'
@@ -153,5 +176,12 @@ operations:
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.relocated'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.rescheduled'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.scheduled'
-      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.started'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.transport-changed'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.started'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.completed'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.reversed'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.accompaniment-changed'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.comments-changed'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.recategorised'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.relocated'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.occurred-at-changed'

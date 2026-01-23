@@ -48,7 +48,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
@@ -206,6 +208,8 @@ class TemporaryAbsenceOccurrence(
   private val movements: MutableList<TemporaryAbsenceMovement> = mutableListOf()
   fun movements(): List<TemporaryAbsenceMovement> = unmodifiableList(movements)
 
+  fun latestMovement(direction: TemporaryAbsenceMovement.Direction): TemporaryAbsenceMovement = movements.sortedByDescending { it.occurredAt }.first { it.direction == direction }
+
   fun addMovement(movement: TemporaryAbsenceMovement, statusProvider: (String) -> OccurrenceStatus) = apply {
     movements.add(movement)
     movement.occurrence = this
@@ -238,6 +242,11 @@ class TemporaryAbsenceOccurrence(
     appliedActions = emptyList()
     return events
   }
+
+  override fun excludeFromPublish(): Set<String> = setOf(
+    TemporaryAbsenceStarted.EVENT_TYPE,
+    TemporaryAbsenceCompleted.EVENT_TYPE,
+  )
 
   fun applyAbsenceCategorisation(
     action: RecategoriseOccurrence,

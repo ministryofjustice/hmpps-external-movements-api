@@ -6,4 +6,6 @@ interface DomainEventProducer {
   fun initialEvent(): DomainEvent<*>?
 
   fun domainEvents(): Set<DomainEvent<*>> = setOf()
+
+  fun excludeFromPublish(): Set<String> = setOf()
 }

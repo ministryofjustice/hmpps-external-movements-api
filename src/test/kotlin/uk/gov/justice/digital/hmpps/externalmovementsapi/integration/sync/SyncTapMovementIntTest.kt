@@ -16,18 +16,22 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Tem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementCommentsChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurredAtChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -61,7 +65,7 @@ class SyncTapMovementIntTest(
   fun `403 forbidden without correct role`() {
     syncTapMovement(
       personIdentifier(),
-      tapMovement(direction = TemporaryAbsenceMovement.Direction.OUT),
+      tapMovement(direction = Direction.OUT),
       "ROLE_ANY__OTHER_RW",
     ).expectStatus().isForbidden
   }
@@ -71,7 +75,7 @@ class SyncTapMovementIntTest(
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
     val request = tapMovement(
-      direction = TemporaryAbsenceMovement.Direction.IN,
+      direction = Direction.IN,
       occurrenceId = occurrence.id,
       prisonCode = authorisation.prisonCode,
     )
@@ -84,7 +88,7 @@ class SyncTapMovementIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
     assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
     val request = tapMovement(
-      direction = TemporaryAbsenceMovement.Direction.OUT,
+      direction = Direction.OUT,
       occurrenceId = occurrence.id,
       prisonCode = authorisation.prisonCode,
     )
@@ -115,7 +119,9 @@ class SyncTapMovementIntTest(
     )
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceStarted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS)),
+      setOf(
+        TemporaryAbsenceStarted(authorisation.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
+      ),
     )
   }
 
@@ -162,7 +168,9 @@ class SyncTapMovementIntTest(
     )
     verifyEvents(
       saved,
-      setOf(TemporaryAbsenceCompleted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS)),
+      setOf(
+        TemporaryAbsenceCompleted(authorisation.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
+      ),
     )
   }
 
@@ -181,10 +189,11 @@ class SyncTapMovementIntTest(
     val request = tapMovement(
       accompaniedByCode = "U",
       accompaniedByComments = "Updated the text about the escort",
-      direction = TemporaryAbsenceMovement.Direction.OUT,
+      direction = Direction.OUT,
       id = existing.id,
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
+      prisonCode = existing.recordedByPrisonCode,
     )
     val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
@@ -199,10 +208,18 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf())
+    verifyEvents(
+      saved,
+      setOf(
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementRelocated(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+      ),
+    )
   }
 
   @Test
@@ -211,7 +228,7 @@ class SyncTapMovementIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
     val existing = givenTemporaryAbsenceMovement(
       temporaryAbsenceMovement(
-        TemporaryAbsenceMovement.Direction.IN,
+        Direction.IN,
         authorisation.person.identifier,
         occurrence,
         legacyId = newId().toString(),
@@ -220,9 +237,10 @@ class SyncTapMovementIntTest(
     val request = tapMovement(
       accompaniedByCode = "U",
       accompaniedByComments = "Updated the text about the escort",
-      direction = TemporaryAbsenceMovement.Direction.IN,
+      direction = Direction.IN,
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
+      prisonCode = existing.recordedByPrisonCode,
     )
     val res = syncTapMovement(authorisation.person.identifier, request)
       .expectStatus().isOk
@@ -237,17 +255,25 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf())
+    verifyEvents(
+      saved,
+      setOf(
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementRelocated(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+      ),
+    )
   }
 
   @Test
   fun `200 ok absence created if one doesn't exist with the given uuid`() {
     val personIdentifier = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode(), setOf(personIdentifier))
-    val request = tapMovement(id = newUuid(), direction = TemporaryAbsenceMovement.Direction.IN)
+    val request = tapMovement(id = newUuid(), direction = Direction.IN)
     val res = syncTapMovement(personIdentifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -261,10 +287,10 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf())
+    verifyEvents(saved, setOf(TemporaryAbsenceCompleted(saved.person.identifier, saved.id, null, DataSource.NOMIS)))
   }
 
   private fun tapMovement(
@@ -313,7 +339,7 @@ class SyncTapMovementIntTest(
 }
 
 private fun TemporaryAbsenceMovement.verifyAgainst(personIdentifier: String, request: TapMovement) {
-  assertThat(this.personIdentifier).isEqualTo(personIdentifier)
+  assertThat(this.person.identifier).isEqualTo(personIdentifier)
   assertThat(direction.name).isEqualTo(request.direction.name)
   assertThat(occurrence?.id).isEqualTo(request.occurrenceId)
   assertThat(occurredAt).isCloseTo(request.occurredAt, within(2, SECONDS))

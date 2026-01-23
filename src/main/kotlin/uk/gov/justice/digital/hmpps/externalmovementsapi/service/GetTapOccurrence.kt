@@ -1,11 +1,13 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.getOccurrence
@@ -15,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerso
 import java.util.UUID
 
 @Service
+@Transactional(readOnly = true)
 class GetTapOccurrence(
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
@@ -65,4 +68,7 @@ private fun TemporaryAbsenceOccurrence.toModel(position: Int, total: Int) = TapO
   comments = comments,
   occurrencePosition = position,
   totalOccurrences = total,
+  movements = movements().map(TemporaryAbsenceMovement::toModel),
 )
+
+private fun TemporaryAbsenceMovement.toModel() = TapOccurrence.Movement(id, occurredAt, direction)

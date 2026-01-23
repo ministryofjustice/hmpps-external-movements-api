@@ -5,8 +5,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
@@ -20,8 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
@@ -38,13 +37,6 @@ interface TempAbsenceOccurrenceOperations {
   fun findForAuthorisation(id: UUID): List<TemporaryAbsenceOccurrence>
 
   companion object {
-
-    fun location(
-      description: String? = word(10),
-      address: String? = word(16),
-      postcode: String? = postcode(),
-      uprn: Long? = newUuid().mostSignificantBits,
-    ) = Location(description, address, postcode, uprn)
 
     fun temporaryAbsenceOccurrence(
       authorisation: TemporaryAbsenceAuthorisation,
@@ -64,7 +56,7 @@ interface TempAbsenceOccurrenceOperations {
       reasonPath: ReasonPath = authorisation.reasonPath,
       scheduleReference: JsonNode? = null,
       legacyId: Long? = null,
-      movements: List<((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceMovement> = listOf(),
+      movements: List<((KClass<out ReferenceData>, String) -> ReferenceData, (String) -> PersonSummary) -> TemporaryAbsenceMovement> = listOf(),
     ): ((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceOccurrence = { rdSupplier ->
       val occurrence = TemporaryAbsenceOccurrence(
         authorisation = authorisation,
@@ -86,7 +78,12 @@ interface TempAbsenceOccurrenceOperations {
         legacyId = legacyId,
       )
       movements.forEach {
-        occurrence.addMovement(it(rdSupplier)) { statusCode ->
+        occurrence.addMovement(
+          it(rdSupplier) { pi ->
+            check(pi == authorisation.person.identifier)
+            authorisation.person
+          },
+        ) { statusCode ->
           rdSupplier(OccurrenceStatus::class, statusCode) as OccurrenceStatus
         }
       }
