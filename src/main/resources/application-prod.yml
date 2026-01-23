@@ -7,4 +7,8 @@ integration:
     url: "https://prisoner-search.prison.service.justice.gov.uk"
 
 service:
+  occurrence-status:
+    poll-interval: PT60s
+  authorisation-expiration:
+    cron: "0 30 0 * * *"
   ui-base-url: "https://external-movements.hmpps.service.justice.gov.uk"
