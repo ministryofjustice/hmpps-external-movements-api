@@ -8,4 +8,8 @@ integration:
 
 service:
   active-prisons: "***"
+  occurrence-status:
+    poll-interval: PT60s
+  authorisation-expiration:
+    cron: "0 30 0 * * *"
   ui-base-url: "https://external-movements-preprod.hmpps.service.justice.gov.uk"
