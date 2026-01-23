@@ -73,7 +73,7 @@ class PrisonerMergedIntTest(
       )
     }
     with(requireNotNull(findTemporaryAbsenceMovement(sm.id))) {
-      assertThat(personIdentifier).isEqualTo(toPi)
+      assertThat(person.identifier).isEqualTo(toPi)
       verifyAudit(
         this,
         RevisionType.MOD,
@@ -85,7 +85,7 @@ class PrisonerMergedIntTest(
       )
     }
     with(requireNotNull(findTemporaryAbsenceMovement(um.id))) {
-      assertThat(personIdentifier).isEqualTo(toPi)
+      assertThat(person.identifier).isEqualTo(toPi)
       verifyAudit(
         this,
         RevisionType.MOD,

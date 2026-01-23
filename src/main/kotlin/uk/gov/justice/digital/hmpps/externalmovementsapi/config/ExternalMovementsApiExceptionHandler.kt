@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.config
 import jakarta.validation.ValidationException
 import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSourceResolvable
+import org.springframework.dao.DataAccessException
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
@@ -125,6 +127,17 @@ class ExternalMovementsApiExceptionHandler {
         developerMessage = e.message,
       ),
     ).also { log.error("Unexpected exception: ${e::class.simpleName}") }
+
+  @ExceptionHandler(DataIntegrityViolationException::class, DataAccessException::class)
+  fun handleConflictException(e: RuntimeException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(CONFLICT)
+    .body(
+      ErrorResponse(
+        status = CONFLICT,
+        userMessage = "Data integrity conflict",
+        developerMessage = e.devMessage(),
+      ),
+    )
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

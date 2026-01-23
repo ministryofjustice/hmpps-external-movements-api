@@ -36,10 +36,11 @@ class TestConfig(
   )
 
   @Bean
-  fun tempAbsenceMovementOperations(): TempAbsenceMovementOperations = TempAbsenceMovementOperationsImpl(
+  fun tempAbsenceMovementOperations(personSummaryOperations: PersonSummaryOperations): TempAbsenceMovementOperations = TempAbsenceMovementOperationsImpl(
     transactionTemplate,
     referenceDataRepository,
     temporaryAbsenceMovementRepository,
+    personSummaryOperations,
   )
 
   @Bean

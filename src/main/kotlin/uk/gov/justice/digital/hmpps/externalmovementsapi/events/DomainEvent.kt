@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -33,8 +34,15 @@ import java.util.UUID
     Type(value = TemporaryAbsenceCommentsChanged::class, name = TemporaryAbsenceCommentsChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceRecategorised::class, name = TemporaryAbsenceRecategorised.EVENT_TYPE),
     Type(value = TemporaryAbsenceRelocated::class, name = TemporaryAbsenceRelocated.EVENT_TYPE),
+
     Type(value = TemporaryAbsenceStarted::class, name = TemporaryAbsenceStarted.EVENT_TYPE),
     Type(value = TemporaryAbsenceCompleted::class, name = TemporaryAbsenceCompleted.EVENT_TYPE),
+    Type(value = TapMovementReversed::class, name = TapMovementReversed.EVENT_TYPE),
+    Type(value = TapMovementAccompanimentChanged::class, name = TapMovementAccompanimentChanged.EVENT_TYPE),
+    Type(value = TapMovementCommentsChanged::class, name = TapMovementCommentsChanged.EVENT_TYPE),
+    Type(value = TapMovementRecategorised::class, name = TapMovementRecategorised.EVENT_TYPE),
+    Type(value = TapMovementRelocated::class, name = TapMovementRelocated.EVENT_TYPE),
+    Type(value = TapMovementOccurredAtChanged::class, name = TapMovementOccurredAtChanged.EVENT_TYPE),
 
     Type(value = PrisonerUpdated::class, name = PrisonerUpdated.EVENT_TYPE),
     Type(value = PrisonerMerged::class, name = PrisonerMerged.EVENT_TYPE),
@@ -47,6 +55,8 @@ import java.util.UUID
 sealed interface DomainEvent<T : AdditionalInformation> {
   val occurredAt: ZonedDateTime
     get() = ZonedDateTime.now()
+
+  @get:JsonIgnore
   val eventType: String
   val description: String
   val additionalInformation: T

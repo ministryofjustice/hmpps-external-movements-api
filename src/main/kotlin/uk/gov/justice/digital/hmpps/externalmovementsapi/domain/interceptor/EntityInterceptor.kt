@@ -27,7 +27,11 @@ class EntityInterceptor : Interceptor {
     types: Array<out Type>,
   ): Boolean {
     if (entity is DomainEventProducer && !ExternalMovementContext.get().migratingData) {
-      entity.domainEvents().forEach { em.persist(HmppsDomainEvent(it)) }
+      entity.domainEvents().forEach {
+        em.persist(
+          HmppsDomainEvent(it).apply { published = it.eventType in entity.excludeFromPublish() },
+        )
+      }
     }
 
     return super.onFlushDirty(entity, id, currentState, previousState, propertyNames, types)

@@ -117,7 +117,7 @@ class MoveTemporaryAbsencesIntTest(
       )
     }
     with(requireNotNull(findTemporaryAbsenceMovement(p1Sm1.id))) {
-      assertThat(personIdentifier).isEqualTo(p2)
+      assertThat(person.identifier).isEqualTo(p2)
       verifyAudit(
         this,
         RevisionType.MOD,
@@ -141,7 +141,7 @@ class MoveTemporaryAbsencesIntTest(
       )
     }
     with(requireNotNull(findTemporaryAbsenceMovement(p1Um1.id))) {
-      assertThat(personIdentifier).isEqualTo(p2)
+      assertThat(person.identifier).isEqualTo(p2)
       verifyAudit(
         this,
         RevisionType.MOD,

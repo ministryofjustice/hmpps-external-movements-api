@@ -7,7 +7,9 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
@@ -19,25 +21,38 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.valueOf
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
+import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementComments
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementDirection
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurredAt
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.MovementAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 @Audited
 @Entity
 @Table(schema = "tap", name = "movement")
 class TemporaryAbsenceMovement(
-  personIdentifier: String,
+  person: PersonSummary,
   occurrence: TemporaryAbsenceOccurrence?,
   occurredAt: LocalDateTime,
   direction: Direction,
@@ -51,11 +66,12 @@ class TemporaryAbsenceMovement(
   @Id
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
-) : Identifiable {
-  @Size(max = 10)
-  @NotNull
-  @Column(name = "person_identifier", nullable = false, length = 10)
-  var personIdentifier: String = personIdentifier.uppercase()
+) : Identifiable,
+  DomainEventProducer {
+  @Audited(targetAuditMode = NOT_AUDITED)
+  @ManyToOne
+  @JoinColumn(name = "person_identifier")
+  var person: PersonSummary = person
     private set
 
   @ManyToOne
@@ -115,32 +131,88 @@ class TemporaryAbsenceMovement(
   override var version: Int? = null
     private set
 
+  @Transient
+  private var appliedActions: List<MovementAction> = listOf()
+
+  @PostLoad
+  private fun load() {
+    appliedActions = listOf()
+  }
+
+  override fun domainEvents(): Set<DomainEvent<*>> {
+    val events = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+    appliedActions = emptyList()
+    return events
+  }
+
+  override fun initialEvent(): DomainEvent<*> = when (direction) {
+    Direction.OUT -> TemporaryAbsenceStarted(person.identifier, id, occurrence?.id)
+    Direction.IN -> TemporaryAbsenceCompleted(person.identifier, id, occurrence?.id)
+  }
+
   enum class Direction {
     IN,
     OUT,
   }
 
-  fun moveTo(personIdentifier: String) = apply {
-    this.personIdentifier = personIdentifier
+  fun moveTo(person: PersonSummary) = apply {
+    this.person = person
   }
 
-  fun update(
-    personIdentifier: String,
-    occurrence: TemporaryAbsenceOccurrence?,
-    request: TapMovement,
-    rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
-  ) = apply {
-    this.personIdentifier = personIdentifier
-    this.occurrence = occurrence
-    occurredAt = request.occurredAt
-    direction = valueOf(request.direction.name)
-    absenceReason = rdProvider(AbsenceReason::class, request.absenceReasonCode) as AbsenceReason
-    accompaniedBy = rdProvider(AccompaniedBy::class, request.accompaniedByCode) as AccompaniedBy
-    accompaniedByComments = request.accompaniedByComments
-    comments = request.comments
-    recordedByPrisonCode = request.created.prisonCode
-    location = request.location
-    legacyId = request.legacyId
+  fun applyDirection(action: ChangeMovementDirection) {
+    if (direction != action.direction) {
+      direction = action.direction
+      appliedActions += action
+    }
+  }
+
+  fun applyLocation(action: ChangeMovementLocation) {
+    if (location != action.location) {
+      location = action.location
+      appliedActions += action
+    }
+  }
+
+  fun applyAccompaniedBy(
+    action: ChangeMovementAccompaniment,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+  ) {
+    var changed = false
+    if (action changes accompaniedByComments) {
+      accompaniedByComments = action.comments
+      changed = true
+    }
+    if (accompaniedBy.code != action.accompaniedByCode) {
+      accompaniedBy = rdSupplier(AccompaniedBy::class, action.accompaniedByCode) as AccompaniedBy
+      changed = true
+    }
+    if (changed) {
+      appliedActions += action
+    }
+  }
+
+  fun applyComments(action: ChangeMovementComments) {
+    if (action changes comments) {
+      comments = action.comments
+      appliedActions += action
+    }
+  }
+
+  fun applyOccurredAt(action: ChangeMovementOccurredAt) {
+    if (action changes occurredAt) {
+      occurredAt = action.occurredAt
+      appliedActions += action
+    }
+  }
+
+  fun applyReason(
+    action: ChangeMovementReason,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+  ) {
+    if (absenceReason.code != action.absenceReasonCode) {
+      absenceReason = rdSupplier(AbsenceReason::class, action.absenceReasonCode) as AbsenceReason
+      appliedActions += action
+    }
   }
 
   companion object {
@@ -153,6 +225,16 @@ class TemporaryAbsenceMovement(
         Direction.OUT -> "Recorded as having gone out of the prison on $format."
       }
     }
+
+    fun changeableProperties(): Set<KProperty1<TemporaryAbsenceMovement, Any?>> = setOf(
+      TemporaryAbsenceMovement::direction,
+      TemporaryAbsenceMovement::occurredAt,
+      TemporaryAbsenceMovement::absenceReason,
+      TemporaryAbsenceMovement::location,
+      TemporaryAbsenceMovement::accompaniedBy,
+      TemporaryAbsenceMovement::accompaniedByComments,
+      TemporaryAbsenceMovement::comments,
+    )
   }
 }
 
@@ -172,13 +254,13 @@ interface TemporaryAbsenceMovementRepository :
         coalesce(sum(case when tam.occurrence is null and tam.direction = 'OUT' then 1 else 0 end),0) as adocOut,
         coalesce(sum(case when tam.occurrence is null and tam.direction = 'IN' then 1 else 0 end),0) as adhocIn
       from TemporaryAbsenceMovement tam
-      where tam.personIdentifier = :personIdentifier
+      where tam.person.identifier = :personIdentifier
     """,
   )
   fun summaryForPerson(personIdentifier: String): PersonMovementSummary
 
   @Modifying
-  @Query("delete from TemporaryAbsenceMovement tam where tam.personIdentifier = :personIdentifier")
+  @Query("delete from TemporaryAbsenceMovement tam where tam.person.identifier = :personIdentifier")
   fun deleteByPersonIdentifier(personIdentifier: String)
 }
 
@@ -188,3 +270,5 @@ interface PersonMovementSummary {
   val adocOut: Int
   val adhocIn: Int
 }
+
+fun TemporaryAbsenceMovementRepository.getMovement(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence movement not found")

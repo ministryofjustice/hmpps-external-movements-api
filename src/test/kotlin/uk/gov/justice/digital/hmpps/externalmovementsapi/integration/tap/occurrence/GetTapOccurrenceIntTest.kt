@@ -150,6 +150,8 @@ class GetTapOccurrenceIntTest(
     occurrence.verifyAgainst(response)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("OVERDUE")
+    val em = occurrence.movements().first()
+    assertThat(response.movements.map { it.id to it.direction }).contains(em.id to em.direction)
   }
 
   @Test
@@ -168,6 +170,8 @@ class GetTapOccurrenceIntTest(
     occurrence.verifyAgainst(response)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("IN_PROGRESS")
+    val em = occurrence.movements().first()
+    assertThat(response.movements.map { it.id to it.direction }).contains(em.id to em.direction)
   }
 
   @Test
@@ -197,6 +201,7 @@ class GetTapOccurrenceIntTest(
     occurrence.verifyAgainst(response)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("COMPLETED")
+    assertThat(response.movements).hasSize(2)
   }
 
   @Test
