@@ -18,9 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementCommentsChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurredAtChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOut
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
@@ -122,8 +120,7 @@ class SyncTapMovementIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceStarted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS),
-        TapMovementOut(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceStarted(authorisation.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
       ),
     )
   }
@@ -172,8 +169,7 @@ class SyncTapMovementIntTest(
     verifyEvents(
       saved,
       setOf(
-        TemporaryAbsenceCompleted(authorisation.person.identifier, occurrence.id, DataSource.NOMIS),
-        TapMovementIn(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceCompleted(authorisation.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
       ),
     )
   }
@@ -218,10 +214,10 @@ class SyncTapMovementIntTest(
     verifyEvents(
       saved,
       setOf(
-        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementRelocated(saved.person.identifier, saved.id, null, DataSource.NOMIS),
       ),
     )
   }
@@ -265,10 +261,10 @@ class SyncTapMovementIntTest(
     verifyEvents(
       saved,
       setOf(
-        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, null, DataSource.NOMIS),
+        TapMovementRelocated(saved.person.identifier, saved.id, null, DataSource.NOMIS),
       ),
     )
   }
@@ -277,7 +273,7 @@ class SyncTapMovementIntTest(
   fun `200 ok absence created if one doesn't exist with the given uuid`() {
     val personIdentifier = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode(), setOf(personIdentifier))
-    val request = tapMovement(id = newUuid(), direction = TemporaryAbsenceMovement.Direction.IN)
+    val request = tapMovement(id = newUuid(), direction = Direction.IN)
     val res = syncTapMovement(personIdentifier, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -294,7 +290,7 @@ class SyncTapMovementIntTest(
       setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf(TapMovementIn(saved.person.identifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(saved, setOf(TemporaryAbsenceCompleted(saved.person.identifier, saved.id, null, DataSource.NOMIS)))
   }
 
   private fun tapMovement(

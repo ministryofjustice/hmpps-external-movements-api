@@ -6,49 +6,10 @@ import java.util.UUID
 
 data class TapMovementInformation(
   override val id: UUID,
+  val occurrenceId: UUID?,
   override val source: DataSource,
 ) : AdditionalInformation,
   IdInformation
-
-data class TapMovementOut(
-  override val additionalInformation: TapMovementInformation,
-  override val personReference: PersonReference,
-) : DomainEvent<TapMovementInformation> {
-  override val eventType: String = EVENT_TYPE
-  override val description: String = "A person has been temporarily released from prison."
-
-  companion object {
-    const val EVENT_TYPE: String = "person.external-movement.recorded-out-temporarily"
-    operator fun invoke(
-      personIdentifier: String,
-      id: UUID,
-      dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = TapMovementOut(
-      TapMovementInformation(id, dataSource),
-      PersonReference.withIdentifier(personIdentifier),
-    )
-  }
-}
-
-data class TapMovementIn(
-  override val additionalInformation: TapMovementInformation,
-  override val personReference: PersonReference,
-) : DomainEvent<TapMovementInformation> {
-  override val eventType: String = EVENT_TYPE
-  override val description: String = "A person has returned from a temporary release from prison."
-
-  companion object {
-    const val EVENT_TYPE: String = "person.external-movement.recorded-in-from-out-temporarily"
-    operator fun invoke(
-      personIdentifier: String,
-      id: UUID,
-      dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = TapMovementIn(
-      TapMovementInformation(id, dataSource),
-      PersonReference.withIdentifier(personIdentifier),
-    )
-  }
-}
 
 data class TapMovementReversed(
   override val additionalInformation: TapMovementInformation,
@@ -58,13 +19,14 @@ data class TapMovementReversed(
   override val description: String = "A temporary movement direction has been reversed."
 
   companion object {
-    const val EVENT_TYPE: String = "person.external-movement.reversed"
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.reversed"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
+      occurrenceId: UUID? = null,
       dataSource: DataSource = ExternalMovementContext.get().source,
     ) = TapMovementReversed(
-      TapMovementInformation(id, dataSource),
+      TapMovementInformation(id, occurrenceId, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
   }
@@ -78,13 +40,14 @@ data class TapMovementAccompanimentChanged(
   override val description: String = "The accompaniment of a temporary absence movement has been changed."
 
   companion object {
-    const val EVENT_TYPE: String = "person.external-movement.accompaniment-changed"
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.accompaniment-changed"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
+      occurrenceId: UUID? = null,
       dataSource: DataSource = ExternalMovementContext.get().source,
     ) = TapMovementAccompanimentChanged(
-      TapMovementInformation(id, dataSource),
+      TapMovementInformation(id, occurrenceId, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
   }
@@ -98,13 +61,14 @@ data class TapMovementCommentsChanged(
   override val description: String = "The comments on a temporary absence movement have been changed."
 
   companion object {
-    const val EVENT_TYPE: String = "person.external-movement.comments-changed"
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.comments-changed"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
+      occurrenceId: UUID? = null,
       dataSource: DataSource = ExternalMovementContext.get().source,
     ) = TapMovementCommentsChanged(
-      TapMovementInformation(id, dataSource),
+      TapMovementInformation(id, occurrenceId, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
   }
@@ -118,13 +82,14 @@ data class TapMovementRecategorised(
   override val description: String = "A temporary absence movement has been recategorised."
 
   companion object {
-    const val EVENT_TYPE: String = "person.external-movement.recategorised"
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.recategorised"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
+      occurrenceId: UUID? = null,
       dataSource: DataSource = ExternalMovementContext.get().source,
     ) = TapMovementRecategorised(
-      TapMovementInformation(id, dataSource),
+      TapMovementInformation(id, occurrenceId, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
   }
@@ -138,13 +103,14 @@ data class TapMovementRelocated(
   override val description: String = "A temporary absence movement has been relocated."
 
   companion object {
-    const val EVENT_TYPE: String = "person.external-movement.relocated"
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.relocated"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
+      occurrenceId: UUID? = null,
       dataSource: DataSource = ExternalMovementContext.get().source,
     ) = TapMovementRelocated(
-      TapMovementInformation(id, dataSource),
+      TapMovementInformation(id, occurrenceId, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
   }
@@ -158,13 +124,56 @@ data class TapMovementOccurredAtChanged(
   override val description: String = "When a temporary absence movement occurred has been changed."
 
   companion object {
-    const val EVENT_TYPE: String = "person.external-movement.occurred-at-changed"
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.occurred-at-changed"
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
+      occurrenceId: UUID? = null,
       dataSource: DataSource = ExternalMovementContext.get().source,
     ) = TapMovementOccurredAtChanged(
-      TapMovementInformation(id, dataSource),
+      TapMovementInformation(id, occurrenceId, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceStarted(
+  override val additionalInformation: TapMovementInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TapMovementInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "A temporary absence has started."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.started"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      occurrenceId: UUID? = null,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceStarted(
+      TapMovementInformation(id, occurrenceId, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceCompleted(
+  override val additionalInformation: TapMovementInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TapMovementInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "A temporary absence has completed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.completed"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      occurrenceId: UUID? = null,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceCompleted(
+      TapMovementInformation(id, occurrenceId, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )
   }

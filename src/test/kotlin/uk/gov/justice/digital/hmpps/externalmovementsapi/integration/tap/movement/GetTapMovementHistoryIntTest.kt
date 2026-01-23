@@ -15,8 +15,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOut
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -107,7 +107,7 @@ class GetTapMovementHistoryIntTest(
     assertThat(history.content).hasSize(3)
     with(history.content.first()) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).containsExactly(TapMovementOut.EVENT_TYPE)
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceStarted.EVENT_TYPE)
       assertThat(reason).startsWith("Recorded as having gone out of the prison on")
     }
     with(history.content[1]) {

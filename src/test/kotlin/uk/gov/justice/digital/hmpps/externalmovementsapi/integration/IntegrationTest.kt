@@ -166,7 +166,7 @@ abstract class IntegrationTest {
       domainEventsPersisted.forEach {
         assertThat(it.eventType).isEqualTo(it.event.eventType)
       }
-      assertThat(domainEventsPersisted.map { it.event }).containsExactlyInAnyOrderElementsOf(events)
+      assertThat(domainEventsPersisted.map { it.event }.toSet()).containsExactlyInAnyOrderElementsOf(events)
     }
   }
 

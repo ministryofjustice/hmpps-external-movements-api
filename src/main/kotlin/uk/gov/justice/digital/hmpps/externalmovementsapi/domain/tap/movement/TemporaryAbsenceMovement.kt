@@ -31,8 +31,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementIn
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOut
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementComments
@@ -146,8 +146,8 @@ class TemporaryAbsenceMovement(
   }
 
   override fun initialEvent(): DomainEvent<*> = when (direction) {
-    Direction.OUT -> TapMovementOut(person.identifier, id)
-    Direction.IN -> TapMovementIn(person.identifier, id)
+    Direction.OUT -> TemporaryAbsenceStarted(person.identifier, id, occurrence?.id)
+    Direction.IN -> TemporaryAbsenceCompleted(person.identifier, id, occurrence?.id)
   }
 
   enum class Direction {
