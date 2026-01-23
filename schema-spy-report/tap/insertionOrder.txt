@@ -1,0 +1,15 @@
+absence_reason
+accompanied_by
+absence_reason_category
+absence_sub_type
+absence_type
+transport
+authorisation_status
+occurrence_status
+occurrence
+authorisation_audit
+movement_audit
+occurrence_audit
+movement
+authorisation
+absence_categorisation_link
