@@ -6,7 +6,7 @@ on:
       java_version:
         description: Java version
         type: string
-        default: '21'
+        default: '25'
       java_options:
         description: Java options
         type: string
@@ -84,7 +84,7 @@ jobs:
           curl -L https://jdbc.postgresql.org/download/postgresql-${{ inputs.postgres_driver_version }}.jar --output /tmp/postgres-driver.jar
           export JAVA_OPTS="${{ inputs.java_options }}"
           ${{ inputs.init_db_cli }}
-          java -jar /tmp/schemaspy.jar -t pgsql -dp /tmp/postgres-driver.jar -db ${{ inputs.database_name }} -host localhost -port 5432 -s ${{ inputs.database_schema }} -vizjs -u ${{ inputs.database_user }} -p ${{ inputs.database_password }} -I ${{ inputs.exclude }} -o /tmp/schema-spy-report
+          java -jar /tmp/schemaspy.jar -t pgsql -dp /tmp/postgres-driver.jar -db ${{ inputs.database_name }} -host localhost -port 5432 -schemaSpec ${{ inputs.database_schema }} -vizjs -u ${{ inputs.database_user }} -p ${{ inputs.database_password }} -I ${{ inputs.exclude }} -o /tmp/schema-spy-report
 
       - name: Publish HTML report
         uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4.8.0
