@@ -46,7 +46,7 @@ jobs:
     with:
       docker_compose_file: 'docker-compose-schema-spy.yml'
       database_name: 'movements'
-      database_schema: '(public)|(tap)'
+      database_schema: 'public,tap'
       database_user: 'external'
       database_password: 'movements'
     secrets: inherit
