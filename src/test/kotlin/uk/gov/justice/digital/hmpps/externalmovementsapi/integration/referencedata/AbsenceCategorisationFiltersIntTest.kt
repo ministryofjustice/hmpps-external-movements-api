@@ -46,7 +46,9 @@ class AbsenceCategorisationFiltersIntTest : IntegrationTest() {
     )
 
     assertThat(res.subTypes).containsExactly(
+      Option(domainCode = ABSENCE_REASON, code = "3", description = "CRL (childcare resettlement licence)"),
       Option(domainCode = ABSENCE_SUB_TYPE, code = "RDR", description = "RDR (resettlement day release)"),
+      Option(domainCode = ABSENCE_REASON, code = "RO", description = "ROR (resettlement overnight release)"),
       Option(domainCode = ABSENCE_SUB_TYPE, code = "SPL", description = "SPL (special purpose licence)"),
       Option(domainCode = ABSENCE_SUB_TYPE, code = "YTRA", description = "Youth - Accommodation"),
       Option(domainCode = ABSENCE_SUB_TYPE, code = "YTRC", description = "Youth - Case work and transitions"),
@@ -57,7 +59,6 @@ class AbsenceCategorisationFiltersIntTest : IntegrationTest() {
     assertThat(res.reasons).containsExactly(
       Option(domainCode = ABSENCE_REASON, code = "FB", description = "Accommodation-related"),
       Option(domainCode = ABSENCE_REASON, code = "LTX", description = "Court, legal, police or prison transfer"),
-      Option(domainCode = ABSENCE_REASON, code = "3", description = "CRL (childcare resettlement licence)"),
       Option(domainCode = ABSENCE_REASON, code = "C3", description = "Death or funeral"),
       Option(domainCode = ABSENCE_REASON, code = "ET", description = "Education or training"),
       Option(domainCode = ABSENCE_REASON, code = "C6", description = "Inpatient medical or dental appointment"),
