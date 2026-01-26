@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -46,7 +45,6 @@ class SyncTapAuthorisation(
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
-  private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
     val person = personSummaryService.getWithSave(personIdentifier)

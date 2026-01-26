@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Loca
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
@@ -82,7 +83,7 @@ interface TempAbsenceOccurrenceOperations {
           it(rdSupplier) { pi ->
             check(pi == authorisation.person.identifier)
             authorisation.person
-          },
+          }.applyLocation(ChangeMovementLocation(location)),
         ) { statusCode ->
           rdSupplier(OccurrenceStatus::class, statusCode) as OccurrenceStatus
         }

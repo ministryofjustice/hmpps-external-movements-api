@@ -159,14 +159,14 @@ class TemporaryAbsenceMovement(
     this.person = person
   }
 
-  fun applyDirection(action: ChangeMovementDirection) {
+  fun applyDirection(action: ChangeMovementDirection) = apply {
     if (direction != action.direction) {
       direction = action.direction
       appliedActions += action
     }
   }
 
-  fun applyLocation(action: ChangeMovementLocation) {
+  fun applyLocation(action: ChangeMovementLocation) = apply {
     if (location != action.location) {
       location = action.location
       appliedActions += action
@@ -176,7 +176,7 @@ class TemporaryAbsenceMovement(
   fun applyAccompaniedBy(
     action: ChangeMovementAccompaniment,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
-  ) {
+  ) = apply {
     var changed = false
     if (action changes accompaniedByComments) {
       accompaniedByComments = action.comments
@@ -191,14 +191,14 @@ class TemporaryAbsenceMovement(
     }
   }
 
-  fun applyComments(action: ChangeMovementComments) {
+  fun applyComments(action: ChangeMovementComments) = apply {
     if (action changes comments) {
       comments = action.comments
       appliedActions += action
     }
   }
 
-  fun applyOccurredAt(action: ChangeMovementOccurredAt) {
+  fun applyOccurredAt(action: ChangeMovementOccurredAt) = apply {
     if (action changes occurredAt) {
       occurredAt = action.occurredAt
       appliedActions += action
@@ -208,7 +208,7 @@ class TemporaryAbsenceMovement(
   fun applyReason(
     action: ChangeMovementReason,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
-  ) {
+  ) = apply {
     if (absenceReason.code != action.absenceReasonCode) {
       absenceReason = rdSupplier(AbsenceReason::class, action.absenceReasonCode) as AbsenceReason
       appliedActions += action

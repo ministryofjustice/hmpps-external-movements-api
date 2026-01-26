@@ -36,7 +36,7 @@ interface TempAbsenceMovementOperations {
       accompaniedByComments: String? = "Some comments about the accompanied by",
       comments: String? = "Some comments on the movement",
       prisonCode: String = prisonCode(),
-      location: Location = location(),
+      location: Location = occurrence?.location ?: location(),
       legacyId: String? = null,
     ): ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceMovement = { rdSupplier, personSupplier ->
       TemporaryAbsenceMovement(
