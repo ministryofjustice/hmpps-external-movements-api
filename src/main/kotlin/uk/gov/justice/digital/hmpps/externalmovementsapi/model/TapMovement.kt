@@ -12,7 +12,7 @@ data class TapMovement(
   val occurrence: Occurrence?,
   val occurredAt: LocalDateTime,
   val direction: TemporaryAbsenceMovement.Direction,
-  val directionPrisonCode: String,
+  val prisonCode: String,
   val absenceReason: CodedDescription,
   val location: Location,
   val accompaniedBy: CodedDescription,

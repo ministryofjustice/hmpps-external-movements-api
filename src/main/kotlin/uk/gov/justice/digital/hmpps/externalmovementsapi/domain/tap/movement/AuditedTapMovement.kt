@@ -33,6 +33,7 @@ class AuditedTapMovement(
   val occurredAt: LocalDateTime,
   @Enumerated(EnumType.STRING)
   val direction: TemporaryAbsenceMovement.Direction,
+  val prisonCode: String,
   @ManyToOne(optional = false)
   @JoinColumn(name = "absence_reason_id", nullable = false)
   val absenceReason: AbsenceReason,
@@ -44,7 +45,6 @@ class AuditedTapMovement(
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "location")
   var location: Location,
-  val recordedByPrisonCode: String,
   val legacyId: String?,
   val createdAt: LocalDateTime,
   val createdBy: String,

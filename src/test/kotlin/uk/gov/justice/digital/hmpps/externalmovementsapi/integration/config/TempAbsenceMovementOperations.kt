@@ -35,7 +35,7 @@ interface TempAbsenceMovementOperations {
       accompaniedBy: String = AccompaniedBy.Code.NOT_PROVIDED.name,
       accompaniedByComments: String? = "Some comments about the accompanied by",
       comments: String? = "Some comments on the movement",
-      recordedByPrison: String = prisonCode(),
+      prisonCode: String = prisonCode(),
       location: Location = location(),
       legacyId: String? = null,
     ): ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceMovement = { rdSupplier, personSupplier ->
@@ -48,7 +48,7 @@ interface TempAbsenceMovementOperations {
         accompaniedBy = rdSupplier(AccompaniedBy::class, accompaniedBy) as AccompaniedBy,
         accompaniedByComments = accompaniedByComments,
         comments = comments,
-        directionPrisonCode = recordedByPrison,
+        prisonCode = prisonCode,
         location = location,
         legacyId = legacyId,
       )
