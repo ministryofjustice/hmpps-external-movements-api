@@ -11,5 +11,5 @@ data class ChangeMovementAccompaniment(
   override val reason: String? = null,
 ) : MovementAction,
   CommentsAction {
-  override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementAccompanimentChanged(tam.person.identifier, tam.id)
+  override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementAccompanimentChanged(tam.person.identifier, tam.id, tam.occurrence?.id)
 }

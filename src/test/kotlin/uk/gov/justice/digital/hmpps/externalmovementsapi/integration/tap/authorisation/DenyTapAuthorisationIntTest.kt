@@ -65,7 +65,7 @@ class DenyTapAuthorisationIntTest(
   @EnumSource(AuthorisationStatus.Code::class, mode = EnumSource.Mode.EXCLUDE, names = ["PENDING", "DENIED"])
   fun `409 - authorisation not awaiting approval cannot be denied`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(
-      TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation(
+      TempAbsenceAuthorisationOperations.temporaryAbsenceAuthorisation(
         status = status,
       ),
     )
@@ -77,12 +77,12 @@ class DenyTapAuthorisationIntTest(
   @Test
   fun `200 ok - authorisation denied`() {
     val auth = givenTemporaryAbsenceAuthorisation(
-      TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation(
+      TempAbsenceAuthorisationOperations.temporaryAbsenceAuthorisation(
         status = AuthorisationStatus.Code.PENDING,
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(
-      TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence(
+      TempAbsenceOccurrenceOperations.temporaryAbsenceOccurrence(
         auth,
       ),
     )
@@ -107,7 +107,7 @@ class DenyTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.Companion.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
     )
 
     verifyEvents(

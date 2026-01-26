@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync.RetrieveTapAuthorisationIntTest.Companion.GET_TAP_AUTH_URL
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import java.time.LocalDate
 import java.time.LocalDateTime

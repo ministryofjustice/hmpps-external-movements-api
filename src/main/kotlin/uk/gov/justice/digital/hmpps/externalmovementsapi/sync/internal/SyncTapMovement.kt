@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurredAt
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
@@ -77,7 +78,9 @@ class SyncTapMovement(
     rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) = TemporaryAbsenceMovement(
     person = person,
-    occurrence = occurrence?.calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus },
+    occurrence = occurrence
+      ?.applyLocation(ChangeOccurrenceLocation(location))
+      ?.calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus },
     occurredAt = occurredAt,
     direction = valueOf(direction.name),
     prisonCode = requireNotNull(prisonCode ?: created.prisonCode),
@@ -100,7 +103,6 @@ class SyncTapMovement(
     }
     applyDirection(ChangeMovementDirection(request.direction))
     applyOccurredAt(ChangeMovementOccurredAt(request.occurredAt))
-    applyLocation(ChangeMovementLocation(request.location))
     request.comments?.also { applyComments(ChangeMovementComments(it)) }
     applyAccompaniedBy(
       ChangeMovementAccompaniment(
@@ -110,5 +112,10 @@ class SyncTapMovement(
       rdProvider,
     )
     applyReason(ChangeMovementReason(request.absenceReasonCode), rdProvider)
+    if (occurrence != null) {
+      occurrence.applyLocation(ChangeOccurrenceLocation(request.location))
+    } else {
+      applyLocation(ChangeMovementLocation(request.location))
+    }
   }
 }

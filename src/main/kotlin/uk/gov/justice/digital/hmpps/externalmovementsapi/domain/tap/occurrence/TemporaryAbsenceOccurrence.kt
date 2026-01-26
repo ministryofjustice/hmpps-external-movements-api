@@ -51,6 +51,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
@@ -251,7 +252,7 @@ class TemporaryAbsenceOccurrence(
   fun applyAbsenceCategorisation(
     action: RecategoriseOccurrence,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
-  ) {
+  ) = apply {
     if (action.changes(this)) {
       reasonPath = action.reasonPath
       absenceType = action.absenceTypeCode?.let { rdSupplier(AbsenceType::class, it) as AbsenceType }
@@ -264,7 +265,7 @@ class TemporaryAbsenceOccurrence(
     }
   }
 
-  fun reschedule(action: RescheduleOccurrence) {
+  fun reschedule(action: RescheduleOccurrence) = apply {
     val rel = action.start.ifChanges(::start)
     val ret = action.end.ifChanges(::end)
     if (rel || ret) {
@@ -272,17 +273,21 @@ class TemporaryAbsenceOccurrence(
     }
   }
 
-  fun applyLocation(action: ChangeOccurrenceLocation) {
+  fun applyLocation(action: ChangeOccurrenceLocation) = apply {
     if (location != action.location) {
       location = action.location
       appliedActions += action
+    }
+  }.also {
+    movements.forEach {
+      it.applyLocation(ChangeMovementLocation(action.location))
     }
   }
 
   fun applyAccompaniment(
     action: ChangeOccurrenceAccompaniment,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
-  ) {
+  ) = apply {
     if (accompaniedBy.code != action.accompaniedByCode) {
       accompaniedBy = rdSupplier(AccompaniedBy::class, action.accompaniedByCode) as AccompaniedBy
       appliedActions += action
@@ -292,28 +297,28 @@ class TemporaryAbsenceOccurrence(
   fun applyTransport(
     action: ChangeOccurrenceTransport,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
-  ) {
+  ) = apply {
     if (transport.code != action.transportCode) {
       transport = rdSupplier(Transport::class, action.transportCode) as Transport
       appliedActions += action
     }
   }
 
-  fun applyContactInformation(action: ChangeOccurrenceContactInformation) {
+  fun applyContactInformation(action: ChangeOccurrenceContactInformation) = apply {
     if (contactInformation?.startsWith(action.information) != true) {
       contactInformation = action.information
       appliedActions += action
     }
   }
 
-  fun applyComments(action: ChangeOccurrenceComments) {
+  fun applyComments(action: ChangeOccurrenceComments) = apply {
     if (action.changes(comments)) {
       comments = action.comments
       appliedActions += action
     }
   }
 
-  fun cancel(action: CancelOccurrence, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+  fun cancel(action: CancelOccurrence, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) = apply {
     if (!::status.isInitialized || status.code != CANCELLED.name) {
       status = rdSupplier(OccurrenceStatus::class, CANCELLED.name) as OccurrenceStatus
       appliedActions += action

@@ -124,13 +124,13 @@ class GetTapAuthorisationHistoryIntTest(
     }
     with(history.content[2]) {
       Assertions.assertThat(user).isEqualTo(AuditedAction.User(approvingUser.username, approvingUser.name))
-      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.Companion.EVENT_TYPE)
+      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
       Assertions.assertThat(reason).isEqualTo(approveAction.reason)
       Assertions.assertThat(changes).containsExactly(AuditedAction.Change("status", "To be reviewed", "Approved"))
     }
     with(history.content.last()) {
       Assertions.assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
-      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.Companion.EVENT_TYPE)
+      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
       Assertions.assertThat(reason).isEqualTo(cancelAction.reason)
       Assertions.assertThat(changes).containsExactly(AuditedAction.Change("status", "Approved", "Cancelled"))
     }
@@ -142,7 +142,7 @@ class GetTapAuthorisationHistoryIntTest(
   ) = webTestClient
     .get()
     .uri(GET_TAP_AUTHORISATION_HISTORY_URL, id)
-    .headers(setAuthorisation(username = ExternalMovementContext.Companion.SYSTEM_USERNAME, roles = listOfNotNull(role)))
+    .headers(setAuthorisation(username = ExternalMovementContext.SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {

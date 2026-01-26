@@ -12,5 +12,5 @@ data class ChangeMovementOccurredAt(
 ) : MovementAction {
   infix fun changes(occurredAt: LocalDateTime): Boolean = this.occurredAt.truncatedTo(ChronoUnit.SECONDS) == occurredAt.truncatedTo(ChronoUnit.SECONDS)
 
-  override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementOccurredAtChanged(tam.person.identifier, tam.id)
+  override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementOccurredAtChanged(tam.person.identifier, tam.id, tam.occurrence?.id)
 }

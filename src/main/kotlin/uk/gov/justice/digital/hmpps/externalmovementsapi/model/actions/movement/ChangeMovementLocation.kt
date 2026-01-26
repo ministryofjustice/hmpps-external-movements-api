@@ -10,5 +10,5 @@ data class ChangeMovementLocation(
   @Valid val location: Location,
   override val reason: String? = null,
 ) : MovementAction {
-  override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementRelocated(tam.person.identifier, tam.id)
+  override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementRelocated(tam.person.identifier, tam.id, tam.occurrence?.id)
 }

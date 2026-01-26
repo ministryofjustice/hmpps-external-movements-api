@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_AUTHORISATION_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TAP_OCCURRENCE_STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
@@ -27,17 +26,7 @@ import java.util.UUID
 data class MigrateTapRequest(
   val temporaryAbsences: List<TapAuthorisation>,
   val unscheduledMovements: List<TapMovement>,
-) {
-  fun requiredReferenceData(): Set<ReferenceDataKey> = (
-    temporaryAbsences.flatMap { auth ->
-      auth.requiredReferenceData() +
-        auth.occurrences.flatMap { occ ->
-          occ.requiredReferenceData() +
-            occ.movements.flatMap { it.requiredReferenceData() }
-        }
-    } + unscheduledMovements.flatMap { it.requiredReferenceData() }
-    ).toSet()
-}
+)
 
 data class MigrateTapResponse(
   val temporaryAbsences: List<MigratedAuthorisation>,

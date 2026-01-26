@@ -51,7 +51,6 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
       comments: String? = "Some comments on the original authorisation",
       start: LocalDate = LocalDate.now().minusDays(7),
       end: LocalDate = LocalDate.now().plusDays(7),
-      applicationDate: LocalDate = LocalDate.now().minusWeeks(1),
       reasonPath: ReasonPath = ReasonPath(
         buildList {
           absenceType?.also { add(ABSENCE_TYPE of it) }
