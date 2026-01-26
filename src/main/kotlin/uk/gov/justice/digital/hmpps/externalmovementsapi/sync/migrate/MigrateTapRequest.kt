@@ -127,6 +127,7 @@ data class TapOccurrence(
 data class TapMovement(
   val occurredAt: LocalDateTime,
   val direction: TemporaryAbsenceMovement.Direction,
+  val prisonCode: String?,
   val absenceReasonCode: String,
   val location: Location,
   val accompaniedByCode: String,

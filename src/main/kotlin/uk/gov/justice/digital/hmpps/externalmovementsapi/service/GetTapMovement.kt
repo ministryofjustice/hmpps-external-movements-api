@@ -29,6 +29,7 @@ private fun TemporaryAbsenceMovement.toModel() = TapMovement(
   occurrence = occurrence?.toModel(),
   occurredAt = occurredAt,
   direction = direction,
+  prisonCode = prisonCode,
   absenceReason = absenceReason.asCodedDescription(),
   location = location,
   accompaniedBy = accompaniedBy.asCodedDescription(),

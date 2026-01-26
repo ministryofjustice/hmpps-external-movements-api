@@ -24,11 +24,12 @@ private fun AuditedTapMovement.forSync() = TapMovement(
   personIdentifier = personIdentifier,
   occurredAt = occurredAt,
   direction = direction,
+  prisonCode = prisonCode,
   absenceReasonCode = absenceReason.code,
   location = location,
   accompaniedByCode = accompaniedBy.code,
   accompaniedByComments = accompaniedByComments,
   comments = comments,
-  created = AtAndByWithPrison(createdAt, createdBy, recordedByPrisonCode),
+  created = AtAndByWithPrison(createdAt, createdBy, prisonCode),
   updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
 )

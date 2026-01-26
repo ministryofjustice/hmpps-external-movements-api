@@ -61,7 +61,7 @@ class TemporaryAbsenceMovement(
   accompaniedByComments: String?,
   comments: String?,
   location: Location,
-  recordedByPrisonCode: String,
+  prisonCode: String,
   legacyId: String?,
   @Id
   @Column(name = "id", nullable = false, updatable = false)
@@ -119,8 +119,8 @@ class TemporaryAbsenceMovement(
 
   @Size(max = 6)
   @NotNull
-  @Column(name = "recorded_by_prison_code", nullable = false, length = 6)
-  var recordedByPrisonCode: String = recordedByPrisonCode
+  @Column(name = "prison_code", nullable = false, length = 6)
+  var prisonCode: String = prisonCode
     private set
 
   @Column(name = "legacy_id")

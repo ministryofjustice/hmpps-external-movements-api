@@ -236,7 +236,7 @@ class MigrateTapHierarchy(
     accompaniedBy = rdSupplier(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
     accompaniedByComments = accompaniedByComments,
     comments = comments,
-    recordedByPrisonCode = created.prisonCode,
+    prisonCode = requireNotNull(prisonCode ?: created.prisonCode),
     location = location,
     legacyId = legacyId,
   )

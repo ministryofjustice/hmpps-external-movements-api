@@ -11,11 +11,11 @@ data class PersonTapDetail(
   val unscheduledMovements: List<Movement>,
 ) {
   @Schema(name = "ReconciliationAuthorisation")
-  data class Authorisation(val id: UUID, val statusCode: AuthorisationStatus.Code, val occurrences: List<Occurrence>)
+  data class Authorisation(val id: UUID, val statusCode: AuthorisationStatus.Code, val prisonCode: String, val occurrences: List<Occurrence>)
 
   @Schema(name = "ReconciliationOccurrence")
-  data class Occurrence(val id: UUID, val statusCode: OccurrenceStatus.Code, val movements: List<Movement>)
+  data class Occurrence(val id: UUID, val statusCode: OccurrenceStatus.Code, val prisonCode: String, val movements: List<Movement>)
 
   @Schema(name = "ReconciliationMovement")
-  data class Movement(val id: UUID, val direction: TemporaryAbsenceMovement.Direction)
+  data class Movement(val id: UUID, val direction: TemporaryAbsenceMovement.Direction, val directionPrisonCode: String)
 }

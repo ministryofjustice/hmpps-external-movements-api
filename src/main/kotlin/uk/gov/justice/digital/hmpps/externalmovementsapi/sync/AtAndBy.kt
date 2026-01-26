@@ -10,5 +10,5 @@ data class AtAndBy(val at: LocalDateTime, val by: String)
 data class AtAndByWithPrison(
   val at: LocalDateTime,
   val by: String,
-  val prisonCode: String,
+  val prisonCode: String?,
 )
