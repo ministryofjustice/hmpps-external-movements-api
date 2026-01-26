@@ -8,5 +8,5 @@ data class ChangeMovementReason(
   val absenceReasonCode: String,
   override val reason: String? = null,
 ) : MovementAction {
-  override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementRecategorised(tam.person.identifier, tam.id, tam.occurrence?.id)
+  override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementRecategorised(tam.person.identifier, tam.id)
 }

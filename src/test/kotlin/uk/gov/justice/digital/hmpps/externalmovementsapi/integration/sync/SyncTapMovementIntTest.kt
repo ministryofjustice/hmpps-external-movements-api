@@ -222,10 +222,10 @@ class SyncTapMovementIntTest(
     verifyEvents(
       saved,
       setOf(
-        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
-        TapMovementCommentsChanged(saved.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
-        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
-        TapMovementRelocated(saved.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceRelocated(saved.person.identifier, occurrence.id, DataSource.NOMIS),
       ),
     )
@@ -271,9 +271,9 @@ class SyncTapMovementIntTest(
     verifyEvents(
       saved,
       setOf(
-        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
-        TapMovementCommentsChanged(saved.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
-        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
       ),
     )
   }

@@ -201,7 +201,7 @@ class SyncTapOccurrenceIntTest(
         TemporaryAbsenceRelocated(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
       ) + saved.movements().map {
-        TapMovementRelocated(saved.person.identifier, it.id, it.occurrence?.id, DataSource.NOMIS)
+        TapMovementRelocated(saved.person.identifier, it.id, DataSource.NOMIS)
       },
     )
   }
