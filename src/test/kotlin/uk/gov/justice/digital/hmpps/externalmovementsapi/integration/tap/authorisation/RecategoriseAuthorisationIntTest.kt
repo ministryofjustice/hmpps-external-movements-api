@@ -64,7 +64,7 @@ class RecategoriseAuthorisationIntTest(
   fun `200 ok - authorisation recategorised`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = action("PP", null, null, null)
+    val request = action("PP", null, null, "PC")
     val res = recategoriseAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
@@ -77,7 +77,7 @@ class RecategoriseAuthorisationIntTest(
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
     val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
-    assertThat(occurrence.absenceReason?.code).isEqualTo(saved.absenceReason?.code)
+    assertThat(occurrence.absenceReason.code).isEqualTo(saved.absenceReason.code)
     assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(saved.absenceReasonCategory?.code)
     assertThat(occurrence.absenceSubType?.code).isEqualTo(saved.absenceSubType?.code)
     assertThat(occurrence.absenceType?.code).isEqualTo(saved.absenceType?.code)
@@ -119,7 +119,7 @@ class RecategoriseAuthorisationIntTest(
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
     val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
-    assertThat(occurrence.absenceReason?.code).isEqualTo(saved.absenceReason?.code)
+    assertThat(occurrence.absenceReason.code).isEqualTo(saved.absenceReason.code)
     assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(saved.absenceReasonCategory?.code)
     assertThat(occurrence.absenceSubType?.code).isEqualTo(saved.absenceSubType?.code)
     assertThat(occurrence.absenceType?.code).isEqualTo(saved.absenceType?.code)
@@ -147,7 +147,7 @@ class RecategoriseAuthorisationIntTest(
   @Test
   fun `200 ok - no-op re-categorisation request`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    val request = action(auth.absenceType?.code, auth.absenceSubType?.code, auth.absenceReasonCategory?.code, auth.absenceReason?.code)
+    val request = action(auth.absenceType?.code, auth.absenceSubType?.code, auth.absenceReasonCategory?.code, auth.absenceReason.code)
     val res = recategoriseAuthorisation(auth.id, request).successResponse<AuditHistory>()
     assertThat(res.content).isEmpty()
 

@@ -293,7 +293,7 @@ class SearchTapOccurrenceIntTest(
       prisonCode,
       absenceCategorisation = AbsenceCategorisationFilter(
         ReferenceDataDomain.Code.ABSENCE_REASON,
-        sortedSetOf(occ2.absenceReason!!.code),
+        sortedSetOf(occ2.absenceReason.code),
       ),
     ).successResponse<TapOccurrenceSearchResponse>()
 
@@ -518,8 +518,8 @@ class SearchTapOccurrenceIntTest(
     assertThat(res3.content.size).isEqualTo(2)
     assertThat(res3.metadata.totalElements).isEqualTo(2)
     assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(
-      sr.absenceReason?.description,
-      pp.absenceReason?.description,
+      sr.absenceReason.description,
+      pp.absenceReason.description,
     )
 
     val res4 = searchTapOccurrences(prisonCode, sort = "absenceReason,desc")
@@ -527,8 +527,8 @@ class SearchTapOccurrenceIntTest(
     assertThat(res4.content.size).isEqualTo(2)
     assertThat(res4.metadata.totalElements).isEqualTo(2)
     assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(
-      pp.absenceReason?.description,
-      sr.absenceReason?.description,
+      pp.absenceReason.description,
+      sr.absenceReason.description,
     )
   }
 
@@ -570,8 +570,8 @@ class SearchTapOccurrenceIntTest(
     assertThat(res3.content.size).isEqualTo(2)
     assertThat(res3.metadata.totalElements).isEqualTo(2)
     assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(
-      one.absenceReason?.description,
-      two.absenceReason?.description,
+      one.absenceReason.description,
+      two.absenceReason.description,
     )
 
     val res4 = searchTapOccurrences(prisonCode, sort = "transport,desc")
@@ -579,8 +579,8 @@ class SearchTapOccurrenceIntTest(
     assertThat(res4.content.size).isEqualTo(2)
     assertThat(res4.metadata.totalElements).isEqualTo(2)
     assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(
-      two.absenceReason?.description,
-      one.absenceReason?.description,
+      two.absenceReason.description,
+      one.absenceReason.description,
     )
   }
 

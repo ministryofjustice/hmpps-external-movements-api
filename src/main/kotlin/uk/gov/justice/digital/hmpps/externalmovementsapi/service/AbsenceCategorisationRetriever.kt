@@ -68,16 +68,14 @@ class AbsenceCategorisationRetriever(
     val subType =
       absenceSubTypeCode?.let { rdProvider(AbsenceSubType::class, it) } ?: linkProvider(ABSENCE_SUB_TYPE, type)
     val reasonCategory = absenceReasonCategoryCode?.let { rdProvider(AbsenceReasonCategory::class, it) }
-    val reason = absenceReasonCode?.let { rdProvider(AbsenceReason::class, it) } ?: linkProvider(
-      ABSENCE_REASON,
-      reasonCategory ?: subType ?: type,
-    )
+    val reason = absenceReasonCode?.let { rdProvider(AbsenceReason::class, it) }
+      ?: linkProvider(ABSENCE_REASON, reasonCategory ?: subType ?: type)
 
     val car = object : CategorisedAbsenceReason {
       override val absenceType: AbsenceType = type
       override val absenceSubType: AbsenceSubType? = subType as? AbsenceSubType
       override val absenceReasonCategory: AbsenceReasonCategory? = reasonCategory as? AbsenceReasonCategory
-      override val absenceReason: AbsenceReason? = reason as? AbsenceReason?
+      override val absenceReason: AbsenceReason = reason as AbsenceReason
     }
     car to allRd
   }

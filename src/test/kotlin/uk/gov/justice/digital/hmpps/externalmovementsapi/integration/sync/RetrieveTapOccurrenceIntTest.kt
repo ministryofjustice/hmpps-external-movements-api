@@ -95,7 +95,7 @@ private fun TapOccurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) 
   } else {
     assertThat(absenceSubTypeCode).isEqualTo(occurrence.absenceSubType?.code)
   }
-  assertThat(absenceReasonCode).isEqualTo(occurrence.absenceReason?.code)
+  assertThat(absenceReasonCode).isEqualTo(occurrence.absenceReason.code)
   assertThat(statusCode).isEqualTo(occurrence.status.code)
   assertThat(start).isCloseTo(occurrence.start, within(2, SECONDS))
   assertThat(end).isCloseTo(occurrence.end, within(2, SECONDS))

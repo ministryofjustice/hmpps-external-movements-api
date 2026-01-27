@@ -11,12 +11,12 @@ interface CategorisedAbsenceReason {
   val absenceType: AbsenceType?
   val absenceSubType: AbsenceSubType?
   val absenceReasonCategory: AbsenceReasonCategory?
-  val absenceReason: AbsenceReason?
+  val absenceReason: AbsenceReason
 
   fun hierarchyDescription(reasonPath: ReasonPath): String = listOfNotNull(
     absenceType?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_TYPE) }?.description,
     absenceSubType?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_SUB_TYPE) }?.description,
     absenceReasonCategory?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY) }?.description,
-    absenceReason?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON) }?.description,
+    absenceReason.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON) }?.description,
   ).joinToString(" > ")
 }

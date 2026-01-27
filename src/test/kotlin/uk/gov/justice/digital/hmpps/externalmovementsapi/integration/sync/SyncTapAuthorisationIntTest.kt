@@ -449,7 +449,7 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   }
   assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
   assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
-  assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
+  assertThat(absenceReason.code).isEqualTo(request.absenceReasonCode)
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
   assertThat(prisonCode).isEqualTo(request.prisonCode)
   assertThat(repeat).isEqualTo(request.repeat)

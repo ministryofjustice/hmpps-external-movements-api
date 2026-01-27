@@ -50,7 +50,7 @@ private fun TemporaryAbsenceOccurrence.toModel() = TapMovement.Occurrence(
     ?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
     ?.asCodedDescription(),
   absenceReason = absenceReason
-    ?.takeIf { reasonPath.has(ABSENCE_REASON) }
+    .takeIf { reasonPath.has(ABSENCE_REASON) }
     ?.asCodedDescription(),
   start = start,
   end = end,

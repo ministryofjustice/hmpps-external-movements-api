@@ -36,7 +36,7 @@ private fun TemporaryAbsenceAuthorisation.forOccurrence() = TapOccurrence.Author
   absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
   absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
     ?.asCodedDescription(),
-  absenceReason = absenceReason?.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
+  absenceReason = absenceReason.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
   accompaniedBy = accompaniedBy.asCodedDescription(),
   repeat = repeat,
   comments = comments,
@@ -56,7 +56,7 @@ private fun TemporaryAbsenceOccurrence.toModel(position: Int, total: Int) = TapO
     ?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
     ?.asCodedDescription(),
   absenceReason = absenceReason
-    ?.takeIf { reasonPath.has(ABSENCE_REASON) }
+    .takeIf { reasonPath.has(ABSENCE_REASON) }
     ?.asCodedDescription(),
   start = start,
   end = end,

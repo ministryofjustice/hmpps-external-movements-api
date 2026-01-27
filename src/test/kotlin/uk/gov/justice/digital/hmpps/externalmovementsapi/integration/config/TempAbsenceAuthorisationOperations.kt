@@ -44,7 +44,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
       absenceType: String? = "SR",
       absenceSubType: String? = "RDR",
       absenceReasonCategory: String? = "PW",
-      absenceReason: String? = "R15",
+      absenceReason: String = "R15",
       accompaniedByCode: String = "L",
       transportCode: String = "OD",
       repeat: Boolean = false,
@@ -56,7 +56,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
           absenceType?.also { add(ABSENCE_TYPE of it) }
           absenceSubType?.also { add(ABSENCE_SUB_TYPE of it) }
           absenceReasonCategory?.also { add(ABSENCE_REASON_CATEGORY of it) }
-          absenceReason?.also { add(ABSENCE_REASON of it) }
+          absenceReason.also { add(ABSENCE_REASON of it) }
         },
       ),
       schedule: JsonNode? = null,
@@ -69,7 +69,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
         absenceType?.let { rdSupplier(AbsenceType::class, it) as AbsenceType },
         absenceSubType?.let { rdSupplier(AbsenceSubType::class, it) as AbsenceSubType },
         absenceReasonCategory?.let { rdSupplier(AbsenceReasonCategory::class, it) as AbsenceReasonCategory },
-        absenceReason?.let { rdSupplier(AbsenceReason::class, it) as AbsenceReason },
+        rdSupplier(AbsenceReason::class, absenceReason) as AbsenceReason,
         rdSupplier(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
         rdSupplier(Transport::class, transportCode) as Transport,
         repeat,
@@ -89,7 +89,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
     assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
     assertThat(absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
-    assertThat(absenceReason?.code).isEqualTo(request.absenceReasonCode)
+    assertThat(absenceReason.code).isEqualTo(request.absenceReasonCode)
     assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
     assertThat(transport.code).isEqualTo(request.transportCode)
     assertThat(comments).isEqualTo(request.comments)

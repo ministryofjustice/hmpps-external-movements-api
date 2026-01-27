@@ -44,7 +44,7 @@ interface TempAbsenceOccurrenceOperations {
       absenceType: String? = authorisation.absenceType?.code,
       absenceSubType: String? = authorisation.absenceSubType?.code,
       absenceReasonCategory: String? = authorisation.absenceReasonCategory?.code,
-      absenceReason: String? = authorisation.absenceReason?.code,
+      absenceReason: String = authorisation.absenceReason.code,
       start: LocalDateTime = LocalDateTime.now().minusDays(1),
       end: LocalDateTime = LocalDateTime.now().plusDays(1),
       location: Location = location(),
@@ -66,7 +66,7 @@ interface TempAbsenceOccurrenceOperations {
         absenceReasonCategory = absenceReasonCategory?.let {
           rdSupplier(AbsenceReasonCategory::class, it) as AbsenceReasonCategory
         },
-        absenceReason = absenceReason?.let { rdSupplier(AbsenceReason::class, it) as AbsenceReason },
+        absenceReason = rdSupplier(AbsenceReason::class, absenceReason) as AbsenceReason,
         start = start,
         end = end,
         location = location,
@@ -127,7 +127,7 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(absenceType?.code).isEqualTo(occurrence.absenceType?.code)
     assertThat(absenceSubType?.code).isEqualTo(occurrence.absenceSubType?.code)
     assertThat(absenceReasonCategory?.code).isEqualTo(occurrence.absenceReasonCategory?.code)
-    assertThat(absenceReason?.code).isEqualTo(occurrence.absenceReason?.code)
+    assertThat(absenceReason.code).isEqualTo(occurrence.absenceReason?.code)
     assertThat(location).isEqualTo(occurrence.location)
     assertThat(accompaniedBy.code).isEqualTo(occurrence.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(occurrence.transport.code)

@@ -104,7 +104,7 @@ class CreateTapOccurrenceIntTest(
     assertThat(absenceType?.code).isEqualTo(authorisation.absenceType?.code)
     assertThat(absenceSubType?.code).isEqualTo(authorisation.absenceSubType?.code)
     assertThat(absenceReasonCategory?.code).isEqualTo(authorisation.absenceReasonCategory?.code)
-    assertThat(absenceReason?.code).isEqualTo(authorisation.absenceReason?.code)
+    assertThat(absenceReason.code).isEqualTo(authorisation.absenceReason.code)
     assertThat(accompaniedBy.code).isEqualTo(authorisation.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(authorisation.transport.code)
   }

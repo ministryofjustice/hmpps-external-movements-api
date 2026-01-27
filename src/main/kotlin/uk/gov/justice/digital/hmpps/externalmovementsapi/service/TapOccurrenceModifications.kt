@@ -121,7 +121,7 @@ class TapOccurrenceModifications(
       absenceTypeCode = ca.absenceType?.code,
       absenceSubTypeCode = ca.absenceSubType?.code,
       absenceReasonCategoryCode = ca.absenceReasonCategory?.code,
-      absenceReasonCode = ca.absenceReason?.code,
+      absenceReasonCode = ca.absenceReason.code,
     )
     return newAction to { domain: KClass<out ReferenceData>, code: String -> requireNotNull(allRd[domain to code]) }
   }

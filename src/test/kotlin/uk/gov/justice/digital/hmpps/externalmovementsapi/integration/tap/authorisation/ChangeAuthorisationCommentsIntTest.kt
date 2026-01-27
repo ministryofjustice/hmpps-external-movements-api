@@ -84,7 +84,7 @@ class ChangeAuthorisationCommentsIntTest(
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
     val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
-    assertThat(occurrence.absenceReason?.code).isEqualTo(saved.absenceReason?.code)
+    assertThat(occurrence.absenceReason.code).isEqualTo(saved.absenceReason.code)
     assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(saved.absenceReasonCategory?.code)
     assertThat(occurrence.absenceSubType?.code).isEqualTo(saved.absenceSubType?.code)
     assertThat(occurrence.absenceType?.code).isEqualTo(saved.absenceType?.code)
