@@ -41,7 +41,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndByWithPrison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapAuthorisation
@@ -447,7 +446,7 @@ class MigrateTapHierarchyIntTest(
     accompaniedByCode,
     accompaniedByComments,
     comments,
-    AtAndByWithPrison(recordedAt, recordedBy, prisonCode),
+    AtAndBy(recordedAt, recordedBy),
     null,
     legacyId,
   )

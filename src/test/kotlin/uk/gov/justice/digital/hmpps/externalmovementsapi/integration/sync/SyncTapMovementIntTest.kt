@@ -36,7 +36,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndByWithPrison
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
 import java.time.LocalDateTime
@@ -327,7 +327,7 @@ class SyncTapMovementIntTest(
     accompaniedByCode,
     accompaniedByComments,
     comments,
-    AtAndByWithPrison(recordedAt, recordedBy, prisonCode),
+    AtAndBy(recordedAt, recordedBy),
     null,
     legacyId,
   )

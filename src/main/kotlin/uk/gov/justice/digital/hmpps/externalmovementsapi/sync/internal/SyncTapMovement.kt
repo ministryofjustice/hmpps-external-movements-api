@@ -83,7 +83,7 @@ class SyncTapMovement(
       ?.calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus },
     occurredAt = occurredAt,
     direction = valueOf(direction.name),
-    prisonCode = requireNotNull(prisonCode ?: created.prisonCode),
+    prisonCode = prisonCode,
     absenceReason = rdProvider(AbsenceReason::class, absenceReasonCode) as AbsenceReason,
     accompaniedBy = rdProvider(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
     accompaniedByComments = accompaniedByComments,
