@@ -32,12 +32,13 @@ data class AbsenceCategorisationFilters(
       val subTypes = types.filterIsInstance<Hierarchy.Node>().flatMap { it.linkedTo }
         .filter { it.position == FilterPosition.SUB_TYPE }
       val reasons = (types + subTypes).filterIsInstance<Hierarchy.Node>().flatMap { it.linkedTo }
-        .filter { it.position == FilterPosition.REASON }
+        .filter { it.position == FilterPosition.REASON && it !in subTypes }
       val workTypes = reasons.filterIsInstance<Hierarchy.Node>().flatMap { it.linkedTo }
+      val subTypeOptions = subTypes.map(Hierarchy::asOption).sorted()
       return AbsenceCategorisationFilters(
         types.map(Hierarchy::asOption).sorted(),
-        subTypes.map(Hierarchy::asOption).sorted(),
-        reasons.map(Hierarchy::asOption).sorted(),
+        subTypeOptions,
+        reasons.map(Hierarchy::asOption).filter { it !in subTypeOptions }.sorted(),
         workTypes.map(Hierarchy::asOption).sorted(),
       )
     }

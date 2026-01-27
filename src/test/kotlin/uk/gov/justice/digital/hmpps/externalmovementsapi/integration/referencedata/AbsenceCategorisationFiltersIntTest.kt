@@ -70,7 +70,6 @@ class AbsenceCategorisationFiltersIntTest : IntegrationTest() {
       Option(domainCode = ABSENCE_REASON, code = "OPA", description = "Outside prison activity"),
       Option(domainCode = ABSENCE_REASON_CATEGORY, code = "PW", description = "Paid work"),
       Option(domainCode = ABSENCE_REASON, code = "PAP", description = "Prisoner apprenticeships pathway"),
-      Option(domainCode = ABSENCE_REASON, code = "RO", description = "ROR (resettlement overnight release)"),
       Option(domainCode = ABSENCE_REASON_CATEGORY, code = "UW", description = "Unpaid work"),
       Option(domainCode = ABSENCE_REASON, code = "C7", description = "Visit a dying relative"),
       Option(domainCode = ABSENCE_REASON, code = "C4", description = "Wedding or civil ceremony"),
