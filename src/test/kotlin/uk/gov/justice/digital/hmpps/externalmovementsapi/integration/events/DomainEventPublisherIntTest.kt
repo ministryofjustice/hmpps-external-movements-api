@@ -21,7 +21,7 @@ class DomainEventPublisherIntTest(
 
     val id = newUuid()
     val personIdentifier = personIdentifier()
-    val toPublish = givenHmppsDomainEvent(TemporaryAbsenceAuthorisationApproved(personIdentifier, id))
+    val toPublish = givenHmppsDomainEvent(TemporaryAbsenceAuthorisationApproved(personIdentifier, id), id)
 
     dep.publishUnpublishedEvents()
 
