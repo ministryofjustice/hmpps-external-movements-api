@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -56,7 +57,7 @@ class ExternalMovementsApiExceptionHandler {
       ),
     )
 
-  @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class)
+  @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class, HttpMessageNotReadableException::class)
   fun handleIllegalArgumentOrStateException(e: RuntimeException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_REQUEST)
     .body(
