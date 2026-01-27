@@ -39,5 +39,11 @@ data class TapOccurrence(
     val repeat: Boolean,
     val comments: String?,
   )
-  data class Movement(val id: UUID, val occurredAt: LocalDateTime, val direction: TemporaryAbsenceMovement.Direction)
+
+  data class Movement(
+    val id: UUID,
+    val occurredAt: LocalDateTime,
+    val direction: TemporaryAbsenceMovement.Direction,
+    val location: Location,
+  )
 }

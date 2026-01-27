@@ -71,4 +71,4 @@ private fun TemporaryAbsenceOccurrence.toModel(position: Int, total: Int) = TapO
   movements = movements().map(TemporaryAbsenceMovement::toModel),
 )
 
-private fun TemporaryAbsenceMovement.toModel() = TapOccurrence.Movement(id, occurredAt, direction)
+private fun TemporaryAbsenceMovement.toModel() = TapOccurrence.Movement(id, occurredAt, direction, location)
