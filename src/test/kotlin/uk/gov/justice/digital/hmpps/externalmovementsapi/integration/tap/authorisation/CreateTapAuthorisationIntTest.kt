@@ -115,7 +115,7 @@ class CreateTapAuthorisationIntTest(
     assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
     assertThat(occurrence.absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
     assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
-    assertThat(occurrence.absenceReason?.code).isEqualTo(request.absenceReasonCode)
+    assertThat(occurrence.absenceReason.code).isEqualTo(request.absenceReasonCode)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -158,7 +158,7 @@ class CreateTapAuthorisationIntTest(
     assertThat(occurrence.absenceType?.code).isEqualTo("PP")
     assertThat(occurrence.absenceSubType?.code).isEqualTo("PP")
     assertThat(occurrence.absenceReasonCategory?.code).isNull()
-    assertThat(occurrence.absenceReason?.code).isEqualTo("PC")
+    assertThat(occurrence.absenceReason.code).isEqualTo("PC")
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -204,7 +204,7 @@ class CreateTapAuthorisationIntTest(
     assertThat(occurrence.absenceType?.code).isEqualTo("SR")
     assertThat(occurrence.absenceSubType?.code).isEqualTo("RDR")
     assertThat(occurrence.absenceReasonCategory?.code).isEqualTo("ET")
-    assertThat(occurrence.absenceReason?.code).isEqualTo("ET")
+    assertThat(occurrence.absenceReason.code).isEqualTo("ET")
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -250,7 +250,7 @@ class CreateTapAuthorisationIntTest(
     assertThat(occurrence.absenceType?.code).isEqualTo("SE")
     assertThat(occurrence.absenceSubType?.code).isNull()
     assertThat(occurrence.absenceReasonCategory?.code).isNull()
-    assertThat(occurrence.absenceReason?.code).isEqualTo("C4")
+    assertThat(occurrence.absenceReason.code).isEqualTo("C4")
     assertThat(occurrence.reasonPath.path).containsExactly(ABSENCE_TYPE of "SE", ABSENCE_REASON of "C4")
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())

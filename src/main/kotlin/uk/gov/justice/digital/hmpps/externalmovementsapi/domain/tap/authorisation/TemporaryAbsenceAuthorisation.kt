@@ -84,7 +84,7 @@ class TemporaryAbsenceAuthorisation(
   absenceType: AbsenceType?,
   absenceSubType: AbsenceSubType?,
   absenceReasonCategory: AbsenceReasonCategory?,
-  absenceReason: AbsenceReason?,
+  absenceReason: AbsenceReason,
   accompaniedBy: AccompaniedBy,
   transport: Transport,
   repeat: Boolean,
@@ -134,7 +134,7 @@ class TemporaryAbsenceAuthorisation(
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
-  override var absenceReason: AbsenceReason? = absenceReason
+  override var absenceReason: AbsenceReason = absenceReason
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
@@ -227,10 +227,10 @@ class TemporaryAbsenceAuthorisation(
   ) {
     if (action.changes(this)) {
       reasonPath = action.reasonPath
-      absenceReason =
-        action.absenceReasonCode?.let { rdSupplier(AbsenceReason::class, it) as AbsenceReason }
-      absenceReasonCategory =
-        action.absenceReasonCategoryCode?.let { rdSupplier(AbsenceReasonCategory::class, it) as AbsenceReasonCategory }
+      absenceReason = rdSupplier(AbsenceReason::class, requireNotNull(action.absenceReasonCode)) as AbsenceReason
+      absenceReasonCategory = action.absenceReasonCategoryCode?.let {
+        rdSupplier(AbsenceReasonCategory::class, it) as AbsenceReasonCategory
+      }
       absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(AbsenceSubType::class, it) as AbsenceSubType }
       absenceType = action.absenceTypeCode?.let { rdSupplier(AbsenceType::class, it) as AbsenceType }
       appliedActions += action

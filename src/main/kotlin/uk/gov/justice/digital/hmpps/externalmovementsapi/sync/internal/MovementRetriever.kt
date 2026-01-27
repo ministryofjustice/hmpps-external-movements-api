@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Aud
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.AuditedTapMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.getMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndByWithPrison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapMovement
 import java.util.UUID
 
@@ -30,6 +29,6 @@ private fun AuditedTapMovement.forSync() = TapMovement(
   accompaniedByCode = accompaniedBy.code,
   accompaniedByComments = accompaniedByComments,
   comments = comments,
-  created = AtAndByWithPrison(createdAt, createdBy, prisonCode),
+  created = AtAndBy(createdAt, createdBy),
   updated = updatedAt?.let { AtAndBy(it, updatedBy!!) },
 )

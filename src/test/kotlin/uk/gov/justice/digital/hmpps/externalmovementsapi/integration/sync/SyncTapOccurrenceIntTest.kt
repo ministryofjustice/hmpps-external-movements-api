@@ -254,7 +254,7 @@ class SyncTapOccurrenceIntTest(
       comments = existing.comments,
       typeCode = existing.absenceType?.code,
       subTypeCode = existing.absenceSubType?.code,
-      reasonCode = existing.absenceReason!!.code,
+      reasonCode = existing.absenceReason.code,
     )
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk

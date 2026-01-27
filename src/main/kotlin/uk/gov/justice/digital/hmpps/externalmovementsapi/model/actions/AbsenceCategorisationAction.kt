@@ -19,7 +19,7 @@ interface AbsenceCategorisationAction :
   fun changes(ac: CategorisedAbsenceReason): Boolean = ac.absenceType?.code != absenceTypeCode ||
     ac.absenceSubType?.code != absenceSubTypeCode ||
     ac.absenceReasonCategory?.code != absenceReasonCategoryCode ||
-    ac.absenceReason?.code != absenceReasonCode
+    ac.absenceReason.code != absenceReasonCode
 
   override fun requiredReferenceData(): Set<ReferenceDataKey> = setOfNotNull(
     absenceTypeCode?.let { ReferenceDataDomain.Code.ABSENCE_TYPE of it },

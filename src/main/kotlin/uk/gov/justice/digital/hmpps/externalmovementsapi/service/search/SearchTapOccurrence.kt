@@ -56,7 +56,7 @@ class SearchTapOccurrence(
     absenceType = absenceType?.asCodedDescription(),
     absenceSubType = absenceSubType?.asCodedDescription(),
     absenceReasonCategory = absenceReasonCategory?.asCodedDescription(),
-    absenceReason = absenceReason?.asCodedDescription(),
+    absenceReason = absenceReason.asCodedDescription(),
     start = start,
     end = end,
     accompaniedBy = accompaniedBy.asCodedDescription(),
@@ -75,7 +75,7 @@ private fun TemporaryAbsenceAuthorisation.asOccurrenceAuth() = TapOccurrenceAuth
   absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
   absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
     ?.asCodedDescription(),
-  absenceReason = absenceReason?.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
+  absenceReason = absenceReason.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
   repeat = repeat,
 )
 

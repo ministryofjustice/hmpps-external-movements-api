@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceMigrated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndByWithPrison
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -116,13 +115,13 @@ data class TapOccurrence(
 data class TapMovement(
   val occurredAt: LocalDateTime,
   val direction: TemporaryAbsenceMovement.Direction,
-  val prisonCode: String?,
+  val prisonCode: String,
   val absenceReasonCode: String,
   val location: Location,
   val accompaniedByCode: String,
   val accompaniedByComments: String?,
   val comments: String?,
-  val created: AtAndByWithPrison,
+  val created: AtAndBy,
   val updated: AtAndBy?,
   val legacyId: String,
 ) : ReferenceDataRequired {

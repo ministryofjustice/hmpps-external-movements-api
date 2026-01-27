@@ -5,10 +5,3 @@ import java.time.LocalDateTime
 
 @Schema(name = "SyncAtAndBy")
 data class AtAndBy(val at: LocalDateTime, val by: String)
-
-@Schema(name = "SyncAtAndByWithPrison")
-data class AtAndByWithPrison(
-  val at: LocalDateTime,
-  val by: String,
-  val prisonCode: String?,
-)
