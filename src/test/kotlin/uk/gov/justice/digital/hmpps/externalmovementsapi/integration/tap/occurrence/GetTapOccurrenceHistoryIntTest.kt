@@ -15,15 +15,21 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.IN
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.OUT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension.Companion.manageUsers
@@ -131,6 +137,56 @@ class GetTapOccurrenceHistoryIntTest(
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
       assertThat(domainEvents).containsExactly(TemporaryAbsenceCancelled.EVENT_TYPE)
       assertThat(reason).isEqualTo("A reason for cancelling")
+    }
+  }
+
+  @Test
+  fun `occurrence shows started and completed`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    manageUsers.findUser(DEFAULT_USERNAME, user(DEFAULT_USERNAME, DEFAULT_NAME))
+
+    transactionTemplate.executeWithoutResult {
+      val movement = givenTemporaryAbsenceMovement(
+        temporaryAbsenceMovement(OUT, auth.person.identifier, occurrence),
+      )
+      findTemporaryAbsenceOccurrence(occurrence.id)?.addMovement(movement) { code ->
+        requireNotNull(
+          referenceDataRepository.findAll().first { it is OccurrenceStatus && it.code == code } as OccurrenceStatus,
+        )
+      }
+    }
+    transactionTemplate.executeWithoutResult {
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME).set()
+      val movement = givenTemporaryAbsenceMovement(
+        temporaryAbsenceMovement(IN, auth.person.identifier, occurrence),
+      )
+      findTemporaryAbsenceOccurrence(occurrence.id)?.addMovement(movement) { code ->
+        requireNotNull(
+          referenceDataRepository.findAll().first { it is OccurrenceStatus && it.code == code } as OccurrenceStatus,
+        )
+      }
+    }
+    ExternalMovementContext.clear()
+
+    val history = getTapOccurrenceHistory(occurrence.id).successResponse<AuditHistory>()
+    with(history.content.first()) {
+      assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceScheduled.EVENT_TYPE)
+    }
+    with(history.content[1]) {
+      assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
+      assertThat(domainEvents).contains(TemporaryAbsenceStarted.EVENT_TYPE)
+      assertThat(changes).containsExactly(
+        AuditedAction.Change(propertyName = "status", previous = "Scheduled", change = "In progress"),
+      )
+    }
+    with(history.content.last()) {
+      assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
+      assertThat(domainEvents).contains(TemporaryAbsenceCompleted.EVENT_TYPE)
+      assertThat(changes).containsExactly(
+        AuditedAction.Change(propertyName = "status", previous = "In progress", change = "Completed"),
+      )
     }
   }
 

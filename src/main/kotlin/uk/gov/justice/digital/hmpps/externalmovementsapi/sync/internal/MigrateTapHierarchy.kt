@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEventRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.IdInformation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapRequest
@@ -247,7 +248,15 @@ class MigrateTapHierarchy(
     unscheduled: List<MigratedMovement>,
   ) {
     val domainEvents = tap.scheduledEvents(personIdentifier) + unscheduled.movementEvents(personIdentifier)
-    domainEventRepository.saveAll(domainEvents.map { HmppsDomainEvent(it).apply { published = true } })
+    domainEventRepository.saveAll(
+      domainEvents.map {
+        val entityId = when (val additionalInformation = it.additionalInformation) {
+          is IdInformation -> additionalInformation.id
+          else -> null
+        }
+        HmppsDomainEvent(it, entityId).apply { published = true }
+      },
+    )
   }
 
   private fun ReferenceDataRequired.rdPaths(

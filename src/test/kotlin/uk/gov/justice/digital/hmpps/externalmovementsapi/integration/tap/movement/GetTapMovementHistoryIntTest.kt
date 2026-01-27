@@ -14,8 +14,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.IN
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.OUT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
@@ -135,6 +139,50 @@ class GetTapMovementHistoryIntTest(
           change = "This person can go unaccompanied now",
         ),
       )
+    }
+  }
+
+  @Test
+  fun `movement shows event to start and complete`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    manageUsers.findUser(DEFAULT_USERNAME, user(DEFAULT_USERNAME, DEFAULT_NAME))
+
+    val m1 = transactionTemplate.execute {
+      val movement = givenTemporaryAbsenceMovement(
+        temporaryAbsenceMovement(OUT, auth.person.identifier, occurrence),
+      )
+      findTemporaryAbsenceOccurrence(occurrence.id)?.addMovement(movement) { code ->
+        requireNotNull(
+          referenceDataRepository.findAll().first { it is OccurrenceStatus && it.code == code } as OccurrenceStatus,
+        )
+      }
+      movement
+    }!!
+    val m2 = transactionTemplate.execute {
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME).set()
+      val movement = givenTemporaryAbsenceMovement(
+        temporaryAbsenceMovement(IN, auth.person.identifier, occurrence),
+      )
+      findTemporaryAbsenceOccurrence(occurrence.id)?.addMovement(movement) { code ->
+        requireNotNull(
+          referenceDataRepository.findAll().first { it is OccurrenceStatus && it.code == code } as OccurrenceStatus,
+        )
+      }
+      movement
+    }!!
+    ExternalMovementContext.clear()
+
+    val h1 = getTapMovementHistory(m1.id).successResponse<AuditHistory>()
+    with(h1.content.first()) {
+      assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceStarted.EVENT_TYPE)
+    }
+
+    val h2 = getTapMovementHistory(m2.id).successResponse<AuditHistory>()
+    with(h2.content.first()) {
+      assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceCompleted.EVENT_TYPE)
     }
   }
 

@@ -24,6 +24,8 @@ class HmppsDomainEvent(
   @Column(name = "event")
   val event: DomainEvent<*>,
 
+  val entityId: UUID?,
+
   @Id
   @Column(name = "id", nullable = false)
   val id: UUID = newUuid(),
@@ -31,10 +33,6 @@ class HmppsDomainEvent(
   @Version
   val version: Int? = null
   val eventType: String = event.eventType
-  val entityId: UUID? = when (val additionalInformation = event.additionalInformation) {
-    is IdInformation -> additionalInformation.id
-    else -> null
-  }
   var published: Boolean = false
 }
 
