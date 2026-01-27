@@ -5,7 +5,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.DomainLinkedReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceCategorisationLink
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.FilterPosition.Companion.positionOf
 import java.util.UUID
 
 data class AbsenceCategorisationFilters(
@@ -28,15 +30,15 @@ data class AbsenceCategorisationFilters(
         { requireNotNull(rd[it]) },
       )
       val subTypes = types.filterIsInstance<Hierarchy.Node>().flatMap { it.linkedTo }
-        .filter { it.domainCode == ReferenceDataDomain.Code.ABSENCE_SUB_TYPE }
-      val categories = subTypes.filterIsInstance<Hierarchy.Node>().flatMap { it.linkedTo }
+        .filter { it.position == FilterPosition.SUB_TYPE }
       val reasons = (types + subTypes).filterIsInstance<Hierarchy.Node>().flatMap { it.linkedTo }
-        .filter { it.domainCode != ReferenceDataDomain.Code.ABSENCE_SUB_TYPE }
-      val workTypes = categories.filterIsInstance<Hierarchy.Node>().flatMap { it.linkedTo }
+        .filter { it.position == FilterPosition.REASON && it !in subTypes }
+      val workTypes = reasons.filterIsInstance<Hierarchy.Node>().flatMap { it.linkedTo }
+      val subTypeOptions = subTypes.map(Hierarchy::asOption).sorted()
       return AbsenceCategorisationFilters(
         types.map(Hierarchy::asOption).sorted(),
-        subTypes.map(Hierarchy::asOption).sorted(),
-        (categories + reasons).map(Hierarchy::asOption).sorted(),
+        subTypeOptions,
+        reasons.map(Hierarchy::asOption).filter { it !in subTypeOptions }.sorted(),
         workTypes.map(Hierarchy::asOption).sorted(),
       )
     }
@@ -50,22 +52,41 @@ data class AbsenceCategorisationFilters(
   }
 }
 
+enum class FilterPosition {
+  TYPE,
+  SUB_TYPE,
+  REASON,
+  WORK_TYPE,
+  ;
+
+  companion object {
+    fun positionOf(rd: ReferenceData): FilterPosition = when (rd) {
+      is AbsenceType -> TYPE
+      is AbsenceSubType -> SUB_TYPE
+      else -> REASON
+    }
+  }
+}
+
 sealed interface Hierarchy {
   val domainCode: ReferenceDataDomain.Code
   val referenceData: ReferenceData
   val parentPrefix: String?
+  val position: FilterPosition
 
   data class Node(
     override val domainCode: ReferenceDataDomain.Code,
     override val referenceData: ReferenceData,
     val linkedTo: List<Hierarchy>,
     override val parentPrefix: String?,
+    override val position: FilterPosition,
   ) : Hierarchy
 
   data class Leaf(
     override val domainCode: ReferenceDataDomain.Code,
     override val referenceData: ReferenceData,
     override val parentPrefix: String?,
+    override val position: FilterPosition,
   ) : Hierarchy
 
   companion object {
@@ -74,30 +95,42 @@ sealed interface Hierarchy {
       head: ReferenceData,
       linkFrom: (UUID) -> List<AbsenceCategorisationLink>,
       linked: (UUID) -> ReferenceData,
-      parentPrefix: String?,
+      prefixOverride: String?,
+      positionOverride: FilterPosition? = null,
     ): Hierarchy {
       val links = linkFrom(head.id).map {
-        of(it.domain2, linked(it.id2), linkFrom, linked, head.workTypePrefix())
+        of(it.domain2, linked(it.id2), linkFrom, linked, head.parentPrefix())
       }
       return if (head is DomainLinkedReferenceData && head.nextDomain != null && links.size > 1) {
-        Node(domainCode, head, links, parentPrefix)
+        Node(domainCode, head, links, prefixOverride, positionOverride ?: positionOf(head))
       } else {
         links.singleOrNull()?.let {
-          of(it.domainCode, it.referenceData, linkFrom, linked, head.workTypePrefix())
-        } ?: Leaf(domainCode, head, parentPrefix)
+          of(
+            it.domainCode,
+            it.referenceData,
+            linkFrom,
+            linked,
+            head.parentPrefix(),
+            positionOverride ?: positionOf(head),
+          )
+        } ?: Leaf(domainCode, head, prefixOverride, positionOverride ?: positionOf(head))
       }
     }
   }
 }
 
-private fun ReferenceData.workTypePrefix(): String? = if (this is AbsenceReasonCategory) {
-  when (code) {
-    "PW" -> "Paid work"
-    "UW" -> "Unpaid work"
-    else -> null
+private fun ReferenceData.parentPrefix(): String? = when (this) {
+  is AbsenceReasonCategory -> {
+    when (code) {
+      "PW" -> "Paid work"
+      "UW" -> "Unpaid work"
+      else -> null
+    }
   }
-} else {
-  null
+
+  else -> {
+    null
+  }
 }
 
 private fun ReferenceData.isYouth() = this !is AbsenceType && code.startsWith("Y")
