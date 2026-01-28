@@ -8,6 +8,8 @@ integration:
 
 service:
   active-prisons: "KVI,LYI,TCI"
+  domain-events:
+    poll-interval: PT1s
   occurrence-status:
     poll-interval: PT60s
   authorisation-expiration:
