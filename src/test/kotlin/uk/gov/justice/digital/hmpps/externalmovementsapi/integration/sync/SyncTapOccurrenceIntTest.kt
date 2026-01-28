@@ -323,6 +323,35 @@ class SyncTapOccurrenceIntTest(
     verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
   }
 
+  @Test
+  fun `200 ok remove duplicate if created pending in dps and approved in nomis`() {
+    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = false, legacyId = newId()))
+    val dpsOccurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
+    val request = tapOccurrence()
+    val res = syncTapOccurrence(authorisation.id, request)
+      .expectStatus().isOk
+      .expectBody<SyncResponse>()
+      .returnResult()
+      .responseBody!!
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceOccurrence(res.id))
+    saved.verifyAgainst(request)
+    assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
+
+    // dps occurrence should be deleted to prevent a duplicate occurrence being created on a single authorisation
+    assertThat(findTemporaryAbsenceOccurrence(dpsOccurrence.id)).isNull()
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
+  }
+
   private fun tapOccurrence(
     id: UUID? = null,
     isCancelled: Boolean = false,

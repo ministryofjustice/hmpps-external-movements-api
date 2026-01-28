@@ -247,7 +247,11 @@ class TemporaryAbsenceOccurrence(
   override fun excludeFromPublish(): Set<String> = setOf(
     TemporaryAbsenceStarted.EVENT_TYPE,
     TemporaryAbsenceCompleted.EVENT_TYPE,
-  )
+  ) + if (status.code == PENDING.name) {
+    domainEvents().map { it.eventType }.toSet()
+  } else {
+    emptySet()
+  }
 
   fun applyAbsenceCategorisation(
     action: RecategoriseOccurrence,
