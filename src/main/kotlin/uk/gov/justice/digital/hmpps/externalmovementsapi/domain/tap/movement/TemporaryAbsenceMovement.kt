@@ -144,11 +144,7 @@ class TemporaryAbsenceMovement(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> {
-    val events = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
-    appliedActions = emptyList()
-    return events
-  }
+  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
 
   override fun initialEvent(): DomainEvent<*> = when (direction) {
     Direction.OUT -> TemporaryAbsenceStarted(person.identifier, id, occurrence?.id)
