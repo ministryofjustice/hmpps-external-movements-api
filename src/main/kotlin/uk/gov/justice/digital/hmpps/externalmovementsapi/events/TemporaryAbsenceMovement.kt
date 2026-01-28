@@ -129,3 +129,23 @@ data class TapMovementOccurredAtChanged(
     )
   }
 }
+
+data class TapMovementOccurrenceChanged(
+  override val additionalInformation: TapMovementInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TapMovementInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "A temporary absence movement's occurrence has been changed."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.occurrence-changed"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TapMovementOccurrenceChanged(
+      TapMovementInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}

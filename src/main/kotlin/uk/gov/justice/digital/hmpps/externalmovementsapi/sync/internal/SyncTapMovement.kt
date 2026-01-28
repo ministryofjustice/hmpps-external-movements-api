@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,12 +25,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementDirection
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurredAt
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapMovement
-import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
 import java.util.UUID
 import kotlin.reflect.KClass
 
@@ -43,7 +42,6 @@ class SyncTapMovement(
   private val occurrenceStatusRepository: OccurrenceStatusRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
-  private val telemetryClient: TelemetryClient,
 ) {
   fun sync(personIdentifier: String, request: TapMovement): SyncResponse {
     val occurrence = request.occurrenceId?.let { occurrenceRepository.getOccurrence(it) }?.also {
@@ -101,21 +99,7 @@ class SyncTapMovement(
     request: TapMovement,
     rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) = apply {
-    check(occurrence?.id == this.occurrence?.id) {
-      telemetryClient.trackEvent(
-        "MovementOccurrenceChange",
-        mapOf(
-          "personIdentifier" to person.identifier,
-          "prisonCode" to prisonCode,
-          "direction" to direction.name,
-          "occurredAt" to ISO_LOCAL_DATE_TIME.format(occurredAt),
-          "previousOccurrence" to this.occurrence?.id.toString(),
-          "nextOccurrence" to occurrence?.id.toString(),
-        ),
-        mapOf(),
-      )
-      "Attempt to change the occurrence of a movement"
-    }
+    switchSchedule(ChangeMovementOccurrence(occurrence?.id)) { _ -> checkNotNull(occurrence) }
     applyDirection(ChangeMovementDirection(request.direction))
     applyOccurredAt(ChangeMovementOccurredAt(request.occurredAt))
     request.comments?.also { applyComments(ChangeMovementComments(it)) }

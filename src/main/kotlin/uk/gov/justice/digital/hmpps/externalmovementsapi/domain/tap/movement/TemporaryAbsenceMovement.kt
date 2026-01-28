@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
@@ -39,6 +40,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementDirection
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurredAt
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.MovementAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -150,6 +152,8 @@ class TemporaryAbsenceMovement(
     Direction.IN -> TemporaryAbsenceCompleted(person.identifier, id, occurrence?.id)
   }
 
+  override fun excludeFromPublish(): Set<String> = setOf(TapMovementOccurrenceChanged.EVENT_TYPE)
+
   enum class Direction {
     IN,
     OUT,
@@ -157,6 +161,13 @@ class TemporaryAbsenceMovement(
 
   fun moveTo(person: PersonSummary) = apply {
     this.person = person
+  }
+
+  fun switchSchedule(action: ChangeMovementOccurrence, occurrenceSupplier: (UUID) -> TemporaryAbsenceOccurrence) = apply {
+    if (this.occurrence?.id != action.occurrenceId) {
+      this.occurrence = action.occurrenceId?.let { occurrenceSupplier(it) }
+      appliedActions += action
+    }
   }
 
   fun applyDirection(action: ChangeMovementDirection) = apply {
