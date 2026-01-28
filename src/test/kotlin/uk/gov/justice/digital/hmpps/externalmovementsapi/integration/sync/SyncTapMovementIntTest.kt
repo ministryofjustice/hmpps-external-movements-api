@@ -320,7 +320,9 @@ class SyncTapMovementIntTest(
       ),
     )
     val movement = occ1.movements().first()
-    assertThat(movement.occurrence?.id).isEqualTo(occ1.id)
+    assertThat(movement.occurrence!!.id).isEqualTo(occ1.id)
+    assertThat(movement.occurrence!!.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
+
     val occ2 = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         authorisation,
@@ -350,7 +352,11 @@ class SyncTapMovementIntTest(
     assertThat(res.id).isEqualTo(movement.id)
     val saved = requireNotNull(findTemporaryAbsenceMovement(movement.id))
     saved.verifyAgainst(authorisation.person.identifier, request)
-    assertThat(saved.occurrence?.id).isEqualTo(occ2.id)
+    assertThat(saved.occurrence!!.id).isEqualTo(occ2.id)
+    assertThat(saved.occurrence!!.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
+
+    val oldOccurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ1.id))
+    assertThat(oldOccurrence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
 
     verifyAudit(
       saved,
@@ -360,11 +366,14 @@ class SyncTapMovementIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS, reason = null),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS, reason = "Recorded movement temporary absence occurrence changed"),
     )
     verifyEvents(
       saved,
-      setOf(TapMovementOccurrenceChanged(movement.person.identifier, movement.id, DataSource.NOMIS)),
+      setOf(
+        TapMovementOccurrenceChanged(movement.person.identifier, movement.id, DataSource.NOMIS),
+        TemporaryAbsenceStarted(movement.person.identifier, movement.id, occ2.id, DataSource.NOMIS),
+      ),
     )
   }
 

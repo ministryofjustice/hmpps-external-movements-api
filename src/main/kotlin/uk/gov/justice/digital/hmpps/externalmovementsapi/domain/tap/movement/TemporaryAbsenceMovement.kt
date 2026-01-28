@@ -22,6 +22,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
@@ -29,6 +31,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSum
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
@@ -163,9 +166,17 @@ class TemporaryAbsenceMovement(
     this.person = person
   }
 
-  fun switchSchedule(action: ChangeMovementOccurrence, occurrenceSupplier: (UUID) -> TemporaryAbsenceOccurrence) = apply {
+  fun switchSchedule(
+    action: ChangeMovementOccurrence,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+    occurrenceSupplier: (UUID) -> TemporaryAbsenceOccurrence,
+  ) = apply {
     if (this.occurrence?.id != action.occurrenceId) {
-      this.occurrence = action.occurrenceId?.let { occurrenceSupplier(it) }
+      val oldOccurrence = this.occurrence
+      oldOccurrence?.removeMovement(this) { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
+      val newOccurrence = action.occurrenceId?.let { occurrenceSupplier(it) }
+      newOccurrence?.addMovement(this) { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
+      ExternalMovementContext.get().copy(reason = "Recorded movement temporary absence occurrence changed").set()
       appliedActions += action
     }
   }

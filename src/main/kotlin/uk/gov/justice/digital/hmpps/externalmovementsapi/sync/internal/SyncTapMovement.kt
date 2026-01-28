@@ -99,7 +99,7 @@ class SyncTapMovement(
     request: TapMovement,
     rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) = apply {
-    switchSchedule(ChangeMovementOccurrence(occurrence?.id)) { _ -> checkNotNull(occurrence) }
+    switchSchedule(ChangeMovementOccurrence(occurrence?.id), rdProvider) { _ -> checkNotNull(occurrence) }
     applyDirection(ChangeMovementDirection(request.direction))
     applyOccurredAt(ChangeMovementOccurredAt(request.occurredAt))
     request.comments?.also { applyComments(ChangeMovementComments(it)) }
