@@ -238,11 +238,7 @@ class TemporaryAbsenceOccurrence(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> {
-    val events = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
-    appliedActions = emptyList()
-    return events
-  }
+  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
 
   override fun excludeFromPublish(): Set<String> = setOf(
     TemporaryAbsenceStarted.EVENT_TYPE,

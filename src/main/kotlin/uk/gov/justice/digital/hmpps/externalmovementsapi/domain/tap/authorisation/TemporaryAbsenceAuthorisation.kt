@@ -206,11 +206,7 @@ class TemporaryAbsenceAuthorisation(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> {
-    val events = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
-    appliedActions = emptyList()
-    return events
-  }
+  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
 
   fun applyPrisonPerson(action: ChangePrisonPerson, person: (String) -> PersonSummary) {
     this.person = person(action.personIdentifier)

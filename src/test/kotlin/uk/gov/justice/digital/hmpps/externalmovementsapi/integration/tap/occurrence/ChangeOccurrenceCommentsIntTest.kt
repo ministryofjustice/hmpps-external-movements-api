@@ -14,6 +14,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
@@ -85,6 +87,43 @@ class ChangeOccurrenceCommentsIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
     )
 
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id),
+        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok single tap occurrence comments updated - no publish`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.PENDING))
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
+
+    val request = action()
+    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
+
+    val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
+    assertThat(saved.comments).isEqualTo(request.comments)
+    assertThat(saved.authorisation.comments).isEqualTo(request.comments)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+    )
+
+    // TODO: Check these are not published
     verifyEvents(
       saved,
       setOf(
