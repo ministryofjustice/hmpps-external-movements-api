@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurredAtChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
@@ -302,12 +303,86 @@ class SyncTapMovementIntTest(
     verifyEvents(saved, setOf(TemporaryAbsenceCompleted(saved.person.identifier, saved.id, null, DataSource.NOMIS)))
   }
 
+  @Test
+  fun `200 ok temporary absence movement switches scheduled occurrence`() {
+    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
+    val occ1 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authorisation,
+        legacyId = newId(),
+        movements = listOf(
+          temporaryAbsenceMovement(
+            Direction.OUT,
+            authorisation.person.identifier,
+            legacyId = newId().toString(),
+          ),
+        ),
+      ),
+    )
+    val movement = occ1.movements().first()
+    assertThat(movement.occurrence!!.id).isEqualTo(occ1.id)
+    assertThat(movement.occurrence!!.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
+
+    val occ2 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authorisation,
+        legacyId = newId(),
+        location = movement.location,
+      ),
+    )
+
+    val request = tapMovement(
+      accompaniedByCode = movement.accompaniedBy.code,
+      accompaniedByComments = movement.accompaniedByComments,
+      direction = movement.direction,
+      location = movement.location,
+      occurredAt = movement.occurredAt,
+      legacyId = movement.legacyId!!,
+      comments = movement.comments,
+      prisonCode = movement.prisonCode,
+      id = movement.id,
+      occurrenceId = occ2.id,
+    )
+    val res = syncTapMovement(authorisation.person.identifier, request)
+      .expectStatus().isOk
+      .expectBody<SyncResponse>()
+      .returnResult()
+      .responseBody!!
+
+    assertThat(res.id).isEqualTo(movement.id)
+    val saved = requireNotNull(findTemporaryAbsenceMovement(movement.id))
+    saved.verifyAgainst(authorisation.person.identifier, request)
+    assertThat(saved.occurrence!!.id).isEqualTo(occ2.id)
+    assertThat(saved.occurrence!!.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
+
+    val oldOccurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ1.id))
+    assertThat(oldOccurrence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceMovement::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS, reason = "Recorded movement temporary absence occurrence changed"),
+    )
+    verifyEvents(
+      saved,
+      setOf(
+        TapMovementOccurrenceChanged(movement.person.identifier, movement.id, DataSource.NOMIS),
+        TemporaryAbsenceStarted(movement.person.identifier, movement.id, occ2.id, DataSource.NOMIS),
+      ),
+    )
+  }
+
   private fun tapMovement(
     id: UUID? = null,
     occurrenceId: UUID? = null,
     direction: Direction,
     prisonCode: String = prisonCode(),
-    occurrenceAt: LocalDateTime = LocalDateTime.now().minusDays(7),
+    occurredAt: LocalDateTime = LocalDateTime.now().minusDays(7),
     reasonCode: String = "R15",
     accompaniedByCode: String = "L",
     accompaniedByComments: String? = "Information about the escort",
@@ -319,7 +394,7 @@ class SyncTapMovementIntTest(
   ) = TapMovement(
     id,
     occurrenceId,
-    occurrenceAt,
+    occurredAt,
     direction,
     prisonCode,
     reasonCode,

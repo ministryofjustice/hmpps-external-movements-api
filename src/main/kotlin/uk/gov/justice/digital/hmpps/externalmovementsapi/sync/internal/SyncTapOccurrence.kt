@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -43,6 +44,7 @@ class SyncTapOccurrence(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
+  private val telemetryClient: TelemetryClient,
 ) {
   fun sync(authorisationId: UUID, request: TapOccurrence): SyncResponse {
     val authorisation = authorisationRepository.getAuthorisation(authorisationId)
@@ -61,6 +63,20 @@ class SyncTapOccurrence(
             throw ConflictException("Attempt to add occurrence to a non-approved authorisation")
           }
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
+          if (!authorisation.repeat) {
+            occurrenceRepository.findByAuthorisationId(authorisation.id).singleOrNull()?.also { tao ->
+              telemetryClient.trackEvent(
+                "DuplicateOccurrenceRemoved",
+                mapOf(
+                  "personIdentifier" to authorisation.person.identifier,
+                  "id" to tao.id.toString(),
+                  "legacyId" to tao.legacyId.toString(),
+                ),
+                mapOf(),
+              )
+              occurrenceRepository.delete(tao)
+            }
+          }
           occurrenceRepository.save(
             request.asEntity(authorisation, rdPaths).calculateStatus {
               rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus

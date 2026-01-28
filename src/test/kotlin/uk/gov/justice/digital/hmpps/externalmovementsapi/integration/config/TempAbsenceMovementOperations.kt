@@ -30,7 +30,7 @@ interface TempAbsenceMovementOperations {
       direction: TemporaryAbsenceMovement.Direction,
       personIdentifier: String = personIdentifier(),
       occurrence: TemporaryAbsenceOccurrence? = null,
-      occurredAt: LocalDateTime = LocalDateTime.now().minusDays(7),
+      occurredAt: LocalDateTime = LocalDateTime.now().minusDays(7).truncatedTo(ChronoUnit.MINUTES),
       absenceReason: String = "R15",
       accompaniedBy: String = AccompaniedBy.Code.NOT_PROVIDED.name,
       accompaniedByComments: String? = "Some comments about the accompanied by",

@@ -22,6 +22,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
@@ -29,8 +31,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSum
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
@@ -39,6 +43,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementDirection
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurredAt
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.MovementAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -150,6 +155,8 @@ class TemporaryAbsenceMovement(
     Direction.IN -> TemporaryAbsenceCompleted(person.identifier, id, occurrence?.id)
   }
 
+  override fun excludeFromPublish(): Set<String> = setOf(TapMovementOccurrenceChanged.EVENT_TYPE)
+
   enum class Direction {
     IN,
     OUT,
@@ -157,6 +164,21 @@ class TemporaryAbsenceMovement(
 
   fun moveTo(person: PersonSummary) = apply {
     this.person = person
+  }
+
+  fun switchSchedule(
+    action: ChangeMovementOccurrence,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+    occurrenceSupplier: (UUID) -> TemporaryAbsenceOccurrence,
+  ) = apply {
+    if (this.occurrence?.id != action.occurrenceId) {
+      val oldOccurrence = this.occurrence
+      oldOccurrence?.removeMovement(this) { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
+      val newOccurrence = action.occurrenceId?.let { occurrenceSupplier(it) }
+      newOccurrence?.addMovement(this) { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
+      ExternalMovementContext.get().copy(reason = "Recorded movement temporary absence occurrence changed").set()
+      appliedActions += action
+    }
   }
 
   fun applyDirection(action: ChangeMovementDirection) = apply {
