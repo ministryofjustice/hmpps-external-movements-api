@@ -64,17 +64,8 @@ class SyncTapOccurrence(
           }
           ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
           if (!authorisation.repeat) {
-            occurrenceRepository.findByAuthorisationId(authorisation.id).singleOrNull()?.also { tao ->
-              telemetryClient.trackEvent(
-                "DuplicateOccurrenceRemoved",
-                mapOf(
-                  "personIdentifier" to authorisation.person.identifier,
-                  "id" to tao.id.toString(),
-                  "legacyId" to tao.legacyId.toString(),
-                ),
-                mapOf(),
-              )
-              occurrenceRepository.delete(tao)
+            occurrenceRepository.findByAuthorisationId(authorisation.id).singleOrNull()?.also {
+              occurrenceRepository.delete(it)
             }
           }
           occurrenceRepository.save(
@@ -113,7 +104,7 @@ class SyncTapOccurrence(
           it,
         ) as AbsenceType
       },
-      absenceSubType = absenceSubTypeCode?.let {
+      absenceSubType = absenceSubTypeCode?.takeIf { it != "SE" }?.let {
         rdPaths.getReferenceData(AbsenceSubType::class, it) as AbsenceSubType
       },
       absenceReasonCategory = category as? AbsenceReasonCategory,
@@ -161,7 +152,7 @@ class SyncTapOccurrence(
     applyAbsenceCategorisation(
       RecategoriseOccurrence(
         request.absenceTypeCode,
-        request.absenceSubTypeCode,
+        request.absenceSubTypeCode?.takeIf { it != "SE" },
         categoryCode,
         request.absenceReasonCode,
         rdPaths.reasonPath(),
