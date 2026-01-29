@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationAccompanimentChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
@@ -488,7 +489,7 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
     assertThat(status.code).isEqualTo(request.statusCode)
   }
   assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
-  assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode.takeIf { it != "SE" })
+  assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode.takeIf { it != AbsenceSubType.Code.SECURITY_ESCORT.value })
   assertThat(absenceReason.code).isEqualTo(request.absenceReasonCode)
   assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
   assertThat(prisonCode).isEqualTo(request.prisonCode)

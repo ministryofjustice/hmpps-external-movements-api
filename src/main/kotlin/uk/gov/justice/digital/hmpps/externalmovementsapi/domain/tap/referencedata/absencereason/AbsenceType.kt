@@ -29,4 +29,8 @@ class AbsenceType(
   @Enumerated(EnumType.STRING)
   override val nextDomain: ReferenceDataDomain.Code?,
 ) : ReferenceData,
-  DomainLinkedReferenceData
+  DomainLinkedReferenceData {
+  enum class Code(val value: String) {
+    SECURITY_ESCORT("SE"),
+  }
+}

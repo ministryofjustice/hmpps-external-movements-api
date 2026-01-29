@@ -9,6 +9,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -90,8 +92,8 @@ private fun TapOccurrence.verifyAgainst(occurrence: TemporaryAbsenceOccurrence) 
   assertThat(id).isEqualTo(occurrence.id)
   authorisation.verifyAgainst(occurrence.authorisation)
   assertThat(absenceTypeCode).isEqualTo(occurrence.absenceType?.code)
-  if (absenceTypeCode == "SE") {
-    assertThat(absenceSubTypeCode).isEqualTo("SE")
+  if (absenceTypeCode == AbsenceType.Code.SECURITY_ESCORT.value) {
+    assertThat(absenceSubTypeCode).isEqualTo(AbsenceSubType.Code.SECURITY_ESCORT.value)
   } else {
     assertThat(absenceSubTypeCode).isEqualTo(occurrence.absenceSubType?.code)
   }

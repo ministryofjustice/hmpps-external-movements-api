@@ -126,6 +126,7 @@ service:
   active-prisons:
   domain-events:
     poll-interval: PT0s
+    batch-size: 10
   occurrence-status:
     poll-interval: PT0s
   authorisation-expiration:

@@ -32,4 +32,8 @@ class AbsenceSubType(
   override val hintText: String?,
 ) : ReferenceData,
   DomainLinkedReferenceData,
-  Hintable
+  Hintable {
+  enum class Code(val value: String) {
+    SECURITY_ESCORT("SE"),
+  }
+}

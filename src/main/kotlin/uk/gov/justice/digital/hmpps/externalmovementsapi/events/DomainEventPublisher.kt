@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 import software.amazon.awssdk.services.sns.model.PublishBatchRequest
 import software.amazon.awssdk.services.sns.model.PublishBatchRequestEntry
 import software.amazon.awssdk.services.sns.model.PublishBatchResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.ServiceConfig
 import uk.gov.justice.hmpps.sqs.DEFAULT_BACKOFF_POLICY
 import uk.gov.justice.hmpps.sqs.DEFAULT_RETRY_POLICY
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -21,6 +22,7 @@ class DomainEventPublisher(
   private val objectMapper: ObjectMapper,
   private val hmppsQueueService: HmppsQueueService,
   private val domainEventRepository: HmppsDomainEventRepository,
+  private val serviceConfig: ServiceConfig,
 ) {
   private val domainEventsTopic by lazy {
     hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw IllegalStateException("Domain event topic not found")
@@ -28,7 +30,7 @@ class DomainEventPublisher(
 
   @Transactional
   fun publishUnpublishedEvents() {
-    domainEventRepository.findByPublishedIsFalseOrderById(Pageable.ofSize(BATCH_SIZE))
+    domainEventRepository.findByPublishedIsFalseOrderById(Pageable.ofSize(serviceConfig.domainEvents.batchSize))
       .takeIf { it.isNotEmpty() }
       ?.also { events -> domainEventsTopic.publishBatch(events) }
       ?.forEach { it.published = true }
@@ -55,9 +57,5 @@ class DomainEventPublisher(
     retryTemplate.execute<PublishBatchResponse, RuntimeException> {
       snsClient.publishBatch(publishRequest).get()
     }
-  }
-
-  companion object {
-    private const val BATCH_SIZE: Int = 10
   }
 }
