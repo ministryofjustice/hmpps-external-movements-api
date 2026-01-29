@@ -162,7 +162,7 @@ class MigrateTapHierarchy(
       person = person,
       prisonCode = prisonCode,
       absenceType = absenceTypeCode?.let { rdPaths.findReferenceData(AbsenceType::class, it) as? AbsenceType },
-      absenceSubType = absenceSubTypeCode?.takeIf { it != "SE" }?.let {
+      absenceSubType = absenceSubTypeCode?.takeIf { it != AbsenceSubType.Code.SECURITY_ESCORT.value }?.let {
         rdPaths.findReferenceData(AbsenceSubType::class, it) as? AbsenceSubType
       },
       absenceReasonCategory = category,
@@ -200,7 +200,7 @@ class MigrateTapHierarchy(
       absenceType = absenceTypeCode?.let {
         rdPaths.findReferenceData(AbsenceType::class, it) as? AbsenceType
       },
-      absenceSubType = absenceSubTypeCode?.takeIf { it != "SE" }?.let {
+      absenceSubType = absenceSubTypeCode?.takeIf { it != AbsenceSubType.Code.SECURITY_ESCORT.value }?.let {
         rdPaths.findReferenceData(AbsenceSubType::class, it) as? AbsenceSubType
       },
       absenceReasonCategory = category,

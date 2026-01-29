@@ -6,6 +6,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.AuditedTapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.AuditedTapOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.getOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.read.TapOccurrence
 import java.util.UUID
@@ -26,7 +28,7 @@ private fun AuditedTapOccurrence.forSync() = TapOccurrence(
   end = end,
   location = location,
   absenceTypeCode = authorisation.absenceType?.code,
-  absenceSubTypeCode = authorisation.absenceSubType?.code ?: if (absenceType?.code == "SE") "SE" else null,
+  absenceSubTypeCode = authorisation.absenceSubType?.code ?: if (absenceType?.code == AbsenceType.Code.SECURITY_ESCORT.value) AbsenceSubType.Code.SECURITY_ESCORT.value else null,
   absenceReasonCode = requireNotNull(authorisation.absenceReason).code,
   accompaniedByCode = accompaniedBy.code,
   transportCode = transport.code,

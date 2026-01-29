@@ -94,7 +94,7 @@ class SyncTapAuthorisation(
       absenceType = absenceTypeCode?.let {
         rdPaths.getReferenceData(AbsenceType::class, it) as AbsenceType
       },
-      absenceSubType = absenceSubTypeCode?.takeIf { it != "SE" }?.let {
+      absenceSubType = absenceSubTypeCode?.takeIf { it != AbsenceSubType.Code.SECURITY_ESCORT.value }?.let {
         rdPaths.getReferenceData(AbsenceSubType::class, it) as AbsenceSubType
       },
       absenceReasonCategory = category as? AbsenceReasonCategory,
@@ -133,7 +133,7 @@ class SyncTapAuthorisation(
     applyAbsenceCategorisation(
       RecategoriseAuthorisation(
         request.absenceTypeCode,
-        request.absenceSubTypeCode?.takeIf { it != "SE" },
+        request.absenceSubTypeCode?.takeIf { it != AbsenceSubType.Code.SECURITY_ESCORT.value },
         categoryCode,
         request.absenceReasonCode,
         rdPaths.reasonPath(),
