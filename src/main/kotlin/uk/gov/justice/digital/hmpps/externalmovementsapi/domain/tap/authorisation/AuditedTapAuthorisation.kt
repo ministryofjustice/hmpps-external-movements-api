@@ -44,7 +44,7 @@ class AuditedTapAuthorisation(
   val absenceReasonCategory: AbsenceReasonCategory?,
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
-  val absenceReason: AbsenceReason?,
+  val absenceReason: AbsenceReason,
   @ManyToOne(optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)
   val accompaniedBy: AccompaniedBy,

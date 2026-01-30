@@ -102,7 +102,7 @@ class SyncTapMovement(
     switchSchedule(ChangeMovementOccurrence(occurrence?.id), rdProvider) { _ -> checkNotNull(occurrence) }
     applyDirection(ChangeMovementDirection(request.direction))
     applyOccurredAt(ChangeMovementOccurredAt(request.occurredAt))
-    request.comments?.also { applyComments(ChangeMovementComments(it)) }
+    applyComments(ChangeMovementComments(request.comments))
     applyAccompaniedBy(
       ChangeMovementAccompaniment(
         request.accompaniedByCode,

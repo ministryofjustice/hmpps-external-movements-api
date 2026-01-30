@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.CommentsAction
 
 data class ChangeAuthorisationComments(
-  override val comments: String,
+  override val comments: String?,
   override val reason: String? = null,
 ) : AuthorisationAction,
   CommentsAction {

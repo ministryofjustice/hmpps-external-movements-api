@@ -248,7 +248,7 @@ class TemporaryAbsenceAuthorisation(
   }
 
   fun applyComments(action: ChangeAuthorisationComments) {
-    if (action.changes(comments)) {
+    if (action changes comments) {
       comments = action.comments
       appliedActions += action
     }

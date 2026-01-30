@@ -119,10 +119,10 @@ class SyncTapAuthorisation(
   ) = apply {
     applyPrisonPerson(ChangePrisonPerson(person.identifier, request.prisonCode)) { person }
     applyAbsenceCategorisation(request, rdPaths)
-    checkSchedule(request, rdPaths)
     checkStatus(request, rdPaths)
+    checkSchedule(request, rdPaths)
     applyLogistics(request, rdPaths)
-    request.comments?.also { applyComments(ChangeAuthorisationComments(it)) }
+    applyComments(ChangeAuthorisationComments(request.comments))
   }
 
   private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(

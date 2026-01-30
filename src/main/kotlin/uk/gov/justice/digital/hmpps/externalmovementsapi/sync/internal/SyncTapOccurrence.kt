@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -44,7 +43,6 @@ class SyncTapOccurrence(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
-  private val telemetryClient: TelemetryClient,
 ) {
   fun sync(authorisationId: UUID, request: TapOccurrence): SyncResponse {
     val authorisation = authorisationRepository.getAuthorisation(authorisationId)
@@ -138,7 +136,7 @@ class SyncTapOccurrence(
     applySchedule(request)
     applyLogistics(request, rdPaths)
     checkCancellation(request, rdPaths)
-    request.comments?.let { applyComments(ChangeOccurrenceComments(it)) }
+    applyComments(ChangeOccurrenceComments(request.comments))
     calculateStatus {
       rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus
     }

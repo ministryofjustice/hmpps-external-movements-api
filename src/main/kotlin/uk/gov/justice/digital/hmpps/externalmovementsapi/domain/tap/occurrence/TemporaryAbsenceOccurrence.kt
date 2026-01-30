@@ -312,7 +312,7 @@ class TemporaryAbsenceOccurrence(
   }
 
   fun applyComments(action: ChangeOccurrenceComments) = apply {
-    if (action.changes(comments)) {
+    if (action changes comments) {
       comments = action.comments
       appliedActions += action
     }
