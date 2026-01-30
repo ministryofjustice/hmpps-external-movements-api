@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
@@ -120,10 +121,21 @@ class SyncTapMovementIntTest(
         reason = TemporaryAbsenceMovement.formattedReason(saved),
       ),
     )
-    verifyEvents(
+    verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceStarted(authorisation.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
+        TemporaryAbsenceStarted(
+          authorisation.person.identifier,
+          saved.id,
+          occurrence.id,
+          DataSource.NOMIS,
+        ).publication(),
+        TemporaryAbsenceStarted(
+          authorisation.person.identifier,
+          saved.id,
+          occurrence.id,
+          DataSource.NOMIS,
+        ).publication { false },
       ),
     )
   }
@@ -170,10 +182,21 @@ class SyncTapMovementIntTest(
         reason = TemporaryAbsenceMovement.formattedReason(saved),
       ),
     )
-    verifyEvents(
+    verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceCompleted(authorisation.person.identifier, saved.id, occurrence.id, DataSource.NOMIS),
+        TemporaryAbsenceCompleted(
+          authorisation.person.identifier,
+          saved.id,
+          occurrence.id,
+          DataSource.NOMIS,
+        ).publication(),
+        TemporaryAbsenceCompleted(
+          authorisation.person.identifier,
+          saved.id,
+          occurrence.id,
+          DataSource.NOMIS,
+        ).publication { false },
       ),
     )
   }
@@ -247,6 +270,7 @@ class SyncTapMovementIntTest(
     val request = tapMovement(
       accompaniedByCode = "U",
       accompaniedByComments = "Updated the text about the escort",
+      occurredAt = existing.occurredAt.minusHours(1),
       direction = Direction.IN,
       occurrenceId = occurrence.id,
       legacyId = existing.legacyId!!,
@@ -366,13 +390,19 @@ class SyncTapMovementIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS, reason = "Recorded movement temporary absence occurrence changed"),
+      ExternalMovementContext.get()
+        .copy(source = DataSource.NOMIS, reason = "Recorded movement temporary absence occurrence changed"),
     )
-    verifyEvents(
+    verifyEventPublications(
       saved,
       setOf(
-        TapMovementOccurrenceChanged(movement.person.identifier, movement.id, DataSource.NOMIS),
-        TemporaryAbsenceStarted(movement.person.identifier, movement.id, occ2.id, DataSource.NOMIS),
+        TapMovementOccurrenceChanged(movement.person.identifier, movement.id, DataSource.NOMIS).publication { false },
+        TemporaryAbsenceStarted(
+          movement.person.identifier,
+          movement.id,
+          occ2.id,
+          DataSource.NOMIS,
+        ).publication { false },
       ),
     )
   }

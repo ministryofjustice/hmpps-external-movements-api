@@ -27,13 +27,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventPublication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
@@ -144,14 +145,18 @@ class TemporaryAbsenceMovement(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
-
-  override fun initialEvent(): DomainEvent<*> = when (direction) {
+  override fun initialEvent(): DomainEventPublication = when (direction) {
     Direction.OUT -> TemporaryAbsenceStarted(person.identifier, id, occurrence?.id)
     Direction.IN -> TemporaryAbsenceCompleted(person.identifier, id, occurrence?.id)
-  }
+  }.publication()
 
-  override fun excludeFromPublish(): Set<String> = setOf(TapMovementOccurrenceChanged.EVENT_TYPE)
+  override fun domainEvents(): Set<DomainEventPublication> {
+    val ep = appliedActions.mapNotNull { action ->
+      action.domainEvent(this)?.publication { it.eventType !in EXCLUDE_FROM_PUBLISH }
+    }.toSet()
+    appliedActions = emptyList()
+    return ep
+  }
 
   enum class Direction {
     IN,
@@ -234,6 +239,10 @@ class TemporaryAbsenceMovement(
   }
 
   companion object {
+    val EXCLUDE_FROM_PUBLISH: Set<String> = setOf(
+      TapMovementOccurrenceChanged.EVENT_TYPE,
+    )
+
     val formattedReason: (TemporaryAbsenceMovement) -> String = {
       val date = DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy")
       val time = DateTimeFormatter.ofPattern("HH:mm")
