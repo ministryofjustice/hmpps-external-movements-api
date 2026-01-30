@@ -26,6 +26,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventPublication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
@@ -47,7 +49,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
@@ -225,11 +226,6 @@ class TemporaryAbsenceOccurrence(
     calculateStatus(statusProvider)
   }
 
-  override fun initialEvent(): DomainEvent<*>? = when (status.code) {
-    SCHEDULED.name -> TemporaryAbsenceScheduled(person.identifier, id)
-    else -> null
-  }
-
   @Transient
   private var appliedActions: List<OccurrenceAction> = listOf()
 
@@ -238,15 +234,17 @@ class TemporaryAbsenceOccurrence(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+  override fun initialEvent(): DomainEventPublication? = when (status.code) {
+    SCHEDULED.name -> TemporaryAbsenceScheduled(person.identifier, id)
+    else -> null
+  }?.publication()
 
-  override fun excludeFromPublish(): Set<String> = setOf(
-    TemporaryAbsenceStarted.EVENT_TYPE,
-    TemporaryAbsenceCompleted.EVENT_TYPE,
-  ) + if (status.code == PENDING.name) {
-    domainEvents().map { it.eventType }.toSet()
-  } else {
-    emptySet()
+  override fun domainEvents(): Set<DomainEventPublication> {
+    val ep = appliedActions.mapNotNull { action ->
+      action.domainEvent(this)?.publication { !(status.code == PENDING.name || it.eventType in EXCLUDE_FROM_PUBLISH) }
+    }.toSet()
+    appliedActions = emptyList()
+    return ep
   }
 
   fun applyAbsenceCategorisation(
@@ -415,6 +413,11 @@ class TemporaryAbsenceOccurrence(
   }
 
   companion object {
+    val EXCLUDE_FROM_PUBLISH: Set<String> = setOf(
+      TemporaryAbsenceStarted.EVENT_TYPE,
+      TemporaryAbsenceCompleted.EVENT_TYPE,
+    )
+
     val PRISON_CODE = TemporaryAbsenceOccurrence::prisonCode.name
     val PERSON = TemporaryAbsenceOccurrence::person.name
     val AUTHORISATION = TemporaryAbsenceOccurrence::authorisation.name

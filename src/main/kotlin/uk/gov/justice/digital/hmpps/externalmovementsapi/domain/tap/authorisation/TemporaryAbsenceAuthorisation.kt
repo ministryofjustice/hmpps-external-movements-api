@@ -30,6 +30,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventPublication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
@@ -54,7 +56,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
@@ -195,12 +196,6 @@ class TemporaryAbsenceAuthorisation(
   override var version: Int? = null
     private set
 
-  override fun initialEvent(): DomainEvent<*>? = if (status.code == APPROVED.name) {
-    TemporaryAbsenceAuthorisationApproved(person.identifier, id)
-  } else {
-    TemporaryAbsenceAuthorisationPending(person.identifier, id)
-  }
-
   @Transient
   private var appliedActions: List<AuthorisationAction> = listOf()
 
@@ -209,7 +204,17 @@ class TemporaryAbsenceAuthorisation(
     appliedActions = listOf()
   }
 
-  override fun domainEvents(): Set<DomainEvent<*>> = appliedActions.mapNotNull { it.domainEvent(this) }.toSet()
+  override fun initialEvent(): DomainEventPublication = if (status.code == APPROVED.name) {
+    TemporaryAbsenceAuthorisationApproved(person.identifier, id)
+  } else {
+    TemporaryAbsenceAuthorisationPending(person.identifier, id)
+  }.publication()
+
+  override fun domainEvents(): Set<DomainEventPublication> {
+    val ep = appliedActions.mapNotNull { it.domainEvent(this)?.publication() }.toSet()
+    appliedActions = emptyList()
+    return ep
+  }
 
   fun applyPrisonPerson(action: ChangePrisonPerson, person: (String) -> PersonSummary) {
     this.person = person(action.personIdentifier)

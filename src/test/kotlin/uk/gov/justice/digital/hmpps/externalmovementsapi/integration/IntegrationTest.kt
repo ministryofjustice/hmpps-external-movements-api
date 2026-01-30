@@ -26,6 +26,8 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventPublication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
@@ -146,6 +148,13 @@ abstract class IntegrationTest {
     entity: Identifiable,
     events: Set<DomainEvent<*>>,
   ) {
+    verifyEventPublications(entity, events.map { it.publication() }.toSet())
+  }
+
+  protected fun verifyEventPublications(
+    entity: Identifiable,
+    events: Set<DomainEventPublication>,
+  ) {
     transactionTemplate.execute {
       val auditReader = AuditReaderFactory.get(entityManager)
       assertTrue(auditReader.isEntityClassAudited(entity::class.java))
@@ -166,7 +175,9 @@ abstract class IntegrationTest {
       domainEventsPersisted.forEach {
         assertThat(it.eventType).isEqualTo(it.event.eventType)
       }
-      assertThat(domainEventsPersisted.map { it.event }.toSet()).containsExactlyInAnyOrderElementsOf(events)
+      assertThat(domainEventsPersisted.map { de -> de.event.publication { !de.published } }).containsExactlyInAnyOrderElementsOf(
+        events,
+      )
     }
   }
 
