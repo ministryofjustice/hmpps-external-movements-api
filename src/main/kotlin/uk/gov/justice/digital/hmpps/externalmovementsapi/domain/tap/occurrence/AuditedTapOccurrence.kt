@@ -46,7 +46,7 @@ class AuditedTapOccurrence(
   val absenceReasonCategory: AbsenceReasonCategory?,
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
-  val absenceReason: AbsenceReason?,
+  val absenceReason: AbsenceReason,
   val start: LocalDateTime,
   val end: LocalDateTime,
   @ManyToOne(optional = false)
