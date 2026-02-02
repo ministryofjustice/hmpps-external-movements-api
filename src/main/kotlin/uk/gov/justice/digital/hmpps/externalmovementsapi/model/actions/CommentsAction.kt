@@ -3,14 +3,16 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions
 interface CommentsAction : Action {
   val comments: String?
   infix fun changes(comments: String?): Boolean {
-    val trimmedComment = this.comments?.let {
-      val endIndex = it.indexOf(TRUNCATION_IDENTIFIER)
-      it.substring(0, if (endIndex > 0) endIndex else it.length)
+    val truncationIndex = this.comments?.indexOf(TRUNCATION_IDENTIFIER) ?: -1
+    val replacementComments = if (truncationIndex > 0 && comments?.startsWith(this.comments!!.substring(0, truncationIndex)) == true) {
+      comments
+    } else {
+      this.comments
     }
-    return this.comments != comments && (trimmedComment?.let { comments?.startsWith(it)?.not() } ?: true)
+    return replacementComments != comments
   }
 
   companion object {
-    const val TRUNCATION_IDENTIFIER = "... see DPS"
+    const val TRUNCATION_IDENTIFIER = "... see DPS for full text"
   }
 }

@@ -30,11 +30,15 @@ class CommentsActionTest {
       Arguments.of(null, null, false),
       Arguments.of("", "", false),
       Arguments.of(LOREM_IPSUM, LOREM_IPSUM, false),
+      // text truncated by sync
       Arguments.of(LOREM_IPSUM, LOREM_IPSUM.substring(0, 200) + "... see DPS for full text", false),
-      Arguments.of(LOREM_IPSUM, LOREM_IPSUM.substring(0, 200), false),
+      // text intentionally shortened by a user
+      Arguments.of(LOREM_IPSUM, LOREM_IPSUM.substring(0, 200), true),
       Arguments.of(LOREM_IPSUM, "Any other text", true),
       Arguments.of(LOREM_IPSUM, null, true),
       Arguments.of(null, LOREM_IPSUM, true),
+      Arguments.of("", null, true),
+      Arguments.of(null, "", true),
     )
   }
 }
