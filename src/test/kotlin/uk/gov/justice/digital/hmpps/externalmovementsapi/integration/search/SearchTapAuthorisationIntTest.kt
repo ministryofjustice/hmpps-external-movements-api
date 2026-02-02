@@ -3,8 +3,11 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.search
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
@@ -14,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -50,6 +54,19 @@ class SearchTapAuthorisationIntTest(
       LocalDate.now(),
       role = role,
     ).expectStatus().isForbidden
+  }
+
+  @ParameterizedTest
+  @MethodSource("invalidSearchRequests")
+  fun `400 bad request when invalid search`(
+    prisonCode: String?,
+    start: LocalDate?,
+    end: LocalDate?,
+    query: String?,
+  ) {
+    val res = searchTapAuthorisations(prisonCode, start, end, query = query).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(res.userMessage).isEqualTo("Validation failure: A valid person identifier is required or valid prison code, start and end.")
   }
 
   @Test
@@ -146,7 +163,12 @@ class SearchTapAuthorisationIntTest(
         absenceSubType = "PP",
         absenceReasonCategory = null,
         absenceReason = "PC",
-        reasonPath = ReasonPath(absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCategoryCode = null, absenceReasonCode = null),
+        reasonPath = ReasonPath(
+          absenceTypeCode = "PP",
+          absenceSubTypeCode = null,
+          absenceReasonCategoryCode = null,
+          absenceReasonCode = null,
+        ),
       ),
     )
 
@@ -466,10 +488,22 @@ class SearchTapAuthorisationIntTest(
     )
   }
 
+  @Test
+  fun `can find results with just a person identifier`() {
+    val personIdentifier = personIdentifier()
+    givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode(), personIdentifier))
+    givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode(), personIdentifier))
+
+    val res = searchTapAuthorisations(prisonCode = null, start = null, end = null, query = personIdentifier)
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res.content.size).isEqualTo(2)
+    assertThat(res.metadata.totalElements).isEqualTo(2)
+  }
+
   private fun searchTapAuthorisations(
-    prisonCode: String,
-    start: LocalDate = LocalDate.now(),
-    end: LocalDate = LocalDate.now().plusDays(1),
+    prisonCode: String? = null,
+    start: LocalDate? = LocalDate.now(),
+    end: LocalDate? = LocalDate.now().plusDays(1),
     status: AuthorisationStatus.Code? = null,
     absenceCategorisation: AbsenceCategorisationFilter? = null,
     query: String? = null,
@@ -478,11 +512,32 @@ class SearchTapAuthorisationIntTest(
   ) = webTestClient
     .post()
     .uri(SEARCH_TAP_AUTH_URL)
-    .bodyValue(TapAuthorisationSearchRequest(prisonCode, start, end, setOfNotNull(status), absenceCategorisation, query, sort = sort ?: START))
+    .bodyValue(
+      TapAuthorisationSearchRequest(
+        prisonCode,
+        start,
+        end,
+        setOfNotNull(status),
+        absenceCategorisation,
+        query,
+        sort = sort ?: START,
+      ),
+    )
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
     const val SEARCH_TAP_AUTH_URL = "/search/temporary-absence-authorisations"
+    const val NON_PI_QUERY = "NotAPrisonIdentifier"
+
+    @JvmStatic
+    fun invalidSearchRequests() = listOf(
+      Arguments.of(null, null, null, null),
+      Arguments.of("ANY", null, null, null),
+      Arguments.of("ANY", LocalDate.now(), LocalDate.now().plusDays(32), null),
+      Arguments.of(null, null, null, NON_PI_QUERY),
+      Arguments.of("ANY", null, null, NON_PI_QUERY),
+      Arguments.of("ANY", LocalDate.now(), LocalDate.now().plusDays(32), NON_PI_QUERY),
+    )
   }
 }

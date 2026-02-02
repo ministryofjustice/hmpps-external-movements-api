@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.o
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceOverlapsDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceResult
@@ -36,12 +35,12 @@ class SearchTapOccurrence(
   }
 
   private fun TapOccurrenceSearchRequest.asSpecification(): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
-    occurrenceMatchesPrisonCode(prisonCode),
+    prisonCode?.let { occurrenceMatchesPrisonCode(it) },
     occurrenceOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
     absenceCategorisation?.matchesOccurrence(),
     queryString?.let {
-      if (it.matches(Prisoner.PATTERN.toRegex())) {
+      if (isPersonIdentifier()) {
         occurrenceMatchesPersonIdentifier(it)
       } else {
         occurrenceMatchesPersonName(it)
