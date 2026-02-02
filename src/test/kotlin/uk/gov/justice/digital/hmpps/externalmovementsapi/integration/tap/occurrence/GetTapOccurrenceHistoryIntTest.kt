@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Tem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.OUT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
@@ -37,6 +38,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Ma
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import java.util.UUID
@@ -186,6 +188,31 @@ class GetTapOccurrenceHistoryIntTest(
       assertThat(domainEvents).contains(TemporaryAbsenceCompleted.EVENT_TYPE)
       assertThat(changes).containsExactly(
         AuditedAction.Change(propertyName = "status", previous = "In progress", change = "Completed"),
+      )
+    }
+  }
+
+  @Test
+  fun `when multiple changes applied a single instance of an event is generated per transaction`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+
+    transactionTemplate.executeWithoutResult {
+      val occ = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
+      occ.applyComments(ChangeOccurrenceComments("The comments are changed once"))
+      // flush forces attempt to regenerate domain events
+      entityManager.flush()
+      occ.applyLocation(ChangeOccurrenceLocation(location()))
+    }
+    ExternalMovementContext.clear()
+
+    val history = getTapOccurrenceHistory(occurrence.id).successResponse<AuditHistory>()
+    assertThat(history.content).hasSize(2)
+    with(history.content[1]) {
+      assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
+      assertThat(domainEvents).containsExactly(
+        TemporaryAbsenceCommentsChanged.EVENT_TYPE,
+        TemporaryAbsenceRelocated.EVENT_TYPE,
       )
     }
   }

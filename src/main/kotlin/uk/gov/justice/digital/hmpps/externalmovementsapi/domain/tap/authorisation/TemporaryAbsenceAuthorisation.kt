@@ -29,9 +29,9 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventPublication
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.publication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventPublication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
@@ -210,11 +210,7 @@ class TemporaryAbsenceAuthorisation(
     TemporaryAbsenceAuthorisationPending(person.identifier, id)
   }.publication()
 
-  override fun domainEvents(): Set<DomainEventPublication> {
-    val ep = appliedActions.mapNotNull { it.domainEvent(this)?.publication() }.toSet()
-    appliedActions = emptyList()
-    return ep
-  }
+  override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { it.domainEvent(this)?.publication() }.toSet()
 
   fun applyPrisonPerson(action: ChangePrisonPerson, person: (String) -> PersonSummary) {
     this.person = person(action.personIdentifier)
