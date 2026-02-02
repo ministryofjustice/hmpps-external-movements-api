@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.validation.Constraint
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
@@ -12,6 +13,7 @@ interface PrisonOrPersonIdentifier<T : Temporal> : StartAndEnd<T> {
   val prisonCode: String?
   val query: String?
 
+  @JsonIgnore
   fun isPersonIdentifier(): Boolean = query?.matches(Prisoner.PATTERN.toRegex()) == true
 }
 
