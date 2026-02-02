@@ -8,20 +8,42 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import java.time.ZonedDateTime
 import java.util.UUID
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "eventType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "eventType")
 @JsonSubTypes(
   value = [
     Type(value = TemporaryAbsenceAuthorisationPending::class, name = TemporaryAbsenceAuthorisationPending.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationApproved::class, name = TemporaryAbsenceAuthorisationApproved.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDeferred::class, name = TemporaryAbsenceAuthorisationDeferred.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDenied::class, name = TemporaryAbsenceAuthorisationDenied.EVENT_TYPE),
-    Type(value = TemporaryAbsenceAuthorisationCancelled::class, name = TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE),
+    Type(
+      value = TemporaryAbsenceAuthorisationCancelled::class,
+      name = TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE,
+    ),
     Type(value = TemporaryAbsenceAuthorisationExpired::class, name = TemporaryAbsenceAuthorisationExpired.EVENT_TYPE),
-    Type(value = TemporaryAbsenceAuthorisationDateRangeChanged::class, name = TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE),
-    Type(value = TemporaryAbsenceAuthorisationAccompanimentChanged::class, name = TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE),
-    Type(value = TemporaryAbsenceAuthorisationTransportChanged::class, name = TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE),
-    Type(value = TemporaryAbsenceAuthorisationCommentsChanged::class, name = TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE),
-    Type(value = TemporaryAbsenceAuthorisationRecategorised::class, name = TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE),
+    Type(
+      value = TemporaryAbsenceAuthorisationDateRangeChanged::class,
+      name = TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE,
+    ),
+    Type(
+      value = TemporaryAbsenceAuthorisationAccompanimentChanged::class,
+      name = TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE,
+    ),
+    Type(
+      value = TemporaryAbsenceAuthorisationTransportChanged::class,
+      name = TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE,
+    ),
+    Type(
+      value = TemporaryAbsenceAuthorisationCommentsChanged::class,
+      name = TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
+    ),
+    Type(
+      value = TemporaryAbsenceAuthorisationRecategorised::class,
+      name = TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE,
+    ),
+    Type(
+      value = TemporaryAbsenceAuthorisationRelocated::class,
+      name = TemporaryAbsenceAuthorisationRelocated.EVENT_TYPE,
+    ),
 
     Type(value = TemporaryAbsenceScheduled::class, name = TemporaryAbsenceScheduled.EVENT_TYPE),
     Type(value = TemporaryAbsenceRescheduled::class, name = TemporaryAbsenceRescheduled.EVENT_TYPE),
@@ -57,7 +79,6 @@ sealed interface DomainEvent<T : AdditionalInformation> {
   val occurredAt: ZonedDateTime
     get() = ZonedDateTime.now()
 
-  @get:JsonIgnore
   val eventType: String
   val description: String
   val additionalInformation: T

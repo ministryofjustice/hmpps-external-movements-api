@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -76,7 +77,10 @@ class ChangeTapOccurrenceLocationIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
     val res = applyLocation(occurrence.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRelocated.EVENT_TYPE)
+    assertThat(res.domainEvents).containsExactly(
+      TemporaryAbsenceRelocated.EVENT_TYPE,
+      TemporaryAbsenceAuthorisationRelocated.EVENT_TYPE,
+    )
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(
@@ -103,6 +107,7 @@ class ChangeTapOccurrenceLocationIntTest(
       saved,
       setOf(
         TemporaryAbsenceRelocated(auth.person.identifier, occurrence.id),
+        TemporaryAbsenceAuthorisationRelocated(auth.person.identifier, auth.id),
       ),
     )
   }
