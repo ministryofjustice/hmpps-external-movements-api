@@ -3,8 +3,11 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.search
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
@@ -16,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -61,6 +65,19 @@ class SearchTapOccurrenceIntTest(
       LocalDate.now(),
       role = role,
     ).expectStatus().isForbidden
+  }
+
+  @ParameterizedTest
+  @MethodSource("invalidSearchRequests")
+  fun `400 bad request when invalid search`(
+    prisonCode: String?,
+    start: LocalDate?,
+    end: LocalDate?,
+    query: String?,
+  ) {
+    val res = searchTapOccurrences(prisonCode, start, end, query = query).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(res.userMessage).isEqualTo("Validation failure: A valid person identifier is required or valid prison code, start and end.")
   }
 
   @Test
@@ -260,7 +277,12 @@ class SearchTapOccurrenceIntTest(
         absenceSubType = "PP",
         absenceReasonCategory = null,
         absenceReason = "PC",
-        reasonPath = ReasonPath(absenceTypeCode = "PP", absenceSubTypeCode = null, absenceReasonCategoryCode = null, absenceReasonCode = null),
+        reasonPath = ReasonPath(
+          absenceTypeCode = "PP",
+          absenceSubTypeCode = null,
+          absenceReasonCategoryCode = null,
+          absenceReasonCode = null,
+        ),
       ),
     )
     val occ2 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2))
@@ -626,10 +648,25 @@ class SearchTapOccurrenceIntTest(
     assertThat(res2.content.map { it.location }).containsExactly(three.location, two.location, one.location)
   }
 
+  @Test
+  fun `can find results with just a person identifier`() {
+    val personIdentifier = personIdentifier()
+    val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode(), personIdentifier))
+    val auth2 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode(), personIdentifier))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2))
+
+    val res = searchTapOccurrences(prisonCode = null, start = null, end = null, query = personIdentifier)
+      .successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res.content.size).isEqualTo(3)
+    assertThat(res.metadata.totalElements).isEqualTo(3)
+  }
+
   private fun searchTapOccurrences(
-    prisonCode: String,
-    start: LocalDate = LocalDate.now(),
-    end: LocalDate = LocalDate.now().plusDays(1),
+    prisonCode: String? = null,
+    start: LocalDate? = LocalDate.now(),
+    end: LocalDate? = LocalDate.now().plusDays(1),
     query: String? = null,
     statuses: List<OccurrenceStatus.Code>? = null,
     absenceCategorisation: AbsenceCategorisationFilter? = null,
@@ -654,5 +691,16 @@ class SearchTapOccurrenceIntTest(
 
   companion object {
     const val SEARCH_TAP_OCCURRENCES_URL = "/search/temporary-absence-occurrences"
+    const val NON_PI_QUERY = "NotAPrisonIdentifier"
+
+    @JvmStatic
+    fun invalidSearchRequests() = listOf(
+      Arguments.of(null, null, null, null),
+      Arguments.of("ANY", null, null, null),
+      Arguments.of("ANY", LocalDate.now(), LocalDate.now().plusDays(32), null),
+      Arguments.of(null, null, null, NON_PI_QUERY),
+      Arguments.of("ANY", null, null, NON_PI_QUERY),
+      Arguments.of("ANY", LocalDate.now(), LocalDate.now().plusDays(32), NON_PI_QUERY),
+    )
   }
 }

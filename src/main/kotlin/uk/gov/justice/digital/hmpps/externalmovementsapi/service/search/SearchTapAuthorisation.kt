@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.matchesAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationResult
@@ -41,12 +40,12 @@ class SearchTapAuthorisation(
   }
 
   private fun TapAuthorisationSearchRequest.asSpecification(): Specification<TemporaryAbsenceAuthorisation> = listOfNotNull(
-    authorisationMatchesPrisonCode(prisonCode),
+    prisonCode?.let { authorisationMatchesPrisonCode(it) },
     authorisationOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { authorisationStatusCodeIn(it) },
     absenceCategorisation?.matchesAuthorisation(),
     queryString?.let {
-      if (it.matches(Prisoner.PATTERN.toRegex())) {
+      if (isPersonIdentifier()) {
         authorisationMatchesPersonIdentifier(it)
       } else {
         authorisationMatchesPersonName(it)

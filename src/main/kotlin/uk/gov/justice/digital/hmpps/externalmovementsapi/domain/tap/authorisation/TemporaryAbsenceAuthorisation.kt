@@ -387,10 +387,10 @@ fun authorisationMatchesPersonName(name: String) = Specification<TemporaryAbsenc
   taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
-fun authorisationOverlapsDateRange(start: LocalDate, end: LocalDate) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+fun authorisationOverlapsDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
   cb.and(
-    cb.greaterThanOrEqualTo(taa.get(END), start),
-    cb.lessThanOrEqualTo(taa.get(START), end),
+    start?.let { cb.greaterThanOrEqualTo(taa.get(END), it) } ?: cb.conjunction(),
+    end?.let { cb.lessThanOrEqualTo(taa.get(START), it) } ?: cb.conjunction(),
   )
 }
 

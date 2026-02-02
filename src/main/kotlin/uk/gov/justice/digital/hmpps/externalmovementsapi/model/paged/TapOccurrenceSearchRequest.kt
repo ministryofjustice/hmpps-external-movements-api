@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Sort
 import org.springframework.data.domain.Sort.Direction
 import org.springframework.data.domain.Sort.by
@@ -20,25 +19,26 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.StartAndEnd
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.PrisonOrPersonIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ValidPrisonOrPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ValidStartAndEnd
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.removeNullChar
 import java.time.LocalDate
 
 @ValidStartAndEnd
+@ValidPrisonOrPersonIdentifier
 data class TapOccurrenceSearchRequest(
-  @NotBlank
-  val prisonCode: String,
-  override val start: LocalDate,
-  override val end: LocalDate,
+  override val prisonCode: String? = null,
+  override val start: LocalDate? = null,
+  override val end: LocalDate? = null,
   val status: Set<OccurrenceStatus.Code> = emptySet(),
   val absenceCategorisation: AbsenceCategorisationFilter? = null,
-  val query: String? = null,
+  override val query: String? = null,
   override val page: Int = 1,
   override val size: Int = 10,
   override val sort: String = START,
 ) : PagedRequest,
-  StartAndEnd<LocalDate> {
+  PrisonOrPersonIdentifier<LocalDate> {
   override fun validSortFields(): Set<String> = setOf(START, END, STATUS, FIRST_NAME, LAST_NAME, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT, LOCATION)
 
   private fun sortByDate(direction: Direction, first: String, second: String) = by(direction, first, second).and(sortByPersonName())

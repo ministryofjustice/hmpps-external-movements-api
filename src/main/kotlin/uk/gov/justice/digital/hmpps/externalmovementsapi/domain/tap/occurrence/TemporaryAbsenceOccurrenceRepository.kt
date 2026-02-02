@@ -143,10 +143,10 @@ fun occurrenceMatchesPersonName(name: String) = Specification<TemporaryAbsenceOc
   tao.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
 }
 
-fun occurrenceOverlapsDateRange(start: LocalDate, end: LocalDate) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+fun occurrenceOverlapsDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
   cb.and(
-    cb.greaterThanOrEqualTo(tao.get(END), start),
-    cb.lessThanOrEqualTo(tao.get(START), end.plusDays(1)),
+    start?.let { cb.greaterThanOrEqualTo(tao.get(END), it) } ?: cb.conjunction(),
+    end?.let { cb.lessThanOrEqualTo(tao.get(START), it.plusDays(1)) } ?: cb.conjunction(),
   )
 }
 
