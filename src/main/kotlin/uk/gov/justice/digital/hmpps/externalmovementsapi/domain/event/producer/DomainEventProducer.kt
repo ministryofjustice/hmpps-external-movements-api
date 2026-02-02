@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor
+package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent

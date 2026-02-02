@@ -26,9 +26,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventProducer
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventPublication
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.publication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventProducer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventPublication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
@@ -150,13 +150,9 @@ class TemporaryAbsenceMovement(
     Direction.IN -> TemporaryAbsenceCompleted(person.identifier, id, occurrence?.id)
   }.publication()
 
-  override fun domainEvents(): Set<DomainEventPublication> {
-    val ep = appliedActions.mapNotNull { action ->
-      action.domainEvent(this)?.publication { it.eventType !in EXCLUDE_FROM_PUBLISH }
-    }.toSet()
-    appliedActions = emptyList()
-    return ep
-  }
+  override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
+    action.domainEvent(this)?.publication { it.eventType !in EXCLUDE_FROM_PUBLISH }
+  }.toSet()
 
   enum class Direction {
     IN,

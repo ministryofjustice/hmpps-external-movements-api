@@ -66,6 +66,8 @@ sealed interface DomainEvent<T : AdditionalInformation> {
     get() = null
   val version: Int
     get() = 1
+
+  @JsonIgnore
   fun getPersonIdentifier(): String = checkNotNull(personReference.findPersonIdentifier())
 }
 

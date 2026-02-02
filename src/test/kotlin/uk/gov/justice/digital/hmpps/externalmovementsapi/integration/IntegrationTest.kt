@@ -26,8 +26,8 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.DomainEventPublication
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.interceptor.publication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventPublication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
@@ -175,9 +175,8 @@ abstract class IntegrationTest {
       domainEventsPersisted.forEach {
         assertThat(it.eventType).isEqualTo(it.event.eventType)
       }
-      assertThat(domainEventsPersisted.map { de -> de.event.publication { !de.published } }).containsExactlyInAnyOrderElementsOf(
-        events,
-      )
+      assertThat(domainEventsPersisted.map { de -> de.event.publication { !de.published } })
+        .containsExactlyInAnyOrderElementsOf(events)
     }
   }
 

@@ -128,15 +128,13 @@ class MigrateTapHierarchy(
   ): MigratedMovement {
     val rdSupplier =
       { domain: KClass<out ReferenceData>, code: String -> rd.first { domain.isInstance(it) && it.code == code } }
-    val movement = asEntity(person, occurrence, rdSupplier)
+    val movement = asEntity(person, rdSupplier)
     occurrence?.also { occ ->
       occ.addMovement(movement) {
         rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus
       }
-    }
-    if (occurrence == null) {
-      movementRepository.save(movement)
-    }
+    } ?: movementRepository.save(movement)
+
     migrationSystemAuditRepository.save(
       MigrationSystemAudit(
         movement.id,
@@ -224,13 +222,10 @@ class MigrateTapHierarchy(
 
   private fun TapMovement.asEntity(
     person: PersonSummary,
-    occurrence: TemporaryAbsenceOccurrence?,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) = TemporaryAbsenceMovement(
     person = person,
-    occurrence = occurrence?.calculateStatus {
-      rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus
-    },
+    occurrence = null,
     occurredAt = occurredAt,
     direction = valueOf(direction.name),
     absenceReason = rdSupplier(AbsenceReason::class, absenceReasonCode) as AbsenceReason,
