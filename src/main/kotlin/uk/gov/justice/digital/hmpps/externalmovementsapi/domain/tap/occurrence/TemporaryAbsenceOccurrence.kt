@@ -49,6 +49,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
@@ -239,8 +240,20 @@ class TemporaryAbsenceOccurrence(
     else -> null
   }?.publication()
 
-  override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
-    action.domainEvent(this)?.publication { !(status.code == PENDING.name || it.eventType in EXCLUDE_FROM_PUBLISH) }
+  override fun domainEvents(): Set<DomainEventPublication> = appliedActions.flatMap { action ->
+    when (action) {
+      is ChangeOccurrenceLocation -> {
+        listOf(
+          action.domainEvent(this).publication { status.code != PENDING.name },
+          TemporaryAbsenceAuthorisationRelocated(person.identifier, authorisation.id).publication(),
+        )
+      }
+
+      else -> listOfNotNull(
+        action.domainEvent(this)
+          ?.publication { !(status.code == PENDING.name || it.eventType in EXCLUDE_FROM_PUBLISH) },
+      )
+    }
   }.toSet()
 
   fun applyAbsenceCategorisation(

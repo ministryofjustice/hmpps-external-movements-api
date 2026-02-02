@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementComme
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurredAtChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
@@ -251,6 +252,7 @@ class SyncTapMovementIntTest(
         TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
         TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceRelocated(saved.person.identifier, occurrence.id, DataSource.NOMIS),
+        TemporaryAbsenceAuthorisationRelocated(saved.person.identifier, authorisation.id, DataSource.NOMIS),
       ),
     )
   }
