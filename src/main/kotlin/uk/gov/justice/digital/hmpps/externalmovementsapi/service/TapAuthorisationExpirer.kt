@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Condition
 import org.springframework.context.annotation.ConditionContext
 import org.springframework.context.annotation.Conditional
@@ -24,9 +25,17 @@ class AuthorisationExpirer(
   fun expireUnapprovedAuthorisations() {
     authorisationRepository.findRecentlyExpired().takeIf { it.isNotEmpty() }
       ?.also {
+        log.debug("Expired authorisations: {}", it)
         val expired = authorisationStatusRepository.getByCode(AuthorisationStatus.Code.EXPIRED.name)
-        it.forEach { taa -> taa.expire(ExpireAuthorisation()) { _, _ -> expired } }
+        it.forEach { taa ->
+          log.debug("Expiring {}", taa.id)
+          taa.expire(ExpireAuthorisation()) { _, _ -> expired }
+        }
       }
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
 
