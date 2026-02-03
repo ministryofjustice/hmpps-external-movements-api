@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
@@ -173,9 +174,12 @@ class CreateTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = username),
     )
 
-    verifyEvents(
+    verifyEventPublications(
       saved,
-      listOf(TemporaryAbsenceScheduled(pi, occurrence.id), TemporaryAbsenceAuthorisationApproved(pi, saved.id)).toSet(),
+      setOf(
+        TemporaryAbsenceScheduled(pi, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id),
+      ),
     )
   }
 
@@ -219,9 +223,12 @@ class CreateTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = username),
     )
 
-    verifyEvents(
+    verifyEventPublications(
       saved,
-      listOf(TemporaryAbsenceScheduled(pi, occurrence.id), TemporaryAbsenceAuthorisationApproved(pi, saved.id)).toSet(),
+      setOf(
+        TemporaryAbsenceScheduled(pi, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id),
+      ),
     )
   }
 
@@ -266,9 +273,12 @@ class CreateTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = username),
     )
 
-    verifyEvents(
+    verifyEventPublications(
       saved,
-      listOf(TemporaryAbsenceScheduled(pi, occurrence.id), TemporaryAbsenceAuthorisationApproved(pi, saved.id)).toSet(),
+      setOf(
+        TemporaryAbsenceScheduled(pi, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id),
+      ),
     )
   }
 

@@ -208,9 +208,9 @@ class TemporaryAbsenceAuthorisation(
     TemporaryAbsenceAuthorisationApproved(person.identifier, id)
   } else {
     TemporaryAbsenceAuthorisationPending(person.identifier, id)
-  }.publication()
+  }.publication(id)
 
-  override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { it.domainEvent(this)?.publication() }.toSet()
+  override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { it.domainEvent(this)?.publication(id) }.toSet()
 
   fun applyPrisonPerson(action: ChangePrisonPerson, person: (String) -> PersonSummary) {
     this.person = person(action.personIdentifier)

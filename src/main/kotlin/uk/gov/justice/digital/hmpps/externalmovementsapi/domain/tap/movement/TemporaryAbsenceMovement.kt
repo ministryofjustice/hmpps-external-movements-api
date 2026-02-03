@@ -148,10 +148,10 @@ class TemporaryAbsenceMovement(
   override fun initialEvent(): DomainEventPublication = when (direction) {
     Direction.OUT -> TemporaryAbsenceStarted(person.identifier, id, occurrence?.id)
     Direction.IN -> TemporaryAbsenceCompleted(person.identifier, id, occurrence?.id)
-  }.publication()
+  }.publication(id)
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
-    action.domainEvent(this)?.publication { it.eventType !in EXCLUDE_FROM_PUBLISH }
+    action.domainEvent(this)?.publication(id) { it.eventType !in EXCLUDE_FROM_PUBLISH }
   }.toSet()
 
   enum class Direction {

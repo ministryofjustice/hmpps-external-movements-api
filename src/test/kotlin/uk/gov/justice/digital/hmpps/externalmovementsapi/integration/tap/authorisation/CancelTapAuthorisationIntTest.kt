@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -112,11 +113,11 @@ class CancelTapAuthorisationIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
     )
 
-    verifyEvents(
+    verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id),
-        TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id),
+        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
+        TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id).publication(occurrence.id),
       ),
     )
   }

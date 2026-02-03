@@ -238,20 +238,20 @@ class TemporaryAbsenceOccurrence(
   override fun initialEvent(): DomainEventPublication? = when (status.code) {
     SCHEDULED.name -> TemporaryAbsenceScheduled(person.identifier, id)
     else -> null
-  }?.publication()
+  }?.publication(id)
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.flatMap { action ->
     when (action) {
       is ChangeOccurrenceLocation -> {
         listOf(
-          action.domainEvent(this).publication { status.code != PENDING.name },
-          TemporaryAbsenceAuthorisationRelocated(person.identifier, authorisation.id).publication(),
+          action.domainEvent(this).publication(id) { status.code != PENDING.name },
+          TemporaryAbsenceAuthorisationRelocated(person.identifier, authorisation.id).publication(authorisation.id),
         )
       }
 
       else -> listOfNotNull(
         action.domainEvent(this)
-          ?.publication { !(status.code == PENDING.name || it.eventType in EXCLUDE_FROM_PUBLISH) },
+          ?.publication(id) { !(status.code == PENDING.name || it.eventType in EXCLUDE_FROM_PUBLISH) },
       )
     }
   }.toSet()

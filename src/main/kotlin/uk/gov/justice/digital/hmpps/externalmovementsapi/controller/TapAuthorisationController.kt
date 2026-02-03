@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceR
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.AuthorisationExpirer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.CreateScheduledAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.GetTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications
@@ -33,6 +34,7 @@ class TapAuthorisationController(
   private val get: GetTapAuthorisation,
   private val history: AuthorisationHistory,
   private val modify: TapAuthorisationModifications,
+  private val authExpirer: AuthorisationExpirer,
 ) {
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping("/{personIdentifier}")
@@ -61,4 +63,10 @@ class TapAuthorisationController(
     @PathVariable id: UUID,
     @Valid @RequestBody request: CreateOccurrenceRequest,
   ) = create.tapOccurrence(id, request)
+
+  // Temporary for debug
+  @PostMapping("/expired-authorisations")
+  fun expiredAuthorisations() {
+    authExpirer.expireUnapprovedAuthorisations()
+  }
 }
