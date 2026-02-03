@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
+import io.sentry.Sentry
 import org.springframework.context.annotation.Condition
 import org.springframework.context.annotation.ConditionContext
 import org.springframework.context.annotation.Conditional
@@ -14,10 +15,14 @@ import java.time.Duration
 @Service
 class DomainEventPoller(private val domainEventPublisher: DomainEventPublisher) {
   @Scheduled(fixedDelayString = $$"${service.domain-events.poll-interval}")
-  fun publishUnpublishedEvents() = try {
-    domainEventPublisher.publishUnpublishedEvents()
-  } finally {
-    ExternalMovementContext.clear()
+  fun publishUnpublishedEvents() {
+    try {
+      domainEventPublisher.publishUnpublishedEvents()
+    } catch (e: Exception) {
+      Sentry.captureException(e)
+    } finally {
+      ExternalMovementContext.clear()
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
+import io.sentry.Sentry
 import org.springframework.context.annotation.Condition
 import org.springframework.context.annotation.ConditionContext
 import org.springframework.context.annotation.Conditional
@@ -42,10 +43,14 @@ class OccurrenceStatusUpdate(
 @Service
 class PastOccurrencesPoller(private val update: OccurrenceStatusUpdate) {
   @Scheduled(fixedDelayString = $$"${service.occurrence-status.poll-interval}")
-  fun recalculatePastOccurrences() = try {
-    update.pastOccurrencesOfInterest()
-  } finally {
-    ExternalMovementContext.clear()
+  fun recalculatePastOccurrences() {
+    try {
+      update.pastOccurrencesOfInterest()
+    } catch (e: Exception) {
+      Sentry.captureException(e)
+    } finally {
+      ExternalMovementContext.clear()
+    }
   }
 }
 

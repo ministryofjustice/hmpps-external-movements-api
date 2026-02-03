@@ -1,10 +1,14 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.service
 
+import io.sentry.Sentry
 import org.springframework.context.annotation.Condition
 import org.springframework.context.annotation.ConditionContext
 import org.springframework.context.annotation.Conditional
 import org.springframework.core.env.getProperty
 import org.springframework.core.type.AnnotatedTypeMetadata
+import org.springframework.retry.backoff.ExponentialBackOffPolicy
+import org.springframework.retry.policy.SimpleRetryPolicy
+import org.springframework.retry.support.RetryTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -34,10 +38,19 @@ class AuthorisationExpirer(
 @Service
 class AuthorisationExpiringPoller(private val authorisationExpirer: AuthorisationExpirer) {
   @Scheduled(cron = $$"${service.authorisation-expiration.cron}")
-  fun recalculatePastOccurrences() = try {
-    authorisationExpirer.expireUnapprovedAuthorisations()
-  } finally {
-    ExternalMovementContext.clear()
+  fun recalculatePastOccurrences() {
+    try {
+      RetryTemplate().apply {
+        setRetryPolicy(SimpleRetryPolicy().apply { maxAttempts = 3 })
+        setBackOffPolicy(ExponentialBackOffPolicy().apply { initialInterval = 1000L })
+      }.execute<Unit, RuntimeException> {
+        authorisationExpirer.expireUnapprovedAuthorisations()
+      }
+    } catch (e: Exception) {
+      Sentry.captureException(e)
+    } finally {
+      ExternalMovementContext.clear()
+    }
   }
 }
 
