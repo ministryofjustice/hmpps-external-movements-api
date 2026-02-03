@@ -9,7 +9,7 @@ plugins {
   kotlin("plugin.spring") version "2.3.0"
   kotlin("plugin.jpa") version "2.3.0"
   id("com.google.cloud.tools.jib") version "3.5.2"
-  id("de.undercouch.download") version "5.6.0"
+  id("de.undercouch.download") version "5.7.0"
 }
 
 configurations {
@@ -17,7 +17,7 @@ configurations {
 }
 
 val ehcacheVersion = "3.11.1"
-val hibernateJcacheVersion = "7.2.2.Final"
+val hibernateJcacheVersion = "7.2.3.Final"
 val hmppsKotlinVersion = "1.8.2"
 val sentryVersion = "8.31.0"
 val springDocVersion = "2.8.15"
