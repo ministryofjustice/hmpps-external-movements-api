@@ -148,7 +148,7 @@ abstract class IntegrationTest {
     entity: Identifiable,
     events: Set<DomainEvent<*>>,
   ) {
-    verifyEventPublications(entity, events.map { it.publication() }.toSet())
+    verifyEventPublications(entity, events.map { it.publication(entity.id) }.toSet())
   }
 
   protected fun verifyEventPublications(
@@ -175,7 +175,7 @@ abstract class IntegrationTest {
       domainEventsPersisted.forEach {
         assertThat(it.eventType).isEqualTo(it.event.eventType)
       }
-      assertThat(domainEventsPersisted.map { de -> de.event.publication { !de.published } })
+      assertThat(domainEventsPersisted.mapNotNull { de -> de.entityId?.let { de.event.publication(it) { !de.published } } })
         .containsExactlyInAnyOrderElementsOf(events)
     }
   }

@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import java.util.UUID
 
 interface DomainEventProducer : Identifiable {
   fun initialEvent(): DomainEventPublication?
@@ -9,6 +10,6 @@ interface DomainEventProducer : Identifiable {
   fun domainEvents(): Set<DomainEventPublication> = setOf()
 }
 
-data class DomainEventPublication(val event: DomainEvent<*>, val publish: Boolean = true)
+data class DomainEventPublication(val event: DomainEvent<*>, val entityId: UUID, val publish: Boolean = true)
 
-fun DomainEvent<*>.publication(publishSupplier: (DomainEvent<*>) -> Boolean = { true }) = DomainEventPublication(this, publishSupplier(this))
+fun DomainEvent<*>.publication(entityId: UUID, publishSupplier: (DomainEvent<*>) -> Boolean = { true }) = DomainEventPublication(this, entityId, publishSupplier(this))

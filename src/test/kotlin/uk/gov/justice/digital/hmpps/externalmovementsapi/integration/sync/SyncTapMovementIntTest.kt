@@ -130,13 +130,13 @@ class SyncTapMovementIntTest(
           saved.id,
           occurrence.id,
           DataSource.NOMIS,
-        ).publication(),
+        ).publication(saved.id),
         TemporaryAbsenceStarted(
           authorisation.person.identifier,
           saved.id,
           occurrence.id,
           DataSource.NOMIS,
-        ).publication { false },
+        ).publication(occurrence.id) { false },
       ),
     )
   }
@@ -191,13 +191,13 @@ class SyncTapMovementIntTest(
           saved.id,
           occurrence.id,
           DataSource.NOMIS,
-        ).publication(),
+        ).publication(saved.id),
         TemporaryAbsenceCompleted(
           authorisation.person.identifier,
           saved.id,
           occurrence.id,
           DataSource.NOMIS,
-        ).publication { false },
+        ).publication(occurrence.id) { false },
       ),
     )
   }
@@ -244,15 +244,15 @@ class SyncTapMovementIntTest(
       ),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
-    verifyEvents(
+    verifyEventPublications(
       saved,
       setOf(
-        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceRelocated(saved.person.identifier, occurrence.id, DataSource.NOMIS),
-        TemporaryAbsenceAuthorisationRelocated(saved.person.identifier, authorisation.id, DataSource.NOMIS),
+        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceRelocated(saved.person.identifier, occurrence.id, DataSource.NOMIS).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationRelocated(saved.person.identifier, authorisation.id, DataSource.NOMIS).publication(authorisation.id),
       ),
     )
   }
@@ -398,13 +398,17 @@ class SyncTapMovementIntTest(
     verifyEventPublications(
       saved,
       setOf(
-        TapMovementOccurrenceChanged(movement.person.identifier, movement.id, DataSource.NOMIS).publication { false },
+        TapMovementOccurrenceChanged(
+          movement.person.identifier,
+          movement.id,
+          DataSource.NOMIS,
+        ).publication(movement.id) { false },
         TemporaryAbsenceStarted(
           movement.person.identifier,
           movement.id,
           occ2.id,
           DataSource.NOMIS,
-        ).publication { false },
+        ).publication(occ2.id) { false },
       ),
     )
   }

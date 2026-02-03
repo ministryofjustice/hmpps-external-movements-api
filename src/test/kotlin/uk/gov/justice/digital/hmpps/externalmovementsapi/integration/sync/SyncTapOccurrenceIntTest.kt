@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
@@ -200,15 +201,15 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(source = DataSource.NOMIS, reason = null),
     )
 
-    verifyEvents(
+    verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceRescheduled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceRelocated(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
-        TemporaryAbsenceAuthorisationRelocated(saved.authorisation.person.identifier, authorisation.id, DataSource.NOMIS),
+        TemporaryAbsenceRescheduled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceRelocated(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceAuthorisationRelocated(saved.authorisation.person.identifier, authorisation.id, DataSource.NOMIS).publication(authorisation.id),
       ) + saved.movements().map {
-        TapMovementRelocated(saved.person.identifier, it.id, DataSource.NOMIS)
+        TapMovementRelocated(saved.person.identifier, it.id, DataSource.NOMIS).publication(it.id)
       },
     )
   }
