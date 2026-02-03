@@ -88,11 +88,11 @@ class ChangeOccurrenceCommentsIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
     )
 
-    verifyEvents(
+    verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id),
-        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id),
+        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id).publication(auth.id),
       ),
     )
   }
@@ -127,8 +127,8 @@ class ChangeOccurrenceCommentsIntTest(
     verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id).publication { false },
-        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id).publication(),
+        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id).publication(occurrence.id) { false },
+        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id).publication(auth.id),
       ),
     )
   }
