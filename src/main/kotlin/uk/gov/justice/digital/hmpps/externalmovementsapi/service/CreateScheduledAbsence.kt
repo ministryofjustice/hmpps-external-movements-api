@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
@@ -62,7 +63,7 @@ class CreateScheduledAbsence(
     }
     val person = personSummaryService.save(prisoner)
     val authorisation = tapAuthRepository.save(
-      request.asAuthorisation(person, prisoner.lastPrisonId, rdProvider, linkProvider),
+      request.asAuthorisation(person, prisoner.lastPrisonId ?: Prisoner.UNKNOWN_PRISON, rdProvider, linkProvider),
     )
     tapOccurrenceRepository.saveAll(
       request.occurrences.map { it.asOccurrence(authorisation, rdProvider, request) },

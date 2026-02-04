@@ -256,6 +256,10 @@ class TemporaryAbsenceOccurrence(
     }
   }.toSet()
 
+  fun moveTo(person: PersonSummary) = apply {
+    this.person = person
+  }
+
   fun applyAbsenceCategorisation(
     action: RecategoriseOccurrence,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,

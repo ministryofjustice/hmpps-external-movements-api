@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PersonReference
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PrisonerMerged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.PrisonerMergedInformation
@@ -67,6 +68,7 @@ class PrisonerMergedIntTest(
         RevisionType.MOD,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
           TemporaryAbsenceMovement::class.simpleName!!,
         ),
         context,
@@ -79,6 +81,7 @@ class PrisonerMergedIntTest(
         RevisionType.MOD,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
           TemporaryAbsenceMovement::class.simpleName!!,
         ),
         context,
@@ -91,11 +94,14 @@ class PrisonerMergedIntTest(
         RevisionType.MOD,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
           TemporaryAbsenceMovement::class.simpleName!!,
         ),
         context,
       )
     }
+
+    assertThat(findPersonSummary(fromPi)).isNull()
   }
 
   private fun prisonerMergedEvent(from: String, to: String): PrisonerMerged = PrisonerMerged(
