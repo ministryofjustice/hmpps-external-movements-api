@@ -71,7 +71,11 @@
          </index>
       </table>
       <table catalog="movements" name="person_summary" remarks="" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="person_identifier" nullable="false" remarks="" size="10" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="person_identifier" nullable="false" remarks="" size="10" type="varchar" typeCode="12">
+            <child catalog="movements" column="person_identifier" foreignKey="fk_authorisation_person" implied="false" onDeleteCascade="false" schema="tap" table="authorisation"/>
+            <child catalog="movements" column="person_identifier" foreignKey="fk_movement_person" implied="false" onDeleteCascade="false" schema="tap" table="movement"/>
+            <child catalog="movements" column="person_identifier" foreignKey="fk_occurrence_person" implied="false" onDeleteCascade="false" schema="tap" table="occurrence"/>
+         </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="first_name" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="last_name" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="date_of_birth" nullable="false" remarks="" size="13" type="date" typeCode="91"/>

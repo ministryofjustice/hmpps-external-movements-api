@@ -117,6 +117,21 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="authorisation.person_identifier references person_summary.person_identifier via fk_authorisation_person"><a href='../../tap/tables/authorisation.html'>authorisation</a><span class='relatedKey'>.person_identifier</span></td>
+                                                <td class="constraint detail">fk_authorisation_person</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="movement.person_identifier references person_summary.person_identifier via fk_movement_person"><a href='../../tap/tables/movement.html'>movement</a><span class='relatedKey'>.person_identifier</span></td>
+                                                <td class="constraint detail">fk_movement_person</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="occurrence.person_identifier references person_summary.person_identifier via fk_occurrence_person"><a href='../../tap/tables/occurrence.html'>occurrence</a><span class='relatedKey'>.person_identifier</span></td>
+                                                <td class="constraint detail">fk_occurrence_person</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
