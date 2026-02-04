@@ -33,7 +33,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.Integration
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchServer.Companion.prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -93,7 +95,8 @@ class CreateTapAuthorisationIntTest(
   @Test
   fun `400 bad request - date range over 6 months`() {
     val pi = personIdentifier()
-    val request = createTapAuthorisationRequest(start = LocalDate.now(), end = LocalDate.now().plusMonths(6).plusDays(1))
+    val request =
+      createTapAuthorisationRequest(start = LocalDate.now(), end = LocalDate.now().plusMonths(6).plusDays(1))
     val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
     assertThat(res.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
@@ -233,10 +236,10 @@ class CreateTapAuthorisationIntTest(
   }
 
   @Test
-  fun `200 ok tap authorisation created successfully type and reason`() {
+  fun `200 ok tap authorisation created successfully type and reason without last prison id`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()
-    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi), listOf(prisoner(null, pi)))
     val request =
       createTapAuthorisationRequest(
         absenceTypeCode = "SE",
@@ -251,6 +254,7 @@ class CreateTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
+    assertThat(saved.prisonCode).isEqualTo(Prisoner.UNKNOWN_PRISON)
 
     val occurrence = findForAuthorisation(saved.id).first()
     occurrence.verifyAgainst(pi, request.occurrences.first(), request)

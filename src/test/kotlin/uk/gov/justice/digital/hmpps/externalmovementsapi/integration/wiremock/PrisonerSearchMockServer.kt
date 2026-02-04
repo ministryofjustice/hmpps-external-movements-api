@@ -40,7 +40,7 @@ class PrisonerSearchServer : WireMockServer(9000) {
 
   companion object {
     fun prisoner(
-      prisonCode: String,
+      prisonCode: String?,
       personIdentifier: String = personIdentifier(),
       firstName: String = word(8),
       lastName: String = word(12),

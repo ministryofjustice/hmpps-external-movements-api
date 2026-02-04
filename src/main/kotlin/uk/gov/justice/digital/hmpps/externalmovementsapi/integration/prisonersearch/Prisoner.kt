@@ -11,7 +11,7 @@ data class Prisoner(
   val firstName: String,
   val lastName: String,
   val dateOfBirth: LocalDate,
-  val lastPrisonId: String,
+  val lastPrisonId: String?,
   val cellLocation: String?,
 ) {
   companion object {
@@ -25,5 +25,6 @@ data class Prisoner(
     )
 
     const val PATTERN: String = "\\w\\d{4}\\w{2}"
+    const val UNKNOWN_PRISON = "UNK"
   }
 }
