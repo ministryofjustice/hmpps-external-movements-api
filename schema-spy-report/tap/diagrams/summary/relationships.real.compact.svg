@@ -217,14 +217,14 @@
 <text text-anchor="start" x="63" y="-378.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">sequence_number</text>
 <polygon fill="none" stroke="#000000" points="41,-352.7 41,-371.7 187,-371.7 187,-352.7 41,-352.7"/>
 <text text-anchor="start" x="44" y="-358.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">...</text>
-<polygon fill="#ffffff" stroke="transparent" points="41,-333.7 41,-352.7 87,-352.7 87,-333.7 41,-333.7"/>
-<polygon fill="none" stroke="#000000" points="41,-333.7 41,-352.7 87,-352.7 87,-333.7 41,-333.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="41,-333.7 41,-352.7 103,-352.7 103,-333.7 41,-333.7"/>
+<polygon fill="none" stroke="#000000" points="41,-333.7 41,-352.7 103,-352.7 103,-333.7 41,-333.7"/>
 <text text-anchor="start" x="44" y="-339.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="87,-333.7 87,-352.7 148,-352.7 148,-333.7 87,-333.7"/>
-<polygon fill="none" stroke="#000000" points="87,-333.7 87,-352.7 148,-352.7 148,-333.7 87,-333.7"/>
-<text text-anchor="start" x="106.4956" y="-339.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">98 rows</text>
-<polygon fill="#ffffff" stroke="transparent" points="148,-333.7 148,-352.7 187,-352.7 187,-333.7 148,-333.7"/>
-<polygon fill="none" stroke="#000000" points="148,-333.7 148,-352.7 187,-352.7 187,-333.7 148,-333.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="103,-333.7 103,-352.7 140,-352.7 140,-333.7 103,-333.7"/>
+<polygon fill="none" stroke="#000000" points="103,-333.7 103,-352.7 140,-352.7 140,-333.7 103,-333.7"/>
+<text text-anchor="start" x="130.8862" y="-339.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="140,-333.7 140,-352.7 187,-352.7 187,-333.7 140,-333.7"/>
+<polygon fill="none" stroke="#000000" points="140,-333.7 140,-352.7 187,-352.7 187,-333.7 140,-333.7"/>
 <text text-anchor="start" x="168.4053" y="-339.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">3 &gt;</text>
 </a>
 </g>
@@ -297,10 +297,46 @@
 </a>
 </g>
 </g>
-<!-- occurrence -->
+<!-- movement_audit -->
 <g id="node9" class="node">
+<title>movement_audit</title>
+<g id="a_node9"><a xlink:href="../../tables/movement_audit.html" xlink:title="movement_audit" target="_top">
+<polygon fill="#ffffff" stroke="transparent" points="533.5,-838.2 533.5,-943.2 741.5,-943.2 741.5,-838.2 533.5,-838.2"/>
+<polygon fill="#f5f5f5" stroke="transparent" points="533.5,-919.7 533.5,-942.7 741.5,-942.7 741.5,-919.7 533.5,-919.7"/>
+<polygon fill="none" stroke="#000000" points="533.5,-919.7 533.5,-942.7 741.5,-942.7 741.5,-919.7 533.5,-919.7"/>
+<text text-anchor="start" x="538.5" y="-928.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">movement_audit</text>
+<text text-anchor="start" x="706.5437" y="-927.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
+<polygon fill="none" stroke="#000000" points="533.5,-897.7 533.5,-919.7 741.5,-919.7 741.5,-897.7 533.5,-897.7"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="538.5" y="-914.7"/>
+<text text-anchor="start" x="553.5" y="-904.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_id</text>
+<polygon fill="none" stroke="#000000" points="533.5,-875.7 533.5,-897.7 741.5,-897.7 741.5,-875.7 533.5,-875.7"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="538.5" y="-892.7"/>
+<text text-anchor="start" x="553.5" y="-882.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="533.5,-856.7 533.5,-875.7 741.5,-875.7 741.5,-856.7 533.5,-856.7"/>
+<text text-anchor="start" x="536.5" y="-862.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">...</text>
+<polygon fill="#ffffff" stroke="transparent" points="533.5,-837.7 533.5,-856.7 635.5,-856.7 635.5,-837.7 533.5,-837.7"/>
+<polygon fill="none" stroke="#000000" points="533.5,-837.7 533.5,-856.7 635.5,-856.7 635.5,-837.7 533.5,-837.7"/>
+<text text-anchor="start" x="536.5" y="-843.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
+<polygon fill="#ffffff" stroke="transparent" points="635.5,-837.7 635.5,-856.7 688.5,-856.7 688.5,-837.7 635.5,-837.7"/>
+<polygon fill="none" stroke="#000000" points="635.5,-837.7 635.5,-856.7 688.5,-856.7 688.5,-837.7 635.5,-837.7"/>
+<text text-anchor="start" x="679.3862" y="-843.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="688.5,-837.7 688.5,-856.7 741.5,-856.7 741.5,-837.7 688.5,-837.7"/>
+<polygon fill="none" stroke="#000000" points="688.5,-837.7 688.5,-856.7 741.5,-856.7 741.5,-837.7 688.5,-837.7"/>
+<text text-anchor="start" x="732.3862" y="-843.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+</a>
+</g>
+</g>
+<!-- movement_audit&#45;&gt;public.audit_revision -->
+<g id="edge12" class="edge">
+<title>movement_audit:w&#45;&gt;public.audit_revision:e</title>
+<path fill="none" stroke="#000000" d="M519.2797,-912.012C498.6615,-924.5686 517.2739,-969.7394 490,-993.7 484.8447,-998.229 479.1529,-1002.2689 473.144,-1005.8709"/>
+<polygon fill="#000000" stroke="#000000" points="525.7085,-910.5147 534.3166,-912.2062 529.6043,-909.6074 533.5,-908.7 533.5,-908.7 533.5,-908.7 529.6043,-909.6074 532.6834,-905.1938 525.7085,-910.5147 525.7085,-910.5147"/>
+<ellipse fill="none" stroke="#000000" cx="522.5919" cy="-911.2406" rx="3.2" ry="3.2"/>
+</g>
+<!-- occurrence -->
+<g id="node10" class="node">
 <title>occurrence</title>
-<g id="a_node9"><a xlink:href="../../tables/occurrence.html" xlink:title="occurrence" target="_top">
+<g id="a_node10"><a xlink:href="../../tables/occurrence.html" xlink:title="occurrence" target="_top">
 <polygon fill="#ffffff" stroke="transparent" points="269,-246.2 269,-615.2 482,-615.2 482,-246.2 269,-246.2"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="269.5,-591.7 269.5,-614.7 482.5,-614.7 482.5,-591.7 269.5,-591.7"/>
 <polygon fill="none" stroke="#000000" points="269.5,-591.7 269.5,-614.7 482.5,-614.7 482.5,-591.7 269.5,-591.7"/>
@@ -475,42 +511,6 @@
 <path fill="none" stroke="#000000" d="M256.192,-376.7707C227.8923,-346.9201 246.3184,-213.0505 228,-175.7 216.346,-151.9381 215.4659,-130.7 189,-130.7"/>
 <polygon fill="#000000" stroke="#000000" points="262.1925,-379.4441 268.0349,-385.9884 265.8462,-381.0721 269.5,-382.7 269.5,-382.7 269.5,-382.7 265.8462,-381.0721 270.9651,-379.4116 262.1925,-379.4441 262.1925,-379.4441"/>
 <ellipse fill="none" stroke="#000000" cx="259.2695" cy="-378.1418" rx="3.2" ry="3.2"/>
-</g>
-<!-- movement_audit -->
-<g id="node10" class="node">
-<title>movement_audit</title>
-<g id="a_node10"><a xlink:href="../../tables/movement_audit.html" xlink:title="movement_audit" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="533.5,-838.2 533.5,-943.2 741.5,-943.2 741.5,-838.2 533.5,-838.2"/>
-<polygon fill="#f5f5f5" stroke="transparent" points="533.5,-919.7 533.5,-942.7 741.5,-942.7 741.5,-919.7 533.5,-919.7"/>
-<polygon fill="none" stroke="#000000" points="533.5,-919.7 533.5,-942.7 741.5,-942.7 741.5,-919.7 533.5,-919.7"/>
-<text text-anchor="start" x="538.5" y="-928.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">movement_audit</text>
-<text text-anchor="start" x="706.5437" y="-927.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
-<polygon fill="none" stroke="#000000" points="533.5,-897.7 533.5,-919.7 741.5,-919.7 741.5,-897.7 533.5,-897.7"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="538.5" y="-914.7"/>
-<text text-anchor="start" x="553.5" y="-904.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_id</text>
-<polygon fill="none" stroke="#000000" points="533.5,-875.7 533.5,-897.7 741.5,-897.7 741.5,-875.7 533.5,-875.7"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="538.5" y="-892.7"/>
-<text text-anchor="start" x="553.5" y="-882.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">id</text>
-<polygon fill="none" stroke="#000000" points="533.5,-856.7 533.5,-875.7 741.5,-875.7 741.5,-856.7 533.5,-856.7"/>
-<text text-anchor="start" x="536.5" y="-862.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">...</text>
-<polygon fill="#ffffff" stroke="transparent" points="533.5,-837.7 533.5,-856.7 635.5,-856.7 635.5,-837.7 533.5,-837.7"/>
-<polygon fill="none" stroke="#000000" points="533.5,-837.7 533.5,-856.7 635.5,-856.7 635.5,-837.7 533.5,-837.7"/>
-<text text-anchor="start" x="536.5" y="-843.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
-<polygon fill="#ffffff" stroke="transparent" points="635.5,-837.7 635.5,-856.7 688.5,-856.7 688.5,-837.7 635.5,-837.7"/>
-<polygon fill="none" stroke="#000000" points="635.5,-837.7 635.5,-856.7 688.5,-856.7 688.5,-837.7 635.5,-837.7"/>
-<text text-anchor="start" x="679.3862" y="-843.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="688.5,-837.7 688.5,-856.7 741.5,-856.7 741.5,-837.7 688.5,-837.7"/>
-<polygon fill="none" stroke="#000000" points="688.5,-837.7 688.5,-856.7 741.5,-856.7 741.5,-837.7 688.5,-837.7"/>
-<text text-anchor="start" x="732.3862" y="-843.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-</a>
-</g>
-</g>
-<!-- movement_audit&#45;&gt;public.audit_revision -->
-<g id="edge12" class="edge">
-<title>movement_audit:w&#45;&gt;public.audit_revision:e</title>
-<path fill="none" stroke="#000000" d="M519.2797,-912.012C498.6615,-924.5686 517.2739,-969.7394 490,-993.7 484.8447,-998.229 479.1529,-1002.2689 473.144,-1005.8709"/>
-<polygon fill="#000000" stroke="#000000" points="525.7085,-910.5147 534.3166,-912.2062 529.6043,-909.6074 533.5,-908.7 533.5,-908.7 533.5,-908.7 529.6043,-909.6074 532.6834,-905.1938 525.7085,-910.5147 525.7085,-910.5147"/>
-<ellipse fill="none" stroke="#000000" cx="522.5919" cy="-911.2406" rx="3.2" ry="3.2"/>
 </g>
 <!-- authorisation -->
 <g id="node11" class="node">
