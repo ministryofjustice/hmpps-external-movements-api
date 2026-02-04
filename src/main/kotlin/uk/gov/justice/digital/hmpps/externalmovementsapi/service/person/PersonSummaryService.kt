@@ -37,5 +37,7 @@ class PersonSummaryService(
     ?.update(person.firstName, person.lastName, person.dateOfBirth, person.cellLocation)
     ?: personSummaryRepository.save(person.summary())
 
+  fun remove(personSummary: PersonSummary) = personSummaryRepository.delete(personSummary)
+
   private fun Prisoner.summary() = PersonSummary(firstName, lastName, dateOfBirth, cellLocation, prisonerNumber)
 }
