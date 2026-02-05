@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><database name="movements" schema="tap" type="PostgreSQL - 18.1 (Debian 18.1-1.pgdg13+2)">
    <tables>
-      <table catalog="movements" name="absence_categorisation_link" remarks="" schema="tap" type="TABLE">
+      <table catalog="movements" name="absence_categorisation_link" numRows="69" remarks="" schema="tap" type="TABLE">
          <column autoUpdated="false" defaultValue="uuidv7()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="domain_1" nullable="false" remarks="" size="32" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="id_1" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
@@ -16,7 +16,7 @@
             <column ascending="true" name="sequence_number"/>
          </index>
       </table>
-      <table catalog="movements" name="absence_reason" remarks="" schema="tap" type="TABLE">
+      <table catalog="movements" name="absence_reason" numRows="98" remarks="" schema="tap" type="TABLE">
          <column autoUpdated="false" defaultValue="uuidv7()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child catalog="movements" column="absence_reason_id" foreignKey="fk_tap_authorisation_absence_reason" implied="false" onDeleteCascade="false" schema="tap" table="authorisation"/>
             <child catalog="movements" column="absence_reason_id" foreignKey="fk_tap_movement_absence_reason" implied="false" onDeleteCascade="false" schema="tap" table="movement"/>
