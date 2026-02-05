@@ -73,7 +73,7 @@ class ChangeTapOccurrenceTransportIntTest(
       AuditedAction.Change(
         "transport",
         occurrence.transport.description,
-        "Not Required",
+        "Other",
       ),
     )
 
@@ -113,7 +113,7 @@ class ChangeTapOccurrenceTransportIntTest(
       AuditedAction.Change(
         "transport",
         occurrence.transport.description,
-        "Not Required",
+        "Other",
       ),
     )
 
