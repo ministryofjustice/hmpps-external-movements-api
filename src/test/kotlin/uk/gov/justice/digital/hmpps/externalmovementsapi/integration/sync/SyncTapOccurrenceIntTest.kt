@@ -10,7 +10,6 @@ import org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.test.web.reactive.server.expectBody
-import sun.security.util.resources.auth
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
@@ -26,7 +25,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved.Companion.invoke
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
@@ -38,13 +36,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
@@ -110,7 +106,13 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id, DataSource.NOMIS).publication(authorisation.id),
+      ),
+    )
   }
 
   @Test
@@ -204,10 +206,24 @@ class SyncTapOccurrenceIntTest(
     verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceRescheduled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceRelocated(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceAuthorisationRelocated(saved.authorisation.person.identifier, authorisation.id, DataSource.NOMIS).publication(authorisation.id),
+        TemporaryAbsenceRescheduled(
+          saved.authorisation.person.identifier,
+          saved.id,
+          DataSource.NOMIS,
+        ).publication(saved.id),
+        TemporaryAbsenceRelocated(
+          saved.authorisation.person.identifier,
+          saved.id,
+          DataSource.NOMIS,
+        ).publication(saved.id),
+        TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(
+          saved.id,
+        ),
+        TemporaryAbsenceAuthorisationRelocated(
+          saved.authorisation.person.identifier,
+          authorisation.id,
+          DataSource.NOMIS,
+        ).publication(authorisation.id),
       ) + saved.movements().map {
         TapMovementRelocated(saved.person.identifier, it.id, DataSource.NOMIS).publication(it.id)
       },
@@ -303,7 +319,13 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id, DataSource.NOMIS).publication(authorisation.id),
+      ),
+    )
   }
 
   @Test
@@ -328,12 +350,23 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceAuthorisationRelocated(
+          authorisation.person.identifier,
+          authorisation.id,
+          DataSource.NOMIS,
+        ).publication(authorisation.id),
+      ),
+    )
   }
 
   @Test
   fun `200 ok remove duplicate if created pending in dps and approved in nomis`() {
-    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = false, legacyId = newId()))
+    val authorisation =
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = false, legacyId = newId()))
     val dpsOccurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
     val request = tapOccurrence()
     val res = syncTapOccurrence(authorisation.id, request)
@@ -357,7 +390,17 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS)))
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceAuthorisationRelocated(
+          authorisation.person.identifier,
+          authorisation.id,
+          DataSource.NOMIS,
+        ).publication(authorisation.id),
+      ),
+    )
   }
 
   @Test
@@ -386,7 +429,13 @@ class SyncTapOccurrenceIntTest(
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceScheduled(auth.person.identifier, saved.id, DataSource.NOMIS)))
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceScheduled(auth.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
+        TemporaryAbsenceAuthorisationRelocated(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
+      ),
+    )
   }
 
   @Test

@@ -264,6 +264,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
               null,
               null,
             ),
+            AbsenceCategorisation(code = "OPA", description = "Outside prison activity", null, null),
           ),
         ),
       ),

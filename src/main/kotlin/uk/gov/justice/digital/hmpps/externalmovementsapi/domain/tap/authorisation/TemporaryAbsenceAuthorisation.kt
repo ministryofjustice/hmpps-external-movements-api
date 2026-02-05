@@ -204,11 +204,13 @@ class TemporaryAbsenceAuthorisation(
     appliedActions = listOf()
   }
 
-  override fun initialEvent(): DomainEventPublication = if (status.code == APPROVED.name) {
-    TemporaryAbsenceAuthorisationApproved(person.identifier, id)
-  } else {
-    TemporaryAbsenceAuthorisationPending(person.identifier, id)
-  }.publication(id)
+  override fun initialEvents(): Set<DomainEventPublication> = setOf(
+    if (status.code == APPROVED.name) {
+      TemporaryAbsenceAuthorisationApproved(person.identifier, id)
+    } else {
+      TemporaryAbsenceAuthorisationPending(person.identifier, id)
+    }.publication(id),
+  )
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { it.domainEvent(this)?.publication(id) }.toSet()
 
