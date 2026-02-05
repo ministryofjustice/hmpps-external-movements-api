@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import java.util.UUID
 
 interface DomainEventProducer : Identifiable {
-  fun initialEvent(): DomainEventPublication?
+  fun initialEvents(): Set<DomainEventPublication>
 
   fun domainEvents(): Set<DomainEventPublication> = setOf()
 }

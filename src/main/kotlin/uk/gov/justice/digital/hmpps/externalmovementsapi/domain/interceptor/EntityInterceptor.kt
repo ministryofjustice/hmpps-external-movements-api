@@ -48,8 +48,10 @@ class EntityInterceptor : Interceptor {
     types: Array<out Type>,
   ): Boolean {
     if (entity is DomainEventProducer && !ExternalMovementContext.get().migratingData) {
-      entity.initialEvent()?.takeIf { registerDomainEvent(it.entityId, it.event.eventType) }?.let {
-        em.persist(HmppsDomainEvent(it.event, it.entityId).apply { published = !it.publish })
+      entity.initialEvents().forEach {
+        if (registerDomainEvent(it.entityId, it.event.eventType)) {
+          em.persist(HmppsDomainEvent(it.event, it.entityId).apply { published = !it.publish })
+        }
       }
     }
     return super.onPersist(entity, id, state, propertyNames, types)

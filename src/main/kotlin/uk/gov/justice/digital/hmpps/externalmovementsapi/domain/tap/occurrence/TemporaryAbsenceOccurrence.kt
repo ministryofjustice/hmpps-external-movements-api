@@ -235,10 +235,13 @@ class TemporaryAbsenceOccurrence(
     appliedActions = listOf()
   }
 
-  override fun initialEvent(): DomainEventPublication? = when (status.code) {
-    SCHEDULED.name -> TemporaryAbsenceScheduled(person.identifier, id)
-    else -> null
-  }?.publication(id)
+  override fun initialEvents(): Set<DomainEventPublication> = when (status.code) {
+    SCHEDULED.name -> setOf(
+      TemporaryAbsenceScheduled(person.identifier, id).publication(id),
+      TemporaryAbsenceAuthorisationRelocated(person.identifier, authorisation.id).publication(authorisation.id),
+    )
+    else -> emptySet()
+  }
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.flatMap { action ->
     when (action) {
