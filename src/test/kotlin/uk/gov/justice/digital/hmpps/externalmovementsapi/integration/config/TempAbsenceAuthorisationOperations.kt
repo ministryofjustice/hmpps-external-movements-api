@@ -27,8 +27,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDate
+import java.util.SequencedSet
 import java.util.UUID
 import kotlin.reflect.KClass
 
@@ -51,6 +53,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
       comments: String? = "Some comments on the original authorisation",
       start: LocalDate = LocalDate.now().minusDays(7),
       end: LocalDate = LocalDate.now().plusDays(7),
+      locations: SequencedSet<Location> = linkedSetOf(),
       reasonPath: ReasonPath = ReasonPath(
         buildList {
           absenceType?.also { add(ABSENCE_TYPE of it) }
@@ -76,6 +79,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
         comments,
         start,
         end,
+        locations,
         reasonPath,
         schedule,
         legacyId,
@@ -115,7 +119,6 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
     assertThat(start).isEqualTo(authorisation.start)
     assertThat(end).isEqualTo(authorisation.end)
     assertThat(schedule).isEqualTo(authorisation.schedule)
-    assertThat(locations).isEqualTo(occurrences.map { it.location }.distinct())
   }
 
   private fun ReasonPath.verify(domain: ReferenceDataDomain.Code, mf: CodedDescription?, ef: ReferenceData?) {

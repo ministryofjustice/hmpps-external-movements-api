@@ -54,47 +54,48 @@ class GetTapAuthorisationIntTest(
   @Test
   fun `200 ok finds tap authorisation and occurrences`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val firstOcc = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
         start = LocalDateTime.now().plusDays(3),
         end = LocalDateTime.now().plusDays(4),
-        location = firstOcc.location,
+        location = occ1.location,
       ),
     )
 
     val response = getTapAuthorisation(auth.id).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
+    assertThat(response.locations).containsExactly(occ1.location)
     assertThat(response.locations).hasSize(1)
-    firstOcc.verifyAgainst(response.occurrences.first())
+    occ1.verifyAgainst(response.occurrences.first())
   }
 
   @Test
   fun `200 ok finds tap authorisation and filters occurrences by date`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    givenTemporaryAbsenceOccurrence(
+    val occ1 = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
         start = LocalDateTime.now().plusHours(1),
         end = LocalDateTime.now().plusHours(3),
       ),
     )
-    givenTemporaryAbsenceOccurrence(
+    val occ2 = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
         start = LocalDateTime.now().plusDays(2).plusHours(1),
         end = LocalDateTime.now().plusDays(2).plusHours(3),
       ),
     )
-    givenTemporaryAbsenceOccurrence(
+    val occ3 = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
         start = LocalDateTime.now().plusDays(3).plusHours(1),
         end = LocalDateTime.now().plusDays(3).plusHours(3),
       ),
     )
-    givenTemporaryAbsenceOccurrence(
+    val occ4 = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
         start = LocalDateTime.now().plusDays(4).plusHours(1),
@@ -108,6 +109,7 @@ class GetTapAuthorisationIntTest(
       LocalDate.now().plusDays(3),
     ).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
+    assertThat(response.locations).containsExactly(occ1.location, occ2.location, occ3.location, occ4.location)
     assertThat(response.occurrences).hasSize(2)
     assertThat(response.totalOccurrenceCount).isEqualTo(4)
   }
@@ -131,6 +133,7 @@ class GetTapAuthorisationIntTest(
     assertThat(response.absenceReasonCategory).isNull()
     assertThat(response.absenceReason).isNull()
     response.verifyAgainst(auth)
+    assertThat(response.locations).containsExactly(occurrence.location)
     val occ = response.occurrences.first()
     occurrence.verifyAgainst(occ)
     assertThat(occ.absenceType?.code).isEqualTo("PP")

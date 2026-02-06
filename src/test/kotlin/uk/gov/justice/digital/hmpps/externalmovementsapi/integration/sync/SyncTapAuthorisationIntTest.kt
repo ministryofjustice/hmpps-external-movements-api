@@ -27,10 +27,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
@@ -81,6 +83,7 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "PW",
       ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
     )
+    assertThat(saved.locations).containsExactly(request.location)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -120,6 +123,7 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "PW",
       ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
     )
+    assertThat(saved.locations).containsExactly(request.location)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -158,6 +162,7 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "SPL",
       ReferenceDataDomain.Code.ABSENCE_REASON of "LTX",
     )
+    assertThat(saved.locations).containsExactly(request.location)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -195,6 +200,7 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
       ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "CRL",
     )
+    assertThat(saved.locations).containsExactly(request.location)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -227,6 +233,7 @@ class SyncTapAuthorisationIntTest(
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
     assertThat(saved.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")
+    assertThat(saved.locations).containsExactly(request.location)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -260,6 +267,7 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SE",
       ReferenceDataDomain.Code.ABSENCE_REASON of "SE",
     )
+    assertThat(saved.locations).containsExactly(request.location)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -277,7 +285,7 @@ class SyncTapAuthorisationIntTest(
   fun `200 ok authorisation updated for security escort`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, pi, legacyId = newId()))
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, pi, locations = linkedSetOf(location()), legacyId = newId()))
     val request = tapAuthorisation(
       id = auth.id,
       reasonCode = "SE",
@@ -287,6 +295,7 @@ class SyncTapAuthorisationIntTest(
       transportCode = auth.transport.code,
       start = auth.start,
       end = auth.end,
+      location = auth.locations.single(),
       comments = auth.comments,
       legacyId = auth.legacyId!!,
     )
@@ -300,6 +309,7 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_TYPE of "SE",
       ReferenceDataDomain.Code.ABSENCE_REASON of "SE",
     )
+    assertThat(saved.locations).containsExactly(request.location)
 
     verifyAudit(
       saved,
@@ -323,14 +333,16 @@ class SyncTapAuthorisationIntTest(
         personIdentifier = ps.identifier,
         accompaniedByCode = "U",
         transportCode = "TNR",
+        locations = linkedSetOf(location()),
       ),
     )
-    val request = tapAuthorisation(id = existing.id, existing.prisonCode, legacyId = legacyId)
+    val request = tapAuthorisation(id = existing.id, existing.prisonCode, location = existing.locations.single(), legacyId = legacyId)
     val res = syncAuthorisation(existing.person.identifier, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(existing.id)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
     saved.verifyAgainst(existing.person.identifier, request)
+    assertThat(saved.locations).containsExactly(request.location)
 
     verifyAudit(
       saved,
@@ -360,6 +372,7 @@ class SyncTapAuthorisationIntTest(
         legacyId = legacyId,
         prisonCode = prisonCode,
         personIdentifier = ps.identifier,
+        locations = linkedSetOf(location()),
       ),
     )
     val request = tapAuthorisation(
@@ -370,6 +383,7 @@ class SyncTapAuthorisationIntTest(
       comments = existing.comments,
       start = existing.start,
       end = existing.end,
+      location = existing.locations.single(),
     )
     val res = syncAuthorisation(existing.person.identifier, request).successResponse<SyncResponse>()
 
@@ -377,6 +391,7 @@ class SyncTapAuthorisationIntTest(
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
     saved.verifyAgainst(existing.person.identifier, request)
     assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    assertThat(saved.locations).containsExactly(request.location)
 
     verifyAudit(
       saved,
@@ -399,6 +414,7 @@ class SyncTapAuthorisationIntTest(
     assertThat(res.id).isEqualTo(uuid)
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
+    assertThat(saved.locations).containsExactly(request.location)
 
     verifyAudit(
       saved,
@@ -419,6 +435,7 @@ class SyncTapAuthorisationIntTest(
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
+    assertThat(saved.locations).containsExactly(request.location)
 
     verifyAudit(
       saved,
@@ -443,6 +460,7 @@ class SyncTapAuthorisationIntTest(
     comments: String? = "Some comments about the application",
     start: LocalDate = now().minusDays(7),
     end: LocalDate = now(),
+    location: Location = location(),
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), DEFAULT_USERNAME),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), SYSTEM_USERNAME),
     legacyId: Long = newId(),
@@ -458,6 +476,7 @@ class SyncTapAuthorisationIntTest(
     repeat,
     start,
     end,
+    location,
     comments,
     created,
     updated,

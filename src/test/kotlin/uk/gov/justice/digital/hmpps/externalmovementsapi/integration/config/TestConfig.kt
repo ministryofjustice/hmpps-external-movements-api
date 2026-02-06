@@ -33,6 +33,7 @@ class TestConfig(
     transactionTemplate,
     referenceDataRepository,
     temporaryAbsenceOccurrenceRepository,
+    temporaryAbsenceAuthorisationRepository,
   )
 
   @Bean

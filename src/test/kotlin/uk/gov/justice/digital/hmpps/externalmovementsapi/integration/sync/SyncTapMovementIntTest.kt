@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
@@ -240,6 +241,7 @@ class SyncTapMovementIntTest(
       setOf(
         TemporaryAbsenceMovement::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),

@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.authorisation
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -19,7 +19,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRecategorised
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension
@@ -64,9 +66,10 @@ class GetTapAuthorisationHistoryIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(
       TempAbsenceAuthorisationOperations.temporaryAbsenceAuthorisation(
         status = AuthorisationStatus.Code.PENDING,
+        locations = linkedSetOf(location()),
       ),
     )
-    givenTemporaryAbsenceOccurrence(TempAbsenceOccurrenceOperations.temporaryAbsenceOccurrence(auth))
+    val occ = givenTemporaryAbsenceOccurrence(TempAbsenceOccurrenceOperations.temporaryAbsenceOccurrence(auth))
     ManageUsersExtension.manageUsers.findUser(
       DEFAULT_USERNAME,
       ManageUsersServer.user(DEFAULT_USERNAME, DEFAULT_NAME),
@@ -105,34 +108,41 @@ class GetTapAuthorisationHistoryIntTest(
     ExternalMovementContext.clear()
 
     val history = getTapAuthHistory(auth.id).successResponse<AuditHistory>()
-    Assertions.assertThat(history.content).hasSize(4)
+    assertThat(history.content).hasSize(5)
     with(history.content.first()) {
-      Assertions.assertThat(user)
+      assertThat(user)
         .isEqualTo(AuditedAction.User(ExternalMovementContext.SYSTEM_USERNAME, "User ${ExternalMovementContext.SYSTEM_USERNAME}"))
-      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationPending.EVENT_TYPE)
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationPending.EVENT_TYPE)
     }
     with(history.content[1]) {
-      Assertions.assertThat(user)
+      assertThat(user).isEqualTo(AuditedAction.User(ExternalMovementContext.SYSTEM_USERNAME, "User ${ExternalMovementContext.SYSTEM_USERNAME}"))
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationRelocated.EVENT_TYPE)
+      assertThat(changes).containsExactlyInAnyOrder(
+        AuditedAction.Change("locations", auth.locations.map { it.toString() }, listOf(occ.location.toString())),
+      )
+    }
+    with(history.content[2]) {
+      assertThat(user)
         .isEqualTo(AuditedAction.User(ExternalMovementContext.SYSTEM_USERNAME, "User ${ExternalMovementContext.SYSTEM_USERNAME}"))
-      Assertions.assertThat(domainEvents).contains(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
-      Assertions.assertThat(changes).containsExactlyInAnyOrder(
+      assertThat(domainEvents).contains(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
+      assertThat(changes).containsExactlyInAnyOrder(
         AuditedAction.Change("absenceType", "Standard ROTL (release on temporary licence)", "Police production"),
         AuditedAction.Change("absenceSubType", "RDR (resettlement day release)", "Police production"),
         AuditedAction.Change("absenceReasonCategory", "Paid work", null),
         AuditedAction.Change("absenceReason", "IT and communication", "Police production"),
       )
     }
-    with(history.content[2]) {
-      Assertions.assertThat(user).isEqualTo(AuditedAction.User(approvingUser.username, approvingUser.name))
-      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
-      Assertions.assertThat(reason).isEqualTo(approveAction.reason)
-      Assertions.assertThat(changes).containsExactly(AuditedAction.Change("status", "To be reviewed", "Approved"))
+    with(history.content[3]) {
+      assertThat(user).isEqualTo(AuditedAction.User(approvingUser.username, approvingUser.name))
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
+      assertThat(reason).isEqualTo(approveAction.reason)
+      assertThat(changes).containsExactly(AuditedAction.Change("status", "To be reviewed", "Approved"))
     }
     with(history.content.last()) {
-      Assertions.assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
-      Assertions.assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-      Assertions.assertThat(reason).isEqualTo(cancelAction.reason)
-      Assertions.assertThat(changes).containsExactly(AuditedAction.Change("status", "Approved", "Cancelled"))
+      assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
+      assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
+      assertThat(reason).isEqualTo(cancelAction.reason)
+      assertThat(changes).containsExactly(AuditedAction.Change("status", "Approved", "Cancelled"))
     }
   }
 

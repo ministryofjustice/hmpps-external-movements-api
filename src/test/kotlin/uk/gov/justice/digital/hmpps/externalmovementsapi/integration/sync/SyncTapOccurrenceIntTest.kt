@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -102,7 +103,11 @@ class SyncTapOccurrenceIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
@@ -110,7 +115,11 @@ class SyncTapOccurrenceIntTest(
       saved,
       setOf(
         TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id, DataSource.NOMIS).publication(authorisation.id),
+        TemporaryAbsenceAuthorisationRelocated(
+          authorisation.person.identifier,
+          authorisation.id,
+          DataSource.NOMIS,
+        ).publication(authorisation.id),
       ),
     )
   }
@@ -196,6 +205,7 @@ class SyncTapOccurrenceIntTest(
       saved,
       RevisionType.MOD,
       setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
         TemporaryAbsenceMovement::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
@@ -248,16 +258,34 @@ class SyncTapOccurrenceIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf())
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationRelocated(
+          saved.authorisation.person.identifier,
+          authorisation.id,
+          DataSource.NOMIS,
+        ).publication(authorisation.id),
+      ),
+    )
   }
 
   @Test
   fun `200 ok scheduled absence id returned if legacy id already exists`() {
-    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
+    val authorisation = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        legacyId = newId(),
+        locations = linkedSetOf(location()),
+      ),
+    )
     val existing = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         authorisation,
@@ -266,6 +294,7 @@ class SyncTapOccurrenceIntTest(
         absenceSubType = "PP",
         absenceReasonCategory = null,
         absenceReason = "PC",
+        location = authorisation.locations.single(),
       ),
     )
     val request = tapOccurrence(
@@ -315,7 +344,11 @@ class SyncTapOccurrenceIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
@@ -323,14 +356,19 @@ class SyncTapOccurrenceIntTest(
       saved,
       setOf(
         TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id, DataSource.NOMIS).publication(authorisation.id),
+        TemporaryAbsenceAuthorisationRelocated(
+          authorisation.person.identifier,
+          authorisation.id,
+          DataSource.NOMIS,
+        ).publication(authorisation.id),
       ),
     )
   }
 
   @Test
   fun `200 ok absence with path for reason only`() {
-    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val authorisation =
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(locations = linkedSetOf(location())))
     val request = tapOccurrence(typeCode = null, subTypeCode = null, reasonCode = "PC")
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
@@ -346,7 +384,11 @@ class SyncTapOccurrenceIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
@@ -368,7 +410,7 @@ class SyncTapOccurrenceIntTest(
     val authorisation =
       givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = false, legacyId = newId()))
     val dpsOccurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation))
-    val request = tapOccurrence()
+    val request = tapOccurrence(location = dpsOccurrence.location)
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk
       .expectBody<SyncResponse>()
@@ -394,22 +436,18 @@ class SyncTapOccurrenceIntTest(
       saved,
       setOf(
         TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceAuthorisationRelocated(
-          authorisation.person.identifier,
-          authorisation.id,
-          DataSource.NOMIS,
-        ).publication(authorisation.id),
       ),
     )
   }
 
   @Test
   fun `200 ok occurrence created for security escort`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(locations = linkedSetOf(location())))
     val request = tapOccurrence(
       reasonCode = "SE",
       typeCode = "SE",
       subTypeCode = "SE",
+      location = auth.locations.single(),
     )
     val res = syncTapOccurrence(auth.id, request).successResponse<SyncResponse>()
 
@@ -433,7 +471,6 @@ class SyncTapOccurrenceIntTest(
       saved,
       setOf(
         TemporaryAbsenceScheduled(auth.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceAuthorisationRelocated(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
       ),
     )
   }

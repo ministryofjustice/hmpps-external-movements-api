@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.SequencedSet
 import java.util.UUID
 
 data class TapAuthorisation(
@@ -22,7 +23,7 @@ data class TapAuthorisation(
   val end: LocalDate,
   val totalOccurrenceCount: Long,
   val occurrences: List<Occurrence>,
-  val locations: List<Location>,
+  val locations: SequencedSet<Location>,
   val schedule: JsonNode?,
   val comments: String?,
 ) {

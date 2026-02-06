@@ -29,6 +29,7 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.RefreshRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventPublication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
@@ -65,15 +66,18 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDate.now
+import java.util.SequencedSet
 import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -95,6 +99,7 @@ class TemporaryAbsenceAuthorisation(
   comments: String?,
   start: LocalDate,
   end: LocalDate,
+  locations: SequencedSet<Location>,
   reasonPath: ReasonPath,
   schedule: JsonNode?,
   legacyId: Long?,
@@ -176,6 +181,11 @@ class TemporaryAbsenceAuthorisation(
   @NotNull
   @Column(name = "end", nullable = false)
   var end: LocalDate = end
+    private set
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "locations")
+  var locations: SequencedSet<Location> = locations
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
@@ -280,6 +290,13 @@ class TemporaryAbsenceAuthorisation(
     }
   }
 
+  fun applyLocations(action: ChangeAuthorisationLocations) = apply {
+    if (!locations.containsAll(action.locations)) {
+      locations = action.locations
+      appliedActions += action
+    }
+  }
+
   fun defer(action: DeferAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
     applyStatus(PENDING, rdSupplier, action)
   }
@@ -339,13 +356,15 @@ class TemporaryAbsenceAuthorisation(
       TemporaryAbsenceAuthorisation::transport,
       TemporaryAbsenceAuthorisation::status,
       TemporaryAbsenceAuthorisation::comments,
+      TemporaryAbsenceAuthorisation::locations,
     )
   }
 }
 
 interface TemporaryAbsenceAuthorisationRepository :
   JpaRepository<TemporaryAbsenceAuthorisation, UUID>,
-  JpaSpecificationExecutor<TemporaryAbsenceAuthorisation> {
+  JpaSpecificationExecutor<TemporaryAbsenceAuthorisation>,
+  RefreshRepository<TemporaryAbsenceAuthorisation, UUID> {
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceAuthorisation?
 
   @Query(

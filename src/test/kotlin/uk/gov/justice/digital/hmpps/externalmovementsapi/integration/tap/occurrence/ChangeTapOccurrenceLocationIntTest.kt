@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
@@ -96,6 +97,7 @@ class ChangeTapOccurrenceLocationIntTest(
       RevisionType.MOD,
       setOf(
         TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),

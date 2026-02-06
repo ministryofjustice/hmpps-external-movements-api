@@ -181,6 +181,7 @@ class MigrateTapHierarchy(
       end = end,
       schedule = null,
       reasonPath = reasonPath,
+      locations = occurrences.mapTo(linkedSetOf()) { it.location },
       legacyId = legacyId,
     )
   }
