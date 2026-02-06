@@ -10,7 +10,6 @@ service:
   active-prisons: "KVI,LYI,TCI"
   domain-events:
     poll-interval: PT1s
-    batch-size: 1
   occurrence-status:
     poll-interval: PT60s
   authorisation-expiration:
