@@ -60,7 +60,7 @@ private fun TemporaryAbsenceAuthorisation.with(
   end = end,
   totalOccurrenceCount = totalOccurrences,
   occurrences = occurrences,
-  locations = locations,
+  locations = occurrences.mapTo(linkedSetOf()) { it.location },
   schedule = schedule,
   comments = comments,
 )
