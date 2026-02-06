@@ -24,7 +24,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
@@ -183,7 +182,6 @@ class CreateTapAuthorisationIntTest(
       setOf(
         TemporaryAbsenceScheduled(pi, occurrence.id).publication(occurrence.id),
         TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id),
-        TemporaryAbsenceAuthorisationRelocated(pi, saved.id).publication(saved.id),
       ),
     )
   }
@@ -233,7 +231,6 @@ class CreateTapAuthorisationIntTest(
       setOf(
         TemporaryAbsenceScheduled(pi, occurrence.id).publication(occurrence.id),
         TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id),
-        TemporaryAbsenceAuthorisationRelocated(pi, saved.id).publication(saved.id),
       ),
     )
   }
@@ -285,7 +282,6 @@ class CreateTapAuthorisationIntTest(
       setOf(
         TemporaryAbsenceScheduled(pi, occurrence.id).publication(occurrence.id),
         TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id),
-        TemporaryAbsenceAuthorisationRelocated(pi, saved.id).publication(saved.id),
       ),
     )
   }

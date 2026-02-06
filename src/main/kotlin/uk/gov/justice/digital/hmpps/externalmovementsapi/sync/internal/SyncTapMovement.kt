@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.getByCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementDirection
@@ -63,6 +64,11 @@ class SyncTapMovement(
           }
           movementRepository.save(movement)
         }
+    occurrence?.authorisation?.also {
+      movementRepository.flush()
+      val locations = occurrenceRepository.findByAuthorisationId(it.id).mapTo(linkedSetOf()) { it.location }
+      it.applyLocations(ChangeAuthorisationLocations(locations))
+    }
     return SyncResponse(movement.id)
   }
 

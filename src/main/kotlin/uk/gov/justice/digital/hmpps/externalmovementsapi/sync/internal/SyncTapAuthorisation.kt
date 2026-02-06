@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
@@ -105,6 +106,7 @@ class SyncTapAuthorisation(
       comments = comments,
       start = start,
       end = end,
+      locations = linkedSetOf(location),
       reasonPath = reasonPath,
       schedule = null,
       legacyId = legacyId,
@@ -123,6 +125,10 @@ class SyncTapAuthorisation(
     checkSchedule(request, rdPaths)
     applyLogistics(request, rdPaths)
     applyComments(ChangeAuthorisationComments(request.comments))
+    val locations = occurrenceRepository.findByAuthorisationId(id).mapTo(linkedSetOf()) { it.location }
+      .takeIf { it.isNotEmpty() }
+      ?: request.location?.let { linkedSetOf(it) }
+    locations?.also { applyLocations(ChangeAuthorisationLocations(it)) }
   }
 
   private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(

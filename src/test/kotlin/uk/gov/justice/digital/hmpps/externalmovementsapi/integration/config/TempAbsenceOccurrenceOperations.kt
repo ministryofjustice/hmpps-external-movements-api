@@ -5,11 +5,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
+import sun.security.util.resources.auth
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.getAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
@@ -24,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Loca
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -142,13 +146,20 @@ class TempAbsenceOccurrenceOperationsImpl(
   private val transactionTemplate: TransactionTemplate,
   private val referenceDataRepository: ReferenceDataRepository,
   private val temporaryAbsenceOccurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val temporaryAbsenceAuthorisationRepository: TemporaryAbsenceAuthorisationRepository,
 ) : TempAbsenceOccurrenceOperations {
   override fun givenTemporaryAbsenceOccurrence(tao: ((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceOccurrence): TemporaryAbsenceOccurrence = transactionTemplate.execute {
     val rdMap = referenceDataRepository.findAll().associateBy { it::class to it.code }
     val occurrence: TemporaryAbsenceOccurrence = tao { dc: KClass<out ReferenceData>, c: String ->
       requireNotNull(rdMap[dc to c])
     }
-    temporaryAbsenceOccurrenceRepository.save(occurrence)
+    val saved = temporaryAbsenceOccurrenceRepository.saveAndFlush(occurrence)
+    val locations = temporaryAbsenceOccurrenceRepository.findByAuthorisationId(saved.authorisation.id)
+      .mapTo(linkedSetOf()) { it.location }
+    saved.apply {
+      val auth = temporaryAbsenceAuthorisationRepository.getAuthorisation(saved.authorisation.id)
+      temporaryAbsenceAuthorisationRepository.save(auth.applyLocations(ChangeAuthorisationLocations(locations)))
+    }
   }!!
 
   override fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence? = transactionTemplate.execute {

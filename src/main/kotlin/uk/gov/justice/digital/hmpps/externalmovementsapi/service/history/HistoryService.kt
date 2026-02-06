@@ -111,6 +111,7 @@ abstract class HistoryService<T : Identifiable>(
   protected fun Any?.asChangeValue(): Any? = when (this) {
     is ReferenceData -> description
     is Location -> toString()
+    is Collection<*> -> map { it.asChangeValue() }
     else -> this
   }
 

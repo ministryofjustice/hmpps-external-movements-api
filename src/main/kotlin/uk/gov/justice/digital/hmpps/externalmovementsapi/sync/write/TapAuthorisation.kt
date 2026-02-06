@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import java.time.LocalDate
 import java.util.UUID
@@ -27,6 +28,7 @@ data class TapAuthorisation(
   val repeat: Boolean,
   val start: LocalDate,
   val end: LocalDate,
+  val location: Location?,
   val comments: String?,
   val created: AtAndBy,
   val updated: AtAndBy?,

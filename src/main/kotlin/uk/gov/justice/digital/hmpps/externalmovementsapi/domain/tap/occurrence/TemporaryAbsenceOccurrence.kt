@@ -49,7 +49,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
@@ -236,27 +235,12 @@ class TemporaryAbsenceOccurrence(
   }
 
   override fun initialEvents(): Set<DomainEventPublication> = when (status.code) {
-    SCHEDULED.name -> setOf(
-      TemporaryAbsenceScheduled(person.identifier, id).publication(id),
-      TemporaryAbsenceAuthorisationRelocated(person.identifier, authorisation.id).publication(authorisation.id),
-    )
+    SCHEDULED.name -> setOf(TemporaryAbsenceScheduled(person.identifier, id).publication(id))
     else -> emptySet()
   }
 
-  override fun domainEvents(): Set<DomainEventPublication> = appliedActions.flatMap { action ->
-    when (action) {
-      is ChangeOccurrenceLocation -> {
-        listOf(
-          action.domainEvent(this).publication(id) { status.code != PENDING.name },
-          TemporaryAbsenceAuthorisationRelocated(person.identifier, authorisation.id).publication(authorisation.id),
-        )
-      }
-
-      else -> listOfNotNull(
-        action.domainEvent(this)
-          ?.publication(id) { !(status.code == PENDING.name || it.eventType in EXCLUDE_FROM_PUBLISH) },
-      )
-    }
+  override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
+    action.domainEvent(this)?.publication(id) { !(status.code == PENDING.name || it.eventType in EXCLUDE_FROM_PUBLISH) }
   }.toSet()
 
   fun moveTo(person: PersonSummary) = apply {

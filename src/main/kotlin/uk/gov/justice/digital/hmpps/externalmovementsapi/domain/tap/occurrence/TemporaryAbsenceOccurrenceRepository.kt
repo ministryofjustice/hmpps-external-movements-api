@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.RefreshRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
@@ -35,7 +36,8 @@ import java.util.UUID
 
 interface TemporaryAbsenceOccurrenceRepository :
   JpaRepository<TemporaryAbsenceOccurrence, UUID>,
-  JpaSpecificationExecutor<TemporaryAbsenceOccurrence> {
+  JpaSpecificationExecutor<TemporaryAbsenceOccurrence>,
+  RefreshRepository<TemporaryAbsenceAuthorisation, UUID> {
   @Query(
     """
     select 

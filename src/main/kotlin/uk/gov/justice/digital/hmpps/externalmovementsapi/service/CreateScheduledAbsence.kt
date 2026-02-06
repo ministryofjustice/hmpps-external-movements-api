@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersea
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import java.util.UUID
 import kotlin.reflect.KClass
@@ -84,6 +85,7 @@ class CreateScheduledAbsence(
     }
 
     val occurrence = request.asOccurrence(authorisation).calculateStatus { occurrenceStatusRepository.getByCode(it) }
+    authorisation.applyLocations(ChangeAuthorisationLocations(occurrence.location))
 
     return ReferenceId(tapOccurrenceRepository.save(occurrence).id)
   }
@@ -122,6 +124,7 @@ class CreateScheduledAbsence(
       schedule = schedule,
       accompaniedBy = rdProvider(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
       transport = rdProvider(Transport::class, transportCode) as Transport,
+      locations = occurrences.mapTo(linkedSetOf()) { it.location },
       legacyId = null,
     )
   }
