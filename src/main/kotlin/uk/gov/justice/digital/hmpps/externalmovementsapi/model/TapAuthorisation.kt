@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
 import com.fasterxml.jackson.databind.JsonNode
+import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDate
@@ -8,6 +9,7 @@ import java.time.LocalDateTime
 import java.util.SequencedSet
 import java.util.UUID
 
+@Schema(name = "TapAuthorisation")
 data class TapAuthorisation(
   val id: UUID,
   val person: Person,
@@ -27,6 +29,7 @@ data class TapAuthorisation(
   val schedule: JsonNode?,
   val comments: String?,
 ) {
+  @Schema(name = "TapAuthorisation.Occurrence")
   data class Occurrence(
     val id: UUID,
     val status: CodedDescription,

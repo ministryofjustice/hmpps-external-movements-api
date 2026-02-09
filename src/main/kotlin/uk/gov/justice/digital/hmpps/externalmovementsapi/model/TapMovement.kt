@@ -1,11 +1,13 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
+import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Schema(name = "TapMovement")
 data class TapMovement(
   val id: UUID,
   val person: Person,
@@ -19,6 +21,7 @@ data class TapMovement(
   val accompaniedByComments: String?,
   val comments: String?,
 ) {
+  @Schema(name = "TapMovement.Occurrence")
   data class Occurrence(
     val id: UUID,
     val absenceType: CodedDescription?,
