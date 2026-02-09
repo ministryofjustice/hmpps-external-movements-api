@@ -108,7 +108,7 @@ class SyncTapAuthorisation(
       comments = comments,
       start = start,
       end = end,
-      locations = linkedSetOf(location),
+      locations = location?.let { linkedSetOf(it) } ?: linkedSetOf(),
       reasonPath = reasonPath,
       schedule = schedule()?.let { objectMapper.valueToTree(it) },
       legacyId = legacyId,
