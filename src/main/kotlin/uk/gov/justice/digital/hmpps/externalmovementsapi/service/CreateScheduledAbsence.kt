@@ -83,6 +83,11 @@ class CreateScheduledAbsence(
     ) {
       "Temporary absence must be within the authorised date range."
     }
+    if (!authorisation.repeat) {
+      check(tapOccurrenceRepository.countByAuthorisationId(authorisationId) == 0) {
+        "Cannot add multiple occurrences to a single authorisation."
+      }
+    }
 
     val occurrence = request.asOccurrence(authorisation).calculateStatus { occurrenceStatusRepository.getByCode(it) }
     val locations = (authorisation.locations + occurrence.location).mapTo(linkedSetOf()) { it }

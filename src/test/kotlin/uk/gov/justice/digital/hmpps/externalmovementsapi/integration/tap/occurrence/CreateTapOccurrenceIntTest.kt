@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -69,6 +70,26 @@ class CreateTapOccurrenceIntTest(
     val response = createOccurrence(authorisation.id, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
     assertThat(response.userMessage).isEqualTo(message)
+  }
+
+  @Test
+  fun `400 bad request - cannot add multiple occurrences to a single authorisation`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now(),
+        end = LocalDate.now().plusDays(3),
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().plusDays(1),
+        end = LocalDateTime.now().plusDays(2),
+      ),
+    )
+    val res = createOccurrence(auth.id, request()).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(res.userMessage).isEqualTo("Validation failure: Cannot add multiple occurrences to a single authorisation.")
   }
 
   @Test
