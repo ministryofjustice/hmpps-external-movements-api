@@ -109,8 +109,7 @@ class GetTapAuthorisationIntTest(
       LocalDate.now().plusDays(3),
     ).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
-    // TODO: re-enable when switching to use auth.locations from tap.authorisation
-    // assertThat(response.locations).containsExactly(occ1.location, occ2.location, occ3.location, occ4.location)
+    assertThat(response.locations).containsExactly(occ1.location, occ2.location, occ3.location, occ4.location)
     assertThat(response.occurrences).hasSize(2)
     assertThat(response.totalOccurrenceCount).isEqualTo(4)
   }
