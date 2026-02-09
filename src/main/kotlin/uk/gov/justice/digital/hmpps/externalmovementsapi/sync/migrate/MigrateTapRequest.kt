@@ -18,8 +18,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceMigrated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.util.UUID
 
 data class MigrateTapRequest(
@@ -67,6 +69,9 @@ data class TapAuthorisation(
   val repeat: Boolean,
   val start: LocalDate,
   val end: LocalDate,
+  val startTime: LocalTime?,
+  val endTime: LocalTime?,
+  val location: Location?,
   val comments: String?,
   val created: AtAndBy,
   val updated: AtAndBy?,
@@ -82,6 +87,12 @@ data class TapAuthorisation(
     TRANSPORT of transportCode,
     TAP_AUTHORISATION_STATUS of AuthorisationStatus.Code.EXPIRED.name,
   )
+
+  fun schedule(): AuthorisationSchedule? = if (!repeat && occurrences.isEmpty() && startTime != null && endTime != null) {
+    AuthorisationSchedule(startTime, endTime)
+  } else {
+    null
+  }
 }
 
 @Schema(name = "MigrateTapOccurrence")

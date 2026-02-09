@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
+import java.time.LocalDate
 
 @Transactional
 @Service
@@ -26,7 +27,9 @@ class AuthorisationExpirer(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
 ) {
   fun expireUnapprovedAuthorisations() {
-    authorisationRepository.findRecentlyExpired().takeIf { it.isNotEmpty() }
+    val pending = authorisationStatusRepository.getByCode(AuthorisationStatus.Code.PENDING.name)
+    authorisationRepository.findByStatusAndEndBefore(pending.id, LocalDate.now())
+      .takeIf { it.isNotEmpty() }
       ?.also {
         val expired = authorisationStatusRepository.getByCode(AuthorisationStatus.Code.EXPIRED.name)
         it.forEach { taa -> taa.expire(ExpireAuthorisation()) { _, _ -> expired } }

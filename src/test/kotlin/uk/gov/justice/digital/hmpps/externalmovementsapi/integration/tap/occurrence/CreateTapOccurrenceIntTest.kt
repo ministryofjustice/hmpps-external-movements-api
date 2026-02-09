@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Loca
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -107,6 +108,24 @@ class CreateTapOccurrenceIntTest(
     assertThat(absenceReason.code).isEqualTo(authorisation.absenceReason.code)
     assertThat(accompaniedBy.code).isEqualTo(authorisation.accompaniedBy.code)
     assertThat(transport.code).isEqualTo(authorisation.transport.code)
+  }
+
+  @Test
+  fun `200 ok - an occurrence is added to an authorisation with new location`() {
+    val authorisation = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(repeat = true, locations = linkedSetOf(location())),
+    )
+    val occ1 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(authorisation, location = authorisation.locations.single()),
+    )
+
+    val request = request()
+    val response = createOccurrence(authorisation.id, request).successResponse<ReferenceId>()
+
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
+    occurrence.verifyAgainst(request)
+    occurrence.verifyAgainst(authorisation)
+    assertThat(occurrence.authorisation.locations).containsExactly(occ1.location, occurrence.location)
   }
 
   private fun createOccurrence(

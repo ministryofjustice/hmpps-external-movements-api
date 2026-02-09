@@ -332,6 +332,16 @@ class TemporaryAbsenceAuthorisation(
     }
   }
 
+  fun applySchedule(json: JsonNode) = apply {
+    schedule = json
+  }
+
+  fun clearSchedule() = apply {
+    if (!repeat) {
+      schedule = null
+    }
+  }
+
   companion object {
     val PRISON_CODE = TemporaryAbsenceAuthorisation::prisonCode.name
     val PERSON = TemporaryAbsenceAuthorisation::person.name
@@ -380,11 +390,11 @@ interface TemporaryAbsenceAuthorisationRepository :
   @Query(
     """
       select taa from TemporaryAbsenceAuthorisation taa
-      where taa.status.code = 'PENDING' and taa.end < current_date
+      where taa.status.id = :statusId and taa.end < :date
     """,
   )
   @QueryHints(value = [QueryHint(name = HibernateHints.HINT_NATIVE_LOCK_MODE, value = "UPGRADE-SKIPLOCKED")])
-  fun findRecentlyExpired(): List<TemporaryAbsenceAuthorisation>
+  fun findByStatusAndEndBefore(statusId: UUID, date: LocalDate): List<TemporaryAbsenceAuthorisation>
 
   fun countByPersonIdentifier(personIdentifier: String): Int
 

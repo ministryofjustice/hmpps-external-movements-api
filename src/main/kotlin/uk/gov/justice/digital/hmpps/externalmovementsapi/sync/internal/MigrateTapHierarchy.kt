@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
@@ -59,6 +60,7 @@ class MigrateTapHierarchy(
   private val personSummaryService: PersonSummaryService,
   private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
   private val domainEventRepository: HmppsDomainEventRepository,
+  private val objectMapper: ObjectMapper,
 ) {
   fun migrate(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
     ExternalMovementContext.get().copy(source = DataSource.NOMIS, migratingData = true).set()
@@ -179,9 +181,10 @@ class MigrateTapHierarchy(
       comments = comments,
       start = start,
       end = end,
-      schedule = null,
+      schedule = schedule()?.let { objectMapper.valueToTree(it) },
       reasonPath = reasonPath,
-      locations = occurrences.mapTo(linkedSetOf()) { it.location },
+      locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
+        ?: location?.let { linkedSetOf(it) } ?: linkedSetOf(),
       legacyId = legacyId,
     )
   }

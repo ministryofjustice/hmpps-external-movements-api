@@ -48,6 +48,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapOccurrence
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.time.temporal.ChronoUnit.SECONDS
 
 class MigrateTapHierarchyIntTest(
@@ -369,6 +371,9 @@ class MigrateTapHierarchyIntTest(
     comments: String? = "Some comments about the application",
     start: LocalDate = LocalDate.now().minusDays(7),
     end: LocalDate = LocalDate.now().minusDays(1),
+    startTime: LocalTime = LocalTime.now().plusMinutes(10).truncatedTo(ChronoUnit.MINUTES),
+    endTime: LocalTime = LocalDateTime.of(start, startTime).plusHours(2).toLocalTime().truncatedTo(ChronoUnit.MINUTES),
+    location: Location = location(),
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), username()),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), username()),
     legacyId: Long = newId(),
@@ -384,6 +389,9 @@ class MigrateTapHierarchyIntTest(
     repeat,
     start,
     end,
+    startTime,
+    endTime,
+    location,
     comments,
     created,
     updated,

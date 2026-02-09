@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -46,6 +47,7 @@ class SyncTapAuthorisation(
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val objectMapper: ObjectMapper,
 ) {
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
     val person = personSummaryService.getWithSave(personIdentifier)
@@ -108,7 +110,7 @@ class SyncTapAuthorisation(
       end = end,
       locations = linkedSetOf(location),
       reasonPath = reasonPath,
-      schedule = null,
+      schedule = schedule()?.let { objectMapper.valueToTree(it) },
       legacyId = legacyId,
       id = id ?: newUuid(),
     )
@@ -125,8 +127,11 @@ class SyncTapAuthorisation(
     checkSchedule(request, rdPaths)
     applyLogistics(request, rdPaths)
     applyComments(ChangeAuthorisationComments(request.comments))
-    val locations = occurrenceRepository.findByAuthorisationId(id).mapTo(linkedSetOf()) { it.location }
-      .takeIf { it.isNotEmpty() }
+    val occurrences = occurrenceRepository.findByAuthorisationId(id)
+    if (occurrences.isEmpty()) {
+      request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
+    }
+    val locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
       ?: request.location?.let { linkedSetOf(it) }
     locations?.also { applyLocations(ChangeAuthorisationLocations(it)) }
   }
