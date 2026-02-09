@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
@@ -34,11 +35,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate
 import java.time.LocalDate.now
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class SyncTapAuthorisationIntTest(
@@ -84,6 +88,11 @@ class SyncTapAuthorisationIntTest(
       ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
     )
     assertThat(saved.locations).containsExactly(request.location)
+    assertThat(saved.schedule).isNotNull
+    val schedule: AuthorisationSchedule = objectMapper.treeToValue(saved.schedule!!)
+    assertThat(schedule.startTime).isEqualTo(request.startTime)
+    assertThat(schedule.returnTime).isEqualTo(request.endTime)
+    assertThat(schedule.type).isEqualTo("SINGLE")
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -460,6 +469,8 @@ class SyncTapAuthorisationIntTest(
     comments: String? = "Some comments about the application",
     start: LocalDate = now().minusDays(7),
     end: LocalDate = now(),
+    startTime: LocalTime = LocalTime.now().plusMinutes(10).truncatedTo(ChronoUnit.MINUTES),
+    endTime: LocalTime = LocalDateTime.of(start, startTime).plusHours(2).toLocalTime().truncatedTo(ChronoUnit.MINUTES),
     location: Location = location(),
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), DEFAULT_USERNAME),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), SYSTEM_USERNAME),
@@ -476,6 +487,8 @@ class SyncTapAuthorisationIntTest(
     repeat,
     start,
     end,
+    startTime,
+    endTime,
     location,
     comments,
     created,

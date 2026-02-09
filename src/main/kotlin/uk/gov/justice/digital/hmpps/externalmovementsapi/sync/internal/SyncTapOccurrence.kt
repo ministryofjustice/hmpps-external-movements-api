@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,6 +34,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
 import java.util.UUID
@@ -44,6 +46,7 @@ class SyncTapOccurrence(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
+  private val objectMapper: ObjectMapper,
 ) {
   fun sync(authorisationId: UUID, request: TapOccurrence): SyncResponse {
     val authorisation = authorisationRepository.getAuthorisation(authorisationId)
@@ -75,7 +78,7 @@ class SyncTapOccurrence(
         }
     occurrenceRepository.flush()
     val locations = occurrenceRepository.findByAuthorisationId(authorisation.id).mapTo(linkedSetOf()) { it.location }
-    authorisation.applyLocations(ChangeAuthorisationLocations(locations))
+    authorisation.applyLocations(ChangeAuthorisationLocations(locations)).clearSchedule()
     return SyncResponse(occurrence.id)
   }
 
@@ -85,6 +88,10 @@ class SyncTapOccurrence(
       if (movementCount > 0) {
         throw ConflictException("Cannot delete an occurrence with a movement")
       } else {
+        if (!occurrence.authorisation.repeat) {
+          val schedule = AuthorisationSchedule(occurrence.start.toLocalTime(), occurrence.end.toLocalTime())
+          occurrence.authorisation.applySchedule(objectMapper.valueToTree(schedule))
+        }
         occurrenceRepository.delete(occurrence)
       }
     }

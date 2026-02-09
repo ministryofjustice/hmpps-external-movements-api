@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 
 @Schema(name = "SyncWriteTapAuthorisation")
@@ -28,6 +29,8 @@ data class TapAuthorisation(
   val repeat: Boolean,
   val start: LocalDate,
   val end: LocalDate,
+  val startTime: LocalTime?,
+  val endTime: LocalTime?,
   val location: Location?,
   val comments: String?,
   val created: AtAndBy,
@@ -43,4 +46,10 @@ data class TapAuthorisation(
     ACCOMPANIED_BY of accompaniedByCode,
     TRANSPORT of transportCode,
   )
+
+  fun schedule(): AuthorisationSchedule? = if (!repeat && startTime != null && endTime != null) {
+    AuthorisationSchedule(startTime, endTime)
+  } else {
+    null
+  }
 }

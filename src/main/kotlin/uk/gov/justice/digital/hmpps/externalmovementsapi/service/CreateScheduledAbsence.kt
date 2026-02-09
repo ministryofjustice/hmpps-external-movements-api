@@ -85,7 +85,8 @@ class CreateScheduledAbsence(
     }
 
     val occurrence = request.asOccurrence(authorisation).calculateStatus { occurrenceStatusRepository.getByCode(it) }
-    authorisation.applyLocations(ChangeAuthorisationLocations(occurrence.location))
+    val locations = (authorisation.locations + occurrence.location).mapTo(linkedSetOf()) { it }
+    authorisation.applyLocations(ChangeAuthorisationLocations(locations)).clearSchedule()
 
     return ReferenceId(tapOccurrenceRepository.save(occurrence).id)
   }

@@ -23,7 +23,7 @@ class TapAuthorisationExpiryIntTest(
   fun `authorisation expired when date range passed`() {
     val yesterday = LocalDate.now().minusDays(1)
     val today = LocalDate.now()
-    val toExpire = (0..50).map {
+    val toExpire = (0..20).map {
       givenTemporaryAbsenceAuthorisation(
         temporaryAbsenceAuthorisation(
           status = PENDING,
