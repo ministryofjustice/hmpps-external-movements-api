@@ -46,6 +46,7 @@ private fun TemporaryAbsenceAuthorisation.with(
   occurrences: List<TapAuthorisation.Occurrence>,
 ) = TapAuthorisation(
   id = id,
+  prisonCode = prisonCode,
   person = person,
   status = status.asCodedDescription(),
   absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
