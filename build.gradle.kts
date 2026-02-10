@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.3.0"
-  kotlin("plugin.spring") version "2.3.0"
-  kotlin("plugin.jpa") version "2.3.0"
-  id("com.google.cloud.tools.jib") version "3.5.2"
+  kotlin("plugin.spring") version "2.3.10"
+  kotlin("plugin.jpa") version "2.3.10"
+  id("com.google.cloud.tools.jib") version "3.5.3"
   id("de.undercouch.download") version "5.7.0"
 }
 
@@ -17,9 +17,9 @@ configurations {
 }
 
 val ehcacheVersion = "3.11.1"
-val hibernateJcacheVersion = "7.2.3.Final"
+val hibernateJcacheVersion = "7.2.4.Final"
 val hmppsKotlinVersion = "1.8.2"
-val sentryVersion = "8.31.0"
+val sentryVersion = "8.32.0"
 val springDocVersion = "2.8.15"
 val sqsStarterVersion = "5.6.3"
 val testContainersVersion = "1.21.4"
