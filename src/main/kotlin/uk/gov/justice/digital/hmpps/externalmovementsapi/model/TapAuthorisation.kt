@@ -12,6 +12,7 @@ import java.util.UUID
 @Schema(name = "TapAuthorisation")
 data class TapAuthorisation(
   val id: UUID,
+  val prisonCode: String,
   val person: Person,
   val status: CodedDescription,
   val absenceType: CodedDescription?,

@@ -44,6 +44,7 @@ private fun TemporaryAbsenceAuthorisation.forOccurrence() = TapOccurrence.Author
 
 private fun TemporaryAbsenceOccurrence.toModel(position: Int, total: Int) = TapOccurrence(
   id = id,
+  prisonCode = prisonCode,
   status = status.asCodedDescription(),
   authorisation = authorisation.forOccurrence(),
   absenceType = absenceType
