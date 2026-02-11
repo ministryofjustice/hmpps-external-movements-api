@@ -334,7 +334,6 @@ class TemporaryAbsenceOccurrence(
   }
 
   fun calculateStatus(statusProvider: (String) -> OccurrenceStatus) = apply {
-    println("Calculating status : ${movements.count()}")
     status =
       statusProvider(
         listOfNotNull(

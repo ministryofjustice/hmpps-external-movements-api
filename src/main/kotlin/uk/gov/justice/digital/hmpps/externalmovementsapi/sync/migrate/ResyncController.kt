@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.resync
+package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate
 
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.access.prepost.PreAuthorize
@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.ResyncTapHierarchy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapResponse
 
 @Tag(name = OpenApiTags.SYNC)
 @RestController

@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
@@ -45,6 +47,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigratedAuthorisation
@@ -66,6 +69,7 @@ class ResyncTapHierarchy(
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val personSummaryService: PersonSummaryService,
+  private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
   private val objectMapper: ObjectMapper,
   private val telemetryClient: TelemetryClient,
 ) {
@@ -95,6 +99,7 @@ class ResyncTapHierarchy(
       )?.update(person, this, rdPaths)
       ?: authorisationRepository.save(asEntity(person, rdPaths))
     val occurrences = occurrences.map { it.resync(person, auth, rd, findLinked) }
+    mergeMigrationAudit(auth.id, created, updated)
     return MigratedAuthorisation(legacyId, auth.id, occurrences)
   }
 
@@ -121,6 +126,7 @@ class ResyncTapHierarchy(
         rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus
       },
     )
+    mergeMigrationAudit(occurrence.id, created, updated)
     return MigratedOccurrence(legacyId, occurrence.id, movements)
   }
 
@@ -143,6 +149,7 @@ class ResyncTapHierarchy(
         }
       }
     } ?: movementRepository.save(movement)
+    mergeMigrationAudit(movement.id, created, updated)
     return MigratedMovement(legacyId, movement.id)
   }
 
@@ -335,4 +342,16 @@ class ResyncTapHierarchy(
     rd.filter { rd -> rd::class to rd.code in requiredReferenceData().map { it.domain.clazz to it.code } },
     findLinked,
   )
+
+  private fun mergeMigrationAudit(id: UUID, created: AtAndBy, updated: AtAndBy?) {
+    migrationSystemAuditRepository.findByIdOrNull(id)?.apply {
+      new = false
+      updated?.also {
+        updatedAt = it.at
+        updatedBy = it.by
+      }
+    } ?: migrationSystemAuditRepository.save(
+      MigrationSystemAudit(id, created.at, created.by, updated?.at, updated?.by),
+    )
+  }
 }
