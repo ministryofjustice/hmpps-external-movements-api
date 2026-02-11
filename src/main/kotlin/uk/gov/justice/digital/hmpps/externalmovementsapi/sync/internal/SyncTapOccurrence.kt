@@ -148,8 +148,12 @@ class SyncTapOccurrence(
     applyLogistics(request, rdPaths)
     checkCancellation(request, rdPaths)
     applyComments(ChangeOccurrenceComments(request.comments))
-    calculateStatus {
-      rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus
+    if (request.isCancelled && movements().isEmpty()) {
+      cancel(CancelOccurrence(), rdPaths::getReferenceData)
+    } else {
+      calculateStatus {
+        rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus
+      }
     }
   }
 

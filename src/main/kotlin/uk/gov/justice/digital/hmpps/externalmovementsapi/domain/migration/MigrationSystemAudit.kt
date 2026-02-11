@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import org.springframework.data.domain.Persistable
 import org.springframework.data.repository.CrudRepository
 import java.time.LocalDateTime
@@ -17,11 +18,14 @@ class MigrationSystemAudit(
   val uuid: UUID,
   val createdAt: LocalDateTime,
   val createdBy: String,
-  val updatedAt: LocalDateTime?,
-  val updatedBy: String?,
+  var updatedAt: LocalDateTime?,
+  var updatedBy: String?,
 ) : Persistable<UUID> {
   override fun getId() = uuid
-  override fun isNew() = true
+
+  @Transient
+  var new: Boolean = true
+  override fun isNew() = new
 }
 
 interface MigrationSystemAuditRepository : CrudRepository<MigrationSystemAudit, UUID>

@@ -6,6 +6,7 @@ import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.AuditReaderFactory
 import org.hibernate.envers.RevisionType
+import org.hibernate.envers.query.AuditEntity
 import org.hibernate.envers.query.AuditEntity.revisionNumber
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -130,6 +131,7 @@ abstract class IntegrationTest {
           .createQuery()
           .forRevisionsOfEntity(entity::class.java, false, true)
           .add(revisionNumber().eq(revisionNumber))
+          .add(AuditEntity.id().eq(entity.id))
           .resultList
           .first() as Array<*>
       assertThat(entityRevision[2]).isEqualTo(revisionType)

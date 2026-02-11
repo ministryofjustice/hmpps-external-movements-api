@@ -401,6 +401,15 @@ interface TemporaryAbsenceAuthorisationRepository :
   @Modifying
   @Query("delete from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier")
   fun deleteByPersonIdentifier(personIdentifier: String)
+
+  @Query(
+    """
+    select a from TemporaryAbsenceAuthorisation a
+    where a.person.identifier = :personIdentifier
+    and a.id not in (:ids)
+  """,
+  )
+  fun findForPersonNotIn(personIdentifier: String, ids: Set<UUID>): List<TemporaryAbsenceAuthorisation>
 }
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")
