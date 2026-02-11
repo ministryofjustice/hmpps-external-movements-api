@@ -287,6 +287,15 @@ interface TemporaryAbsenceMovementRepository :
   @Modifying
   @Query("delete from TemporaryAbsenceMovement tam where tam.person.identifier = :personIdentifier")
   fun deleteByPersonIdentifier(personIdentifier: String)
+
+  @Query(
+    """
+    select m from TemporaryAbsenceMovement m
+    where m.person.identifier = :personIdentifier
+    and m.id not in (:ids)
+  """,
+  )
+  fun findForPersonNotIn(personIdentifier: String, ids: Set<UUID>): List<TemporaryAbsenceMovement>
 }
 
 interface PersonMovementSummary {

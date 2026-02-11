@@ -76,6 +76,7 @@ data class TapAuthorisation(
   val created: AtAndBy,
   val updated: AtAndBy?,
   val legacyId: Long,
+  val id: UUID?,
   val occurrences: List<TapOccurrence>,
 ) : ReferenceDataRequired {
   override fun requiredReferenceData() = setOfNotNull(
@@ -111,6 +112,7 @@ data class TapOccurrence(
   val created: AtAndBy,
   val updated: AtAndBy?,
   val legacyId: Long,
+  val id: UUID?,
   val movements: List<TapMovement>,
 ) : ReferenceDataRequired {
   override fun requiredReferenceData() = setOfNotNull(
@@ -135,6 +137,7 @@ data class TapMovement(
   val created: AtAndBy,
   val updated: AtAndBy?,
   val legacyId: String,
+  val id: UUID?,
 ) : ReferenceDataRequired {
 
   override fun requiredReferenceData() = setOfNotNull(

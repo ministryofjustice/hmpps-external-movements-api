@@ -82,10 +82,7 @@ import kotlin.reflect.KProperty1
 @Entity
 @Table(schema = "tap", name = "occurrence")
 class TemporaryAbsenceOccurrence(
-  @Audited
-  @ManyToOne
-  @JoinColumn(name = "authorisation_id", updatable = false)
-  val authorisation: TemporaryAbsenceAuthorisation,
+  authorisation: TemporaryAbsenceAuthorisation,
   absenceType: AbsenceType?,
   absenceSubType: AbsenceSubType?,
   absenceReasonCategory: AbsenceReasonCategory?,
@@ -134,6 +131,12 @@ class TemporaryAbsenceOccurrence(
   @ManyToOne
   @JoinColumn(name = "absence_reason_id")
   override var absenceReason: AbsenceReason = absenceReason
+    private set
+
+  @Audited
+  @ManyToOne
+  @JoinColumn(name = "authorisation_id")
+  var authorisation: TemporaryAbsenceAuthorisation = authorisation
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
@@ -223,6 +226,7 @@ class TemporaryAbsenceOccurrence(
 
   fun removeMovement(movement: TemporaryAbsenceMovement, statusProvider: (String) -> OccurrenceStatus) = apply {
     movements.remove(movement)
+    movement.occurrence = null
     calculateStatus(statusProvider)
   }
 
@@ -245,6 +249,12 @@ class TemporaryAbsenceOccurrence(
 
   fun moveTo(person: PersonSummary) = apply {
     this.person = person
+  }
+
+  fun authorisationPersonAndPrison(authorisation: TemporaryAbsenceAuthorisation) {
+    this.authorisation = authorisation
+    this.person = authorisation.person
+    this.prisonCode = authorisation.prisonCode
   }
 
   fun applyAbsenceCategorisation(
@@ -324,6 +334,7 @@ class TemporaryAbsenceOccurrence(
   }
 
   fun calculateStatus(statusProvider: (String) -> OccurrenceStatus) = apply {
+    println("Calculating status : ${movements.count()}")
     status =
       statusProvider(
         listOfNotNull(

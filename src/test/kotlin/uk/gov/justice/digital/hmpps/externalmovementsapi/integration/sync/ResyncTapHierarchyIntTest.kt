@@ -2,20 +2,13 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
-import org.hibernate.envers.AuditReaderFactory
 import org.hibernate.envers.RevisionType
-import org.hibernate.envers.query.AuditEntity.revisionNumber
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
@@ -51,12 +44,12 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import java.time.temporal.ChronoUnit.SECONDS
+import java.util.UUID
 
-class MigrateTapHierarchyIntTest(
+class ResyncTapHierarchyIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
   @Autowired private val tamOperations: TempAbsenceMovementOperations,
-  @Autowired private val msaRepository: MigrationSystemAuditRepository,
 ) : IntegrationTest(),
   TempAbsenceAuthorisationOperations by taaOperations,
   TempAbsenceOccurrenceOperations by taoOperations,
@@ -66,7 +59,7 @@ class MigrateTapHierarchyIntTest(
   fun `401 unauthorised without a valid token`() {
     webTestClient
       .put()
-      .uri(MIGRATE_TAP_URL, personIdentifier())
+      .uri(RESYNC_TAP_URL, personIdentifier())
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -74,40 +67,39 @@ class MigrateTapHierarchyIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    migrateTap(personIdentifier(), migrateTapRequest(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+    migrateTap(personIdentifier(), resyncTapRequest(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
   }
 
   @Test
-  fun `200 ok - can migrate tap for a person`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val occurrence = givenTemporaryAbsenceOccurrence(
+  fun `200 ok - can merge tap for a person deleting and creating new`() {
+    val originalAuth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val originalOcc = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
-        auth,
+        originalAuth,
         legacyId = newId(),
         movements = listOf(
           temporaryAbsenceMovement(
-            personIdentifier = auth.person.identifier,
+            personIdentifier = originalAuth.person.identifier,
             direction = Direction.OUT,
             legacyId = newId().toString(),
           ),
         ),
       ),
     )
-    val um = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(Direction.IN, auth.person.identifier))
-    prisonerSearch.getPrisoners(auth.prisonCode, setOf(auth.person.identifier))
-    val request = migrateTapRequest(
+    val um = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(Direction.IN, originalAuth.person.identifier))
+    val request = resyncTapRequest(
       temporaryAbsences = listOf(
-        tapAuthorisation(),
+        tapAuthorisation(occurrences = listOf(tapOccurrence())),
         tapAuthorisation(statusCode = AuthorisationStatus.Code.PENDING.name, occurrences = listOf()),
       ),
     )
 
-    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+    val response = migrateTap(originalAuth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     // confirm existing tap hierarchy has been removed
-    assertThat(findTemporaryAbsenceAuthorisation(auth.id)).isNull()
-    assertThat(findTemporaryAbsenceOccurrence(occurrence.id)).isNull()
-    assertThat(findTemporaryAbsenceMovement(occurrence.movements().first().id)).isNull()
+    assertThat(findTemporaryAbsenceAuthorisation(originalAuth.id)).isNull()
+    assertThat(findTemporaryAbsenceOccurrence(originalOcc.id)).isNull()
+    assertThat(findTemporaryAbsenceMovement(originalOcc.movements().first().id)).isNull()
 
     // confirm unscheduled movements are removed
     assertThat(findTemporaryAbsenceOccurrence(um.id)).isNull()
@@ -115,8 +107,7 @@ class MigrateTapHierarchyIntTest(
     response.temporaryAbsences.first().also { ma ->
       val auth = requireNotNull(findTemporaryAbsenceAuthorisation(ma.id))
       val authRequest = request.temporaryAbsences.single { it.legacyId == auth.legacyId }
-      val amsa = requireNotNull(msaRepository.findByIdOrNull(auth.id))
-      auth.verifyAgainst(auth.person.identifier, authRequest, amsa)
+      auth.verifyAgainst(auth.person.identifier, authRequest)
       assertThat(auth.reasonPath.path).containsExactly(
         ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
         ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "RDR",
@@ -126,8 +117,7 @@ class MigrateTapHierarchyIntTest(
       ma.occurrences.forEach { mo ->
         val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
         val occRequest = authRequest.occurrences.single { it.legacyId == occurrence.legacyId }
-        val omsa = requireNotNull(msaRepository.findByIdOrNull(occurrence.id))
-        occurrence.verifyAgainst(occRequest, omsa)
+        occurrence.verifyAgainst(occRequest)
         assertThat(auth.reasonPath.path).containsExactly(
           ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
           ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "RDR",
@@ -137,8 +127,7 @@ class MigrateTapHierarchyIntTest(
         mo.movements.forEach { mm ->
           val movement = requireNotNull(findTemporaryAbsenceMovement(mm.id))
           val movementRequest = occRequest.movements.single { it.legacyId == movement.legacyId }
-          val mmsa = requireNotNull(msaRepository.findByIdOrNull(movement.id))
-          movement.verifyAgainst(auth.person.identifier, movementRequest, mmsa)
+          movement.verifyAgainst(auth.person.identifier, movementRequest)
         }
       }
 
@@ -153,10 +142,6 @@ class MigrateTapHierarchyIntTest(
         ),
         ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, reason = null),
       )
-
-      val domainEvents = latestRevisionDomainEvents(auth)
-      assertThat(domainEvents).hasSize(5)
-      domainEvents.forEach { domainEvent -> assertThat(domainEvent.published).isTrue }
     }
 
     with(response.temporaryAbsences.last()) {
@@ -170,7 +155,7 @@ class MigrateTapHierarchyIntTest(
     val prisonCode = prisonCode()
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val request = migrateTapRequest(
+    val request = resyncTapRequest(
       temporaryAbsences = listOf(
         tapAuthorisation(
           typeCode = "PP",
@@ -192,20 +177,17 @@ class MigrateTapHierarchyIntTest(
     response.temporaryAbsences.first().also { ma ->
       val auth = requireNotNull(findTemporaryAbsenceAuthorisation(ma.id))
       val authRequest = request.temporaryAbsences.single { it.legacyId == auth.legacyId }
-      val amsa = requireNotNull(msaRepository.findByIdOrNull(auth.id))
-      auth.verifyAgainst(auth.person.identifier, authRequest, amsa)
+      auth.verifyAgainst(auth.person.identifier, authRequest)
       assertThat(auth.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")
       ma.occurrences.forEach { mo ->
         val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
         val occRequest = authRequest.occurrences.single { it.legacyId == occurrence.legacyId }
-        val omsa = requireNotNull(msaRepository.findByIdOrNull(occurrence.id))
-        occurrence.verifyAgainst(occRequest, omsa)
+        occurrence.verifyAgainst(occRequest)
         assertThat(occurrence.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")
         mo.movements.forEach { mm ->
           val movement = requireNotNull(findTemporaryAbsenceMovement(mm.id))
           val movementRequest = occRequest.movements.single { it.legacyId == movement.legacyId }
-          val mmsa = requireNotNull(msaRepository.findByIdOrNull(movement.id))
-          movement.verifyAgainst(auth.person.identifier, movementRequest, mmsa)
+          movement.verifyAgainst(auth.person.identifier, movementRequest)
         }
       }
 
@@ -220,10 +202,6 @@ class MigrateTapHierarchyIntTest(
         ),
         ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
       )
-
-      val domainEvents = latestRevisionDomainEvents(auth)
-      assertThat(domainEvents).hasSize(3)
-      domainEvents.forEach { domainEvent -> assertThat(domainEvent.published).isTrue }
     }
   }
 
@@ -232,7 +210,7 @@ class MigrateTapHierarchyIntTest(
     val prisonCode = prisonCode()
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val request = migrateTapRequest(
+    val request = resyncTapRequest(
       temporaryAbsences = listOf(
         tapAuthorisation(
           typeCode = null,
@@ -254,20 +232,17 @@ class MigrateTapHierarchyIntTest(
     response.temporaryAbsences.first().also { ma ->
       val auth = requireNotNull(findTemporaryAbsenceAuthorisation(ma.id))
       val authRequest = request.temporaryAbsences.single { it.legacyId == auth.legacyId }
-      val amsa = requireNotNull(msaRepository.findByIdOrNull(auth.id))
-      auth.verifyAgainst(auth.person.identifier, authRequest, amsa)
+      auth.verifyAgainst(auth.person.identifier, authRequest)
       assertThat(auth.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "ET")
       ma.occurrences.forEach { mo ->
         val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
         val occRequest = authRequest.occurrences.single { it.legacyId == occurrence.legacyId }
-        val omsa = requireNotNull(msaRepository.findByIdOrNull(occurrence.id))
-        occurrence.verifyAgainst(occRequest, omsa)
+        occurrence.verifyAgainst(occRequest)
         assertThat(occurrence.reasonPath.path).containsExactly(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "ET")
         mo.movements.forEach { mm ->
           val movement = requireNotNull(findTemporaryAbsenceMovement(mm.id))
           val movementRequest = occRequest.movements.single { it.legacyId == movement.legacyId }
-          val mmsa = requireNotNull(msaRepository.findByIdOrNull(movement.id))
-          movement.verifyAgainst(auth.person.identifier, movementRequest, mmsa)
+          movement.verifyAgainst(auth.person.identifier, movementRequest)
         }
       }
 
@@ -282,10 +257,6 @@ class MigrateTapHierarchyIntTest(
         ),
         ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
       )
-
-      val domainEvents = latestRevisionDomainEvents(auth)
-      assertThat(domainEvents).hasSize(3)
-      domainEvents.forEach { domainEvent -> assertThat(domainEvent.published).isTrue }
     }
   }
 
@@ -294,7 +265,7 @@ class MigrateTapHierarchyIntTest(
     val prisonCode = prisonCode()
     val pi = personIdentifier()
     prisonerSearch.getPrisoners(prisonCode, setOf(pi))
-    val request = migrateTapRequest(
+    val request = resyncTapRequest(
       temporaryAbsences = listOf(
         tapAuthorisation(
           occurrences = listOf(
@@ -336,25 +307,200 @@ class MigrateTapHierarchyIntTest(
     }
   }
 
-  private fun latestRevisionDomainEvents(entity: Identifiable): List<HmppsDomainEvent> = transactionTemplate.execute {
-    val auditReader = AuditReaderFactory.get(entityManager)
-    assertTrue(auditReader.isEntityClassAudited(entity::class.java))
+  @Test
+  fun `200 ok - can make unscheduled movement scheduled`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        movements = listOf(
+          temporaryAbsenceMovement(Direction.OUT, auth.person.identifier, legacyId = newId().toString()),
+        ),
+        legacyId = newId(),
+      ),
+    )
+    val inMovement = givenTemporaryAbsenceMovement(
+      temporaryAbsenceMovement(Direction.IN, auth.person.identifier, legacyId = newId().toString()),
+    )
 
-    val revisionNumber =
-      auditReader
-        .getRevisions(entity::class.java, entity.id)
-        .filterIsInstance<Long>()
-        .max()
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          occurrences = listOf(
+            tapOccurrence(
+              id = occurrence.id,
+              legacyId = occurrence.legacyId!!,
+              start = LocalDateTime.now().minusDays(3),
+              end = LocalDateTime.now().minusDays(2),
+              movements = listOf(
+                tapMovement(
+                  id = occurrence.movements().first().id,
+                  legacyId = occurrence.movements().first().legacyId!!,
+                  occurredAt = LocalDateTime.now().minusDays(1),
+                  direction = Direction.OUT,
+                ),
+                tapMovement(
+                  id = inMovement.id,
+                  legacyId = inMovement.legacyId!!,
+                  occurredAt = LocalDateTime.now(),
+                  direction = Direction.IN,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
-    auditReader
-      .createQuery()
-      .forRevisionsOfEntity(HmppsDomainEvent::class.java, true, true)
-      .add(revisionNumber().eq(revisionNumber))
-      .resultList
-      .filterIsInstance<HmppsDomainEvent>()
-  }!!
+    response.temporaryAbsences.first().also { ma ->
+      ma.occurrences.first().also { mo ->
+        val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
+        assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.COMPLETED.name)
+        assertThat(occurrence.movements()).hasSize(2)
+      }
+    }
+  }
 
-  private fun migrateTapRequest(
+  @Test
+  fun `200 ok - can make scheduled movement unscheduled`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        movements = listOf(
+          temporaryAbsenceMovement(Direction.OUT, auth.person.identifier, legacyId = newId().toString()),
+        ),
+        legacyId = newId(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          occurrences = listOf(
+            tapOccurrence(
+              id = occurrence.id,
+              legacyId = occurrence.legacyId!!,
+              start = LocalDateTime.now().minusDays(3),
+              end = LocalDateTime.now().minusDays(2),
+              movements = listOf(),
+            ),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(
+        occurrence.movements().single().let {
+          tapMovement(
+            id = it.id,
+            prisonCode = it.prisonCode,
+            legacyId = it.legacyId!!,
+            occurredAt = it.occurredAt,
+            direction = it.direction,
+            location = it.location,
+          )
+        },
+      ),
+    )
+    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    response.temporaryAbsences.single().also { ma ->
+      ma.occurrences.single().also { mo ->
+        val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(mo.id))
+        assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+        assertThat(occurrence.movements()).hasSize(0)
+      }
+    }
+  }
+
+  @Test
+  fun `200 ok - can remove occurrence`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        movements = listOf(
+          temporaryAbsenceMovement(Direction.OUT, auth.person.identifier, legacyId = newId().toString()),
+        ),
+        legacyId = newId(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          occurrences = listOf(),
+        ),
+      ),
+      unscheduledMovements = listOf(
+        occurrence.movements().single().let {
+          tapMovement(
+            id = it.id,
+            prisonCode = it.prisonCode,
+            legacyId = it.legacyId!!,
+            occurredAt = it.occurredAt,
+            direction = it.direction,
+            location = it.location,
+          )
+        },
+      ),
+    )
+    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    response.temporaryAbsences.single().also { ma -> assertThat(ma.occurrences.isEmpty()) }
+    assertThat(findTemporaryAbsenceOccurrence(occurrence.id)).isNull()
+    response.unscheduledMovements.single().also { mo ->
+      val movement = requireNotNull(findTemporaryAbsenceMovement(mo.id))
+      movement.verifyAgainst(auth.person.identifier, request.unscheduledMovements.single())
+    }
+  }
+
+  @Test
+  fun `200 ok - can add new occurrences`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        movements = listOf(
+          temporaryAbsenceMovement(Direction.OUT, auth.person.identifier, legacyId = newId().toString()),
+        ),
+        legacyId = newId(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          occurrences = listOf(
+            tapOccurrence(id = occurrence.id, legacyId = occurrence.legacyId!!),
+            tapOccurrence(id = null, legacyId = newId()),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val responseAuth = response.temporaryAbsences.single()
+    assertThat(responseAuth.occurrences).hasSize(2)
+    responseAuth.occurrences.forEach { occ ->
+      val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
+      val occRequest =
+        request.temporaryAbsences.flatMap { it.occurrences }.single { it.legacyId == occurrence.legacyId }
+      occurrence.verifyAgainst(occRequest)
+    }
+  }
+
+  private fun resyncTapRequest(
     temporaryAbsences: List<TapAuthorisation> = listOf(tapAuthorisation()),
     unscheduledMovements: List<TapMovement> = listOf(tapMovement()),
   ) = MigrateTapRequest(temporaryAbsences, unscheduledMovements)
@@ -377,6 +523,7 @@ class MigrateTapHierarchyIntTest(
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusHours(1), username()),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusHours(1), username()),
     legacyId: Long = newId(),
+    id: UUID? = null,
     occurrences: List<TapOccurrence> = listOf(tapOccurrence()),
   ) = TapAuthorisation(
     prisonCode,
@@ -396,7 +543,7 @@ class MigrateTapHierarchyIntTest(
     created,
     updated,
     legacyId,
-    null,
+    id,
     occurrences,
   )
 
@@ -415,6 +562,7 @@ class MigrateTapHierarchyIntTest(
     created: AtAndBy = AtAndBy(LocalDateTime.now().minusMonths(1), username()),
     updated: AtAndBy? = AtAndBy(LocalDateTime.now().minusWeeks(1), username()),
     legacyId: Long = newId(),
+    id: UUID? = null,
     movements: List<TapMovement> = listOf(tapMovement()),
   ) = TapOccurrence(
     isCancelled,
@@ -431,7 +579,7 @@ class MigrateTapHierarchyIntTest(
     created,
     updated,
     legacyId,
-    null,
+    id,
     movements,
   )
 
@@ -445,6 +593,7 @@ class MigrateTapHierarchyIntTest(
     comments: String? = "Some comments about the movement",
     location: Location = location(),
     legacyId: String = "${newId()}",
+    id: UUID? = null,
     recordedBy: String = username(),
     recordedAt: LocalDateTime = LocalDateTime.now().minusDays(7),
   ) = TapMovement(
@@ -459,7 +608,7 @@ class MigrateTapHierarchyIntTest(
     AtAndBy(recordedAt, recordedBy),
     null,
     legacyId,
-    null,
+    id,
   )
 
   private fun migrateTap(
@@ -468,22 +617,20 @@ class MigrateTapHierarchyIntTest(
     role: String? = Roles.NOMIS_SYNC,
   ) = webTestClient
     .put()
-    .uri(MIGRATE_TAP_URL, personIdentifier)
+    .uri(RESYNC_TAP_URL, personIdentifier)
     .bodyValue(request)
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
-    const val MIGRATE_TAP_URL = "/migrate/temporary-absences/{personIdentifier}"
+    const val RESYNC_TAP_URL = "/resync/temporary-absences/{personIdentifier}"
 
     private fun TemporaryAbsenceAuthorisation.verifyAgainst(
       personIdentifier: String,
       request: TapAuthorisation,
-      msa: MigrationSystemAudit,
     ) {
       assertThat(person.identifier).isEqualTo(personIdentifier)
       assertThat(legacyId).isEqualTo(request.legacyId)
-      assertThat(status.code).isEqualTo(request.statusCode)
       assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)
       assertThat(absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
       assertThat(absenceReason.code).isEqualTo(request.absenceReasonCode)
@@ -493,15 +640,9 @@ class MigrateTapHierarchyIntTest(
       assertThat(comments).isEqualTo(request.comments)
       assertThat(start).isEqualTo(request.start)
       assertThat(end).isEqualTo(request.end)
-      assertThat(msa.createdBy).isEqualTo(request.created.by)
-      assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))
-      request.updated?.also {
-        assertThat(msa.updatedBy).isEqualTo(it.by)
-        assertThat(msa.updatedAt).isCloseTo(it.at, within(1, SECONDS))
-      }
     }
 
-    private fun TemporaryAbsenceOccurrence.verifyAgainst(request: TapOccurrence, msa: MigrationSystemAudit) {
+    private fun TemporaryAbsenceOccurrence.verifyAgainst(request: TapOccurrence) {
       assertThat(start).isCloseTo(request.start, within(2, SECONDS))
       assertThat(end).isCloseTo(request.end, within(2, SECONDS))
       assertThat(accompaniedBy.code).isEqualTo(request.accompaniedByCode)
@@ -510,18 +651,11 @@ class MigrateTapHierarchyIntTest(
       assertThat(contactInformation).isEqualTo(request.contactInformation)
       assertThat(comments).isEqualTo(request.comments)
       assertThat(legacyId).isEqualTo(request.legacyId)
-      assertThat(msa.createdBy).isEqualTo(request.created.by)
-      assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))
-      request.updated?.also {
-        assertThat(msa.updatedBy).isEqualTo(it.by)
-        assertThat(msa.updatedAt).isCloseTo(it.at, within(1, SECONDS))
-      }
     }
 
     private fun TemporaryAbsenceMovement.verifyAgainst(
       personIdentifier: String,
       request: TapMovement,
-      msa: MigrationSystemAudit,
     ) {
       assertThat(this.person.identifier).isEqualTo(personIdentifier)
       assertThat(direction.name).isEqualTo(request.direction.name)
@@ -532,12 +666,6 @@ class MigrateTapHierarchyIntTest(
       assertThat(comments).isEqualTo(request.comments)
       assertThat(prisonCode).isEqualTo(request.prisonCode)
       assertThat(legacyId).isEqualTo(request.legacyId)
-      assertThat(msa.createdBy).isEqualTo(request.created.by)
-      assertThat(msa.createdAt).isCloseTo(request.created.at, within(1, SECONDS))
-      request.updated?.also {
-        assertThat(msa.updatedBy).isEqualTo(it.by)
-        assertThat(msa.updatedAt).isCloseTo(it.at, within(1, SECONDS))
-      }
     }
   }
 }
