@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.AuditReaderFactory
@@ -14,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
@@ -24,6 +23,8 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.support.TransactionTemplate
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.readValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
@@ -61,6 +62,7 @@ import java.util.concurrent.TimeUnit
 @ContextConfiguration(classes = [TestConfig::class])
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
+@AutoConfigureWebTestClient
 abstract class IntegrationTest {
 
   @Autowired
@@ -70,7 +72,7 @@ abstract class IntegrationTest {
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @Autowired
-  protected lateinit var objectMapper: ObjectMapper
+  protected lateinit var jsonMapper: JsonMapper
 
   @Autowired
   protected lateinit var transactionTemplate: TransactionTemplate
@@ -95,14 +97,14 @@ abstract class IntegrationTest {
   }
 
   protected fun sendDomainEvent(event: DomainEvent<*>) {
-    domainEventsTopic.publish(event.eventType, objectMapper.writeValueAsString(event))
+    domainEventsTopic.publish(event.eventType, jsonMapper.writeValueAsString(event))
   }
 
   protected fun HmppsQueue.receiveDomainEventsOnQueue(maxMessages: Int = 10): List<DomainEvent<*>> = sqsClient.receiveMessage(
     ReceiveMessageRequest.builder().queueUrl(queueUrl).maxNumberOfMessages(maxMessages).build(),
   ).get().messages()
-    .map { objectMapper.readValue<Notification>(it.body()) }
-    .map { objectMapper.readValue<DomainEvent<*>>(it.message) }
+    .map { jsonMapper.readValue<Notification>(it.body()) }
+    .map { jsonMapper.readValue<DomainEvent<*>>(it.message) }
 
   protected fun setAuthorisation(
     username: String? = DEFAULT_USERNAME,
@@ -198,8 +200,8 @@ abstract class IntegrationTest {
     }
   }
 
-  protected final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(status: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(status)
-    .expectBody(T::class.java)
+  protected final inline fun <reified T : Any> WebTestClient.ResponseSpec.successResponse(status: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(status)
+    .expectBody<T>()
     .returnResult().responseBody!!
 
   protected final fun WebTestClient.ResponseSpec.errorResponse(status: HttpStatus): ErrorResponse = expectStatus().isEqualTo(status)

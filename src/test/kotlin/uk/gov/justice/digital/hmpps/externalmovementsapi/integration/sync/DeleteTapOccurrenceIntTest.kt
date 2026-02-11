@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
-import com.fasterxml.jackson.module.kotlin.treeToValue
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
@@ -80,7 +79,7 @@ class DeleteTapOccurrenceIntTest(
     assertThat(saved).isNull()
     val updatedAuth = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
     assertThat(updatedAuth.schedule).isNotNull
-    val schedule = objectMapper.treeToValue<AuthorisationSchedule>(updatedAuth.schedule!!)
+    val schedule = jsonMapper.treeToValue<AuthorisationSchedule>(updatedAuth.schedule!!)
     assertThat(schedule.startTime).isEqualTo(occurrence.start.toLocalTime())
     assertThat(schedule.returnTime).isEqualTo(occurrence.end.toLocalTime())
 

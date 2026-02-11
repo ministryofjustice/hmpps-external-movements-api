@@ -352,7 +352,7 @@ class MigrateTapHierarchyIntTest(
       .add(revisionNumber().eq(revisionNumber))
       .resultList
       .filterIsInstance<HmppsDomainEvent>()
-  }!!
+  }
 
   private fun migrateTapRequest(
     temporaryAbsences: List<TapAuthorisation> = listOf(tapAuthorisation()),

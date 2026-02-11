@@ -160,7 +160,7 @@ class TempAbsenceOccurrenceOperationsImpl(
       val auth = temporaryAbsenceAuthorisationRepository.getAuthorisation(saved.authorisation.id)
       temporaryAbsenceAuthorisationRepository.save(auth.applyLocations(ChangeAuthorisationLocations(locations)))
     }
-  }!!
+  }
 
   override fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence? = transactionTemplate.execute {
     val occurrence = temporaryAbsenceOccurrenceRepository.findByIdOrNull(id)

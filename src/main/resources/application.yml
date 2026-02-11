@@ -23,17 +23,21 @@ spring:
     validate-on-migrate: false
     locations: classpath:db/schema,classpath:db/data
 
-  jackson:
+  jackson2:
     date-format: "yyyy-MM-dd HH:mm:ss"
     default-property-inclusion: non_null
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
+  jackson:
+    date-format: "yyyy-MM-dd HH:mm:ss"
+    default-property-inclusion: non_null
+
   jpa:
     show-sql: false
     generate-ddl: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     properties:
       hibernate:
         cache:
@@ -85,6 +89,10 @@ spring:
 
   threads.virtual.enabled: true
 
+  web:
+    error:
+      include-message: always
+
 sentry:
   exception-resolver-order: -2147483647
 
@@ -101,8 +109,6 @@ server:
       remote-ip-header: x-forwarded-for
       protocol-header: x-forwarded-proto
   shutdown: graceful
-  error:
-    include-message: always
 
 management:
   endpoints:

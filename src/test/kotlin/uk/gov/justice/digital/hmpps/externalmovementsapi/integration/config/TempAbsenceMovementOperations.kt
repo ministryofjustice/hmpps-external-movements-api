@@ -81,7 +81,7 @@ class TempAbsenceMovementOperationsImpl(
       { psOperations.findPersonSummary(it) ?: psOperations.givenPersonSummary(personSummary(it)) },
     )
     temporaryAbsenceMovementRepository.save(movement)
-  }!!
+  }
 
   override fun findTemporaryAbsenceMovement(id: UUID): TemporaryAbsenceMovement? = temporaryAbsenceMovementRepository.findByIdOrNull(id)
 }

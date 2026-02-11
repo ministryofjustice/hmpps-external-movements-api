@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.json.JsonMapper
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
@@ -70,7 +70,7 @@ class ResyncTapHierarchy(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val personSummaryService: PersonSummaryService,
   private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
   private val telemetryClient: TelemetryClient,
 ) {
   fun resync(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
@@ -201,7 +201,7 @@ class ResyncTapHierarchy(
       comments = comments,
       start = start,
       end = end,
-      schedule = schedule()?.let { objectMapper.valueToTree(it) },
+      schedule = schedule()?.let { jsonMapper.valueToTree(it) },
       reasonPath = reasonPath,
       locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: location?.let { linkedSetOf(it) } ?: linkedSetOf(),
@@ -222,7 +222,7 @@ class ResyncTapHierarchy(
     applyComments(ChangeAuthorisationComments(request.comments))
     val occurrences = occurrenceRepository.findByAuthorisationId(id)
     if (occurrences.isEmpty()) {
-      request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
+      request.schedule()?.also { applySchedule(jsonMapper.valueToTree(it)) }
     }
     val locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
       ?: request.location?.let { linkedSetOf(it) }
