@@ -24,7 +24,7 @@ class PrisonerSearchClient(
           .post()
           .uri {
             it.path(GET_PRISONERS_BY_IDENTIFIER)
-            it.queryParam("responseFields", Prisoner.fields())
+            it.queryParam("responseFields", *Prisoner.fields())
             it.build()
           }.bodyValue(PrisonerNumbers(prisonNumbers))
           .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.json.JsonMapper
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
@@ -60,7 +60,7 @@ class MigrateTapHierarchy(
   private val personSummaryService: PersonSummaryService,
   private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
   private val domainEventRepository: HmppsDomainEventRepository,
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) {
   fun migrate(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
     ExternalMovementContext.get().copy(source = DataSource.NOMIS, migratingData = true).set()
@@ -181,7 +181,7 @@ class MigrateTapHierarchy(
       comments = comments,
       start = start,
       end = end,
-      schedule = schedule()?.let { objectMapper.valueToTree(it) },
+      schedule = schedule()?.let { jsonMapper.valueToTree(it) },
       reasonPath = reasonPath,
       locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: location?.let { linkedSetOf(it) } ?: linkedSetOf(),
