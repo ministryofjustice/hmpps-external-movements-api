@@ -5,6 +5,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
@@ -83,6 +84,7 @@ class SyncTapOccurrence(
   }
 
   fun deleteById(id: UUID) {
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
     occurrenceRepository.findByIdOrNull(id)?.also { occurrence ->
       val movementCount = movementRepository.countByOccurrenceId(occurrence.id)
       if (movementCount > 0) {

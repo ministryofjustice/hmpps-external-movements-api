@@ -71,14 +71,14 @@ class DeleteTapMovementIntTest(
       movement,
       RevisionType.DEL,
       setOf(TemporaryAbsenceMovement::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyAudit(
       occurrence,
       RevisionType.MOD,
       setOf(TemporaryAbsenceMovement::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(movement, setOf())
