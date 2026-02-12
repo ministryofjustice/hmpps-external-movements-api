@@ -5,6 +5,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
@@ -68,6 +69,7 @@ class SyncTapAuthorisation(
   }
 
   fun deleteById(id: UUID) {
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
     authorisationRepository.findByIdOrNull(id)?.also { authorisation ->
       val occurrenceCount = occurrenceRepository.countByAuthorisationId(authorisation.id)
       if (occurrenceCount > 0) {
