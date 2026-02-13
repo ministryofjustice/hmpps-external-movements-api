@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
@@ -74,7 +75,7 @@ class ResyncTapHierarchy(
   private val telemetryClient: TelemetryClient,
 ) {
   fun resync(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
-    ExternalMovementContext.get().copy(source = DataSource.NOMIS, migratingData = false).set()
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, migratingData = false).set()
     val person = personSummaryService.getWithSave(personIdentifier)
     val allRd = referenceDataRepository.findAll()
     val rdLinks =
