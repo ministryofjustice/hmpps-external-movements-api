@@ -634,7 +634,7 @@ class ResyncTapHierarchyIntTest(
     .put()
     .uri(RESYNC_TAP_URL, personIdentifier)
     .bodyValue(request)
-    .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
+    .headers(setAuthorisation(username = "migration-client-id", roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
