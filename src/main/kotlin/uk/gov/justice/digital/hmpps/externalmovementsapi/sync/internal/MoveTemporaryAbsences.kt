@@ -19,6 +19,7 @@ class MoveTemporaryAbsences(
     occurrenceRepository.findByAuthorisationIdIn(request.authorisationIds).forEach { tao ->
       check(request contains tao.authorisation.person.identifier) { EXCEPTION_MESSAGE }
       tao.authorisation.moveTo(moveTo)
+      tao.moveTo(moveTo)
       tao.movements().forEach {
         check(request contains it.person.identifier) { EXCEPTION_MESSAGE }
         it.moveTo(moveTo)

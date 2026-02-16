@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.IN
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.OUT
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -101,16 +102,19 @@ class MoveTemporaryAbsencesIntTest(
 
     with(requireNotNull(findTemporaryAbsenceOccurrence(p1Occ1.id))) {
       assertThat(authorisation.person.identifier).isEqualTo(p1)
+      assertThat(person.identifier).isEqualTo(p1)
     }
 
     val context = ExternalMovementContext.get().copy(reason = "Prisoner booking moved", source = DataSource.NOMIS)
     with(requireNotNull(findTemporaryAbsenceOccurrence(p1Occ2.id))) {
       assertThat(authorisation.person.identifier).isEqualTo(p2)
+      assertThat(person.identifier).isEqualTo(p2)
       verifyAudit(
         this.authorisation,
         RevisionType.MOD,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
           TemporaryAbsenceMovement::class.simpleName!!,
         ),
         context,
@@ -118,11 +122,13 @@ class MoveTemporaryAbsencesIntTest(
     }
     with(requireNotNull(findTemporaryAbsenceMovement(p1Sm1.id))) {
       assertThat(person.identifier).isEqualTo(p2)
+      assertThat(occurrence!!.person.identifier).isEqualTo(p2)
       verifyAudit(
         this,
         RevisionType.MOD,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
           TemporaryAbsenceMovement::class.simpleName!!,
         ),
         context,
@@ -130,11 +136,13 @@ class MoveTemporaryAbsencesIntTest(
     }
     with(requireNotNull(findTemporaryAbsenceOccurrence(p1Occ3.id))) {
       assertThat(authorisation.person.identifier).isEqualTo(p2)
+      assertThat(person.identifier).isEqualTo(p2)
       verifyAudit(
         this.authorisation,
         RevisionType.MOD,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
           TemporaryAbsenceMovement::class.simpleName!!,
         ),
         context,
@@ -147,6 +155,7 @@ class MoveTemporaryAbsencesIntTest(
         RevisionType.MOD,
         setOf(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
           TemporaryAbsenceMovement::class.simpleName!!,
         ),
         context,
@@ -155,6 +164,7 @@ class MoveTemporaryAbsencesIntTest(
 
     with(requireNotNull(findTemporaryAbsenceOccurrence(p2Occ1.id))) {
       assertThat(authorisation.person.identifier).isEqualTo(p2)
+      assertThat(person.identifier).isEqualTo(p2)
     }
   }
 
