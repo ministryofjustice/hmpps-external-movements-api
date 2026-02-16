@@ -1,6 +1,5 @@
 import com.google.cloud.tools.jib.gradle.BuildImageTask
 import de.undercouch.gradle.tasks.download.Download
-import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -119,6 +118,7 @@ jib {
     jvmFlags = mutableListOf("-Duser.timezone=Europe/London")
     mainClass = "uk.gov.justice.digital.hmpps.externalmovementsapi.ExternalMovementsApiKt"
     user = "2000:2000"
+    environment = mapOf("BUILD_NUMBER" to (System.getenv("VERSION") ?: "dev"))
   }
   from {
     image = "eclipse-temurin:25-jre-jammy"
