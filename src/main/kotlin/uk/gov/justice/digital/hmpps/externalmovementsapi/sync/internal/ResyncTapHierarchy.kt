@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
@@ -117,7 +118,12 @@ class ResyncTapHierarchy(
     movementProvider: (UUID?, String) -> TemporaryAbsenceMovement?,
   ): MigratedAuthorisation {
     val rdPaths = rdPaths(rd, findLinked)
-    val auth = authorisationProvider(id, legacyId)?.update(person, this, rdPaths)
+    val auth = (
+      authorisationProvider(id, legacyId)
+        ?: id?.let { authorisationRepository.findByIdOrNull(it) }
+        ?: authorisationRepository.findByLegacyId(legacyId)
+      )
+      ?.update(person, this, rdPaths)
       ?: authorisationRepository.save(asEntity(person, rdPaths))
     val occurrences = occurrences.map {
       it.resync(person, auth, rd, findLinked, occurrenceProvider, movementProvider)
@@ -135,7 +141,12 @@ class ResyncTapHierarchy(
     movementProvider: (UUID?, String) -> TemporaryAbsenceMovement?,
   ): MigratedOccurrence {
     val rdPaths = rdPaths(rd, findLinked)
-    val occ = occurrenceProvider(id, legacyId)?.update(authorisation, this, rdPaths)
+    val occ = (
+      occurrenceProvider(id, legacyId)
+        ?: id?.let { occurrenceRepository.findByIdOrNull(it) }
+        ?: occurrenceRepository.findByLegacyId(legacyId)
+      )
+      ?.update(authorisation, this, rdPaths)
       ?: asEntity(authorisation, rdPaths)
     val movements = movements.map { it.resync(person, occ, rd, movementProvider) }
     if (movements.map { it.id }.sorted() != occ.movements().map { it.id }.sorted()) {
@@ -161,7 +172,12 @@ class ResyncTapHierarchy(
   ): MigratedMovement {
     val rdSupplier =
       { domain: KClass<out ReferenceData>, code: String -> rd.first { domain.isInstance(it) && it.code == code } }
-    val movement = movementProvider(id, legacyId)?.update(person, occurrence, this, rdSupplier)
+    val movement = (
+      movementProvider(id, legacyId)
+        ?: id?.let { movementRepository.findByIdOrNull(it) }
+        ?: movementRepository.findByLegacyId(legacyId)
+      )
+      ?.update(person, occurrence, this, rdSupplier)
       ?: asEntity(person, rdSupplier)
     occurrence?.also { occ ->
       if (occurrence.movements().none { it.id == id }) {

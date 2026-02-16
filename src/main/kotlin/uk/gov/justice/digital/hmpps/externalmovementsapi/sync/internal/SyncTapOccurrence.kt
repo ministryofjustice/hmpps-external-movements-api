@@ -60,7 +60,7 @@ class SyncTapOccurrence(
         ?.also {
           request.updated?.also { ExternalMovementContext.get().copy(requestAt = it.at, username = it.by).set() }
         }
-        ?.update(request, rdPaths)
+        ?.update(request, rdPaths, authorisation)
         ?: let {
           if (authorisation.status.code != AuthorisationStatus.Code.APPROVED.name) {
             throw ConflictException("Attempt to add occurrence to a non-approved authorisation")
@@ -144,7 +144,9 @@ class SyncTapOccurrence(
   private fun TemporaryAbsenceOccurrence.update(
     request: TapOccurrence,
     rdPaths: ReferenceDataPaths,
+    authorisation: TemporaryAbsenceAuthorisation,
   ) = apply {
+    authorisationPersonAndPrison(authorisation)
     applyAbsenceCategorisation(request, rdPaths)
     applySchedule(request)
     applyLogistics(request, rdPaths)
