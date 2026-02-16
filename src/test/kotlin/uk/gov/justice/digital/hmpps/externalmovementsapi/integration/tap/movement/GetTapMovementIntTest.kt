@@ -57,13 +57,14 @@ class GetTapMovementIntTest(
 
   @Test
   fun `can retrieve out movement`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occurrence =
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
           auth,
           end = LocalDateTime.now().plusHours(2),
-          movements = listOf(temporaryAbsenceMovement(OUT, auth.person.identifier)),
+          movements = listOf(temporaryAbsenceMovement(OUT, auth.person.identifier, prisonCode = prison.code)),
         ),
       )
     val movement = occurrence.movements().first()
@@ -75,7 +76,8 @@ class GetTapMovementIntTest(
 
   @Test
   fun `can retrieve in movement`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
@@ -86,11 +88,13 @@ class GetTapMovementIntTest(
             OUT,
             auth.person.identifier,
             occurredAt = LocalDateTime.now().minusHours(4),
+            prisonCode = prison.code,
           ),
           temporaryAbsenceMovement(
             IN,
             auth.person.identifier,
             occurredAt = LocalDateTime.now(),
+            prisonCode = prison.code,
           ),
         ),
       ),

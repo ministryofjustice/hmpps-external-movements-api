@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Tem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.getOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.PrisonRegisterClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerson
@@ -20,11 +22,12 @@ import java.util.UUID
 @Transactional(readOnly = true)
 class GetTapOccurrence(
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val prisonRegister: PrisonRegisterClient,
 ) {
   fun byId(id: UUID): TapOccurrence {
     val occurrence = occurrenceRepository.getOccurrence(id)
     val pac = occurrenceRepository.getPosition(occurrence.authorisation.id, occurrence.id)
-    return occurrence.toModel(pac.position, pac.total)
+    return occurrence.toModel(prisonRegister.getPrisonOrDefault(occurrence.prisonCode), pac.position, pac.total)
   }
 }
 
@@ -42,8 +45,9 @@ private fun TemporaryAbsenceAuthorisation.forOccurrence() = TapOccurrence.Author
   comments = comments,
 )
 
-private fun TemporaryAbsenceOccurrence.toModel(position: Int, total: Int) = TapOccurrence(
+private fun TemporaryAbsenceOccurrence.toModel(prison: Prison, position: Int, total: Int) = TapOccurrence(
   id = id,
+  prison = prison,
   prisonCode = prisonCode,
   status = status.asCodedDescription(),
   authorisation = authorisation.forOccurrence(),

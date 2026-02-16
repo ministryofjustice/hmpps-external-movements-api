@@ -88,9 +88,7 @@ interface TempAbsenceOccurrenceOperations {
             check(pi == authorisation.person.identifier)
             authorisation.person
           }.applyLocation(ChangeMovementLocation(location)),
-        ) { statusCode ->
-          rdSupplier(OccurrenceStatus::class, statusCode) as OccurrenceStatus
-        }
+        ) { statusCode -> rdSupplier(OccurrenceStatus::class, statusCode) as OccurrenceStatus }
       }
       if (cancelledAt != null && cancelledBy != null) {
         occurrence.cancel(CancelOccurrence(), rdSupplier)
@@ -128,6 +126,7 @@ interface TempAbsenceOccurrenceOperations {
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {
     assertThat(person.identifier).isEqualTo(occurrence.authorisation.person.personIdentifier)
+    assertThat(prisonCode).isEqualTo(occurrence.prison.code)
     assertThat(absenceType?.code).isEqualTo(occurrence.absenceType?.code)
     assertThat(absenceSubType?.code).isEqualTo(occurrence.absenceSubType?.code)
     assertThat(absenceReasonCategory?.code).isEqualTo(occurrence.absenceReasonCategory?.code)
