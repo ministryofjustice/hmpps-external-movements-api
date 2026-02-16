@@ -37,8 +37,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Test
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.PostgresContainer
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonRegisterMockServer.Companion.prison
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension.Companion.prisonRegister
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueue
@@ -55,6 +59,7 @@ import java.util.concurrent.TimeUnit
   value = [
     HmppsAuthApiExtension::class,
     ManageUsersExtension::class,
+    PrisonerRegisterExtension::class,
     PrisonerSearchExtension::class,
   ],
 )
@@ -205,6 +210,11 @@ abstract class IntegrationTest {
   protected final fun WebTestClient.ResponseSpec.errorResponse(status: HttpStatus): ErrorResponse = expectStatus().isEqualTo(status)
     .expectBody<ErrorResponse>()
     .returnResult().responseBody!!
+
+  protected final fun givenPrison(prison: Prison = prison()): Prison {
+    prisonRegister.getPrison(prison)
+    return prison
+  }
 
   @BeforeEach
   fun clearContext() {

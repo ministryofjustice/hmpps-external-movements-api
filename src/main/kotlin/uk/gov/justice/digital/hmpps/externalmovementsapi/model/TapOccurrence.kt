@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
 import com.fasterxml.jackson.databind.JsonNode
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDateTime
@@ -11,7 +13,9 @@ import java.util.UUID
 @Schema(name = "TapOccurrence")
 data class TapOccurrence(
   val id: UUID,
+  @Parameter(name = "prisonCode", required = true, example = "MDI", deprecated = true)
   val prisonCode: String,
+  val prison: Prison,
   val authorisation: Authorisation,
   val absenceType: CodedDescription?,
   val absenceSubType: CodedDescription?,

@@ -106,6 +106,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
 
   fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
     assertThat(person.personIdentifier).isEqualTo(authorisation.person.identifier)
+    assertThat(prison.code).isEqualTo(authorisation.prisonCode)
     assertThat(status.code).isEqualTo(authorisation.status.code)
     with(authorisation.reasonPath) {
       verify(ABSENCE_TYPE, absenceType, authorisation.absenceType)
