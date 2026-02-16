@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
@@ -367,13 +366,7 @@ class ResyncTapHierarchy(
   )
 
   private fun mergeMigrationAudit(id: UUID, created: AtAndBy, updated: AtAndBy?) {
-    migrationSystemAuditRepository.findByIdOrNull(id)?.apply {
-      new = false
-      updated?.also {
-        updatedAt = it.at
-        updatedBy = it.by
-      }
-    } ?: migrationSystemAuditRepository.save(
+    migrationSystemAuditRepository.save(
       MigrationSystemAudit(id, created.at, created.by, updated?.at, updated?.by),
     )
   }
