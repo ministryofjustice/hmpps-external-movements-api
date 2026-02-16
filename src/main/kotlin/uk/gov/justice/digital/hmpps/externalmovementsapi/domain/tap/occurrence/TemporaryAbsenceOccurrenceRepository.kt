@@ -124,15 +124,6 @@ interface TemporaryAbsenceOccurrenceRepository :
   """,
   )
   fun deleteByPersonIdentifier(personIdentifier: String)
-
-  @Query(
-    """
-    select o from TemporaryAbsenceOccurrence o
-    where o.person.identifier = :personIdentifier
-    and o.id not in (:ids)
-  """,
-  )
-  fun findForPersonNotIn(personIdentifier: String, ids: Set<UUID>): List<TemporaryAbsenceOccurrence>
 }
 
 fun TemporaryAbsenceOccurrenceRepository.getOccurrence(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence occurrence not found")

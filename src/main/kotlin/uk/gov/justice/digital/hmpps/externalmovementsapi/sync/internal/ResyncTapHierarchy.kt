@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
@@ -20,11 +19,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.valueOf
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
@@ -75,7 +76,8 @@ class ResyncTapHierarchy(
   private val telemetryClient: TelemetryClient,
 ) {
   fun resync(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
-    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, migratingData = false).set()
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, migratingData = false)
+      .set()
     val person = personSummaryService.getWithSave(personIdentifier)
     val allRd = referenceDataRepository.findAll()
     val rdLinks =
@@ -83,9 +85,26 @@ class ResyncTapHierarchy(
     val findLinkedFrom: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData> =
       { id: UUID, domainCode: ReferenceDataDomain.Code -> rdLinks[id to domainCode] ?: emptyList() }
 
-    val tap = request.temporaryAbsences.map { it.resync(person, allRd, findLinkedFrom) }
-    val unscheduled = request.unscheduledMovements.map { it.resync(person, null, allRd) }
-    removeNotInResync(personIdentifier, tap, unscheduled)
+    val authorisations: List<TemporaryAbsenceAuthorisation> =
+      authorisationRepository.findAll(authorisationMatchesPersonIdentifier(personIdentifier))
+    val authorisationProvider = { id: UUID?, legacyId: Long ->
+      authorisations.firstOrNull { it.id == id || it.legacyId == legacyId }
+    }
+    val occurrences: List<TemporaryAbsenceOccurrence> =
+      occurrenceRepository.findAll(occurrenceMatchesPersonIdentifier(personIdentifier))
+    val occurrenceProvider = { id: UUID?, legacyId: Long ->
+      occurrences.firstOrNull { it.id == id || it.legacyId == legacyId }
+    }
+    val movements: List<TemporaryAbsenceMovement> = movementRepository.findAllByPersonIdentifier(personIdentifier)
+    val movementProvider = { id: UUID?, legacyId: String ->
+      movements.firstOrNull { it.id == id || it.legacyId == legacyId }
+    }
+
+    val tap = request.temporaryAbsences.map {
+      it.resync(person, allRd, findLinkedFrom, authorisationProvider, occurrenceProvider, movementProvider)
+    }
+    val unscheduled = request.unscheduledMovements.map { it.resync(person, null, allRd, movementProvider) }
+    removeNotInResync(tap, unscheduled, authorisations, occurrences, movements)
     return MigrateTapResponse(tap, unscheduled)
   }
 
@@ -93,13 +112,16 @@ class ResyncTapHierarchy(
     person: PersonSummary,
     rd: List<ReferenceData>,
     findLinked: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData>,
+    authorisationProvider: (UUID?, Long) -> TemporaryAbsenceAuthorisation?,
+    occurrenceProvider: (UUID?, Long) -> TemporaryAbsenceOccurrence?,
+    movementProvider: (UUID?, String) -> TemporaryAbsenceMovement?,
   ): MigratedAuthorisation {
     val rdPaths = rdPaths(rd, findLinked)
-    val auth = (
-      id?.let(authorisationRepository::findByIdOrNull) ?: authorisationRepository.findByLegacyId(legacyId)
-      )?.update(person, this, rdPaths)
+    val auth = authorisationProvider(id, legacyId)?.update(person, this, rdPaths)
       ?: authorisationRepository.save(asEntity(person, rdPaths))
-    val occurrences = occurrences.map { it.resync(person, auth, rd, findLinked) }
+    val occurrences = occurrences.map {
+      it.resync(person, auth, rd, findLinked, occurrenceProvider, movementProvider)
+    }
     mergeMigrationAudit(auth.id, created, updated)
     return MigratedAuthorisation(legacyId, auth.id, occurrences)
   }
@@ -109,13 +131,13 @@ class ResyncTapHierarchy(
     authorisation: TemporaryAbsenceAuthorisation,
     rd: List<ReferenceData>,
     findLinked: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData>,
+    occurrenceProvider: (UUID?, Long) -> TemporaryAbsenceOccurrence?,
+    movementProvider: (UUID?, String) -> TemporaryAbsenceMovement?,
   ): MigratedOccurrence {
     val rdPaths = rdPaths(rd, findLinked)
-    val occ = (
-      id?.let(occurrenceRepository::findByIdOrNull) ?: occurrenceRepository.findByLegacyId(legacyId)
-      )?.update(authorisation, this, rdPaths)
+    val occ = occurrenceProvider(id, legacyId)?.update(authorisation, this, rdPaths)
       ?: asEntity(authorisation, rdPaths)
-    val movements = movements.map { it.resync(person, occ, rd) }
+    val movements = movements.map { it.resync(person, occ, rd, movementProvider) }
     if (movements.map { it.id }.sorted() != occ.movements().map { it.id }.sorted()) {
       val toRemove = occ.movements().filter { m -> m.id !in movements.map { it.id } }
       toRemove.forEach { mov ->
@@ -135,12 +157,11 @@ class ResyncTapHierarchy(
     person: PersonSummary,
     occurrence: TemporaryAbsenceOccurrence?,
     rd: List<ReferenceData>,
+    movementProvider: (UUID?, String) -> TemporaryAbsenceMovement?,
   ): MigratedMovement {
     val rdSupplier =
       { domain: KClass<out ReferenceData>, code: String -> rd.first { domain.isInstance(it) && it.code == code } }
-    val movement = (
-      id?.let(movementRepository::findByIdOrNull) ?: movementRepository.findByLegacyId(legacyId)
-      )?.update(person, occurrence, this, rdSupplier)
+    val movement = movementProvider(id, legacyId)?.update(person, occurrence, this, rdSupplier)
       ?: asEntity(person, rdSupplier)
     occurrence?.also { occ ->
       if (occurrence.movements().none { it.id == id }) {
@@ -155,19 +176,19 @@ class ResyncTapHierarchy(
   }
 
   private fun removeNotInResync(
-    personIdentifier: String,
     tap: List<MigratedAuthorisation>,
     unscheduled: List<MigratedMovement>,
+    authorisations: List<TemporaryAbsenceAuthorisation>,
+    occurrences: List<TemporaryAbsenceOccurrence>,
+    movements: List<TemporaryAbsenceMovement>,
   ) {
     val movementIds =
       tap.flatMap { a -> a.occurrences.flatMap { o -> o.movements.map { m -> m.id } } } + unscheduled.map { it.id }
     val occurrenceIds = tap.flatMap { a -> a.occurrences.map { o -> o.id } }
-    movementRepository.findForPersonNotIn(personIdentifier, movementIds.toSet())
-      .forEach(movementRepository::delete)
-    occurrenceRepository.findForPersonNotIn(personIdentifier, occurrenceIds.toSet())
-      .forEach(occurrenceRepository::delete)
-    authorisationRepository.findForPersonNotIn(personIdentifier, tap.map { a -> a.id }.toSet())
-      .forEach(authorisationRepository::delete)
+    val authorisationIds = tap.map { a -> a.id }.toSet()
+    movements.filter { it.id !in movementIds }.also(movementRepository::deleteAll)
+    occurrences.filter { it.id !in occurrenceIds }.also(occurrenceRepository::deleteAll)
+    authorisations.filter { it.id !in authorisationIds }.also(authorisationRepository::deleteAll)
   }
 
   private fun TapAuthorisation.asEntity(
@@ -345,13 +366,7 @@ class ResyncTapHierarchy(
   )
 
   private fun mergeMigrationAudit(id: UUID, created: AtAndBy, updated: AtAndBy?) {
-    migrationSystemAuditRepository.findByIdOrNull(id)?.apply {
-      new = false
-      updated?.also {
-        updatedAt = it.at
-        updatedBy = it.by
-      }
-    } ?: migrationSystemAuditRepository.save(
+    migrationSystemAuditRepository.save(
       MigrationSystemAudit(id, created.at, created.by, updated?.at, updated?.by),
     )
   }
