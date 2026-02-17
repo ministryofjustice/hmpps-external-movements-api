@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Tem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -39,6 +40,8 @@ data class TapOccurrence(
     val id: UUID,
     val person: Person,
     val status: CodedDescription,
+    val start: LocalDate,
+    val end: LocalDate,
     val absenceType: CodedDescription?,
     val absenceSubType: CodedDescription?,
     val absenceReasonCategory: CodedDescription?,
