@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.JoinType
 import org.hibernate.jpa.HibernateHints
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
@@ -124,6 +125,15 @@ interface TemporaryAbsenceOccurrenceRepository :
   """,
   )
   fun deleteByPersonIdentifier(personIdentifier: String)
+
+  @Query("""select tao.id from TemporaryAbsenceOccurrence tao where tao.person.identifier = :personIdentifier""")
+  fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>
+
+  @Query("""select tao.id from TemporaryAbsenceOccurrence tao where tao.legacyId in :legacyIds""")
+  fun findIdsByLegacyId(legacyIds: Set<Long>): List<UUID>
+
+  @EntityGraph("tap.occurrence.full")
+  override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceOccurrence>
 }
 
 fun TemporaryAbsenceOccurrenceRepository.getOccurrence(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence occurrence not found")

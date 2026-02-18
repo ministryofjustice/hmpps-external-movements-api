@@ -7,6 +7,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
@@ -78,6 +79,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty1
 
+@NamedEntityGraph(name = "tap.occurrence.full", includeAllAttributes = true)
 @Audited
 @Entity
 @Table(schema = "tap", name = "occurrence")
@@ -129,19 +131,19 @@ class TemporaryAbsenceOccurrence(
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
-  @JoinColumn(name = "absence_reason_id")
+  @JoinColumn(name = "absence_reason_id", nullable = false)
   override var absenceReason: AbsenceReason = absenceReason
     private set
 
   @Audited
   @ManyToOne
-  @JoinColumn(name = "authorisation_id")
+  @JoinColumn(name = "authorisation_id", nullable = false)
   var authorisation: TemporaryAbsenceAuthorisation = authorisation
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
-  @JoinColumn(name = "person_identifier")
+  @JoinColumn(name = "person_identifier", nullable = false)
   var person: PersonSummary = authorisation.person
     private set
 
@@ -174,7 +176,7 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "location")
+  @Column(name = "location", nullable = false)
   var location: Location = location
     private set
 
@@ -192,7 +194,7 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "reason_path")
+  @Column(name = "reason_path", nullable = false)
   var reasonPath: ReasonPath = reasonPath
     private set
 
