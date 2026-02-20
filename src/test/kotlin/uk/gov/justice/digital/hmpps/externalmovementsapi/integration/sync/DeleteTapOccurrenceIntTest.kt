@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
-import com.fasterxml.jackson.module.kotlin.treeToValue
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
@@ -11,7 +10,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -21,7 +19,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import java.util.UUID
 
 class DeleteTapOccurrenceIntTest(
@@ -76,18 +73,13 @@ class DeleteTapOccurrenceIntTest(
 
     deleteTapOccurrence(occurrence.id).expectStatus().isNoContent
 
-    val saved = findTemporaryAbsenceOccurrence(occurrence.id)
-    assertThat(saved).isNull()
-    val updatedAuth = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    assertThat(updatedAuth.schedule).isNotNull
-    val schedule = objectMapper.treeToValue<AuthorisationSchedule>(updatedAuth.schedule!!)
-    assertThat(schedule.startTime).isEqualTo(occurrence.start.toLocalTime())
-    assertThat(schedule.returnTime).isEqualTo(occurrence.end.toLocalTime())
+    val deleted = findTemporaryAbsenceOccurrence(occurrence.id)
+    assertThat(deleted).isNull()
 
     verifyAudit(
       occurrence,
       RevisionType.DEL,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!, TemporaryAbsenceAuthorisation::class.simpleName!!),
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
       ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
     )
 

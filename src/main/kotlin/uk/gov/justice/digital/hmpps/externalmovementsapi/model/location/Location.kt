@@ -7,9 +7,12 @@ data class Location(
   val postcode: String?,
   val uprn: Long?,
 ) {
-  companion object {
-    fun unknown() = Location("Location not found", null, null, null)
-  }
-
+  fun isEmpty(): Boolean = description.isNullOrEmpty() && address.isNullOrEmpty() && postcode.isNullOrEmpty()
   override fun toString(): String = listOfNotNull(description?.trim(), address?.trim(), postcode?.trim()).joinToString()
+
+  companion object {
+    fun empty(): Location = Location(null, null, null, null)
+  }
 }
+
+fun Location?.isNullOrEmpty(): Boolean = this == null || isEmpty()

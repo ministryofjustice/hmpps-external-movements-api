@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -35,10 +36,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.isNullOrEmpty
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate.now
+import java.time.LocalTime
 import java.util.UUID
 
 @Transactional
@@ -53,7 +57,7 @@ class SyncTapAuthorisation(
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
     val person = personSummaryService.getWithSave(personIdentifier)
     val rdPaths = referenceDataRepository.referenceDataFor(request)
-    val application = (
+    val authorisation = (
       request.id?.let { authorisationRepository.findByIdOrNull(it) }
         ?: authorisationRepository.findByLegacyId(request.legacyId)
       )
@@ -65,7 +69,7 @@ class SyncTapAuthorisation(
         ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
         authorisationRepository.save(request.asEntity(person, rdPaths))
       }
-    return SyncResponse(application.id)
+    return SyncResponse(authorisation.id)
   }
 
   fun deleteById(id: UUID) {
@@ -110,7 +114,7 @@ class SyncTapAuthorisation(
       comments = comments,
       start = start,
       end = end,
-      locations = location?.let { linkedSetOf(it) } ?: linkedSetOf(),
+      locations = location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) } ?: linkedSetOf(),
       reasonPath = reasonPath,
       schedule = schedule()?.let { objectMapper.valueToTree(it) },
       legacyId = legacyId,
@@ -130,12 +134,13 @@ class SyncTapAuthorisation(
     applyLogistics(request, rdPaths)
     applyComments(ChangeAuthorisationComments(request.comments))
     val occurrences = occurrenceRepository.findByAuthorisationId(id)
+    (
+      occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
+        ?: request.location?.let { linkedSetOf(it) }
+      )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
     if (occurrences.isEmpty()) {
       request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
     }
-    val locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
-      ?: request.location?.let { linkedSetOf(it) }
-    locations?.also { applyLocations(ChangeAuthorisationLocations(it)) }
   }
 
   private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(
@@ -172,4 +177,25 @@ class SyncTapAuthorisation(
   private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
     applyDateRange(ChangeAuthorisationDateRange(request.start, request.end), rdPaths::getReferenceData)
   }
+
+  private fun TemporaryAbsenceAuthorisation.occurrence(
+    startTime: LocalTime,
+    endTime: LocalTime,
+  ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
+    authorisation = this,
+    absenceType = absenceType,
+    absenceSubType = absenceSubType,
+    absenceReasonCategory = absenceReasonCategory,
+    absenceReason = absenceReason,
+    start = start.atTime(startTime),
+    end = end.atTime(endTime),
+    contactInformation = null,
+    accompaniedBy = accompaniedBy,
+    transport = transport,
+    location = locations.first(),
+    comments = comments,
+    legacyId = legacyId,
+    reasonPath = reasonPath,
+    scheduleReference = null,
+  )
 }
