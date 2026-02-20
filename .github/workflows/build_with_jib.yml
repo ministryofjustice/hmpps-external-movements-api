@@ -34,7 +34,6 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Push Image
-        if: github.ref == 'refs/heads/main'
         shell: bash
         # Configuration cache is not yet supported for Jib - see: https://github.com/GoogleContainerTools/jib/issues/3132
         run: ./gradlew jib --no-configuration-cache
