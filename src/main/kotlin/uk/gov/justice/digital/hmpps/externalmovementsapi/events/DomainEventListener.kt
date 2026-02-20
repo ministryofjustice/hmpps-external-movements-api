@@ -42,6 +42,7 @@ class DomainEventListener(
       TemporaryAbsenceAuthorisationDeferred.EVENT_TYPE,
       TemporaryAbsenceAuthorisationDenied.EVENT_TYPE,
       TemporaryAbsenceAuthorisationPending.EVENT_TYPE,
+      TemporaryAbsenceAuthorisationExpired.EVENT_TYPE,
     )
   }
 }

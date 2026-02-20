@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDeferred
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDenied
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationExpired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -18,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.UnapprovedAuthStatusHandler
@@ -163,5 +165,36 @@ class UnapprovedAuthorisationIntTest(
     assertThat(occurrence.start.toLocalTime()).isEqualTo(LocalTime.of(8, 40))
     assertThat(occurrence.end.toLocalTime()).isEqualTo(LocalTime.of(10, 40))
     assertThat(occurrence.location).isEqualTo(occ.location)
+  }
+
+  @Test
+  fun `sync of an expired authorisation creates occurrence if one doesn't exist`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        status = AuthorisationStatus.Code.PENDING,
+        repeat = false,
+        legacyId = newId(),
+        start = LocalDate.now().plusDays(1),
+        end = LocalDate.now().plusDays(1),
+        schedule = objectMapper.valueToTree(AuthorisationSchedule(LocalTime.of(8, 0), LocalTime.of(10, 0))),
+      ),
+    )
+
+    val expired = transactionTemplate.execute {
+      val toExpire = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+      toExpire.expire(ExpireAuthorisation()) { domain, code ->
+        requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
+      }
+      toExpire
+    }!!
+    assertThat(expired.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
+
+    uasHandler.handle(TemporaryAbsenceAuthorisationExpired(auth.person.identifier, auth.id, DataSource.NOMIS))
+
+    val occurrence = findForAuthorisation(auth.id).single()
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+    assertThat(occurrence.start.toLocalTime()).isEqualTo(LocalTime.of(8, 0))
+    assertThat(occurrence.end.toLocalTime()).isEqualTo(LocalTime.of(10, 0))
+    assertThat(occurrence.location).isEqualTo(Location.empty())
   }
 }
