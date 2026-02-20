@@ -14,11 +14,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReasonCategory
@@ -36,13 +36,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.isNullOrEmpty
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate.now
-import java.time.LocalTime
 import java.util.UUID
 
 @Transactional
@@ -67,7 +67,11 @@ class SyncTapAuthorisation(
       ?.update(person, request, rdPaths)
       ?: let {
         ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
-        authorisationRepository.save(request.asEntity(person, rdPaths))
+        val saved = authorisationRepository.save(request.asEntity(person, rdPaths))
+        if (!saved.repeat && saved.schedule != null && saved.status.code != AuthorisationStatus.Code.APPROVED.name) {
+          saved.createOccurrence(objectMapper, rdPaths)
+        }
+        saved
       }
     return SyncResponse(authorisation.id)
   }
@@ -138,9 +142,21 @@ class SyncTapAuthorisation(
       occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: request.location?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
-    if (occurrences.isEmpty()) {
-      request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
+    val schedule = request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
+    if (schedule != null && !repeat && status.code != AuthorisationStatus.Code.APPROVED.name) {
+      occurrences.singleOrNull()?.also {
+        it.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
+      } ?: createOccurrence(objectMapper, rdPaths)
     }
+  }
+
+  private fun TemporaryAbsenceAuthorisation.createOccurrence(
+    objectMapper: ObjectMapper,
+    rdPaths: ReferenceDataPaths,
+  ) {
+    occurrence(objectMapper)?.calculateStatus { code ->
+      rdPaths.getReferenceData(OccurrenceStatus::class, code) as OccurrenceStatus
+    }?.also(occurrenceRepository::save)
   }
 
   private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(
@@ -177,25 +193,4 @@ class SyncTapAuthorisation(
   private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
     applyDateRange(ChangeAuthorisationDateRange(request.start, request.end), rdPaths::getReferenceData)
   }
-
-  private fun TemporaryAbsenceAuthorisation.occurrence(
-    startTime: LocalTime,
-    endTime: LocalTime,
-  ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
-    authorisation = this,
-    absenceType = absenceType,
-    absenceSubType = absenceSubType,
-    absenceReasonCategory = absenceReasonCategory,
-    absenceReason = absenceReason,
-    start = start.atTime(startTime),
-    end = end.atTime(endTime),
-    contactInformation = null,
-    accompaniedBy = accompaniedBy,
-    transport = transport,
-    location = locations.first(),
-    comments = comments,
-    legacyId = legacyId,
-    reasonPath = reasonPath,
-    scheduleReference = null,
-  )
 }

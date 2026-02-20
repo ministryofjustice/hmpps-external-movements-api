@@ -47,6 +47,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.isNullOrEmpty
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
@@ -257,9 +258,16 @@ class ResyncTapHierarchy(
       .forEach { auth ->
         val authOccurrences = occurrencesByAuthId[auth.id] ?: emptyList()
         if (authOccurrences.isEmpty()) {
-          auth.occurrence()
+          auth.occurrence(objectMapper)
             ?.calculateStatus { code -> occurrenceStatuses.first { it.code == code } }
             ?.also(occurrenceRepository::save)
+        } else {
+          auth.schedule?.also {
+            val schedule = objectMapper.treeToValue<AuthorisationSchedule>(it)
+            authOccurrences.single().reschedule(
+              RescheduleOccurrence(auth.start.atTime(schedule.startTime), auth.end.atTime(schedule.returnTime)),
+            )
+          }
         }
       }
   }
@@ -315,34 +323,11 @@ class ResyncTapHierarchy(
     checkSchedule(request, rdPaths)
     applyLogistics(request, rdPaths)
     applyComments(ChangeAuthorisationComments(request.comments))
-    if (request.occurrences.isEmpty()) {
-      request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
-    }
+    request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
     (
       request.occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
-  }
-
-  fun TemporaryAbsenceAuthorisation.occurrence(): TemporaryAbsenceOccurrence? = this.schedule?.let {
-    val schedule = objectMapper.treeToValue<AuthorisationSchedule>(it)
-    TemporaryAbsenceOccurrence(
-      authorisation = this,
-      absenceType = absenceType,
-      absenceSubType = absenceSubType,
-      absenceReasonCategory = absenceReasonCategory,
-      absenceReason = absenceReason,
-      start = start.atTime(schedule.startTime),
-      end = end.atTime(schedule.returnTime),
-      contactInformation = null,
-      accompaniedBy = accompaniedBy,
-      transport = transport,
-      location = locations.firstOrNull() ?: Location.empty(),
-      comments = comments,
-      legacyId = legacyId,
-      reasonPath = reasonPath,
-      scheduleReference = null,
-    )
   }
 
   private fun TapOccurrence.asEntity(

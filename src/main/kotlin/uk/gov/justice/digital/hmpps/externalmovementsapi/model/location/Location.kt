@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.location
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 @ValidLocation
 data class Location(
   val description: String?,
@@ -7,7 +9,8 @@ data class Location(
   val postcode: String?,
   val uprn: Long?,
 ) {
-  fun isEmpty(): Boolean = description.isNullOrEmpty() && address.isNullOrEmpty() && postcode.isNullOrEmpty()
+  @JsonIgnore
+  fun isEmpty(): Boolean = description.isNullOrBlank() && address.isNullOrBlank() && postcode.isNullOrBlank()
   override fun toString(): String = listOfNotNull(description?.trim(), address?.trim(), postcode?.trim()).joinToString()
 
   companion object {

@@ -10,9 +10,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
@@ -24,6 +26,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationTransportChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -32,6 +35,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Loca
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.PersonSummaryOperations.Companion.verifyAgainst
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
@@ -47,8 +52,10 @@ import java.util.UUID
 
 class SyncTapAuthorisationIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
-  TempAbsenceAuthorisationOperations by taaOperations {
+  TempAbsenceAuthorisationOperations by taaOperations,
+  TempAbsenceOccurrenceOperations by taoOperations {
 
   @Test
   fun `401 unauthorised without a valid token`() {
@@ -99,13 +106,23 @@ class SyncTapAuthorisationIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(
+    verifyEventPublications(
       saved,
-      setOf(TemporaryAbsenceAuthorisationPending(saved.person.identifier, saved.id, DataSource.NOMIS)),
+      setOf(
+        TemporaryAbsenceAuthorisationPending(
+          saved.person.identifier,
+          saved.id,
+          DataSource.NOMIS,
+        ).publication(saved.id),
+      ),
     )
   }
 
@@ -118,7 +135,7 @@ class SyncTapAuthorisationIntTest(
       prisonCode = prisonCode,
       statusCode = "PENDING",
       updated = null,
-      location = Location("", "", "", null),
+      location = Location(" ", "", "  ", null),
     )
     val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
 
@@ -143,7 +160,11 @@ class SyncTapAuthorisationIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
@@ -183,7 +204,11 @@ class SyncTapAuthorisationIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
@@ -219,10 +244,20 @@ class SyncTapAuthorisationIntTest(
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
+    val occurrence = findForAuthorisation(saved.id).single()
+    assertThat(occurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    assertThat(occurrence.start).isEqualTo(request.start.atTime(request.startTime))
+    assertThat(occurrence.end).isEqualTo(request.end.atTime(request.endTime))
+    assertThat(occurrence.location).isEqualTo(request.location)
+
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
@@ -257,10 +292,20 @@ class SyncTapAuthorisationIntTest(
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
+    val occurrence = findForAuthorisation(saved.id).single()
+    assertThat(occurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    assertThat(occurrence.start).isEqualTo(request.start.atTime(request.startTime))
+    assertThat(occurrence.end).isEqualTo(request.end.atTime(request.endTime))
+    assertThat(occurrence.location).isEqualTo(request.location)
+
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
 
@@ -338,7 +383,14 @@ class SyncTapAuthorisationIntTest(
   fun `200 ok authorisation updated for security escort`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, pi, locations = linkedSetOf(location()), legacyId = newId()))
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        pi,
+        locations = linkedSetOf(location()),
+        legacyId = newId(),
+      ),
+    )
     val request = tapAuthorisation(
       id = auth.id,
       reasonCode = "SE",
@@ -389,7 +441,12 @@ class SyncTapAuthorisationIntTest(
         locations = linkedSetOf(location()),
       ),
     )
-    val request = tapAuthorisation(id = existing.id, existing.prisonCode, location = existing.locations.single(), legacyId = legacyId)
+    val request = tapAuthorisation(
+      id = existing.id,
+      existing.prisonCode,
+      location = existing.locations.single(),
+      legacyId = legacyId,
+    )
     val res = syncAuthorisation(existing.person.identifier, request).successResponse<SyncResponse>()
 
     assertThat(res.id).isEqualTo(existing.id)
@@ -445,15 +502,99 @@ class SyncTapAuthorisationIntTest(
     saved.verifyAgainst(existing.person.identifier, request)
     assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
     assertThat(saved.locations).containsExactly(request.location)
+    val occurrence = findForAuthorisation(saved.id).single()
+    assertThat(occurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    assertThat(occurrence.start).isEqualTo(request.start.atTime(request.startTime))
+    assertThat(occurrence.end).isEqualTo(request.end.atTime(request.endTime))
 
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
-    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationDeferred(saved.person.identifier, saved.id, DataSource.NOMIS)))
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationDeferred(saved.person.identifier, saved.id, DataSource.NOMIS),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - pending authorisation rescheduled is propagated to occurrence`() {
+    val legacyId = newId()
+    val prisonCode = prisonCode()
+    val ps = givenPersonSummary(personSummary())
+    val existing = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        status = AuthorisationStatus.Code.PENDING,
+        legacyId = legacyId,
+        prisonCode = prisonCode,
+        personIdentifier = ps.identifier,
+        start = now().plusDays(2),
+        end = now().plusDays(2),
+        locations = linkedSetOf(location()),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        existing,
+        start = existing.start.atTime(9, 0),
+        end = existing.end.atTime(17, 0),
+        location = existing.locations.single(),
+      ),
+    )
+
+    val request = tapAuthorisation(
+      id = existing.id,
+      prisonCode = existing.prisonCode,
+      legacyId = legacyId,
+      statusCode = "PENDING",
+      comments = existing.comments,
+      start = existing.start,
+      end = existing.end,
+      startTime = LocalTime.of(10, 0),
+      endTime = LocalTime.of(14, 0),
+      location = existing.locations.single(),
+    )
+    val res = syncAuthorisation(existing.person.identifier, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isEqualTo(existing.id)
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(existing.id))
+    saved.verifyAgainst(existing.person.identifier, request)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    assertThat(saved.locations).containsExactly(request.location)
+
+    val occurrence = findForAuthorisation(saved.id).single()
+    assertThat(occurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    assertThat(occurrence.start).isEqualTo(request.start.atTime(request.startTime))
+    assertThat(occurrence.end).isEqualTo(request.end.atTime(request.endTime))
+    assertThat(occurrence.location).isEqualTo(request.location)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceRescheduled(occurrence.person.identifier, occurrence.id, DataSource.NOMIS)
+          .publication(occurrence.id) { false },
+      ),
+    )
   }
 
   @Test

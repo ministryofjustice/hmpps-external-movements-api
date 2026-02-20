@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDeferred
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -556,7 +557,14 @@ class ResyncTapHierarchyIntTest(
         legacyId = newId(),
       ),
     )
-    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, location = auth.locations.single()))
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = auth.start.atTime(15, 0),
+        end = auth.end.atTime(17, 0),
+        location = auth.locations.single(),
+      ),
+    )
 
     val request = resyncTapRequest(
       temporaryAbsences = listOf(
@@ -566,9 +574,11 @@ class ResyncTapHierarchyIntTest(
           occurrences = listOf(),
           // nomis doesn't have the concept of expired so sends pending
           statusCode = "PENDING",
-          start = auth.start,
-          end = auth.end,
-          location = auth.locations.single(),
+          start = occ.start.toLocalDate(),
+          end = occ.end.toLocalDate(),
+          startTime = occ.start.toLocalTime(),
+          endTime = occ.end.toLocalTime(),
+          location = occ.location,
           comments = "Resync authorisation",
         ),
       ),
@@ -653,6 +663,79 @@ class ResyncTapHierarchyIntTest(
         ).publication(auth.id),
         TemporaryAbsenceAuthorisationRelocated(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
         TemporaryAbsenceAuthorisationDeferred(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - non scheduled occurrence is updated from schedule of non approved authorisation`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now().plusDays(2),
+        end = LocalDate.now().plusDays(2),
+        status = AuthorisationStatus.Code.PENDING,
+        locations = linkedSetOf(location()),
+        legacyId = newId(),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = auth.start.atTime(10, 0),
+        end = auth.end.atTime(12, 0),
+        location = auth.locations.single(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          occurrences = listOf(),
+          statusCode = "PENDING",
+          start = auth.start,
+          end = auth.end,
+          startTime = LocalTime.of(9, 30),
+          endTime = LocalTime.of(14, 30),
+          location = occ.location,
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    val dpsOccurrence = findForAuthorisation(saved.id).single()
+    assertThat(dpsOccurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    val authRequest = request.temporaryAbsences.single()
+    assertThat(dpsOccurrence.start).isEqualTo(authRequest.start.atTime(authRequest.startTime))
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationCommentsChanged(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { true },
+        TemporaryAbsenceRescheduled(
+          dpsOccurrence.person.identifier,
+          dpsOccurrence.id,
+          DataSource.NOMIS,
+        ).publication(dpsOccurrence.id) { false },
       ),
     )
   }

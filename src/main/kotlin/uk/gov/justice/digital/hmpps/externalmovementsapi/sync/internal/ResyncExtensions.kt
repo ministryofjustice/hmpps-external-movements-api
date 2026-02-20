@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
@@ -22,8 +24,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import java.time.LocalDate.now
 
 internal fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(
@@ -50,7 +54,11 @@ internal fun TemporaryAbsenceAuthorisation.applyLogistics(request: TapAuthorisat
 
 internal fun TemporaryAbsenceAuthorisation.checkStatus(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
   when (request.statusCode) {
-    AuthorisationStatus.Code.PENDING.name if (now().isAfter(request.end)) -> expire(ExpireAuthorisation(), rdPaths::getReferenceData)
+    AuthorisationStatus.Code.PENDING.name if (now().isAfter(request.end)) -> expire(
+      ExpireAuthorisation(),
+      rdPaths::getReferenceData,
+    )
+
     AuthorisationStatus.Code.PENDING.name -> defer(DeferAuthorisation(), rdPaths::getReferenceData)
     AuthorisationStatus.Code.APPROVED.name -> approve(ApproveAuthorisation(), rdPaths::getReferenceData)
     AuthorisationStatus.Code.CANCELLED.name -> cancel(CancelAuthorisation(), rdPaths::getReferenceData)
@@ -94,4 +102,25 @@ internal fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence
   if (request.isCancelled) {
     cancel(CancelOccurrence(), rdPaths::getReferenceData)
   }
+}
+
+fun TemporaryAbsenceAuthorisation.occurrence(objectMapper: ObjectMapper): TemporaryAbsenceOccurrence? = this.schedule?.let {
+  val schedule = objectMapper.treeToValue<AuthorisationSchedule>(it)
+  TemporaryAbsenceOccurrence(
+    authorisation = this,
+    absenceType = absenceType,
+    absenceSubType = absenceSubType,
+    absenceReasonCategory = absenceReasonCategory,
+    absenceReason = absenceReason,
+    start = start.atTime(schedule.startTime),
+    end = end.atTime(schedule.returnTime),
+    contactInformation = null,
+    accompaniedBy = accompaniedBy,
+    transport = transport,
+    location = locations.firstOrNull() ?: Location.empty(),
+    comments = comments,
+    legacyId = legacyId,
+    reasonPath = reasonPath,
+    scheduleReference = null,
+  )
 }
