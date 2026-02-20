@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -58,6 +59,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigratedOc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.reflect.KClass
@@ -117,7 +119,8 @@ class ResyncTapHierarchy(
       it.resync(person, allRd, findLinkedFrom, authorisationProvider, occurrenceProvider, movementProvider)
     }
     val unscheduled = request.unscheduledMovements.map { it.resync(person, null, allRd, movementProvider) }
-    removeNotInResync(tap, unscheduled, authorisations, occurrences, movements)
+    val (auth, occ) = removeNotInResync(tap, unscheduled, authorisations, occurrences, movements)
+    createMissingOccurrences(auth, occ, allRd.filterIsInstance<OccurrenceStatus>())
     return MigrateTapResponse(tap, unscheduled)
   }
 
@@ -227,14 +230,38 @@ class ResyncTapHierarchy(
     authorisations: List<TemporaryAbsenceAuthorisation>,
     occurrences: List<TemporaryAbsenceOccurrence>,
     movements: List<TemporaryAbsenceMovement>,
-  ) {
+  ): Pair<List<TemporaryAbsenceAuthorisation>, List<TemporaryAbsenceOccurrence>> {
     val movementIds =
       tap.flatMap { a -> a.occurrences.flatMap { o -> o.movements.map { m -> m.id } } } + unscheduled.map { it.id }
     val occurrenceIds = tap.flatMap { a -> a.occurrences.map { o -> o.id } }
     val authorisationIds = tap.map { a -> a.id }.toSet()
     movements.filter { it.id !in movementIds }.also(movementRepository::deleteAll)
-    occurrences.filter { it.id !in occurrenceIds }.also(occurrenceRepository::deleteAll)
-    authorisations.filter { it.id !in authorisationIds }.also(authorisationRepository::deleteAll)
+    // only delete scheduled ones not in nomis as nomis doesn't have the unscheduled ones
+    val (authToDelete, authToKeep) = authorisations.partition { it.id !in authorisationIds }
+    val (occToDelete, occToKeep) = occurrences.partition {
+      it.id !in occurrenceIds &&
+        (it.authorisation.id in authToDelete.map { atd -> atd.id } || it.status.code == OccurrenceStatus.Code.SCHEDULED.name)
+    }
+    occToDelete.also(occurrenceRepository::deleteAll)
+    authToDelete.also(authorisationRepository::deleteAll)
+    return authToKeep to occToKeep
+  }
+
+  private fun createMissingOccurrences(
+    authorisations: List<TemporaryAbsenceAuthorisation>,
+    occurrences: List<TemporaryAbsenceOccurrence>,
+    occurrenceStatuses: List<OccurrenceStatus>,
+  ) {
+    val occurrencesByAuthId = occurrences.groupBy { it.authorisation.id }
+    authorisations.filter { auth -> !auth.repeat && auth.status.code != AuthorisationStatus.Code.APPROVED.name }
+      .forEach { auth ->
+        val authOccurrences = occurrencesByAuthId[auth.id] ?: emptyList()
+        if (authOccurrences.isEmpty()) {
+          auth.occurrence()
+            ?.calculateStatus { code -> occurrenceStatuses.first { it.code == code } }
+            ?.also(occurrenceRepository::save)
+        }
+      }
   }
 
   private fun TapAuthorisation.asEntity(
@@ -295,6 +322,27 @@ class ResyncTapHierarchy(
       request.occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
+  }
+
+  fun TemporaryAbsenceAuthorisation.occurrence(): TemporaryAbsenceOccurrence? = this.schedule?.let {
+    val schedule = objectMapper.treeToValue<AuthorisationSchedule>(it)
+    TemporaryAbsenceOccurrence(
+      authorisation = this,
+      absenceType = absenceType,
+      absenceSubType = absenceSubType,
+      absenceReasonCategory = absenceReasonCategory,
+      absenceReason = absenceReason,
+      start = start.atTime(schedule.startTime),
+      end = end.atTime(schedule.returnTime),
+      contactInformation = null,
+      accompaniedBy = accompaniedBy,
+      transport = transport,
+      location = locations.firstOrNull() ?: Location.empty(),
+      comments = comments,
+      legacyId = legacyId,
+      reasonPath = reasonPath,
+      scheduleReference = null,
+    )
   }
 
   private fun TapOccurrence.asEntity(

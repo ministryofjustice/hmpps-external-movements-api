@@ -520,6 +520,32 @@ class ResyncTapHierarchyIntTest(
   }
 
   @Test
+  fun `200 ok - create occurrence if not exists for single auth`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(legacyId = newId(), repeat = false, status = AuthorisationStatus.Code.EXPIRED),
+    )
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          statusCode = AuthorisationStatus.Code.PENDING.name,
+          occurrences = listOf(),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    val response = resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val responseAuth = response.temporaryAbsences.single()
+    // response will have no occurrences as occurrences that are not scheduled do not exist in nomis
+    assertThat(responseAuth.occurrences).hasSize(0)
+    val occurrence = findForAuthorisation(responseAuth.id).single()
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+    assertThat(occurrence.location).isEqualTo(request.temporaryAbsences.single().location)
+  }
+
+  @Test
   fun `200 ok - resync of expired authorisation maintains status`() {
     val auth = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
@@ -530,6 +556,7 @@ class ResyncTapHierarchyIntTest(
         legacyId = newId(),
       ),
     )
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, location = auth.locations.single()))
 
     val request = resyncTapRequest(
       temporaryAbsences = listOf(
@@ -562,7 +589,11 @@ class ResyncTapHierarchyIntTest(
     verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
+        TemporaryAbsenceAuthorisationCommentsChanged(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id),
       ),
     )
   }
@@ -598,18 +629,28 @@ class ResyncTapHierarchyIntTest(
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
     assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    val dpsOccurrence = findForAuthorisation(saved.id).single()
+    assertThat(dpsOccurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
 
     verifyAudit(
       saved,
       RevisionType.MOD,
-      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
       ExternalMovementContext.get().copy(source = DataSource.NOMIS),
     )
 
     verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
+        TemporaryAbsenceAuthorisationCommentsChanged(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id),
         TemporaryAbsenceAuthorisationRelocated(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
         TemporaryAbsenceAuthorisationDeferred(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
       ),
