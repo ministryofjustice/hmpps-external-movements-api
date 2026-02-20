@@ -46,6 +46,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.isNullOrEmpty
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigrateTapRequest
@@ -270,7 +272,7 @@ class ResyncTapHierarchy(
       schedule = schedule()?.let { objectMapper.valueToTree(it) },
       reasonPath = reasonPath,
       locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
-        ?: location?.let { linkedSetOf(it) } ?: linkedSetOf(),
+        ?: location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) } ?: linkedSetOf(),
       legacyId = legacyId,
     )
   }
@@ -289,9 +291,10 @@ class ResyncTapHierarchy(
     if (request.occurrences.isEmpty()) {
       request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
     }
-    val locations = request.occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
-      ?: request.location?.let { linkedSetOf(it) }
-    locations?.also { applyLocations(ChangeAuthorisationLocations(it)) }
+    (
+      request.occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
+        ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
+      )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
   }
 
   private fun TapOccurrence.asEntity(

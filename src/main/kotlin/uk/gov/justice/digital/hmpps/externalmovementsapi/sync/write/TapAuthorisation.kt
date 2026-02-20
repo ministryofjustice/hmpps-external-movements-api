@@ -29,8 +29,8 @@ data class TapAuthorisation(
   val repeat: Boolean,
   val start: LocalDate,
   val end: LocalDate,
-  val startTime: LocalTime?,
-  val endTime: LocalTime?,
+  val startTime: LocalTime,
+  val endTime: LocalTime,
   val location: Location?,
   val comments: String?,
   val created: AtAndBy,
@@ -47,7 +47,7 @@ data class TapAuthorisation(
     TRANSPORT of transportCode,
   )
 
-  fun schedule(): AuthorisationSchedule? = if (!repeat && startTime != null && endTime != null) {
+  fun schedule(): AuthorisationSchedule? = if (!repeat) {
     AuthorisationSchedule(startTime, endTime)
   } else {
     null

@@ -110,6 +110,50 @@ class SyncTapAuthorisationIntTest(
   }
 
   @Test
+  fun `200 ok authorisation with empty location successfully processed`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = tapAuthorisation(
+      prisonCode = prisonCode,
+      statusCode = "PENDING",
+      updated = null,
+      location = Location("", "", "", null),
+    )
+    val res = syncAuthorisation(pi, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.reasonPath.path).containsExactly(
+      ReferenceDataDomain.Code.ABSENCE_TYPE of "SR",
+      ReferenceDataDomain.Code.ABSENCE_SUB_TYPE of "RDR",
+      ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY of "PW",
+      ReferenceDataDomain.Code.ABSENCE_REASON of "R15",
+    )
+    assertThat(saved.locations).isEmpty()
+    assertThat(saved.schedule).isNotNull
+    val schedule: AuthorisationSchedule = objectMapper.treeToValue(saved.schedule!!)
+    assertThat(schedule.startTime).isEqualTo(request.startTime)
+    assertThat(schedule.returnTime).isEqualTo(request.endTime)
+    assertThat(schedule.type).isEqualTo("SINGLE")
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(
+      saved,
+      setOf(TemporaryAbsenceAuthorisationPending(saved.person.identifier, saved.id, DataSource.NOMIS)),
+    )
+  }
+
+  @Test
   fun `200 ok authorisation created where category is required but type and sub type missing`() {
     val prisonCode = prisonCode()
     val pi = personIdentifier()

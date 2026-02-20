@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.ResyncTap
 @PreAuthorize("hasRole('${Roles.NOMIS_SYNC}')")
 class ResyncController(private val tap: ResyncTapHierarchy) {
   @PutMapping("/temporary-absences/{personIdentifier}")
-  fun migrateTemporaryAbsences(
+  fun mergeTemporaryAbsences(
     @PathVariable personIdentifier: String,
     @RequestBody request: MigrateTapRequest,
   ): MigrateTapResponse = tap.resync(personIdentifier, request)

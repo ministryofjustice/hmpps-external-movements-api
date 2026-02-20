@@ -69,8 +69,8 @@ data class TapAuthorisation(
   val repeat: Boolean,
   val start: LocalDate,
   val end: LocalDate,
-  val startTime: LocalTime?,
-  val endTime: LocalTime?,
+  val startTime: LocalTime,
+  val endTime: LocalTime,
   val location: Location?,
   val comments: String?,
   val created: AtAndBy,
@@ -89,7 +89,7 @@ data class TapAuthorisation(
     TAP_AUTHORISATION_STATUS of AuthorisationStatus.Code.EXPIRED.name,
   )
 
-  fun schedule(): AuthorisationSchedule? = if (!repeat && occurrences.isEmpty() && startTime != null && endTime != null) {
+  fun schedule(): AuthorisationSchedule? = if (!repeat && occurrences.isEmpty()) {
     AuthorisationSchedule(startTime, endTime)
   } else {
     null
