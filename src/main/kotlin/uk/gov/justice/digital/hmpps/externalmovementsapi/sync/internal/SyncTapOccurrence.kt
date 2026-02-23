@@ -76,7 +76,7 @@ class SyncTapOccurrence(
         }
     occurrenceRepository.flush()
     val locations = occurrenceRepository.findByAuthorisationId(authorisation.id).mapTo(linkedSetOf()) { it.location }
-    authorisation.applyLocations(ChangeAuthorisationLocations(locations)).clearSchedule()
+    authorisation.applyLocations(ChangeAuthorisationLocations(locations))
     return SyncResponse(occurrence.id)
   }
 

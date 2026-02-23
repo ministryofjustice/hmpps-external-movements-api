@@ -144,8 +144,13 @@ class SyncTapAuthorisation(
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
     val schedule = request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
     if (schedule != null && !repeat && status.code != AuthorisationStatus.Code.APPROVED.name) {
-      occurrences.singleOrNull()?.also {
-        it.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
+      occurrences.singleOrNull()?.let { occ ->
+        if (occ.status.code == OccurrenceStatus.Code.SCHEDULED.name) {
+          occurrenceRepository.delete(occ)
+          null
+        } else {
+          occ.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
+        }
       } ?: createOccurrence(objectMapper, rdPaths)
     }
   }
