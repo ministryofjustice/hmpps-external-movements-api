@@ -338,12 +338,6 @@ class TemporaryAbsenceAuthorisation(
     schedule = json
   }
 
-  fun clearSchedule() = apply {
-    if (!repeat) {
-      schedule = null
-    }
-  }
-
   companion object {
     val PRISON_CODE = TemporaryAbsenceAuthorisation::prisonCode.name
     val PERSON = TemporaryAbsenceAuthorisation::person.name

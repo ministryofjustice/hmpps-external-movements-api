@@ -264,9 +264,9 @@ class ResyncTapHierarchy(
         } else {
           auth.schedule?.also {
             val schedule = objectMapper.treeToValue<AuthorisationSchedule>(it)
-            authOccurrences.single().reschedule(
-              RescheduleOccurrence(auth.start.atTime(schedule.startTime), auth.end.atTime(schedule.returnTime)),
-            )
+            authOccurrences.single()
+              .reschedule(RescheduleOccurrence(auth.start.atTime(schedule.startTime), auth.end.atTime(schedule.returnTime)))
+              .calculateStatus { code -> occurrenceStatuses.first { s -> s.code == code } }
           }
         }
       }

@@ -140,12 +140,18 @@ class SyncTapAuthorisation(
     val occurrences = occurrenceRepository.findByAuthorisationId(id)
     (
       occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
-        ?: request.location?.let { linkedSetOf(it) }
+        ?: request.location?.takeIf { it.isNullOrEmpty() }?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
     val schedule = request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
     if (schedule != null && !repeat && status.code != AuthorisationStatus.Code.APPROVED.name) {
-      occurrences.singleOrNull()?.also {
-        it.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
+      occurrences.singleOrNull()?.let { occ ->
+        if (occ.status.code == OccurrenceStatus.Code.SCHEDULED.name) {
+          occurrenceRepository.delete(occ)
+          null
+        } else {
+          occ.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
+          occ.calculateStatus { rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus }
+        }
       } ?: createOccurrence(objectMapper, rdPaths)
     }
   }

@@ -13,6 +13,21 @@ data class Location(
   fun isEmpty(): Boolean = description.isNullOrBlank() && address.isNullOrBlank() && postcode.isNullOrBlank()
   override fun toString(): String = listOfNotNull(description?.trim(), address?.trim(), postcode?.trim()).joinToString()
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as Location
+
+    if (description != other.description) return false
+    if (address != other.address) return false
+    if (postcode != other.postcode) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = description?.hashCode() ?: ((0 + (address?.hashCode() ?: 0)) + (postcode?.hashCode() ?: 0))
+
   companion object {
     fun empty(): Location = Location(null, null, null, null)
   }
