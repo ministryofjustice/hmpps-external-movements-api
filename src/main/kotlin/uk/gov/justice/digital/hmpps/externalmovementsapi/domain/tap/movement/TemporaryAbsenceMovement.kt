@@ -21,7 +21,6 @@ import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
@@ -286,10 +285,6 @@ interface TemporaryAbsenceMovementRepository :
     """,
   )
   fun summaryForPerson(personIdentifier: String): PersonMovementSummary
-
-  @Modifying
-  @Query("delete from TemporaryAbsenceMovement tam where tam.person.identifier = :personIdentifier")
-  fun deleteByPersonIdentifier(personIdentifier: String)
 
   @Query("""select tam.id from TemporaryAbsenceMovement tam where tam.person.identifier = :personIdentifier""")
   fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>

@@ -527,7 +527,7 @@ class SyncTapAuthorisationIntTest(
   }
 
   @Test
-  fun `200 ok - pending authorisation rescheduled is propagated to occurrence`() {
+  fun `200 ok - pending authorisation reschedule is propagated to occurrence`() {
     val legacyId = newId()
     val prisonCode = prisonCode()
     val ps = givenPersonSummary(personSummary())
@@ -542,7 +542,7 @@ class SyncTapAuthorisationIntTest(
         locations = linkedSetOf(location()),
       ),
     )
-    val occ = givenTemporaryAbsenceOccurrence(
+    givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         existing,
         start = existing.start.atTime(9, 0),

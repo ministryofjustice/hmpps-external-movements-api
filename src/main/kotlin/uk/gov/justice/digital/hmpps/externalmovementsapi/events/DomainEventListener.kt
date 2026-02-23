@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PrisonerMergedHandler
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonUpdatedHandler
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationApprovedHandler
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.UnapprovedAuthStatusHandler
 
 @Service
 class DomainEventListener(
@@ -17,7 +16,6 @@ class DomainEventListener(
   private val person: PersonUpdatedHandler,
   private val merged: PrisonerMergedHandler,
   private val authApproved: AuthorisationApprovedHandler,
-  private val unapprovedStatus: UnapprovedAuthStatusHandler,
 ) {
   @SqsListener("hmppsdomaineventsqueue", factory = "hmppsQueueContainerFactoryProxy")
   fun receive(notification: Notification) {
@@ -26,7 +24,6 @@ class DomainEventListener(
         PrisonerUpdated.EVENT_TYPE -> person.handle(objectMapper.readValue(notification.message))
         PrisonerMerged.EVENT_TYPE -> merged.handle(objectMapper.readValue(notification.message))
         TemporaryAbsenceAuthorisationApproved.EVENT_TYPE -> authApproved.handle(objectMapper.readValue(notification.message))
-        in UNAPPROVED_STATUS_EVENTS -> unapprovedStatus.handle(objectMapper.readValue(notification.message))
       }
     } catch (ex: Exception) {
       Sentry.captureException(ex)
@@ -34,15 +31,5 @@ class DomainEventListener(
     } finally {
       ExternalMovementContext.clear()
     }
-  }
-
-  companion object {
-    private val UNAPPROVED_STATUS_EVENTS = setOf(
-      TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationDeferred.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationDenied.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationPending.EVENT_TYPE,
-      TemporaryAbsenceAuthorisationExpired.EVENT_TYPE,
-    )
   }
 }

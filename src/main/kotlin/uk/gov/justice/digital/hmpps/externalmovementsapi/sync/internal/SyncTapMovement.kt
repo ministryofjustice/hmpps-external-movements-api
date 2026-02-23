@@ -67,7 +67,7 @@ class SyncTapMovement(
         }
     occurrence?.authorisation?.also {
       movementRepository.flush()
-      val locations = occurrenceRepository.findByAuthorisationId(it.id).mapTo(linkedSetOf()) { it.location }
+      val locations = occurrenceRepository.findByAuthorisationId(it.id).mapTo(linkedSetOf()) { occ -> occ.location }
       it.applyLocations(ChangeAuthorisationLocations(locations))
     }
     return SyncResponse(movement.id)

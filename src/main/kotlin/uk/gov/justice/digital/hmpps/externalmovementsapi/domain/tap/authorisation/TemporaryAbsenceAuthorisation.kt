@@ -24,7 +24,6 @@ import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
@@ -400,10 +399,6 @@ interface TemporaryAbsenceAuthorisationRepository :
   fun findByStatusAndEndBefore(statusId: UUID, date: LocalDate): List<TemporaryAbsenceAuthorisation>
 
   fun countByPersonIdentifier(personIdentifier: String): Int
-
-  @Modifying
-  @Query("delete from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier")
-  fun deleteByPersonIdentifier(personIdentifier: String)
 
   @Query("""select taa.id from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier""")
   fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>

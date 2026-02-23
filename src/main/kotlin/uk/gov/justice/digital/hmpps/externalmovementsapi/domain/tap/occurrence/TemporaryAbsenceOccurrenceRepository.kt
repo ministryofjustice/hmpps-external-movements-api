@@ -8,7 +8,6 @@ import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
@@ -117,14 +116,6 @@ interface TemporaryAbsenceOccurrenceRepository :
 
   fun countByPersonIdentifier(personIdentifier: String): Int
   fun findByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceOccurrence>
-
-  @Modifying
-  @Query(
-    """
-    delete from TemporaryAbsenceOccurrence tao where tao.person.identifier = :personIdentifier
-  """,
-  )
-  fun deleteByPersonIdentifier(personIdentifier: String)
 
   @Query("""select tao.id from TemporaryAbsenceOccurrence tao where tao.person.identifier = :personIdentifier""")
   fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>
