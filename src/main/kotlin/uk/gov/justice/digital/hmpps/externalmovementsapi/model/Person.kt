@@ -8,8 +8,4 @@ data class Person(
   val lastName: String,
   val dateOfBirth: LocalDate,
   val cellLocation: String?,
-) {
-  companion object {
-    fun unknown(personIdentifier: String) = Person(personIdentifier, firstName = "", lastName = "", LocalDate.EPOCH, cellLocation = null)
-  }
-}
+)
