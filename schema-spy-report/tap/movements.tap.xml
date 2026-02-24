@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><database name="movements" schema="tap" type="PostgreSQL - 18.2 (Debian 18.2-1.pgdg13+1)">
    <tables>
-      <table catalog="movements" name="absence_categorisation_link" remarks="" schema="tap" type="TABLE">
+      <table catalog="movements" name="absence_categorisation_link" numRows="71" remarks="" schema="tap" type="TABLE">
          <column autoUpdated="false" defaultValue="uuidv7()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="domain_1" nullable="false" remarks="" size="32" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="id_1" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
@@ -16,7 +16,7 @@
             <column ascending="true" name="sequence_number"/>
          </index>
       </table>
-      <table catalog="movements" name="absence_reason" remarks="" schema="tap" type="TABLE">
+      <table catalog="movements" name="absence_reason" numRows="98" remarks="" schema="tap" type="TABLE">
          <column autoUpdated="false" defaultValue="uuidv7()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child catalog="movements" column="absence_reason_id" foreignKey="fk_tap_authorisation_absence_reason" implied="false" onDeleteCascade="false" schema="tap" table="authorisation"/>
             <child catalog="movements" column="absence_reason_id" foreignKey="fk_tap_movement_absence_reason" implied="false" onDeleteCascade="false" schema="tap" table="movement"/>
@@ -400,12 +400,17 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="schedule_reference" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="dps_only" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_tap_occurrence" unique="true">
             <column ascending="true" name="id"/>
          </index>
          <index name="idx_tap_occurrence_authorisation_id" unique="false">
             <column ascending="true" name="authorisation_id"/>
+         </index>
+         <index name="idx_tap_occurrence_person_identifier_dps_only" unique="false">
+            <column ascending="true" name="person_identifier"/>
+            <column ascending="true" name="dps_only"/>
          </index>
          <index name="idx_tap_occurrence_prison_person_start_end" unique="false">
             <column ascending="true" name="prison_code"/>
@@ -447,6 +452,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="schedule_reference" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="dps_only" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <primaryKey column="rev_id" sequenceNumberInPK="2"/>
          <index name="pk_tap_occurrence_audit" unique="true">
