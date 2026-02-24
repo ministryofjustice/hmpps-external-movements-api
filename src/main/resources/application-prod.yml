@@ -9,7 +9,7 @@ integration:
     url: "https://prisoner-search.prison.service.justice.gov.uk"
 
 service:
-  active-prisons: "KVI,LYI,TCI"
+  active-prisons: "AGI,EHI,ESI,FDI,GNI,HBI,HDI,HVI,KMI,KVI,LNI,LYI,NSI,SPI,SUI,TCI,UPI,WII"
   domain-events:
     poll-interval: PT0.1s
   occurrence-status:
