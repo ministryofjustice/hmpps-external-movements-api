@@ -79,7 +79,7 @@ class ResyncTapHierarchy(
   private val telemetryClient: TelemetryClient,
 ) {
   fun resync(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
-    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, migratingData = false)
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, migratingData = true)
       .set()
     val person = personSummaryService.getWithSave(personIdentifier)
     val allRd = referenceDataRepository.findAll()

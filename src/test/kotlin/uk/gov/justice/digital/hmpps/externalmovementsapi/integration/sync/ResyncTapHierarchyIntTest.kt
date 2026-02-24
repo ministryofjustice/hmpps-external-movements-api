@@ -606,7 +606,7 @@ class ResyncTapHierarchyIntTest(
           auth.person.identifier,
           auth.id,
           DataSource.NOMIS,
-        ).publication(auth.id),
+        ).publication(auth.id) { false },
       ),
     )
   }
@@ -663,9 +663,17 @@ class ResyncTapHierarchyIntTest(
           auth.person.identifier,
           auth.id,
           DataSource.NOMIS,
-        ).publication(auth.id),
-        TemporaryAbsenceAuthorisationRelocated(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
-        TemporaryAbsenceAuthorisationDeferred(auth.person.identifier, auth.id, DataSource.NOMIS).publication(auth.id),
+        ).publication(auth.id) { false },
+        TemporaryAbsenceAuthorisationRelocated(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
+        TemporaryAbsenceAuthorisationDeferred(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
       ),
     )
   }
@@ -733,7 +741,7 @@ class ResyncTapHierarchyIntTest(
           auth.person.identifier,
           auth.id,
           DataSource.NOMIS,
-        ).publication(auth.id) { true },
+        ).publication(auth.id) { false },
       ),
     )
   }
