@@ -119,9 +119,9 @@ fun TemporaryAbsenceAuthorisation.occurrence(objectMapper: ObjectMapper): Tempor
     transport = transport,
     location = locations.firstOrNull() ?: Location.empty(),
     comments = comments,
-    legacyId = legacyId,
     reasonPath = reasonPath,
     scheduleReference = null,
+    legacyId = null,
     dpsOnly = true,
   )
 }
