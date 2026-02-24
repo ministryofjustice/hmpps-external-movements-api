@@ -91,7 +91,9 @@ class ChangeOccurrenceCommentsIntTest(
     verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceCommentsChanged(occurrence.authorisation.person.identifier, occurrence.id).publication(
+          occurrence.id,
+        ),
         TemporaryAbsenceAuthorisationCommentsChanged(auth.person.identifier, auth.id).publication(auth.id),
       ),
     )
@@ -99,8 +101,9 @@ class ChangeOccurrenceCommentsIntTest(
 
   @Test
   fun `200 ok single tap occurrence comments updated - no publish`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.PENDING))
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val auth =
+      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.PENDING))
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
     assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
 
     val request = action()

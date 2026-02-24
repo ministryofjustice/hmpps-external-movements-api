@@ -120,9 +120,7 @@ class TapAuthorisationModifications(
 
   private fun TemporaryAbsenceAuthorisation.affectedOccurrences() = taoRepository.findAll(
     forAuthorisation(id)
-      .and(
-        occurrenceStatusCodeIn(OccurrenceStatus.Code.PENDING, OccurrenceStatus.Code.SCHEDULED),
-      ),
+      .and(occurrenceStatusCodeIn(OccurrenceStatus.Code.PENDING, OccurrenceStatus.Code.SCHEDULED)),
   )
 
   private fun TemporaryAbsenceAuthorisation.updateOccurrenceStatus() {

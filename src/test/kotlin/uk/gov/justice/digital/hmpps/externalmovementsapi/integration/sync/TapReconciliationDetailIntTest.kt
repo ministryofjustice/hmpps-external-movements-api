@@ -62,10 +62,11 @@ class TapReconciliationDetailIntTest(
   @Test
   fun `200 ok - tap detail returned for person`() {
     val personIdentifier = personIdentifier()
-    val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(personIdentifier = personIdentifier))
+    val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(personIdentifier = personIdentifier, repeat = true))
     val auth2 = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         personIdentifier = personIdentifier,
+        repeat = true,
         status = AuthorisationStatus.Code.PENDING,
       ),
     )
@@ -93,10 +94,20 @@ class TapReconciliationDetailIntTest(
       )
     }
 
+    val auth3 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        personIdentifier = personIdentifier,
+        repeat = false,
+        status = AuthorisationStatus.Code.PENDING,
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth3, dpsOnly = true))
+
     val res = getTapDetail(personIdentifier).successResponse<PersonTapDetail>()
     assertThat(res.scheduledAbsences.map { it.id to it.statusCode }).containsExactlyInAnyOrder(
       auth1.id to AuthorisationStatus.Code.valueOf(auth1.status.code),
       auth2.id to AuthorisationStatus.Code.valueOf(auth2.status.code),
+      auth3.id to AuthorisationStatus.Code.valueOf(auth3.status.code),
     )
     val schedules = res.scheduledAbsences.flatMap { it.occurrences }
     assertThat(schedules.map { it.id to it.statusCode }).containsExactlyInAnyOrderElementsOf(

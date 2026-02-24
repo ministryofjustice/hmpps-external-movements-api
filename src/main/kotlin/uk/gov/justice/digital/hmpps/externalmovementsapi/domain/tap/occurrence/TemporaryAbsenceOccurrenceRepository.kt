@@ -114,8 +114,8 @@ interface TemporaryAbsenceOccurrenceRepository :
   )
   fun findReturningTodayCount(prisonIdentifier: String): Int
 
-  fun countByPersonIdentifier(personIdentifier: String): Int
-  fun findByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceOccurrence>
+  fun countByPersonIdentifierAndDpsOnlyFalse(personIdentifier: String): Int
+  fun findByPersonIdentifierAndDpsOnlyFalse(personIdentifier: String): List<TemporaryAbsenceOccurrence>
 
   @Query("""select tao.id from TemporaryAbsenceOccurrence tao where tao.person.identifier = :personIdentifier""")
   fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>

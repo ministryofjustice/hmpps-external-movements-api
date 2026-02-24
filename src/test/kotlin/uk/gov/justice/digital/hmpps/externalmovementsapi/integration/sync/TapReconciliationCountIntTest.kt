@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -72,9 +73,12 @@ class TapReconciliationCountIntTest(
         temporaryAbsenceMovement(direction = direction, personIdentifier = personIdentifier, occurrence = occurrence),
       )
     }
+    val auth3 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(personIdentifier = personIdentifier, status = AuthorisationStatus.Code.PENDING))
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth3, dpsOnly = true))
+
     val res = getTapCounts(personIdentifier).successResponse<PersonTapCounts>()
 
-    assertThat(res.authorisations.count).isEqualTo(2)
+    assertThat(res.authorisations.count).isEqualTo(3)
     assertThat(res.occurrences.count).isEqualTo(5)
     assertThat(res.movements.scheduled.outCount).isEqualTo(2)
     assertThat(res.movements.scheduled.inCount).isEqualTo(1)

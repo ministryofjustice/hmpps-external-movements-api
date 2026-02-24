@@ -30,10 +30,11 @@ class EntityInterceptor : Interceptor {
     propertyNames: Array<out String>,
     types: Array<out Type>,
   ): Boolean {
-    if (entity is DomainEventProducer && !ExternalMovementContext.get().migratingData) {
+    if (entity is DomainEventProducer) {
+      val migrating = ExternalMovementContext.get().migratingData
       entity.domainEvents().forEach {
         if (registerDomainEvent(it.entityId, it.event.eventType)) {
-          em.persist(HmppsDomainEvent(it.event, it.entityId).apply { published = !it.publish })
+          em.persist(HmppsDomainEvent(it.event, it.entityId).apply { published = migrating || !it.publish })
         }
       }
     }
@@ -47,10 +48,11 @@ class EntityInterceptor : Interceptor {
     propertyNames: Array<out String>,
     types: Array<out Type>,
   ): Boolean {
-    if (entity is DomainEventProducer && !ExternalMovementContext.get().migratingData) {
+    if (entity is DomainEventProducer) {
+      val migrating = ExternalMovementContext.get().migratingData
       entity.initialEvents().forEach {
         if (registerDomainEvent(it.entityId, it.event.eventType)) {
-          em.persist(HmppsDomainEvent(it.event, it.entityId).apply { published = !it.publish })
+          em.persist(HmppsDomainEvent(it.event, it.entityId).apply { published = migrating || !it.publish })
         }
       }
     }

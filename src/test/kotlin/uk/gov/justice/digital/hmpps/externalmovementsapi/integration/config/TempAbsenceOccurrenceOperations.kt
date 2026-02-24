@@ -60,6 +60,7 @@ interface TempAbsenceOccurrenceOperations {
       reasonPath: ReasonPath = authorisation.reasonPath,
       scheduleReference: JsonNode? = null,
       legacyId: Long? = null,
+      dpsOnly: Boolean = false,
       movements: List<((KClass<out ReferenceData>, String) -> ReferenceData, (String) -> PersonSummary) -> TemporaryAbsenceMovement> = listOf(),
     ): ((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceOccurrence = { rdSupplier ->
       val occurrence = TemporaryAbsenceOccurrence(
@@ -80,6 +81,7 @@ interface TempAbsenceOccurrenceOperations {
         reasonPath = reasonPath,
         scheduleReference = scheduleReference,
         legacyId = legacyId,
+        dpsOnly = dpsOnly,
       )
       movements.forEach {
         occurrence.addMovement(

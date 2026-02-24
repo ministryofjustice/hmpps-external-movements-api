@@ -126,6 +126,7 @@ class SyncTapOccurrence(
       legacyId = legacyId,
       reasonPath = reasonPath,
       scheduleReference = null,
+      dpsOnly = false,
       id = id ?: newUuid(),
     ).apply {
       if (isCancelled) {
@@ -145,6 +146,7 @@ class SyncTapOccurrence(
     applyLogistics(request, rdPaths)
     checkCancellation(request, rdPaths)
     applyComments(ChangeOccurrenceComments(request.comments))
+    applyLegacyId(request.legacyId)
     if (request.isCancelled && movements().isEmpty()) {
       cancel(CancelOccurrence(), rdPaths::getReferenceData)
     } else {

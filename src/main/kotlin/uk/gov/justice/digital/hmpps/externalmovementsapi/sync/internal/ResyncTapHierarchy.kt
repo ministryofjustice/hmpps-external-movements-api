@@ -79,7 +79,7 @@ class ResyncTapHierarchy(
   private val telemetryClient: TelemetryClient,
 ) {
   fun resync(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
-    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, migratingData = false)
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, migratingData = true)
       .set()
     val person = personSummaryService.getWithSave(personIdentifier)
     val allRd = referenceDataRepository.findAll()
@@ -237,11 +237,10 @@ class ResyncTapHierarchy(
     val occurrenceIds = tap.flatMap { a -> a.occurrences.map { o -> o.id } }
     val authorisationIds = tap.map { a -> a.id }.toSet()
     movements.filter { it.id !in movementIds }.also(movementRepository::deleteAll)
-    // only delete scheduled ones not in nomis as nomis doesn't have the unscheduled ones
     val (authToDelete, authToKeep) = authorisations.partition { it.id !in authorisationIds }
     val (occToDelete, occToKeep) = occurrences.partition {
       it.id !in occurrenceIds &&
-        (it.authorisation.id in authToDelete.map { atd -> atd.id } || it.status.code == OccurrenceStatus.Code.SCHEDULED.name)
+        (it.authorisation.id in authToDelete.map { atd -> atd.id } || !it.dpsOnly)
     }
     occToDelete.also(occurrenceRepository::deleteAll)
     authToDelete.also(authorisationRepository::deleteAll)
@@ -358,6 +357,7 @@ class ResyncTapHierarchy(
       legacyId = legacyId,
       reasonPath = reasonPath,
       scheduleReference = null,
+      dpsOnly = false,
     ).apply {
       if (isCancelled) {
         cancel(CancelOccurrence(), rdPaths::getReferenceData)
@@ -388,6 +388,7 @@ class ResyncTapHierarchy(
     applyLogistics(request, rdPaths)
     checkCancellation(request, rdPaths)
     applyComments(ChangeOccurrenceComments(request.comments))
+    applyLegacyId(request.legacyId)
     if (request.isCancelled && request.movements.isEmpty()) {
       cancel(CancelOccurrence(), rdPaths::getReferenceData)
     }

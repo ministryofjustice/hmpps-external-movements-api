@@ -393,6 +393,7 @@ interface TemporaryAbsenceAuthorisationRepository :
   fun findByStatusAndEndBefore(statusId: UUID, date: LocalDate): List<TemporaryAbsenceAuthorisation>
 
   fun countByPersonIdentifier(personIdentifier: String): Int
+  fun findByPersonIdentifier(personIdentifiable: String): List<TemporaryAbsenceAuthorisation>
 
   @Query("""select taa.id from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier""")
   fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>
