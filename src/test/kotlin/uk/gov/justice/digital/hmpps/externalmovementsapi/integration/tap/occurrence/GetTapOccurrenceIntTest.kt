@@ -57,7 +57,7 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve individually cancelled occurrence`() {
     val prison = givenPrison()
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code, repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,

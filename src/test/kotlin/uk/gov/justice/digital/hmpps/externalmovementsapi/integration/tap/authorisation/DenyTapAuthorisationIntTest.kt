@@ -115,7 +115,7 @@ class DenyTapAuthorisationIntTest(
       saved,
       setOf(
         TemporaryAbsenceAuthorisationDenied(auth.person.identifier, auth.id).publication(auth.id),
-        TemporaryAbsenceDenied(auth.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceDenied(auth.person.identifier, occurrence.id).publication(occurrence.id) { false },
       ),
     )
   }

@@ -122,5 +122,6 @@ fun TemporaryAbsenceAuthorisation.occurrence(objectMapper: ObjectMapper): Tempor
     legacyId = legacyId,
     reasonPath = reasonPath,
     scheduleReference = null,
+    dpsOnly = true,
   )
 }

@@ -548,6 +548,7 @@ class SyncTapAuthorisationIntTest(
         start = existing.start.atTime(9, 0),
         end = existing.end.atTime(17, 0),
         location = existing.locations.single(),
+        dpsOnly = true,
       ),
     )
 
