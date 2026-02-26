@@ -9,8 +9,7 @@ import java.time.temporal.ChronoUnit
 import java.time.temporal.Temporal
 import kotlin.reflect.KClass
 
-interface PrisonOrPersonIdentifier<T : Temporal> : StartAndEnd<T> {
-  val prisonCode: String?
+interface PersonIdentifierDateRange<T : Temporal> : StartAndEnd<T> {
   val query: String?
 
   @JsonIgnore
@@ -19,23 +18,23 @@ interface PrisonOrPersonIdentifier<T : Temporal> : StartAndEnd<T> {
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-@Constraint(validatedBy = [PrisonOrPersonIdentifierValidator::class])
-annotation class ValidPrisonOrPersonIdentifier(
+@Constraint(validatedBy = [PersonIdentifierDateRangeValidator::class])
+annotation class ValidPersonIdentifierOrDateRange(
   val message: String = DEFAULT_MESSAGE,
   val groups: Array<KClass<*>> = [],
   val payload: Array<KClass<out Any>> = [],
 ) {
   companion object {
-    const val DEFAULT_MESSAGE = "A valid person identifier is required or valid prison code, start and end."
+    const val DEFAULT_MESSAGE = "A valid person identifier is required or valid start and end."
   }
 }
 
-class PrisonOrPersonIdentifierValidator : ConstraintValidator<ValidPrisonOrPersonIdentifier, PrisonOrPersonIdentifier<*>> {
-  override fun isValid(request: PrisonOrPersonIdentifier<*>, context: ConstraintValidatorContext): Boolean = with(request) {
+class PersonIdentifierDateRangeValidator : ConstraintValidator<ValidPersonIdentifierOrDateRange, PersonIdentifierDateRange<*>> {
+  override fun isValid(request: PersonIdentifierDateRange<*>, context: ConstraintValidatorContext): Boolean = with(request) {
     return if (request.isPersonIdentifier()) {
       true
     } else {
-      prisonCode?.isNotBlank() == true && start != null && end != null && ChronoUnit.DAYS.between(start, end) <= 31
+      start != null && end != null && ChronoUnit.DAYS.between(start, end) <= 31
     }
   }
 }

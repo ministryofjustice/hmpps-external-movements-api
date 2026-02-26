@@ -53,7 +53,7 @@ class PrisonRegisterMockServer : WireMockServer(9005) {
   }
 
   companion object {
-    fun prison() = Prison(prisonCode(), word(10))
+    fun prison(code: String = prisonCode(), name: String = word(10)) = Prison(code, name)
   }
 }
 
