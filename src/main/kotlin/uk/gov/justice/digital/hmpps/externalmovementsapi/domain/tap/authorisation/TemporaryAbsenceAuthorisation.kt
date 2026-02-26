@@ -316,7 +316,7 @@ class TemporaryAbsenceAuthorisation(
   }
 
   fun expire(action: ExpireAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    if (status.code == PENDING.name) {
+    if (status.code == PENDING.name || status.code == APPROVED.name) {
       applyStatus(EXPIRED, rdSupplier, action)
     }
   }
