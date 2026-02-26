@@ -30,7 +30,6 @@ class GetTapMovement(
     occurrence = occurrence?.toModel(),
     occurredAt = occurredAt,
     direction = direction,
-    prisonCode = prisonCode,
     prison = prisonRegister.getPrisonOrDefault(prisonCode),
     absenceReason = absenceReason.asCodedDescription(),
     location = location,

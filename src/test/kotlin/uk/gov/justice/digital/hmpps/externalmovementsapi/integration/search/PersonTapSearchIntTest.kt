@@ -95,8 +95,7 @@ class PersonTapSearchIntTest(
       ),
     )
 
-    val prison = prison(toFind.prisonCode, "Prison for findable")
-    prisonRegister.getPrison(prison)
+    val prison = givenPrison(prison(toFind.prisonCode, "Prison for findable"))
 
     val res = searchPersonTap(toFind.person.identifier).successResponse<PersonTapSearchResponse>()
 
@@ -139,8 +138,7 @@ class PersonTapSearchIntTest(
 
   @Test
   fun `can filter occurrences by status`() {
-    val prisonCode = prisonCode()
-    prisonRegister.getPrison(prison(prisonCode))
+    val prisonCode = givenPrison().code
     val personIdentifier = personIdentifier()
     val start = LocalDateTime.now().minusDays(3)
     val end = LocalDateTime.now().plusDays(1)
@@ -216,8 +214,7 @@ class PersonTapSearchIntTest(
 
   @Test
   fun `can filter occurrences by absence categorisation`() {
-    val prisonCode = prisonCode()
-    prisonRegister.getPrison(prison(prisonCode))
+    val prisonCode = givenPrison().code
     val personIdentifier = personIdentifier()
 
     val auth1 = givenTemporaryAbsenceAuthorisation(
@@ -296,8 +293,7 @@ class PersonTapSearchIntTest(
 
   @Test
   fun `can sort occurrences by status`() {
-    val prisonCode = prisonCode()
-    prisonRegister.getPrison(prison(prisonCode))
+    val prisonCode = givenPrison().code
     val personIdentifier = personIdentifier()
     val start = LocalDateTime.now().minusDays(3)
     val end = LocalDateTime.now().plusDays(3)
@@ -433,8 +429,7 @@ class PersonTapSearchIntTest(
 
   @Test
   fun `can sort type or reason`() {
-    val prisonCode = prisonCode()
-    prisonRegister.getPrison(prison(prisonCode))
+    val prisonCode = givenPrison().code
     val personIdentifier = personIdentifier()
 
     val sr = givenTemporaryAbsenceAuthorisation(
@@ -494,8 +489,7 @@ class PersonTapSearchIntTest(
 
   @Test
   fun `can sort accompanied by or transport`() {
-    val prisonCode = prisonCode()
-    prisonRegister.getPrison(prison(prisonCode))
+    val prisonCode = givenPrison().code
     val personIdentifier = personIdentifier()
 
     val one = givenTemporaryAbsenceAuthorisation(
@@ -554,8 +548,7 @@ class PersonTapSearchIntTest(
 
   @Test
   fun `can sort by location`() {
-    val prisonCode = prisonCode()
-    prisonRegister.getPrison(prison(prisonCode))
+    val prisonCode = givenPrison().code
     val personIdentifier = personIdentifier()
 
     val authOne = givenTemporaryAbsenceAuthorisation(

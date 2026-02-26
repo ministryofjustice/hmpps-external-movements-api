@@ -55,7 +55,6 @@ private fun TemporaryAbsenceAuthorisation.with(
   occurrences: List<TapAuthorisation.Occurrence>,
 ) = TapAuthorisation(
   id = id,
-  prisonCode = prisonCode,
   prison = prison,
   person = person,
   status = status.asCodedDescription(),
