@@ -84,7 +84,20 @@ class SyncTapAuthorisation(
   fun deleteById(id: UUID) {
     ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
     authorisationRepository.findByIdOrNull(id)?.also { authorisation ->
-      val occurrenceCount = occurrenceRepository.countByAuthorisationId(authorisation.id)
+      val occurrenceCount = if (authorisation.repeat) {
+        occurrenceRepository.countByAuthorisationId(authorisation.id)
+      } else {
+        val occ = occurrenceRepository.findByAuthorisationId(authorisation.id).singleOrNull()
+        when {
+          occ == null -> 0
+          occ.dpsOnly -> {
+            occurrenceRepository.delete(occ)
+            0
+          }
+
+          else -> 1
+        }
+      }
       if (occurrenceCount > 0) {
         throw ConflictException("Cannot delete an authorisation with a scheduled occurrence")
       } else {
