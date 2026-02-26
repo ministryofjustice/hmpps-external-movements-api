@@ -17,7 +17,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.APPROVED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.DENIED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
@@ -35,6 +39,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangePrisonPerson
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -68,7 +73,7 @@ class SyncTapAuthorisation(
       ?: let {
         ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
         val saved = authorisationRepository.save(request.asEntity(person, rdPaths))
-        if (!saved.repeat && saved.schedule != null && saved.status.code != AuthorisationStatus.Code.APPROVED.name) {
+        if (!saved.repeat && saved.schedule != null && saved.status.code != APPROVED.name) {
           saved.createOccurrence(objectMapper, rdPaths)
         }
         saved
@@ -99,7 +104,7 @@ class SyncTapAuthorisation(
     return TemporaryAbsenceAuthorisation(
       person = person,
       prisonCode = prisonCode,
-      status = if (end.isBefore(now()) && statusCode == AuthorisationStatus.Code.PENDING.name) {
+      status = if (end.isBefore(now()) && statusCode == PENDING.name) {
         rdPaths.getReferenceData(AuthorisationStatus::class, EXPIRED.name) as AuthorisationStatus
       } else {
         rdPaths.getReferenceData(AuthorisationStatus::class, statusCode) as AuthorisationStatus
@@ -143,7 +148,7 @@ class SyncTapAuthorisation(
         ?: request.location?.takeIf { it.isNullOrEmpty() }?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
     val schedule = request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
-    if (schedule != null && !repeat && status.code != AuthorisationStatus.Code.APPROVED.name) {
+    if (schedule != null && !repeat && status.code != APPROVED.name) {
       occurrences.singleOrNull()?.let { occ ->
         if (occ.status.code == OccurrenceStatus.Code.SCHEDULED.name) {
           occurrenceRepository.delete(occ)
@@ -189,10 +194,12 @@ class SyncTapAuthorisation(
 
   private fun TemporaryAbsenceAuthorisation.checkStatus(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
     when (request.statusCode) {
-      AuthorisationStatus.Code.PENDING.name -> defer(DeferAuthorisation(), rdPaths::getReferenceData)
-      AuthorisationStatus.Code.APPROVED.name -> approve(ApproveAuthorisation(), rdPaths::getReferenceData)
-      AuthorisationStatus.Code.CANCELLED.name -> cancel(CancelAuthorisation(), rdPaths::getReferenceData)
-      AuthorisationStatus.Code.DENIED.name -> deny(DenyAuthorisation(), rdPaths::getReferenceData)
+      EXPIRED.name -> expire(ExpireAuthorisation(), rdPaths::getReferenceData)
+      PENDING.name if (now().isAfter(request.end)) -> expire(ExpireAuthorisation(), rdPaths::getReferenceData)
+      PENDING.name -> defer(DeferAuthorisation(), rdPaths::getReferenceData)
+      APPROVED.name -> approve(ApproveAuthorisation(), rdPaths::getReferenceData)
+      CANCELLED.name -> cancel(CancelAuthorisation(), rdPaths::getReferenceData)
+      DENIED.name -> deny(DenyAuthorisation(), rdPaths::getReferenceData)
     }
   }
 

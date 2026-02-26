@@ -396,6 +396,7 @@ class TemporaryAbsenceOccurrence(
     val status = OccurrenceStatus.Code.valueOf(authorisation.status.code)
     val action = when (status) {
       DENIED -> DenyOccurrence()
+      EXPIRED -> ExpireOccurrence()
       else -> null
     }
     action?.also {
