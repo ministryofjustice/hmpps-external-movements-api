@@ -24,7 +24,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDeferred
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationExpired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceExpired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -742,6 +744,90 @@ class ResyncTapHierarchyIntTest(
           auth.id,
           DataSource.NOMIS,
         ).publication(auth.id) { false },
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - can expire future dated authorisations when not on current booking`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now().plusDays(2),
+        end = LocalDate.now().plusDays(2),
+        status = AuthorisationStatus.Code.APPROVED,
+        locations = linkedSetOf(location()),
+        legacyId = newId(),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = auth.start.atTime(11, 0),
+        end = auth.end.atTime(15, 0),
+        location = auth.locations.single(),
+        legacyId = newId(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          statusCode = "EXPIRED",
+          start = auth.start,
+          end = auth.end,
+          startTime = LocalTime.of(11, 0),
+          endTime = LocalTime.of(15, 0),
+          location = auth.locations.single(),
+          comments = auth.comments,
+          occurrences = listOf(
+            tapOccurrence(
+              id = occ.id,
+              start = occ.start,
+              end = occ.end,
+              contactInformation = null,
+              comments = occ.comments,
+              location = occ.location,
+              legacyId = occ.legacyId!!,
+              movements = listOf(),
+            ),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
+    assertThat(occurrence.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationExpired(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
+        TemporaryAbsenceExpired(
+          auth.person.identifier,
+          occ.id,
+          DataSource.NOMIS,
+        ).publication(occ.id) { false },
       ),
     )
   }
