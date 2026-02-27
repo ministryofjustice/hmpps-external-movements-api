@@ -7,14 +7,13 @@ import jakarta.persistence.Table
 import jakarta.persistence.Version
 import jakarta.validation.constraints.Size
 import org.springframework.data.jpa.repository.JpaRepository
-import java.time.LocalDate
 
 @Entity
 @Table
 class PersonSummary(
   firstName: String,
   lastName: String,
-  dateOfBirth: LocalDate,
+  prisonCode: String?,
   cellLocation: String?,
   @Id
   @Size(max = 10)
@@ -25,7 +24,7 @@ class PersonSummary(
     private set
   var lastName: String = lastName
     private set
-  var dateOfBirth: LocalDate = dateOfBirth
+  var prisonCode: String? = prisonCode
     private set
   var cellLocation: String? = cellLocation
     private set
@@ -33,11 +32,11 @@ class PersonSummary(
   @Version
   val version: Int? = null
 
-  fun update(firstName: String, lastName: String, dateOfBirth: LocalDate, cellLocation: String?) = apply {
-    if (this.firstName != firstName || this.lastName != lastName || !this.dateOfBirth.isEqual(dateOfBirth) || this.cellLocation != cellLocation) {
+  fun update(firstName: String, lastName: String, prisonCode: String?, cellLocation: String?) = apply {
+    if (this.firstName != firstName || this.lastName != lastName || this.prisonCode != prisonCode || this.cellLocation != cellLocation) {
       this.firstName = firstName
       this.lastName = lastName
-      this.dateOfBirth = dateOfBirth
+      this.prisonCode = prisonCode
       this.cellLocation = cellLocation
     }
   }
