@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.3.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.0.3"
   kotlin("plugin.spring") version "2.3.10"
   kotlin("plugin.jpa") version "2.3.10"
   id("com.google.cloud.tools.jib") version "3.5.3"
@@ -17,19 +17,20 @@ configurations {
 
 val ehcacheVersion = "3.11.1"
 val hibernateJcacheVersion = "7.2.5.Final"
-val hmppsKotlinVersion = "1.8.2"
+val hmppsKotlinVersion = "2.0.0"
 val sentryVersion = "8.33.0"
-val springDocVersion = "2.8.15"
-val sqsStarterVersion = "5.6.3"
+val springDocVersion = "3.0.1"
+val sqsStarterVersion = "7.0.0"
 val testContainersVersion = "1.21.4"
 val uuidGeneratorVersion = "5.2.0"
 val wiremockVersion = "3.13.2"
 
 dependencies {
-  implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("org.springframework.boot:spring-boot-starter-webclient")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:$hmppsKotlinVersion")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:$sqsStarterVersion")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:$sentryVersion")
+  implementation("io.sentry:sentry-spring-boot-4:$sentryVersion")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.hibernate.orm:hibernate-envers")
@@ -37,9 +38,7 @@ dependencies {
   implementation("org.springframework.data:spring-data-envers")
   implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:$sqsStarterVersion")
-
-  runtimeOnly("org.flywaydb:flyway-core")
+  runtimeOnly("org.springframework.boot:spring-boot-starter-flyway")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
   runtimeOnly("org.postgresql:postgresql")
   runtimeOnly("org.ehcache:ehcache:$ehcacheVersion")
@@ -47,6 +46,7 @@ dependencies {
   testImplementation("org.testcontainers:postgresql:$testContainersVersion")
   testImplementation("org.testcontainers:localstack:$testContainersVersion")
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:$hmppsKotlinVersion")
+  testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("org.wiremock:wiremock-standalone:$wiremockVersion")
 }
 

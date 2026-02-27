@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.data.domain.Pageable
 import org.springframework.retry.RetryPolicy
 import org.springframework.retry.backoff.BackOffPolicy
@@ -10,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 import software.amazon.awssdk.services.sns.model.PublishBatchRequest
 import software.amazon.awssdk.services.sns.model.PublishBatchRequestEntry
 import software.amazon.awssdk.services.sns.model.PublishBatchResponse
+import tools.jackson.databind.json.JsonMapper
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.ServiceConfig
 import uk.gov.justice.hmpps.sqs.DEFAULT_BACKOFF_POLICY
 import uk.gov.justice.hmpps.sqs.DEFAULT_RETRY_POLICY
@@ -19,7 +19,7 @@ import uk.gov.justice.hmpps.sqs.eventTypeSnsMap
 
 @Service
 class DomainEventPublisher(
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
   private val hmppsQueueService: HmppsQueueService,
   private val domainEventRepository: HmppsDomainEventRepository,
   private val serviceConfig: ServiceConfig,
@@ -49,7 +49,7 @@ class DomainEventPublisher(
       events.map {
         PublishBatchRequestEntry.builder()
           .id(it.id.toString())
-          .message(objectMapper.writeValueAsString(it.event))
+          .message(jsonMapper.writeValueAsString(it.event))
           .messageAttributes(eventTypeSnsMap(it.eventType, noTracing = true))
           .build()
       },

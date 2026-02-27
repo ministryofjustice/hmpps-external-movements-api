@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config
 
-import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
+import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
@@ -160,7 +160,7 @@ class TempAbsenceOccurrenceOperationsImpl(
       val auth = temporaryAbsenceAuthorisationRepository.getAuthorisation(saved.authorisation.id)
       temporaryAbsenceAuthorisationRepository.save(auth.applyLocations(ChangeAuthorisationLocations(locations)))
     }
-  }!!
+  }
 
   override fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence? = transactionTemplate.execute {
     val occurrence = temporaryAbsenceOccurrenceRepository.findByIdOrNull(id)

@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
 
-import com.fasterxml.jackson.module.kotlin.treeToValue
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import tools.jackson.module.kotlin.treeToValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
@@ -96,7 +96,7 @@ class SyncTapAuthorisationIntTest(
     )
     assertThat(saved.locations).containsExactly(request.location)
     assertThat(saved.schedule).isNotNull
-    val schedule: AuthorisationSchedule = objectMapper.treeToValue(saved.schedule!!)
+    val schedule: AuthorisationSchedule = jsonMapper.treeToValue(saved.schedule!!)
     assertThat(schedule.startTime).isEqualTo(request.startTime)
     assertThat(schedule.returnTime).isEqualTo(request.endTime)
     assertThat(schedule.type).isEqualTo("SINGLE")
@@ -150,7 +150,7 @@ class SyncTapAuthorisationIntTest(
     )
     assertThat(saved.locations).isEmpty()
     assertThat(saved.schedule).isNotNull
-    val schedule: AuthorisationSchedule = objectMapper.treeToValue(saved.schedule!!)
+    val schedule: AuthorisationSchedule = jsonMapper.treeToValue(saved.schedule!!)
     assertThat(schedule.startTime).isEqualTo(request.startTime)
     assertThat(schedule.returnTime).isEqualTo(request.endTime)
     assertThat(schedule.type).isEqualTo("SINGLE")

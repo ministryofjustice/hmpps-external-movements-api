@@ -13,7 +13,7 @@ data class Prisoner(
   val cellLocation: String?,
 ) {
   companion object {
-    fun fields() = setOf(
+    fun fields() = arrayOf(
       Prisoner::prisonerNumber.name,
       Prisoner::firstName.name,
       Prisoner::lastName.name,

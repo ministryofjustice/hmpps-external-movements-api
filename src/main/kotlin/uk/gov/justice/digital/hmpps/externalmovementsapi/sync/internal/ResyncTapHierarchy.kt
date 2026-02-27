@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.treeToValue
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.treeToValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
@@ -75,7 +75,7 @@ class ResyncTapHierarchy(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val personSummaryService: PersonSummaryService,
   private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
   private val telemetryClient: TelemetryClient,
 ) {
   fun resync(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
@@ -257,12 +257,12 @@ class ResyncTapHierarchy(
       .forEach { auth ->
         val authOccurrences = occurrencesByAuthId[auth.id] ?: emptyList()
         if (authOccurrences.isEmpty()) {
-          auth.occurrence(objectMapper)
+          auth.occurrence(jsonMapper)
             ?.calculateStatus { code -> occurrenceStatuses.first { it.code == code } }
             ?.also(occurrenceRepository::save)
         } else {
           auth.schedule?.also {
-            val schedule = objectMapper.treeToValue<AuthorisationSchedule>(it)
+            val schedule = jsonMapper.treeToValue<AuthorisationSchedule>(it)
             authOccurrences.single()
               .reschedule(RescheduleOccurrence(auth.start.atTime(schedule.startTime), auth.end.atTime(schedule.returnTime)))
               .calculateStatus { code -> occurrenceStatuses.first { s -> s.code == code } }
@@ -303,7 +303,7 @@ class ResyncTapHierarchy(
       comments = comments,
       start = start,
       end = end,
-      schedule = schedule()?.let { objectMapper.valueToTree(it) },
+      schedule = schedule()?.let { jsonMapper.valueToTree(it) },
       reasonPath = reasonPath,
       locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) } ?: linkedSetOf(),
@@ -322,7 +322,7 @@ class ResyncTapHierarchy(
     checkSchedule(request, rdPaths)
     applyLogistics(request, rdPaths)
     applyComments(ChangeAuthorisationComments(request.comments))
-    request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
+    request.schedule()?.also { applySchedule(jsonMapper.valueToTree(it)) }
     (
       request.occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }

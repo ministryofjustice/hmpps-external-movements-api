@@ -61,9 +61,9 @@ class ExternalMovementContextInterceptor : HandlerInterceptor {
   private fun getUsername(): String = SecurityContextHolder
     .getContext()
     .authentication
-    .name
-    .trim()
-    .takeUnless(String::isBlank)
+    ?.name
+    ?.trim()
+    ?.takeUnless(String::isBlank)
     ?.also { if (it.length > 64) throw ValidationException("Username must be <= 64 characters") }
     ?: throw ValidationException("Could not find non empty username")
 }

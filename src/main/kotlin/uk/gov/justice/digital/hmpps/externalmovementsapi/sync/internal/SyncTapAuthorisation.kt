@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.json.JsonMapper
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
@@ -57,7 +57,7 @@ class SyncTapAuthorisation(
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) {
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
     val person = personSummaryService.getWithSave(personIdentifier)
@@ -74,7 +74,7 @@ class SyncTapAuthorisation(
         ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
         val saved = authorisationRepository.save(request.asEntity(person, rdPaths))
         if (!saved.repeat && saved.schedule != null && saved.status.code != APPROVED.name) {
-          saved.createOccurrence(objectMapper, rdPaths)
+          saved.createOccurrence(jsonMapper, rdPaths)
         }
         saved
       }
@@ -138,7 +138,7 @@ class SyncTapAuthorisation(
       end = end,
       locations = location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) } ?: linkedSetOf(),
       reasonPath = reasonPath,
-      schedule = schedule()?.let { objectMapper.valueToTree(it) },
+      schedule = schedule()?.let { jsonMapper.valueToTree(it) },
       legacyId = legacyId,
       id = id ?: newUuid(),
     )
@@ -160,7 +160,7 @@ class SyncTapAuthorisation(
       occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: request.location?.takeIf { it.isNullOrEmpty() }?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
-    val schedule = request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
+    val schedule = request.schedule()?.also { applySchedule(jsonMapper.valueToTree(it)) }
     if (schedule != null && !repeat && status.code != APPROVED.name) {
       occurrences.singleOrNull()?.let { occ ->
         if (occ.status.code == OccurrenceStatus.Code.SCHEDULED.name) {
@@ -170,15 +170,15 @@ class SyncTapAuthorisation(
           occ.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
           occ.calculateStatus { rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus }
         }
-      } ?: createOccurrence(objectMapper, rdPaths)
+      } ?: createOccurrence(jsonMapper, rdPaths)
     }
   }
 
   private fun TemporaryAbsenceAuthorisation.createOccurrence(
-    objectMapper: ObjectMapper,
+    jsonMapper: JsonMapper,
     rdPaths: ReferenceDataPaths,
   ) {
-    occurrence(objectMapper)?.calculateStatus { code ->
+    occurrence(jsonMapper)?.calculateStatus { code ->
       rdPaths.getReferenceData(OccurrenceStatus::class, code) as OccurrenceStatus
     }?.also(occurrenceRepository::save)
   }
