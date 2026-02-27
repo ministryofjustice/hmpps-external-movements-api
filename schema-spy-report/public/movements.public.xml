@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><database name="movements" schema="public" type="PostgreSQL - 18.2 (Debian 18.2-1.pgdg13+1)">
+<?xml version="1.0" encoding="UTF-8"?><database name="movements" schema="public" type="PostgreSQL - 18.3 (Debian 18.3-1.pgdg13+1)">
    <sequences>
       <sequence increment="1" name="audit_revision_id_seq" startValue="1"/>
    </sequences>
@@ -78,9 +78,9 @@
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="first_name" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="last_name" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="date_of_birth" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="cell_location" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="cell_location" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="prison_code" nullable="true" remarks="" size="6" type="varchar" typeCode="12"/>
          <primaryKey column="person_identifier" sequenceNumberInPK="1"/>
          <index name="person_summary_pkey" unique="true">
             <column ascending="true" name="person_identifier"/>

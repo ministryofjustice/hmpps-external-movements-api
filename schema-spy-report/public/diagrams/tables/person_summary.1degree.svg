@@ -59,17 +59,17 @@
 <polygon fill="none" stroke="#000000" points="146.5,-135.7 146.5,-157.7 207.5,-157.7 207.5,-135.7 146.5,-135.7"/>
 <text text-anchor="start" x="149.494" y="-143.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">varchar[64]</text>
 <polygon fill="none" stroke="#000000" points="10.5,-113.7 10.5,-135.7 146.5,-135.7 146.5,-113.7 10.5,-113.7"/>
-<text text-anchor="start" x="30.5" y="-120.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">date_of_birth</text>
+<text text-anchor="start" x="30.5" y="-120.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">cell_location</text>
 <polygon fill="none" stroke="#000000" points="146.5,-113.7 146.5,-135.7 207.5,-135.7 207.5,-113.7 146.5,-113.7"/>
-<text text-anchor="start" x="149.5" y="-121.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">date[13]</text>
+<text text-anchor="start" x="149.494" y="-121.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">varchar[64]</text>
 <polygon fill="none" stroke="#000000" points="10.5,-91.7 10.5,-113.7 146.5,-113.7 146.5,-91.7 10.5,-91.7"/>
-<text text-anchor="start" x="30.5" y="-98.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">cell_location</text>
+<text text-anchor="start" x="30.5" y="-98.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">version</text>
 <polygon fill="none" stroke="#000000" points="146.5,-91.7 146.5,-113.7 207.5,-113.7 207.5,-91.7 146.5,-91.7"/>
-<text text-anchor="start" x="149.494" y="-99.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">varchar[64]</text>
+<text text-anchor="start" x="149.5" y="-99.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">int4[10]</text>
 <polygon fill="none" stroke="#000000" points="10.5,-69.7 10.5,-91.7 146.5,-91.7 146.5,-69.7 10.5,-69.7"/>
-<text text-anchor="start" x="30.5" y="-76.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">version</text>
+<text text-anchor="start" x="30.5" y="-76.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">prison_code</text>
 <polygon fill="none" stroke="#000000" points="146.5,-69.7 146.5,-91.7 207.5,-91.7 207.5,-69.7 146.5,-69.7"/>
-<text text-anchor="start" x="149.5" y="-77.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">int4[10]</text>
+<text text-anchor="start" x="149.5" y="-77.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">varchar[6]</text>
 <polygon fill="#ffffff" stroke="transparent" points="10.5,-50.7 10.5,-69.7 82.5,-69.7 82.5,-50.7 10.5,-50.7"/>
 <polygon fill="none" stroke="#000000" points="10.5,-50.7 10.5,-69.7 82.5,-69.7 82.5,-50.7 10.5,-50.7"/>
 <text text-anchor="start" x="13.5" y="-56.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 0</text>

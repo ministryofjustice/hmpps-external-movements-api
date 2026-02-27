@@ -109,11 +109,11 @@
 <polygon fill="none" stroke="#000000" points="8,-2616.2 8,-2638.2 162,-2638.2 162,-2616.2 8,-2616.2"/>
 <text text-anchor="start" x="37" y="-2623.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">last_name</text>
 <polygon fill="none" stroke="#000000" points="8,-2594.2 8,-2616.2 162,-2616.2 162,-2594.2 8,-2594.2"/>
-<text text-anchor="start" x="37" y="-2601.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">date_of_birth</text>
+<text text-anchor="start" x="37" y="-2601.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">cell_location</text>
 <polygon fill="none" stroke="#000000" points="8,-2572.2 8,-2594.2 162,-2594.2 162,-2572.2 8,-2572.2"/>
-<text text-anchor="start" x="37" y="-2579.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">cell_location</text>
+<text text-anchor="start" x="37" y="-2579.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">version</text>
 <polygon fill="none" stroke="#000000" points="8,-2550.2 8,-2572.2 162,-2572.2 162,-2550.2 8,-2550.2"/>
-<text text-anchor="start" x="37" y="-2557.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">version</text>
+<text text-anchor="start" x="37" y="-2557.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">prison_code</text>
 <polygon fill="#ffffff" stroke="transparent" points="8,-2531.2 8,-2550.2 74,-2550.2 74,-2531.2 8,-2531.2"/>
 <polygon fill="none" stroke="#000000" points="8,-2531.2 8,-2550.2 74,-2550.2 74,-2531.2 8,-2531.2"/>
 <text text-anchor="start" x="11" y="-2537.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
