@@ -5,11 +5,10 @@ import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummaryRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.cellLocation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.dob
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
-import java.time.LocalDate
 
 interface PersonSummaryOperations {
   fun givenPersonSummary(personSummary: PersonSummary): PersonSummary
@@ -19,16 +18,16 @@ interface PersonSummaryOperations {
     personIdentifier: String = personIdentifier(),
     firstName: String = word(8),
     lastName: String = word(8),
-    dateOfBirth: LocalDate = dob(),
+    prisonCode: String? = prisonCode(),
     cellLocation: String? = cellLocation(),
-  ): PersonSummary = PersonSummary(firstName, lastName, dateOfBirth, cellLocation, personIdentifier)
+  ): PersonSummary = PersonSummary(firstName, lastName, prisonCode, cellLocation, personIdentifier)
 
   companion object {
     fun PersonSummary.verifyAgainst(prisoner: Prisoner) {
       assertThat(identifier).isEqualTo(prisoner.prisonerNumber)
       assertThat(firstName).isEqualTo(prisoner.firstName)
       assertThat(lastName).isEqualTo(prisoner.lastName)
-      assertThat(dateOfBirth).isEqualTo(prisoner.dateOfBirth)
+      assertThat(prisonCode).isEqualTo(prisoner.prisonId)
       assertThat(cellLocation).isEqualTo(prisoner.cellLocation)
     }
   }

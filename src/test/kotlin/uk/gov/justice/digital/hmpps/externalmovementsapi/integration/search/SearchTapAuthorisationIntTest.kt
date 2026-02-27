@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -59,14 +58,13 @@ class SearchTapAuthorisationIntTest(
   @ParameterizedTest
   @MethodSource("invalidSearchRequests")
   fun `400 bad request when invalid search`(
-    prisonCode: String?,
     start: LocalDate?,
     end: LocalDate?,
     query: String?,
   ) {
-    val res = searchTapAuthorisations(prisonCode, start, end, query = query).errorResponse(HttpStatus.BAD_REQUEST)
+    val res = searchTapAuthorisations(prisonCode(), start, end, query = query).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: A valid person identifier is required or valid prison code, start and end.")
+    assertThat(res.userMessage).isEqualTo("Validation failure: A valid person identifier is required or valid start and end.")
   }
 
   @Test
@@ -488,20 +486,8 @@ class SearchTapAuthorisationIntTest(
     )
   }
 
-  @Test
-  fun `can find results with just a person identifier`() {
-    val personIdentifier = personIdentifier()
-    givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode(), personIdentifier))
-    givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode(), personIdentifier))
-
-    val res = searchTapAuthorisations(prisonCode = null, start = null, end = null, query = personIdentifier)
-      .successResponse<TapAuthorisationSearchResponse>()
-    assertThat(res.content.size).isEqualTo(2)
-    assertThat(res.metadata.totalElements).isEqualTo(2)
-  }
-
   private fun searchTapAuthorisations(
-    prisonCode: String? = null,
+    prisonCode: String,
     start: LocalDate? = LocalDate.now(),
     end: LocalDate? = LocalDate.now().plusDays(1),
     status: AuthorisationStatus.Code? = null,
@@ -532,12 +518,10 @@ class SearchTapAuthorisationIntTest(
 
     @JvmStatic
     fun invalidSearchRequests() = listOf(
-      Arguments.of(null, null, null, null),
-      Arguments.of("ANY", null, null, null),
-      Arguments.of("ANY", LocalDate.now(), LocalDate.now().plusDays(32), null),
-      Arguments.of(null, null, null, NON_PI_QUERY),
-      Arguments.of("ANY", null, null, NON_PI_QUERY),
-      Arguments.of("ANY", LocalDate.now(), LocalDate.now().plusDays(32), NON_PI_QUERY),
+      Arguments.of(null, null, null),
+      Arguments.of(LocalDate.now(), LocalDate.now().plusDays(32), null),
+      Arguments.of(null, null, NON_PI_QUERY),
+      Arguments.of(LocalDate.now(), LocalDate.now().plusDays(32), NON_PI_QUERY),
     )
   }
 }

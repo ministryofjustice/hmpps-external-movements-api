@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.PostLoad
 import jakarta.persistence.QueryHint
 import jakarta.persistence.Table
@@ -19,9 +20,9 @@ import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.jpa.HibernateHints
 import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.domain.Specification
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
@@ -82,6 +83,7 @@ import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
+@NamedEntityGraph(name = "tap.authorisation.full", includeAllAttributes = true)
 @Audited
 @Entity
 @Table(schema = "tap", name = "authorisation")
@@ -112,7 +114,7 @@ class TemporaryAbsenceAuthorisation(
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
-  @JoinColumn(name = "person_identifier")
+  @JoinColumn(name = "person_identifier", nullable = false)
   var person: PersonSummary = person
     private set
 
@@ -142,7 +144,7 @@ class TemporaryAbsenceAuthorisation(
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
-  @JoinColumn(name = "absence_reason_id")
+  @JoinColumn(name = "absence_reason_id", nullable = false)
   override var absenceReason: AbsenceReason = absenceReason
     private set
 
@@ -184,12 +186,12 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "locations")
+  @Column(name = "locations", nullable = false)
   var locations: SequencedSet<Location> = locations
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "reason_path")
+  @Column(name = "reason_path", nullable = false)
   var reasonPath: ReasonPath = reasonPath
     private set
 
@@ -314,7 +316,7 @@ class TemporaryAbsenceAuthorisation(
   }
 
   fun expire(action: ExpireAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    if (status.code == PENDING.name) {
+    if (status.code == PENDING.name || status.code == APPROVED.name) {
       applyStatus(EXPIRED, rdSupplier, action)
     }
   }
@@ -334,12 +336,6 @@ class TemporaryAbsenceAuthorisation(
 
   fun applySchedule(json: JsonNode) = apply {
     schedule = json
-  }
-
-  fun clearSchedule() = apply {
-    if (!repeat) {
-      schedule = null
-    }
   }
 
   companion object {
@@ -397,19 +393,16 @@ interface TemporaryAbsenceAuthorisationRepository :
   fun findByStatusAndEndBefore(statusId: UUID, date: LocalDate): List<TemporaryAbsenceAuthorisation>
 
   fun countByPersonIdentifier(personIdentifier: String): Int
+  fun findByPersonIdentifier(personIdentifiable: String): List<TemporaryAbsenceAuthorisation>
 
-  @Modifying
-  @Query("delete from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier")
-  fun deleteByPersonIdentifier(personIdentifier: String)
+  @Query("""select taa.id from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier""")
+  fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>
 
-  @Query(
-    """
-    select a from TemporaryAbsenceAuthorisation a
-    where a.person.identifier = :personIdentifier
-    and a.id not in (:ids)
-  """,
-  )
-  fun findForPersonNotIn(personIdentifier: String, ids: Set<UUID>): List<TemporaryAbsenceAuthorisation>
+  @Query("""select taa.id from TemporaryAbsenceAuthorisation taa where taa.legacyId in :legacyIds""")
+  fun findIdsByLegacyId(legacyIds: Set<Long>): List<UUID>
+
+  @EntityGraph("tap.authorisation.full")
+  override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceAuthorisation>
 }
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")

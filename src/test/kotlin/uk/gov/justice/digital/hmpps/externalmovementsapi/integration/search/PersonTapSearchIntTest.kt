@@ -1,0 +1,633 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.search
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.beans.factory.annotation.Autowired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonRegisterMockServer.Companion.prison
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension.Companion.prisonRegister
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PersonTapSearchRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PersonTapSearchResponse
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime.now
+
+class PersonTapSearchIntTest(
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
+  @Autowired private val tamOperations: TempAbsenceMovementOperations,
+) : IntegrationTest(),
+  TempAbsenceAuthorisationOperations by taaOperations,
+  TempAbsenceOccurrenceOperations by taoOperations,
+  TempAbsenceMovementOperations by tamOperations {
+
+  @Test
+  fun `401 unauthorised without a valid token`() {
+    webTestClient
+      .get()
+      .uri(PERSON_SEARCH_TAP_URL, personIdentifier())
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, TEMPORARY_ABSENCE_RW, EXTERNAL_MOVEMENTS_RO])
+  fun `403 forbidden without correct role`(role: String) {
+    searchPersonTap(personIdentifier(), LocalDate.now(), LocalDate.now(), role = role).expectStatus().isForbidden
+  }
+
+  @Test
+  fun `can find all for a person`() {
+    val start = LocalDate.now().plusDays(1)
+    val end = LocalDate.now().plusDays(3)
+
+    val toFind = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        status = AuthorisationStatus.Code.PENDING,
+        start = start,
+        end = end,
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        toFind,
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
+      ),
+    )
+    val doNotFind = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = toFind.prisonCode,
+        status = AuthorisationStatus.Code.PENDING,
+        start = start,
+        end = end,
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        doNotFind,
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
+      ),
+    )
+
+    val prison = givenPrison(prison(toFind.prisonCode, "Prison for findable"))
+
+    val res = searchPersonTap(toFind.person.identifier).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res.content.size).isEqualTo(1)
+    assertThat(res.metadata.totalElements).isEqualTo(1)
+    assertThat(res.content.single().prison).isEqualTo(prison)
+  }
+
+  @Test
+  fun `can find by date`() {
+    val personIdentifier = personIdentifier()
+    val start = LocalDate.now().minusDays(2)
+    val end = LocalDate.now().plusDays(2)
+
+    val authorisations = (1..5).map {
+      givenTemporaryAbsenceAuthorisation(
+        temporaryAbsenceAuthorisation(
+          personIdentifier = personIdentifier,
+          start = start.minusDays(1),
+          end = end.plusDays(1),
+        ),
+      )
+    }
+    authorisations.mapIndexed { idx, auth ->
+      givenTemporaryAbsenceOccurrence(
+        temporaryAbsenceOccurrence(
+          auth,
+          start = LocalDateTime.of(start.minusDays(2), now()).plusDays(idx.toLong()),
+          end = LocalDateTime.of(start.minusDays(1), now()).plusDays(idx.toLong()),
+        ),
+      )
+    }
+
+    prisonRegister.getPrisons(authorisations.subList(1, 4).map { prison(it.prisonCode) }.toSet())
+    val res = searchPersonTap(personIdentifier, start, end).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res.content.size).isEqualTo(4)
+    assertThat(res.metadata.totalElements).isEqualTo(4)
+  }
+
+  @Test
+  fun `can filter occurrences by status`() {
+    val prisonCode = givenPrison().code
+    val personIdentifier = personIdentifier()
+    val start = LocalDateTime.now().minusDays(3)
+    val end = LocalDateTime.now().plusDays(1)
+    val auth1 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1, start = start, end = end))
+    assertThat(occ1.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
+
+    val auth2 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        status = AuthorisationStatus.Code.PENDING,
+      ),
+    )
+    val occ2 =
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2, start = start, end = end))
+    assertThat(occ2.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
+
+    val auth3 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val occ3 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth3,
+        start = LocalDateTime.now().minusDays(3),
+        end = LocalDateTime.now().minusDays(1),
+      ),
+    )
+    assertThat(occ3.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+
+    val auth4 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        status = AuthorisationStatus.Code.DENIED,
+      ),
+    )
+    val occ4 =
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth4, start = start, end = end))
+    assertThat(occ4.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
+
+    val res = searchPersonTap(
+      personIdentifier = personIdentifier,
+      start = start.toLocalDate(),
+      end = end.toLocalDate(),
+      statuses = listOf(OccurrenceStatus.Code.SCHEDULED, OccurrenceStatus.Code.EXPIRED),
+    ).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res.content.size).isEqualTo(2)
+    assertThat(res.metadata.totalElements).isEqualTo(2)
+    assertThat(res.content.map { it.status.code }).containsExactlyInAnyOrder(
+      OccurrenceStatus.Code.SCHEDULED.name,
+      OccurrenceStatus.Code.EXPIRED.name,
+    )
+
+    val single = searchPersonTap(
+      personIdentifier = personIdentifier,
+      statuses = listOf(OccurrenceStatus.Code.DENIED),
+    ).successResponse<PersonTapSearchResponse>()
+
+    assertThat(single.content.size).isEqualTo(1)
+    assertThat(single.metadata.totalElements).isEqualTo(1)
+    assertThat(single.content.map { it.status.code }).containsExactlyInAnyOrder(OccurrenceStatus.Code.DENIED.name)
+  }
+
+  @Test
+  fun `can filter occurrences by absence categorisation`() {
+    val prisonCode = givenPrison().code
+    val personIdentifier = personIdentifier()
+
+    val auth1 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1))
+    val auth2 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        absenceType = "PP",
+        absenceSubType = "PP",
+        absenceReasonCategory = null,
+        absenceReason = "PC",
+        reasonPath = ReasonPath(
+          absenceTypeCode = "PP",
+          absenceSubTypeCode = null,
+          absenceReasonCategoryCode = null,
+          absenceReasonCode = null,
+        ),
+      ),
+    )
+    val occ2 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2))
+
+    val res1 = searchPersonTap(
+      personIdentifier = personIdentifier,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_TYPE,
+        sortedSetOf(occ1.absenceType!!.code),
+      ),
+    ).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res1.content.size).isEqualTo(1)
+    assertThat(res1.metadata.totalElements).isEqualTo(1)
+    assertThat(res1.content.first().absenceCategorisation).isEqualTo("Standard ROTL (release on temporary licence) > RDR (resettlement day release) > Paid work > IT and communication")
+
+    val res2 = searchPersonTap(
+      personIdentifier = personIdentifier,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_SUB_TYPE,
+        sortedSetOf(occ1.absenceSubType!!.code),
+      ),
+    ).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res2.content.size).isEqualTo(1)
+    assertThat(res2.metadata.totalElements).isEqualTo(1)
+    assertThat(res2.content.first().absenceCategorisation).isEqualTo("Standard ROTL (release on temporary licence) > RDR (resettlement day release) > Paid work > IT and communication")
+
+    val res3 = searchPersonTap(
+      personIdentifier = personIdentifier,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_REASON,
+        sortedSetOf(occ2.absenceReason.code),
+      ),
+    ).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res3.content.size).isEqualTo(1)
+    assertThat(res3.metadata.totalElements).isEqualTo(1)
+    assertThat(res3.content.first().absenceCategorisation).isEqualTo("Police production")
+
+    val res4 = searchPersonTap(
+      personIdentifier = personIdentifier,
+      absenceCategorisation = AbsenceCategorisationFilter(
+        ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY,
+        sortedSetOf(occ1.absenceReasonCategory!!.code),
+      ),
+    ).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res4.content.size).isEqualTo(1)
+    assertThat(res4.metadata.totalElements).isEqualTo(1)
+    assertThat(res4.content.first().absenceCategorisation).isEqualTo("Standard ROTL (release on temporary licence) > RDR (resettlement day release) > Paid work > IT and communication")
+  }
+
+  @Test
+  fun `can sort occurrences by status`() {
+    val prisonCode = givenPrison().code
+    val personIdentifier = personIdentifier()
+    val start = LocalDateTime.now().minusDays(3)
+    val end = LocalDateTime.now().plusDays(3)
+    val auth1 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val occ1 =
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1, start = start, end = end))
+    assertThat(occ1.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
+
+    val auth2 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        status = AuthorisationStatus.Code.PENDING,
+      ),
+    )
+    val occ2 =
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2, start = start, end = end))
+    assertThat(occ2.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
+
+    val auth3 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val occ3 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth3,
+        start = LocalDateTime.now().minusDays(3),
+        end = LocalDateTime.now().minusDays(1),
+      ),
+    )
+    assertThat(occ3.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+
+    val auth4 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        status = AuthorisationStatus.Code.DENIED,
+      ),
+    )
+    val occ4 =
+      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth4, start = start, end = end))
+    assertThat(occ4.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
+
+    val auth5 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val occ5 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth5,
+        start = LocalDateTime.now().minusDays(3),
+        end = LocalDateTime.now().minusDays(1),
+        movements = listOf(
+          temporaryAbsenceMovement(
+            TemporaryAbsenceMovement.Direction.OUT,
+            auth5.person.identifier,
+            occurredAt = LocalDateTime.now().minusDays(3),
+            prisonCode = prisonCode,
+          ),
+        ),
+      ),
+    )
+    assertThat(occ5.status.code).isEqualTo(OccurrenceStatus.Code.OVERDUE.name)
+
+    val auth6 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val occ6 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth6,
+        start = LocalDateTime.now().minusHours(1),
+        end = LocalDateTime.now().plusHours(3),
+        movements = listOf(
+          temporaryAbsenceMovement(
+            TemporaryAbsenceMovement.Direction.OUT,
+            auth6.person.identifier,
+            occurredAt = LocalDateTime.now().minusHours(1),
+            prisonCode = prisonCode,
+          ),
+        ),
+      ),
+    )
+    assertThat(occ6.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
+
+    val res1 = searchPersonTap(
+      personIdentifier = personIdentifier,
+      start = start.toLocalDate(),
+      end = end.toLocalDate(),
+      sort = "status,asc",
+    ).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res1.content.size).isEqualTo(6)
+    assertThat(res1.metadata.totalElements).isEqualTo(6)
+    assertThat(res1.content.map { it.status.code }).containsExactly(
+      OccurrenceStatus.Code.OVERDUE.name,
+      OccurrenceStatus.Code.IN_PROGRESS.name,
+      OccurrenceStatus.Code.SCHEDULED.name,
+      OccurrenceStatus.Code.PENDING.name,
+      OccurrenceStatus.Code.EXPIRED.name,
+      OccurrenceStatus.Code.DENIED.name,
+    )
+
+    val res2 = searchPersonTap(
+      personIdentifier = personIdentifier,
+      start = start.toLocalDate(),
+      end = end.toLocalDate(),
+      sort = "status,desc",
+    ).successResponse<PersonTapSearchResponse>()
+
+    assertThat(res2.content.size).isEqualTo(6)
+    assertThat(res2.metadata.totalElements).isEqualTo(6)
+    assertThat(res2.content.map { it.status.code }).containsExactly(
+      OccurrenceStatus.Code.DENIED.name,
+      OccurrenceStatus.Code.EXPIRED.name,
+      OccurrenceStatus.Code.PENDING.name,
+      OccurrenceStatus.Code.SCHEDULED.name,
+      OccurrenceStatus.Code.IN_PROGRESS.name,
+      OccurrenceStatus.Code.OVERDUE.name,
+    )
+  }
+
+  @Test
+  fun `can sort type or reason`() {
+    val prisonCode = givenPrison().code
+    val personIdentifier = personIdentifier()
+
+    val sr = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(sr))
+    val pp = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        absenceType = "PP",
+        absenceSubType = "PP",
+        absenceReason = "PC",
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(pp))
+
+    val res1 = searchPersonTap(personIdentifier, sort = "absenceType,asc")
+      .successResponse<PersonTapSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(
+      pp.absenceType?.description,
+      sr.absenceType?.description,
+    )
+
+    val res2 = searchPersonTap(personIdentifier, sort = "absenceType,desc")
+      .successResponse<PersonTapSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(
+      sr.absenceType?.description,
+      pp.absenceType?.description,
+    )
+
+    val res3 = searchPersonTap(personIdentifier, sort = "absenceReason,asc")
+      .successResponse<PersonTapSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(2)
+    assertThat(res3.metadata.totalElements).isEqualTo(2)
+    assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(
+      sr.absenceReason.description,
+      pp.absenceReason.description,
+    )
+
+    val res4 = searchPersonTap(personIdentifier, sort = "absenceReason,desc")
+      .successResponse<PersonTapSearchResponse>()
+    assertThat(res4.content.size).isEqualTo(2)
+    assertThat(res4.metadata.totalElements).isEqualTo(2)
+    assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(
+      pp.absenceReason.description,
+      sr.absenceReason.description,
+    )
+  }
+
+  @Test
+  fun `can sort accompanied by or transport`() {
+    val prisonCode = givenPrison().code
+    val personIdentifier = personIdentifier()
+
+    val one = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(one))
+    val two = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        accompaniedByCode = "GROUP4",
+        transportCode = "CAV",
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(two))
+
+    val res1 = searchPersonTap(personIdentifier, sort = "accompaniedBy,asc")
+      .successResponse<PersonTapSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+    assertThat(res1.content.map { it.absenceType?.description }).containsExactly(
+      two.absenceType?.description,
+      one.absenceType?.description,
+    )
+
+    val res2 = searchPersonTap(personIdentifier, sort = "accompaniedBy,desc")
+      .successResponse<PersonTapSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+    assertThat(res2.content.map { it.absenceType?.description }).containsExactly(
+      one.absenceType?.description,
+      two.absenceType?.description,
+    )
+
+    val res3 = searchPersonTap(personIdentifier, sort = "transport,asc")
+      .successResponse<PersonTapSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(2)
+    assertThat(res3.metadata.totalElements).isEqualTo(2)
+    assertThat(res3.content.map { it.absenceReason?.description }).containsExactly(
+      one.absenceReason.description,
+      two.absenceReason.description,
+    )
+
+    val res4 = searchPersonTap(personIdentifier, sort = "transport,desc")
+      .successResponse<PersonTapSearchResponse>()
+    assertThat(res4.content.size).isEqualTo(2)
+    assertThat(res4.metadata.totalElements).isEqualTo(2)
+    assertThat(res4.content.map { it.absenceReason?.description }).containsExactly(
+      two.absenceReason.description,
+      one.absenceReason.description,
+    )
+  }
+
+  @Test
+  fun `can sort by location`() {
+    val prisonCode = givenPrison().code
+    val personIdentifier = personIdentifier()
+
+    val authOne = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val one = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authOne,
+        location = location(
+          description = "A description of the location",
+          address = null,
+          postcode = null,
+          uprn = null,
+        ),
+      ),
+    )
+    val authTwo = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val two = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authTwo,
+        location = location(description = null, address = "An address", postcode = "H3 4TH"),
+      ),
+    )
+    val authThree = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+      ),
+    )
+    val three = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        authThree,
+        location = location(description = "Special Description", address = "Address Line", postcode = postcode()),
+      ),
+    )
+
+    val res1 = searchPersonTap(personIdentifier, sort = "location,asc").successResponse<PersonTapSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(3)
+    assertThat(res1.metadata.totalElements).isEqualTo(3)
+    assertThat(res1.content.map { it.location }).containsExactly(one.location, two.location, three.location)
+
+    val res2 = searchPersonTap(personIdentifier, sort = "location,desc").successResponse<PersonTapSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(3)
+    assertThat(res2.metadata.totalElements).isEqualTo(3)
+    assertThat(res2.content.map { it.location }).containsExactly(three.location, two.location, one.location)
+  }
+
+  private fun searchPersonTap(
+    personIdentifier: String,
+    start: LocalDate? = null,
+    end: LocalDate? = null,
+    statuses: List<OccurrenceStatus.Code>? = null,
+    absenceCategorisation: AbsenceCategorisationFilter? = null,
+    sort: String? = null,
+    role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+  ) = webTestClient
+    .post()
+    .uri(PERSON_SEARCH_TAP_URL, personIdentifier)
+    .bodyValue(
+      PersonTapSearchRequest(
+        start,
+        end,
+        statuses?.toSet() ?: emptySet(),
+        absenceCategorisation,
+        sort = sort ?: START,
+      ),
+    )
+    .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
+    .exchange()
+
+  companion object {
+    const val PERSON_SEARCH_TAP_URL = "/search/people/{personIdentifier}/temporary-absence-occurrences"
+  }
+}

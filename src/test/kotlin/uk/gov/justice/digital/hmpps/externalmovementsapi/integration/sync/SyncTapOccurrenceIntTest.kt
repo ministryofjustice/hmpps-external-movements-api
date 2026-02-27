@@ -242,7 +242,7 @@ class SyncTapOccurrenceIntTest(
 
   @Test
   fun `200 ok can create occurrence if cancelled`() {
-    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val request = tapOccurrence(isCancelled = true)
     val res = syncTapOccurrence(authorisation.id, request)
       .expectStatus().isOk

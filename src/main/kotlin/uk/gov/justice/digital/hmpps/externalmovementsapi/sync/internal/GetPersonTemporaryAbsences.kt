@@ -22,7 +22,7 @@ class GetPersonTemporaryAbsences(
 ) {
   fun count(personIdentifier: String): PersonTapCounts {
     val authCount = authorisationRepository.countByPersonIdentifier(personIdentifier)
-    val occCount = occurrenceRepository.countByPersonIdentifier(personIdentifier)
+    val occCount = occurrenceRepository.countByPersonIdentifierAndDpsOnlyFalse(personIdentifier)
     val movementSummary = movementRepository.summaryForPerson(personIdentifier)
     return PersonTapCounts(
       PersonAuthorisationCount(authCount),
@@ -35,29 +35,30 @@ class GetPersonTemporaryAbsences(
   }
 
   fun detail(personIdentifier: String): PersonTapDetail {
+    val authorisations = authorisationRepository.findByPersonIdentifier(personIdentifier)
     val occurrences =
-      occurrenceRepository.findByPersonIdentifier(personIdentifier).groupBy { it.authorisation }
+      occurrenceRepository.findByPersonIdentifierAndDpsOnlyFalse(personIdentifier).groupBy { it.authorisation.id }
     val unscheduledKey = newUuid()
     val movements =
       movementRepository.findAllByPersonIdentifier(personIdentifier).groupBy { it.occurrence?.id ?: unscheduledKey }
-    val authorisations = occurrences.map { e ->
+    val authDetail = authorisations.map { auth ->
       PersonTapDetail.Authorisation(
-        e.key.id,
-        AuthorisationStatus.Code.valueOf(e.key.status.code),
-        e.key.prisonCode,
-        e.value.map { occ ->
+        auth.id,
+        AuthorisationStatus.Code.valueOf(auth.status.code),
+        auth.prisonCode,
+        occurrences[auth.id]?.map { occ ->
           PersonTapDetail.Occurrence(
             occ.id,
             OccurrenceStatus.Code.valueOf(occ.status.code),
             occ.prisonCode,
             movements[occ.id]?.map { m -> PersonTapDetail.Movement(m.id, m.direction, m.prisonCode) } ?: emptyList(),
           )
-        },
+        } ?: emptyList(),
       )
     }
     val unscheduled = movements[unscheduledKey]?.map { PersonTapDetail.Movement(it.id, it.direction, it.prisonCode) } ?: emptyList()
     return PersonTapDetail(
-      authorisations,
+      authDetail,
       unscheduled,
     )
   }

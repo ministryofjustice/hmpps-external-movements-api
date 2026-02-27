@@ -53,7 +53,8 @@ class GetTapAuthorisationIntTest(
 
   @Test
   fun `200 ok finds tap authorisation and occurrences`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
@@ -73,7 +74,8 @@ class GetTapAuthorisationIntTest(
 
   @Test
   fun `200 ok finds tap authorisation and filters occurrences by date`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occ1 = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
@@ -109,6 +111,7 @@ class GetTapAuthorisationIntTest(
       LocalDate.now().plusDays(3),
     ).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
+    assertThat(response.prison.name).isEqualTo(prison.name)
     assertThat(response.locations).containsExactly(occ1.location, occ2.location, occ3.location, occ4.location)
     assertThat(response.occurrences).hasSize(2)
     assertThat(response.totalOccurrenceCount).isEqualTo(4)
@@ -116,8 +119,10 @@ class GetTapAuthorisationIntTest(
 
   @Test
   fun `200 ok finds tap authorisation created with just type`() {
+    val prison = givenPrison()
     val auth = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
+        prisonCode = prison.code,
         absenceType = "PP",
         absenceSubType = "PP",
         absenceReasonCategory = null,
@@ -133,6 +138,7 @@ class GetTapAuthorisationIntTest(
     assertThat(response.absenceReasonCategory).isNull()
     assertThat(response.absenceReason).isNull()
     response.verifyAgainst(auth)
+    assertThat(response.prison.name).isEqualTo(prison.name)
     assertThat(response.locations).containsExactly(occurrence.location)
     val occ = response.occurrences.first()
     occurrence.verifyAgainst(occ)

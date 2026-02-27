@@ -14,6 +14,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.forAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.startAfter
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.startBefore
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.PrisonRegisterClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.asCodedDescription
@@ -25,6 +27,7 @@ import java.util.UUID
 class GetTapAuthorisation(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val prisonRegister: PrisonRegisterClient,
 ) {
   fun byId(id: UUID, start: LocalDate?, end: LocalDate?): TapAuthorisation {
     val authorisation = authorisationRepository.getAuthorisation(id)
@@ -36,17 +39,23 @@ class GetTapAuthorisation(
         end?.let { startBefore(it.plusDays(1).atStartOfDay()) },
       ).reduce(Specification<TemporaryAbsenceOccurrence>::and),
     )
-    return authorisation.with(authorisation.person.asPerson(), totalOccurrences, occurrences.map { o -> o.asOccurrence() })
+    return authorisation.with(
+      prisonRegister.getPrisonOrDefault(authorisation.prisonCode),
+      authorisation.person.asPerson(),
+      totalOccurrences,
+      occurrences.map { o -> o.asOccurrence() },
+    )
   }
 }
 
 private fun TemporaryAbsenceAuthorisation.with(
+  prison: Prison,
   person: Person,
   totalOccurrences: Long,
   occurrences: List<TapAuthorisation.Occurrence>,
 ) = TapAuthorisation(
   id = id,
-  prisonCode = prisonCode,
+  prison = prison,
   person = person,
   status = status.asCodedDescription(),
   absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),

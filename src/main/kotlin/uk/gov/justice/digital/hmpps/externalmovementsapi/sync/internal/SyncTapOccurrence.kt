@@ -3,8 +3,8 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import tools.jackson.databind.json.JsonMapper
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
@@ -34,7 +34,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapOccurrence
 import java.util.UUID
@@ -46,7 +45,6 @@ class SyncTapOccurrence(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
-  private val jsonMapper: JsonMapper,
 ) {
   fun sync(authorisationId: UUID, request: TapOccurrence): SyncResponse {
     val authorisation = authorisationRepository.getAuthorisation(authorisationId)
@@ -59,7 +57,7 @@ class SyncTapOccurrence(
         ?.also {
           request.updated?.also { ExternalMovementContext.get().copy(requestAt = it.at, username = it.by).set() }
         }
-        ?.update(request, rdPaths)
+        ?.update(request, rdPaths, authorisation)
         ?: let {
           if (authorisation.status.code != AuthorisationStatus.Code.APPROVED.name) {
             throw ConflictException("Attempt to add occurrence to a non-approved authorisation")
@@ -78,20 +76,17 @@ class SyncTapOccurrence(
         }
     occurrenceRepository.flush()
     val locations = occurrenceRepository.findByAuthorisationId(authorisation.id).mapTo(linkedSetOf()) { it.location }
-    authorisation.applyLocations(ChangeAuthorisationLocations(locations)).clearSchedule()
+    authorisation.applyLocations(ChangeAuthorisationLocations(locations))
     return SyncResponse(occurrence.id)
   }
 
   fun deleteById(id: UUID) {
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
     occurrenceRepository.findByIdOrNull(id)?.also { occurrence ->
       val movementCount = movementRepository.countByOccurrenceId(occurrence.id)
       if (movementCount > 0) {
         throw ConflictException("Cannot delete an occurrence with a movement")
       } else {
-        if (!occurrence.authorisation.repeat) {
-          val schedule = AuthorisationSchedule(occurrence.start.toLocalTime(), occurrence.end.toLocalTime())
-          occurrence.authorisation.applySchedule(jsonMapper.valueToTree(schedule))
-        }
         occurrenceRepository.delete(occurrence)
       }
     }
@@ -131,6 +126,7 @@ class SyncTapOccurrence(
       legacyId = legacyId,
       reasonPath = reasonPath,
       scheduleReference = null,
+      dpsOnly = false,
       id = id ?: newUuid(),
     ).apply {
       if (isCancelled) {
@@ -142,12 +138,15 @@ class SyncTapOccurrence(
   private fun TemporaryAbsenceOccurrence.update(
     request: TapOccurrence,
     rdPaths: ReferenceDataPaths,
+    authorisation: TemporaryAbsenceAuthorisation,
   ) = apply {
+    authorisationPersonAndPrison(authorisation)
     applyAbsenceCategorisation(request, rdPaths)
     applySchedule(request)
     applyLogistics(request, rdPaths)
     checkCancellation(request, rdPaths)
     applyComments(ChangeOccurrenceComments(request.comments))
+    applyLegacyId(request.legacyId)
     if (request.isCancelled && movements().isEmpty()) {
       cancel(CancelOccurrence(), rdPaths::getReferenceData)
     } else {

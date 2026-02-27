@@ -1,12 +1,12 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence
 
-import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
@@ -20,6 +20,7 @@ import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
+import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -39,6 +40,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.CANCELLED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.COMPLETED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.DENIED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.EXPIRED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.OVERDUE
@@ -50,6 +52,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceDenied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
@@ -78,6 +81,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty1
 
+@NamedEntityGraph(name = "tap.occurrence.full", includeAllAttributes = true)
 @Audited
 @Entity
 @Table(schema = "tap", name = "occurrence")
@@ -97,6 +101,7 @@ class TemporaryAbsenceOccurrence(
   reasonPath: ReasonPath,
   scheduleReference: JsonNode?,
   legacyId: Long?,
+  dpsOnly: Boolean = false,
   @Id
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
@@ -129,19 +134,19 @@ class TemporaryAbsenceOccurrence(
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
-  @JoinColumn(name = "absence_reason_id")
+  @JoinColumn(name = "absence_reason_id", nullable = false)
   override var absenceReason: AbsenceReason = absenceReason
     private set
 
   @Audited
   @ManyToOne
-  @JoinColumn(name = "authorisation_id")
+  @JoinColumn(name = "authorisation_id", nullable = false)
   var authorisation: TemporaryAbsenceAuthorisation = authorisation
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
-  @JoinColumn(name = "person_identifier")
+  @JoinColumn(name = "person_identifier", nullable = false)
   var person: PersonSummary = authorisation.person
     private set
 
@@ -174,7 +179,7 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "location")
+  @Column(name = "location", nullable = false)
   var location: Location = location
     private set
 
@@ -192,7 +197,7 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "reason_path")
+  @Column(name = "reason_path", nullable = false)
   var reasonPath: ReasonPath = reasonPath
     private set
 
@@ -207,6 +212,10 @@ class TemporaryAbsenceOccurrence(
 
   @Version
   override var version: Int? = null
+    private set
+
+  @Column(name = "dps_only")
+  var dpsOnly: Boolean = dpsOnly
     private set
 
   @OneToMany(mappedBy = "occurrence", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
@@ -244,7 +253,7 @@ class TemporaryAbsenceOccurrence(
   }
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
-    action.domainEvent(this)?.publication(id) { !(status.code == PENDING.name || it.eventType in EXCLUDE_FROM_PUBLISH) }
+    action.domainEvent(this)?.publication(id) { !(dpsOnly || it.eventType in EXCLUDE_FROM_PUBLISH) }
   }.toSet()
 
   fun moveTo(person: PersonSummary) = apply {
@@ -334,15 +343,22 @@ class TemporaryAbsenceOccurrence(
   }
 
   fun calculateStatus(statusProvider: (String) -> OccurrenceStatus) = apply {
-    status =
-      statusProvider(
-        listOfNotNull(
-          movementStatus(),
-          expiredStatus(),
-          isCancelledStatus(),
-          authorisationStatus(),
-        ).first().name,
-      )
+    status = statusProvider(
+      listOfNotNull(
+        movementStatus(),
+        expiredStatus(),
+        isCancelledStatus(),
+        authorisationStatus(),
+      ).first().name,
+    )
+    if (dpsOnly && status.code in listOf(SCHEDULED.name, IN_PROGRESS.name, OVERDUE.name, COMPLETED.name)) {
+      dpsOnly = false
+    }
+  }
+
+  fun applyLegacyId(legacyId: Long) = apply {
+    this.legacyId = legacyId
+    this.dpsOnly = false
   }
 
   private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
@@ -368,7 +384,7 @@ class TemporaryAbsenceOccurrence(
     null
   }
 
-  private fun isCancelledStatus(): OccurrenceStatus.Code? = if (::status.isInitialized && status.code == CANCELLED.name) {
+  private fun isCancelledStatus(): OccurrenceStatus.Code? = if (authorisation.repeat && ::status.isInitialized && status.code == CANCELLED.name) {
     CANCELLED
   } else {
     null
@@ -379,7 +395,8 @@ class TemporaryAbsenceOccurrence(
   } else {
     val status = OccurrenceStatus.Code.valueOf(authorisation.status.code)
     val action = when (status) {
-      OccurrenceStatus.Code.DENIED -> DenyOccurrence()
+      DENIED -> DenyOccurrence()
+      EXPIRED -> ExpireOccurrence()
       else -> null
     }
     action?.also {
@@ -426,6 +443,7 @@ class TemporaryAbsenceOccurrence(
     val EXCLUDE_FROM_PUBLISH: Set<String> = setOf(
       TemporaryAbsenceStarted.EVENT_TYPE,
       TemporaryAbsenceCompleted.EVENT_TYPE,
+      TemporaryAbsenceDenied.EVENT_TYPE,
     )
 
     val PRISON_CODE = TemporaryAbsenceOccurrence::prisonCode.name

@@ -3,13 +3,15 @@ integration:
     url: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
   manage-users:
     url:  "https://manage-users-api-dev.hmpps.service.justice.gov.uk"
+  prison-register:
+    url: "https://prison-register-dev.hmpps.service.justice.gov.uk"
   prisoner-search:
     url: "https://prisoner-search-dev.prison.service.justice.gov.uk"
 
 service:
   active-prisons: "***"
   domain-events:
-    poll-interval: PT1s
+    poll-interval: PT0.1s
   occurrence-status:
     poll-interval: PT60s
   authorisation-expiration:

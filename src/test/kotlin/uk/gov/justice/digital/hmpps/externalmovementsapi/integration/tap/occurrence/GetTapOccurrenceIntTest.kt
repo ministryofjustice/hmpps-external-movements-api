@@ -56,7 +56,8 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve individually cancelled occurrence`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code, repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
@@ -73,7 +74,8 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve scheduled occurrence`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, end = LocalDateTime.now().plusHours(2)))
 
@@ -85,7 +87,8 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve expired occurrence`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, end = LocalDateTime.now().minusHours(2)))
 
@@ -97,10 +100,11 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve pending occurrence`() {
-    val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.PENDING))
-    val occurrence =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode = prison.code, status = AuthorisationStatus.Code.PENDING),
+    )
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -110,10 +114,11 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve cancelled occurrence from cancelled authorisation`() {
-    val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.CANCELLED))
-    val occurrence =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode = prison.code, status = AuthorisationStatus.Code.CANCELLED),
+    )
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -123,10 +128,11 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve denied occurrence`() {
-    val auth =
-      givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.DENIED))
-    val occurrence =
-      givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prisonCode = prison.code, status = AuthorisationStatus.Code.DENIED),
+    )
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
@@ -136,7 +142,8 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve overdue occurrence`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occurrence =
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
@@ -156,7 +163,8 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve in progress occurrence`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occurrence =
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
@@ -176,7 +184,8 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve completed occurrence`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
@@ -206,7 +215,8 @@ class GetTapOccurrenceIntTest(
 
   @Test
   fun `can retrieve occurrence with position and total count`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val prison = givenPrison()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
     val occ1 =
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(

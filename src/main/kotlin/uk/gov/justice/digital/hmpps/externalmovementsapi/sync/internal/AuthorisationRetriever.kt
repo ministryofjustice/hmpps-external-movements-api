@@ -35,7 +35,7 @@ private fun AuditedTapAuthorisation.with(
   statusCode = status.code,
   absenceTypeCode = absenceType?.code,
   absenceSubTypeCode = absenceSubType?.code ?: if (absenceType?.code == AbsenceType.Code.SECURITY_ESCORT.value) AbsenceSubType.Code.SECURITY_ESCORT.value else null,
-  absenceReasonCode = requireNotNull(absenceReason).code,
+  absenceReasonCode = absenceReason.code,
   accompaniedByCode = accompaniedBy.code,
   transportCode = transport.code,
   repeat = repeat,

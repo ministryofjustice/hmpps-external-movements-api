@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch
 
-import java.time.LocalDate
-
 data class PrisonerNumbers(
   val prisonerNumbers: Set<String>,
 )
@@ -10,7 +8,7 @@ data class Prisoner(
   val prisonerNumber: String,
   val firstName: String,
   val lastName: String,
-  val dateOfBirth: LocalDate,
+  val prisonId: String?,
   val lastPrisonId: String?,
   val cellLocation: String?,
 ) {
@@ -19,7 +17,7 @@ data class Prisoner(
       Prisoner::prisonerNumber.name,
       Prisoner::firstName.name,
       Prisoner::lastName.name,
-      Prisoner::dateOfBirth.name,
+      Prisoner::prisonId.name,
       Prisoner::lastPrisonId.name,
       Prisoner::cellLocation.name,
     )

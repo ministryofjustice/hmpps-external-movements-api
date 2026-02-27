@@ -1,18 +1,21 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import io.awspring.cloud.sqs.annotation.SqsListener
+import io.sentry.Sentry
 import org.springframework.stereotype.Service
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.readValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PrisonerMergedHandler
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonUpdatedHandler
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationApprovedHandler
 
 @Service
 class DomainEventListener(
   private val jsonMapper: JsonMapper,
   private val person: PersonUpdatedHandler,
   private val merged: PrisonerMergedHandler,
+  private val authApproved: AuthorisationApprovedHandler,
 ) {
   @SqsListener("hmppsdomaineventsqueue", factory = "hmppsQueueContainerFactoryProxy")
   fun receive(notification: Notification) {
@@ -20,7 +23,11 @@ class DomainEventListener(
       when (notification.eventType) {
         PrisonerUpdated.EVENT_TYPE -> person.handle(jsonMapper.readValue(notification.message))
         PrisonerMerged.EVENT_TYPE -> merged.handle(jsonMapper.readValue(notification.message))
+        TemporaryAbsenceAuthorisationApproved.EVENT_TYPE -> authApproved.handle(jsonMapper.readValue(notification.message))
       }
+    } catch (ex: Exception) {
+      Sentry.captureException(ex)
+      throw ex
     } finally {
       ExternalMovementContext.clear()
     }

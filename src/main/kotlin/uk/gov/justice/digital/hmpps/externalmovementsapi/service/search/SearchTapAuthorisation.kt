@@ -40,7 +40,7 @@ class SearchTapAuthorisation(
   }
 
   private fun TapAuthorisationSearchRequest.asSpecification(): Specification<TemporaryAbsenceAuthorisation> = listOfNotNull(
-    prisonCode?.let { authorisationMatchesPrisonCode(it) },
+    authorisationMatchesPrisonCode(prisonCode),
     authorisationOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { authorisationStatusCodeIn(it) },
     absenceCategorisation?.matchesAuthorisation(),

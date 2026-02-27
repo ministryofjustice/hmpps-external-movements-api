@@ -1,6 +1,5 @@
 import com.google.cloud.tools.jib.gradle.BuildImageTask
 import de.undercouch.gradle.tasks.download.Download
-import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -17,9 +16,9 @@ configurations {
 }
 
 val ehcacheVersion = "3.11.1"
-val hibernateJcacheVersion = "7.2.4.Final"
+val hibernateJcacheVersion = "7.2.5.Final"
 val hmppsKotlinVersion = "2.0.0"
-val sentryVersion = "8.32.0"
+val sentryVersion = "8.33.0"
 val springDocVersion = "3.0.1"
 val sqsStarterVersion = "7.0.0"
 val testContainersVersion = "1.21.4"
@@ -102,7 +101,7 @@ tasks {
   withType<BuildImageTask>().named("jib") {
     doFirst {
       jib!!.to {
-        tags = setOf(System.getenv("VERSION") ?: "dev")
+        tags = setOf(System.getenv("BUILD_NUMBER") ?: "dev")
         auth {
           username = System.getenv("GITHUB_USERNAME")
           password = System.getenv("GITHUB_PASSWORD")
@@ -119,6 +118,7 @@ jib {
     jvmFlags = mutableListOf("-Duser.timezone=Europe/London")
     mainClass = "uk.gov.justice.digital.hmpps.externalmovementsapi.ExternalMovementsApiKt"
     user = "2000:2000"
+    environment = mapOf("BUILD_NUMBER" to (System.getenv("BUILD_NUMBER") ?: "dev"))
   }
   from {
     image = "eclipse-temurin:25-jre-jammy"

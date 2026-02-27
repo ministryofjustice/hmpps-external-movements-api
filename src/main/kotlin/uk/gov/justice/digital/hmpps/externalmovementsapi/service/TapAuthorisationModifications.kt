@@ -114,15 +114,13 @@ class TapAuthorisationModifications(
       }
       taaRepository.flush()
       readVersion!! to authorisation.version!!
-    }!!
+    }
     return AuditHistory(listOfNotNull(authorisationHistory.currentAction(id, readVersion, writeVersion)))
   }
 
   private fun TemporaryAbsenceAuthorisation.affectedOccurrences() = taoRepository.findAll(
     forAuthorisation(id)
-      .and(
-        occurrenceStatusCodeIn(OccurrenceStatus.Code.PENDING, OccurrenceStatus.Code.SCHEDULED),
-      ),
+      .and(occurrenceStatusCodeIn(OccurrenceStatus.Code.PENDING, OccurrenceStatus.Code.SCHEDULED)),
   )
 
   private fun TemporaryAbsenceAuthorisation.updateOccurrenceStatus() {

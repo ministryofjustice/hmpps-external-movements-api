@@ -1,7 +1,8 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
-import com.fasterxml.jackson.databind.JsonNode
 import io.swagger.v3.oas.annotations.media.Schema
+import tools.jackson.databind.JsonNode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDate
@@ -12,7 +13,7 @@ import java.util.UUID
 @Schema(name = "TapAuthorisation")
 data class TapAuthorisation(
   val id: UUID,
-  val prisonCode: String,
+  val prison: Prison,
   val person: Person,
   val status: CodedDescription,
   val absenceType: CodedDescription?,

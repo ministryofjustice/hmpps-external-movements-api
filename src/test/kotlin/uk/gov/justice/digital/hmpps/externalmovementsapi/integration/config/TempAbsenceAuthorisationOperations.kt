@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config
 
-import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
+import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
@@ -106,6 +106,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
 
   fun TapAuthorisation.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
     assertThat(person.personIdentifier).isEqualTo(authorisation.person.identifier)
+    assertThat(prison.code).isEqualTo(authorisation.prisonCode)
     assertThat(status.code).isEqualTo(authorisation.status.code)
     with(authorisation.reasonPath) {
       verify(ABSENCE_TYPE, absenceType, authorisation.absenceType)

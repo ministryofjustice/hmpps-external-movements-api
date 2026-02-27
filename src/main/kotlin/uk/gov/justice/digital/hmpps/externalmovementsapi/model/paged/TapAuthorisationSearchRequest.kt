@@ -17,16 +17,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.PrisonOrPersonIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ValidPrisonOrPersonIdentifier
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.PersonIdentifierDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ValidPersonIdentifierOrDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ValidStartAndEnd
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.removeNullChar
 import java.time.LocalDate
 
 @ValidStartAndEnd
-@ValidPrisonOrPersonIdentifier
+@ValidPersonIdentifierOrDateRange
 data class TapAuthorisationSearchRequest(
-  override val prisonCode: String? = null,
+  val prisonCode: String,
   override val start: LocalDate? = null,
   override val end: LocalDate? = null,
   val status: Set<AuthorisationStatus.Code> = emptySet(),
@@ -37,7 +37,7 @@ data class TapAuthorisationSearchRequest(
   override val size: Int = 10,
   override val sort: String = START,
 ) : PagedRequest,
-  PrisonOrPersonIdentifier<LocalDate> {
+  PersonIdentifierDateRange<LocalDate> {
   override fun validSortFields(): Set<String> = setOf(START, END, STATUS, ABSENCE_TYPE, ABSENCE_REASON, REPEAT, FIRST_NAME, LAST_NAME)
 
   private fun sortByDate(direction: Direction, first: String, second: String) = by(direction, first, second).and(sortByPersonName())

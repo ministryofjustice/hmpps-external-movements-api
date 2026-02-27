@@ -1,11 +1,10 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config
 
-import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
-import sun.security.util.resources.auth
+import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
@@ -61,6 +60,7 @@ interface TempAbsenceOccurrenceOperations {
       reasonPath: ReasonPath = authorisation.reasonPath,
       scheduleReference: JsonNode? = null,
       legacyId: Long? = null,
+      dpsOnly: Boolean = false,
       movements: List<((KClass<out ReferenceData>, String) -> ReferenceData, (String) -> PersonSummary) -> TemporaryAbsenceMovement> = listOf(),
     ): ((KClass<out ReferenceData>, String) -> ReferenceData) -> TemporaryAbsenceOccurrence = { rdSupplier ->
       val occurrence = TemporaryAbsenceOccurrence(
@@ -81,6 +81,7 @@ interface TempAbsenceOccurrenceOperations {
         reasonPath = reasonPath,
         scheduleReference = scheduleReference,
         legacyId = legacyId,
+        dpsOnly = dpsOnly,
       )
       movements.forEach {
         occurrence.addMovement(
@@ -88,9 +89,7 @@ interface TempAbsenceOccurrenceOperations {
             check(pi == authorisation.person.identifier)
             authorisation.person
           }.applyLocation(ChangeMovementLocation(location)),
-        ) { statusCode ->
-          rdSupplier(OccurrenceStatus::class, statusCode) as OccurrenceStatus
-        }
+        ) { statusCode -> rdSupplier(OccurrenceStatus::class, statusCode) as OccurrenceStatus }
       }
       if (cancelledAt != null && cancelledBy != null) {
         occurrence.cancel(CancelOccurrence(), rdSupplier)
@@ -128,6 +127,7 @@ interface TempAbsenceOccurrenceOperations {
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapOccurrence) {
     assertThat(person.identifier).isEqualTo(occurrence.authorisation.person.personIdentifier)
+    assertThat(prisonCode).isEqualTo(occurrence.prison.code)
     assertThat(absenceType?.code).isEqualTo(occurrence.absenceType?.code)
     assertThat(absenceSubType?.code).isEqualTo(occurrence.absenceSubType?.code)
     assertThat(absenceReasonCategory?.code).isEqualTo(occurrence.absenceReasonCategory?.code)

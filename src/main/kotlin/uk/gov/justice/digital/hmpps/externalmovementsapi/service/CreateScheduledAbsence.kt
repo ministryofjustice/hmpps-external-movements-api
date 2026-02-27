@@ -91,7 +91,7 @@ class CreateScheduledAbsence(
 
     val occurrence = request.asOccurrence(authorisation).calculateStatus { occurrenceStatusRepository.getByCode(it) }
     val locations = (authorisation.locations + occurrence.location).mapTo(linkedSetOf()) { it }
-    authorisation.applyLocations(ChangeAuthorisationLocations(locations)).clearSchedule()
+    authorisation.applyLocations(ChangeAuthorisationLocations(locations))
 
     return ReferenceId(tapOccurrenceRepository.save(occurrence).id)
   }
@@ -161,6 +161,7 @@ class CreateScheduledAbsence(
     reasonPath = authorisation.reasonPath,
     scheduleReference = scheduleReference,
     legacyId = null,
+    dpsOnly = authorisation.status.code != AuthorisationStatus.Code.APPROVED.name,
   ).calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus }
 
   private fun CreateOccurrenceRequest.asOccurrence(
@@ -187,5 +188,6 @@ class CreateScheduledAbsence(
     reasonPath = authorisation.reasonPath,
     scheduleReference = null,
     legacyId = null,
+    dpsOnly = authorisation.status.code != AuthorisationStatus.Code.APPROVED.name,
   )
 }

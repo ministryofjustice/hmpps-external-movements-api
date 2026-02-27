@@ -4,6 +4,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
@@ -66,13 +67,14 @@ class SyncTapMovement(
         }
     occurrence?.authorisation?.also {
       movementRepository.flush()
-      val locations = occurrenceRepository.findByAuthorisationId(it.id).mapTo(linkedSetOf()) { it.location }
+      val locations = occurrenceRepository.findByAuthorisationId(it.id).mapTo(linkedSetOf()) { occ -> occ.location }
       it.applyLocations(ChangeAuthorisationLocations(locations))
     }
     return SyncResponse(movement.id)
   }
 
   fun deleteById(id: UUID) {
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
     movementRepository.findByIdOrNull(id)?.also {
       it.occurrence?.removeMovement(it) { statusCode -> occurrenceStatusRepository.getByCode(statusCode) }
       movementRepository.delete(it)

@@ -5,9 +5,9 @@ import jakarta.persistence.criteria.JoinType
 import org.hibernate.jpa.HibernateHints
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
@@ -114,25 +114,17 @@ interface TemporaryAbsenceOccurrenceRepository :
   )
   fun findReturningTodayCount(prisonIdentifier: String): Int
 
-  fun countByPersonIdentifier(personIdentifier: String): Int
-  fun findByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceOccurrence>
+  fun countByPersonIdentifierAndDpsOnlyFalse(personIdentifier: String): Int
+  fun findByPersonIdentifierAndDpsOnlyFalse(personIdentifier: String): List<TemporaryAbsenceOccurrence>
 
-  @Modifying
-  @Query(
-    """
-    delete from TemporaryAbsenceOccurrence tao where tao.person.identifier = :personIdentifier
-  """,
-  )
-  fun deleteByPersonIdentifier(personIdentifier: String)
+  @Query("""select tao.id from TemporaryAbsenceOccurrence tao where tao.person.identifier = :personIdentifier""")
+  fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>
 
-  @Query(
-    """
-    select o from TemporaryAbsenceOccurrence o
-    where o.person.identifier = :personIdentifier
-    and o.id not in (:ids)
-  """,
-  )
-  fun findForPersonNotIn(personIdentifier: String, ids: Set<UUID>): List<TemporaryAbsenceOccurrence>
+  @Query("""select tao.id from TemporaryAbsenceOccurrence tao where tao.legacyId in :legacyIds""")
+  fun findIdsByLegacyId(legacyIds: Set<Long>): List<UUID>
+
+  @EntityGraph("tap.occurrence.full")
+  override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceOccurrence>
 }
 
 fun TemporaryAbsenceOccurrenceRepository.getOccurrence(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence occurrence not found")

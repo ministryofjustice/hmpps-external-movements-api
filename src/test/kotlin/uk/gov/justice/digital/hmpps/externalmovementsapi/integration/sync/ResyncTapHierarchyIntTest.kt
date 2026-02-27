@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
@@ -21,6 +22,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDeferred
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationExpired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceExpired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -71,7 +77,7 @@ class ResyncTapHierarchyIntTest(
 
   @Test
   fun `403 forbidden without correct role`() {
-    migrateTap(personIdentifier(), resyncTapRequest(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+    resyncTap(personIdentifier(), resyncTapRequest(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
   }
 
   @Test
@@ -98,7 +104,7 @@ class ResyncTapHierarchyIntTest(
       ),
     )
 
-    val response = migrateTap(originalAuth.person.identifier, request).successResponse<MigrateTapResponse>()
+    val response = resyncTap(originalAuth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     // confirm existing tap hierarchy has been removed
     assertThat(findTemporaryAbsenceAuthorisation(originalAuth.id)).isNull()
@@ -179,7 +185,7 @@ class ResyncTapHierarchyIntTest(
       ),
       unscheduledMovements = listOf(),
     )
-    val response = migrateTap(pi, request).successResponse<MigrateTapResponse>()
+    val response = resyncTap(pi, request).successResponse<MigrateTapResponse>()
 
     response.temporaryAbsences.first().also { ma ->
       val auth = requireNotNull(findTemporaryAbsenceAuthorisation(ma.id))
@@ -237,7 +243,7 @@ class ResyncTapHierarchyIntTest(
       ),
       unscheduledMovements = listOf(),
     )
-    val response = migrateTap(pi, request).successResponse<MigrateTapResponse>()
+    val response = resyncTap(pi, request).successResponse<MigrateTapResponse>()
 
     response.temporaryAbsences.first().also { ma ->
       val auth = requireNotNull(findTemporaryAbsenceAuthorisation(ma.id))
@@ -303,7 +309,7 @@ class ResyncTapHierarchyIntTest(
       ),
       unscheduledMovements = listOf(),
     )
-    val response = migrateTap(pi, request).successResponse<MigrateTapResponse>()
+    val response = resyncTap(pi, request).successResponse<MigrateTapResponse>()
 
     response.temporaryAbsences.first().also { ma ->
       ma.occurrences.first().also { mo ->
@@ -367,7 +373,7 @@ class ResyncTapHierarchyIntTest(
       ),
       unscheduledMovements = listOf(),
     )
-    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+    val response = resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     response.temporaryAbsences.first().also { ma ->
       ma.occurrences.first().also { mo ->
@@ -420,7 +426,7 @@ class ResyncTapHierarchyIntTest(
         },
       ),
     )
-    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+    val response = resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     response.temporaryAbsences.single().also { ma ->
       ma.occurrences.single().also { mo ->
@@ -465,7 +471,7 @@ class ResyncTapHierarchyIntTest(
         },
       ),
     )
-    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+    val response = resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     response.temporaryAbsences.single().also { ma -> assertThat(ma.occurrences.isEmpty()) }
     assertThat(findTemporaryAbsenceOccurrence(occurrence.id)).isNull()
@@ -502,7 +508,7 @@ class ResyncTapHierarchyIntTest(
       ),
       unscheduledMovements = listOf(),
     )
-    val response = migrateTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+    val response = resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
 
     val responseAuth = response.temporaryAbsences.single()
     assertThat(responseAuth.occurrences).hasSize(2)
@@ -513,6 +519,317 @@ class ResyncTapHierarchyIntTest(
       val msa = requireNotNull(migrationSystemAuditRepository.findByIdOrNull(occurrence.id))
       occurrence.verifyAgainst(occRequest, msa)
     }
+  }
+
+  @Test
+  fun `200 ok - create occurrence if not exists for single auth`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(legacyId = newId(), repeat = false, status = AuthorisationStatus.Code.EXPIRED),
+    )
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          statusCode = AuthorisationStatus.Code.PENDING.name,
+          occurrences = listOf(),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    val response = resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val responseAuth = response.temporaryAbsences.single()
+    // response will have no occurrences as occurrences that are not scheduled do not exist in nomis
+    assertThat(responseAuth.occurrences).hasSize(0)
+    val occurrence = findForAuthorisation(responseAuth.id).single()
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+    assertThat(occurrence.location).isEqualTo(request.temporaryAbsences.single().location)
+  }
+
+  @Test
+  fun `200 ok - resync of expired authorisation maintains status`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now().minusDays(10),
+        end = LocalDate.now().minusDays(5),
+        status = AuthorisationStatus.Code.EXPIRED,
+        locations = linkedSetOf(location()),
+        legacyId = newId(),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = auth.start.atTime(15, 0),
+        end = auth.end.atTime(17, 0),
+        location = auth.locations.single(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          occurrences = listOf(),
+          // nomis doesn't have the concept of expired so sends pending
+          statusCode = "PENDING",
+          start = occ.start.toLocalDate(),
+          end = occ.end.toLocalDate(),
+          startTime = occ.start.toLocalTime(),
+          endTime = occ.end.toLocalTime(),
+          location = occ.location,
+          comments = "Resync authorisation",
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationCommentsChanged(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - can reset to pending if not in the past`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now().minusDays(3),
+        end = LocalDate.now().plusDays(3),
+        status = AuthorisationStatus.Code.APPROVED,
+        locations = linkedSetOf(location()),
+        legacyId = newId(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          occurrences = listOf(),
+          statusCode = "PENDING",
+          start = auth.start,
+          end = auth.end,
+          location = location(),
+          comments = "Resync authorisation",
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    val dpsOccurrence = findForAuthorisation(saved.id).single()
+    assertThat(dpsOccurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationCommentsChanged(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
+        TemporaryAbsenceAuthorisationRelocated(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
+        TemporaryAbsenceAuthorisationDeferred(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - non scheduled occurrence is updated from schedule of non approved authorisation`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now().plusDays(2),
+        end = LocalDate.now().plusDays(2),
+        status = AuthorisationStatus.Code.PENDING,
+        locations = linkedSetOf(location()),
+        legacyId = newId(),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = auth.start.atTime(10, 0),
+        end = auth.end.atTime(12, 0),
+        location = auth.locations.single(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          occurrences = listOf(),
+          statusCode = "PENDING",
+          start = auth.start,
+          end = auth.end,
+          startTime = LocalTime.of(9, 30),
+          endTime = LocalTime.of(14, 30),
+          location = occ.location,
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    val dpsOccurrence = findForAuthorisation(saved.id).single()
+    assertThat(dpsOccurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    val authRequest = request.temporaryAbsences.single()
+    assertThat(dpsOccurrence.start).isEqualTo(authRequest.start.atTime(authRequest.startTime))
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationCommentsChanged(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - can expire future dated authorisations when not on current booking`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now().plusDays(2),
+        end = LocalDate.now().plusDays(2),
+        status = AuthorisationStatus.Code.APPROVED,
+        locations = linkedSetOf(location()),
+        legacyId = newId(),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = auth.start.atTime(11, 0),
+        end = auth.end.atTime(15, 0),
+        location = auth.locations.single(),
+        legacyId = newId(),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(
+        tapAuthorisation(
+          id = auth.id,
+          legacyId = auth.legacyId!!,
+          statusCode = "EXPIRED",
+          start = auth.start,
+          end = auth.end,
+          startTime = LocalTime.of(11, 0),
+          endTime = LocalTime.of(15, 0),
+          location = auth.locations.single(),
+          comments = auth.comments,
+          occurrences = listOf(
+            tapOccurrence(
+              id = occ.id,
+              start = occ.start,
+              end = occ.end,
+              contactInformation = null,
+              comments = occ.comments,
+              location = occ.location,
+              legacyId = occ.legacyId!!,
+              movements = listOf(),
+            ),
+          ),
+        ),
+      ),
+      unscheduledMovements = listOf(),
+    )
+    resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
+    assertThat(occurrence.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationExpired(
+          auth.person.identifier,
+          auth.id,
+          DataSource.NOMIS,
+        ).publication(auth.id) { false },
+        TemporaryAbsenceExpired(
+          auth.person.identifier,
+          occ.id,
+          DataSource.NOMIS,
+        ).publication(occ.id) { false },
+      ),
+    )
   }
 
   private fun resyncTapRequest(
@@ -626,7 +943,7 @@ class ResyncTapHierarchyIntTest(
     id,
   )
 
-  private fun migrateTap(
+  private fun resyncTap(
     personIdentifier: String,
     request: MigrateTapRequest,
     role: String? = Roles.NOMIS_SYNC,
@@ -634,7 +951,7 @@ class ResyncTapHierarchyIntTest(
     .put()
     .uri(RESYNC_TAP_URL, personIdentifier)
     .bodyValue(request)
-    .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
+    .headers(setAuthorisation(username = "migration-client-id", roles = listOfNotNull(role)))
     .exchange()
 
   companion object {

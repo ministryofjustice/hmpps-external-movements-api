@@ -17,7 +17,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.o
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceOverlapsDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.PrisonRegisterClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PersonOccurrenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PersonOccurrenceResult
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PersonTapSearchRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PersonTapSearchResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceResult
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurrenceSearchRequest
@@ -28,14 +34,21 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.mapping.asPerso
 @Service
 class SearchTapOccurrence(
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val prisonRegister: PrisonRegisterClient,
 ) {
   fun find(request: TapOccurrenceSearchRequest): TapOccurrenceSearchResponse {
     val page = occurrenceRepository.findAll(request.asSpecification(), request.pageable())
     return page.map { it.toModel() }.asResponse()
   }
 
+  fun findForPerson(personIdentifier: String, request: PersonTapSearchRequest): PersonTapSearchResponse {
+    val page = occurrenceRepository.findAll(request.specificationFor(personIdentifier), request.pageable())
+    val prisons = prisonRegister.findPrisons(page.map { it.prisonCode }.toSet()).associateBy { it.code }
+    return page.map { it.forPerson { code -> prisons[code] ?: Prison.default(code) } }.asResponse()
+  }
+
   private fun TapOccurrenceSearchRequest.asSpecification(): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
-    prisonCode?.let { occurrenceMatchesPrisonCode(it) },
+    occurrenceMatchesPrisonCode(prisonCode),
     occurrenceOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
     absenceCategorisation?.matchesOccurrence(),
@@ -46,6 +59,13 @@ class SearchTapOccurrence(
         occurrenceMatchesPersonName(it)
       }
     },
+  ).reduce(Specification<TemporaryAbsenceOccurrence>::and)
+
+  private fun PersonTapSearchRequest.specificationFor(personIdentifier: String): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
+    occurrenceMatchesPersonIdentifier(personIdentifier),
+    occurrenceOverlapsDateRange(start, end),
+    status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
+    absenceCategorisation?.matchesOccurrence(),
   ).reduce(Specification<TemporaryAbsenceOccurrence>::and)
 
   private fun TemporaryAbsenceOccurrence.toModel() = TapOccurrenceResult(
@@ -79,3 +99,34 @@ private fun TemporaryAbsenceAuthorisation.asOccurrenceAuth() = TapOccurrenceAuth
 )
 
 fun Page<TapOccurrenceResult>.asResponse() = TapOccurrenceSearchResponse(content, PageMetadata(totalElements))
+
+private fun TemporaryAbsenceOccurrence.forPerson(prisonSupplier: (String) -> Prison) = PersonOccurrenceResult(
+  id = id,
+  authorisation = authorisation.forPerson(),
+  prison = prisonSupplier(prisonCode),
+  status = status.asCodedDescription(),
+  absenceType = absenceType?.asCodedDescription(),
+  absenceSubType = absenceSubType?.asCodedDescription(),
+  absenceReasonCategory = absenceReasonCategory?.asCodedDescription(),
+  absenceReason = absenceReason.asCodedDescription(),
+  start = start,
+  end = end,
+  accompaniedBy = accompaniedBy.asCodedDescription(),
+  transport = transport.asCodedDescription(),
+  location = location,
+  isCancelled = status.code == OccurrenceStatus.Code.CANCELLED.name,
+  absenceCategorisation = hierarchyDescription(reasonPath),
+)
+
+private fun TemporaryAbsenceAuthorisation.forPerson() = PersonOccurrenceAuthorisation(
+  id,
+  status.asCodedDescription(),
+  absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
+  absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
+  absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
+    ?.asCodedDescription(),
+  absenceReason = absenceReason.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
+  repeat = repeat,
+)
+
+fun Page<PersonOccurrenceResult>.asResponse() = PersonTapSearchResponse(content, PageMetadata(totalElements))

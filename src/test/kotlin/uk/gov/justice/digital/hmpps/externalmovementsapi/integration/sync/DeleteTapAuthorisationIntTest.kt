@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -59,7 +61,7 @@ class DeleteTapAuthorisationIntTest(
   }
 
   @Test
-  fun `204 can delete tap authorisation and occurrences`() {
+  fun `204 can delete tap authorisation`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
 
     deleteTapAuthorisation(auth.id).expectStatus().isNoContent
@@ -71,7 +73,29 @@ class DeleteTapAuthorisationIntTest(
       auth,
       RevisionType.DEL,
       setOf(TemporaryAbsenceAuthorisation::class.simpleName!!),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+      ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(auth, setOf())
+  }
+
+  @Test
+  fun `204 can delete tap authorisation with dps only occurrence`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.PENDING))
+    val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
+
+    deleteTapAuthorisation(auth.id).expectStatus().isNoContent
+
+    val authorisation = findTemporaryAbsenceAuthorisation(auth.id)
+    assertThat(authorisation).isNull()
+    val occurrence = findTemporaryAbsenceOccurrence(occ.id)
+    assertThat(occurrence).isNull()
+
+    verifyAudit(
+      auth,
+      RevisionType.DEL,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
     )
 
     verifyEvents(auth, setOf())
