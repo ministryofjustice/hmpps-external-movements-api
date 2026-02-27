@@ -69,7 +69,7 @@ class PrisonerUpdatedIntTest(
     assertThat(unchanged.identifier).isEqualTo(person.identifier)
     assertThat(unchanged.firstName).isEqualTo(person.firstName)
     assertThat(unchanged.lastName).isEqualTo(person.lastName)
-    assertThat(unchanged.dateOfBirth).isEqualTo(person.dateOfBirth)
+    assertThat(unchanged.prisonCode).isEqualTo(person.prisonCode)
     assertThat(unchanged.cellLocation).isEqualTo(person.cellLocation)
   }
 }
