@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationOverlapsDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationStatusCodeIn
@@ -32,10 +33,11 @@ class SearchTapAuthorisation(
 ) {
   fun find(request: TapAuthorisationSearchRequest): TapAuthorisationSearchResponse {
     val page = authRepository.findAll(request.asSpecification(), request.pageable())
+    val authorisations = authRepository.findAllById(page.map { it.id }).associateBy { it.id }
     val occurrences = occurrenceRepository.findByAuthorisationIdIn(page.content.map { it.id }.toSet())
       .groupBy { it.authorisation.id }
     return page.map { taa ->
-      taa.with(taa.person.asPerson(), occurrences[taa.id] ?: emptyList())
+      requireNotNull(authorisations[taa.id]).with(taa.person.asPerson(), occurrences[taa.id] ?: emptyList())
     }.asResponse()
   }
 
@@ -46,11 +48,11 @@ class SearchTapAuthorisation(
     absenceCategorisation?.matchesAuthorisation(),
     queryString?.let {
       if (isPersonIdentifier()) {
-        authorisationMatchesPersonIdentifier(it)
+        authorisationMatchesPersonIdentifier(it, prisonCode)
       } else {
-        authorisationMatchesPersonName(it)
+        authorisationMatchesPersonName(it, prisonCode)
       }
-    },
+    } ?: authorisationMatchesPersonPrisonCode(prisonCode),
   ).reduce(Specification<TemporaryAbsenceAuthorisation>::and)
 
   private fun TemporaryAbsenceAuthorisation.with(

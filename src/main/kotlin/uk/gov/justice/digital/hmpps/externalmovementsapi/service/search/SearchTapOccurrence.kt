@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.matchesOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceOverlapsDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceStatusCodeIn
@@ -38,7 +39,8 @@ class SearchTapOccurrence(
 ) {
   fun find(request: TapOccurrenceSearchRequest): TapOccurrenceSearchResponse {
     val page = occurrenceRepository.findAll(request.asSpecification(), request.pageable())
-    return page.map { it.toModel() }.asResponse()
+    val occurrences = occurrenceRepository.findAllById(page.map { it.id }).associateBy { it.id }
+    return page.map { requireNotNull(occurrences[it.id]).toModel() }.asResponse()
   }
 
   fun findForPerson(personIdentifier: String, request: PersonTapSearchRequest): PersonTapSearchResponse {
@@ -54,15 +56,15 @@ class SearchTapOccurrence(
     absenceCategorisation?.matchesOccurrence(),
     queryString?.let {
       if (isPersonIdentifier()) {
-        occurrenceMatchesPersonIdentifier(it)
+        occurrenceMatchesPersonIdentifier(it, prisonCode)
       } else {
-        occurrenceMatchesPersonName(it)
+        occurrenceMatchesPersonName(it, prisonCode)
       }
-    },
+    } ?: occurrenceMatchesPersonPrisonCode(prisonCode),
   ).reduce(Specification<TemporaryAbsenceOccurrence>::and)
 
   private fun PersonTapSearchRequest.specificationFor(personIdentifier: String): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
-    occurrenceMatchesPersonIdentifier(personIdentifier),
+    occurrenceMatchesPersonIdentifier(personIdentifier, null),
     occurrenceOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
     absenceCategorisation?.matchesOccurrence(),
