@@ -35,7 +35,7 @@ import java.util.UUID
 import kotlin.reflect.KClass
 
 interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
-  fun givenTemporaryAbsenceAuthorisation(tas: ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation
+  fun givenTemporaryAbsenceAuthorisation(tas: ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String, String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation
   fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation?
 
   companion object {
@@ -64,9 +64,9 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
       ),
       schedule: JsonNode? = null,
       legacyId: Long? = null,
-    ): ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation = { rdSupplier, personSupplier ->
+    ): ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String, String) -> PersonSummary) -> TemporaryAbsenceAuthorisation = { rdSupplier, personSupplier ->
       TemporaryAbsenceAuthorisation(
-        personSupplier(personIdentifier),
+        personSupplier(personIdentifier, prisonCode),
         prisonCode,
         rdSupplier(AuthorisationStatus::class, status.name) as AuthorisationStatus,
         absenceType?.let { rdSupplier(AbsenceType::class, it) as AbsenceType },
@@ -138,11 +138,11 @@ class TempAbsenceAuthorisationOperationsImpl(
   private val psOperations: PersonSummaryOperations,
 ) : TempAbsenceAuthorisationOperations,
   PersonSummaryOperations by psOperations {
-  override fun givenTemporaryAbsenceAuthorisation(tas: ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation = transactionTemplate.execute {
+  override fun givenTemporaryAbsenceAuthorisation(tas: ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String, String) -> PersonSummary) -> TemporaryAbsenceAuthorisation): TemporaryAbsenceAuthorisation = transactionTemplate.execute {
     val rdMap = referenceDataRepository.findAll().associateBy { it::class to it.code }
     val authorisation: TemporaryAbsenceAuthorisation = tas(
       { dc: KClass<out ReferenceData>, c: String -> requireNotNull(rdMap[dc to c]) },
-      { psOperations.findPersonSummary(it) ?: psOperations.givenPersonSummary(personSummary(it)) },
+      { identifier, prisonCode -> psOperations.findPersonSummary(identifier) ?: psOperations.givenPersonSummary(personSummary(identifier, prisonCode = prisonCode)) },
     )
     temporaryAbsenceAuthorisationRepository.save(authorisation)
   }

@@ -37,6 +37,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.p
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
@@ -408,7 +409,11 @@ interface TemporaryAbsenceAuthorisationRepository :
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")
 
 fun authorisationMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
-  cb.equal(taa.get<String>(PRISON_CODE), prisonCode)
+  cb.and(
+    taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
+      .matchesPrisonCode(cb, prisonCode),
+    cb.equal(taa.get<String>(PRISON_CODE), prisonCode),
+  )
 }
 
 fun authorisationMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->

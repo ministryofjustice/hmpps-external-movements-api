@@ -6,6 +6,7 @@ import jakarta.persistence.criteria.Predicate
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.FIRST_NAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.IDENTIFIER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.LAST_NAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary.Companion.PRISON_CODE
 
 fun <T> Join<T, PersonSummary>.matchesName(cb: CriteriaBuilder, name: String): Predicate {
   val matches = name.replace(",", " ").split("\\s".toRegex())
@@ -23,3 +24,8 @@ fun <T> Join<T, PersonSummary>.matchesIdentifier(
   cb: CriteriaBuilder,
   identifier: String,
 ): Predicate = cb.equal(get<String>(IDENTIFIER), identifier.uppercase())
+
+fun <T> Join<T, PersonSummary>.matchesPrisonCode(
+  cb: CriteriaBuilder,
+  prisonCode: String,
+): Predicate = cb.equal(get<String>(PRISON_CODE), prisonCode)
