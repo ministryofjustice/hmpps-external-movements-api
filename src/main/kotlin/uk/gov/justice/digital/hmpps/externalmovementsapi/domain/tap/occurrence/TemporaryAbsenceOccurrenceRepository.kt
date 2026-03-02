@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.RefreshRepositor
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.matchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
@@ -130,7 +131,11 @@ interface TemporaryAbsenceOccurrenceRepository :
 fun TemporaryAbsenceOccurrenceRepository.getOccurrence(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence occurrence not found")
 
 fun occurrenceMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.equal(tao.get<String>(PRISON_CODE), prisonCode)
+  cb.and(
+    tao.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER)
+      .matchesPrisonCode(cb, prisonCode),
+    cb.equal(tao.get<String>(PRISON_CODE), prisonCode),
+  )
 }
 
 fun occurrenceMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->

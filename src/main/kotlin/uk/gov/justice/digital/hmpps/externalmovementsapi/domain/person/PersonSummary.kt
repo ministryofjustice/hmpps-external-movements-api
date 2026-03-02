@@ -45,6 +45,7 @@ class PersonSummary(
     val IDENTIFIER: String = PersonSummary::identifier.name
     val FIRST_NAME: String = PersonSummary::firstName.name
     val LAST_NAME: String = PersonSummary::lastName.name
+    val PRISON_CODE: String = PersonSummary::prisonCode.name
   }
 }
 
