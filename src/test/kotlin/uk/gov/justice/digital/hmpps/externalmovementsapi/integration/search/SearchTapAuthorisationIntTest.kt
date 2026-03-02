@@ -287,8 +287,8 @@ class SearchTapAuthorisationIntTest(
     val start = LocalDate.now().plusDays(1)
     val end = LocalDate.now().plusDays(2)
 
-    val p1 = givenPersonSummary(personSummary(lastName = "Smith", firstName = "Jane"))
-    val p2 = givenPersonSummary(personSummary(lastName = "Doe", firstName = "John"))
+    val p1 = givenPersonSummary(personSummary(lastName = "Smith", firstName = "Jane", prisonCode = prisonCode))
+    val p2 = givenPersonSummary(personSummary(lastName = "Doe", firstName = "John", prisonCode = prisonCode))
     givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         prisonCode,
@@ -484,6 +484,44 @@ class SearchTapAuthorisationIntTest(
       single.absenceType?.description,
       repeat.absenceType?.description,
     )
+  }
+
+  @Test
+  fun `person not resident is not found`() {
+    val prisonCode = prisonCode()
+    val anotherPrisonCode = prisonCode()
+    val start = LocalDate.now().plusDays(1)
+    val end = LocalDate.now().plusDays(3)
+
+    val fPerson = givenPersonSummary(personSummary(prisonCode = prisonCode))
+    val nfPerson = givenPersonSummary(personSummary(prisonCode = anotherPrisonCode))
+
+    val fAuth =
+      givenTemporaryAbsenceAuthorisation(
+        temporaryAbsenceAuthorisation(
+          prisonCode = prisonCode,
+          personIdentifier = fPerson.identifier,
+          status = AuthorisationStatus.Code.APPROVED,
+          start = start,
+          end = end,
+        ),
+      )
+    givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = nfPerson.identifier,
+        status = AuthorisationStatus.Code.APPROVED,
+        start = start,
+        end = end,
+      ),
+    )
+
+    val res = searchTapAuthorisations(prisonCode, start, end).successResponse<TapAuthorisationSearchResponse>()
+
+    assertThat(res.content.size).isEqualTo(1)
+    assertThat(res.metadata.totalElements).isEqualTo(1)
+    assertThat(res.content.single().person.personIdentifier).isEqualTo(fPerson.identifier)
+    assertThat(res.content.single().id).isEqualTo(fAuth.id)
   }
 
   private fun searchTapAuthorisations(

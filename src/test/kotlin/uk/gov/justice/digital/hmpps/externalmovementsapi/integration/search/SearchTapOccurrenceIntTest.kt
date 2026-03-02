@@ -451,8 +451,8 @@ class SearchTapOccurrenceIntTest(
   fun `can sort by name`() {
     val prisonCode = prisonCode()
 
-    val p1 = givenPersonSummary(personSummary(lastName = "Smith", firstName = "Jane"))
-    val p2 = givenPersonSummary(personSummary(lastName = "Doe", firstName = "John"))
+    val p1 = givenPersonSummary(personSummary(lastName = "Smith", firstName = "Jane", prisonCode = prisonCode))
+    val p2 = givenPersonSummary(personSummary(lastName = "Doe", firstName = "John", prisonCode = prisonCode))
     val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, p1.identifier))
     givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1))
     val auth2 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, p2.identifier))
@@ -644,6 +644,46 @@ class SearchTapOccurrenceIntTest(
     assertThat(res2.content.size).isEqualTo(3)
     assertThat(res2.metadata.totalElements).isEqualTo(3)
     assertThat(res2.content.map { it.location }).containsExactly(three.location, two.location, one.location)
+  }
+
+  @Test
+  fun `person not resident is not found`() {
+    val prisonCode = prisonCode()
+    val anotherPrisonCode = prisonCode()
+    val start = LocalDate.now().plusDays(1)
+    val end = LocalDate.now().plusDays(3)
+
+    val fPerson = givenPersonSummary(personSummary(prisonCode = prisonCode))
+    val nfPerson = givenPersonSummary(personSummary(prisonCode = anotherPrisonCode))
+
+    val fAuth =
+      givenTemporaryAbsenceAuthorisation(
+        temporaryAbsenceAuthorisation(
+          prisonCode = prisonCode,
+          personIdentifier = fPerson.identifier,
+          status = AuthorisationStatus.Code.APPROVED,
+          start = start,
+          end = end,
+        ),
+      )
+    val fOccurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(fAuth))
+    val nfAuth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = nfPerson.identifier,
+        status = AuthorisationStatus.Code.APPROVED,
+        start = start,
+        end = end,
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(nfAuth))
+
+    val res = searchTapOccurrences(prisonCode, start, end).successResponse<TapOccurrenceSearchResponse>()
+
+    assertThat(res.content.size).isEqualTo(1)
+    assertThat(res.metadata.totalElements).isEqualTo(1)
+    assertThat(res.content.single().authorisation.person.personIdentifier).isEqualTo(fPerson.identifier)
+    assertThat(res.content.single().id).isEqualTo(fOccurrence.id)
   }
 
   private fun searchTapOccurrences(
