@@ -28,10 +28,14 @@ class SearchScheduledMovements(
   private val serviceConfig: ServiceConfig,
   private val taoRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
-  fun search(prisonCode: String, request: SearchScheduledMovementsRequest): ScheduledMovements = taoRepository.findAll(request.asSpecification(prisonCode)).mapNotNull {
-    it.scheduledMovement(request.includeSensitive, request.includeLocation, serviceConfig.uiBaseUrl)
-  }.let {
-    ScheduledMovements(it)
+  fun search(prisonCode: String, request: SearchScheduledMovementsRequest): ScheduledMovements = if (request.movementTypes.contains(ScheduledMovementType.TEMPORARY_ABSENCE)) {
+    taoRepository.findAll(request.asSpecification(prisonCode)).mapNotNull {
+      it.scheduledMovement(request.includeSensitive, request.includeLocation, serviceConfig.uiBaseUrl)
+    }.let {
+      ScheduledMovements(it)
+    }
+  } else {
+    ScheduledMovements(emptyList())
   }
 }
 

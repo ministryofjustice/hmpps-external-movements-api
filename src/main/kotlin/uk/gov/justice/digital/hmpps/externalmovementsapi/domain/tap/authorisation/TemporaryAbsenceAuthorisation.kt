@@ -409,20 +409,27 @@ interface TemporaryAbsenceAuthorisationRepository :
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")
 
 fun authorisationMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  cb.equal(taa.get<String>(PRISON_CODE), prisonCode)
+}
+
+fun authorisationMatchesPersonPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesPrisonCode(cb, prisonCode)
+}
+
+fun authorisationMatchesPersonIdentifier(personIdentifier: String, prisonCode: String?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  val person = taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
   cb.and(
-    taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
-      .matchesPrisonCode(cb, prisonCode),
-    cb.equal(taa.get<String>(PRISON_CODE), prisonCode),
+    person.matchesIdentifier(cb, personIdentifier),
+    prisonCode?.let { person.matchesPrisonCode(cb, it) } ?: cb.conjunction(),
   )
 }
 
-fun authorisationMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
-  taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
-    .matchesIdentifier(cb, personIdentifier)
-}
-
-fun authorisationMatchesPersonName(name: String) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
-  taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
+fun authorisationMatchesPersonName(name: String, prisonCode: String?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  val person = taa.join<TemporaryAbsenceAuthorisation, PersonSummary>(PERSON, JoinType.INNER)
+  cb.and(
+    person.matchesName(cb, name),
+    prisonCode?.let { person.matchesPrisonCode(cb, it) } ?: cb.conjunction(),
+  )
 }
 
 fun authorisationOverlapsDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->

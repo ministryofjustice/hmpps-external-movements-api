@@ -28,9 +28,9 @@ class PrisonerMergedHandler(
     personSummaryService.findPersonSummary(pmi.removedNomsNumber)?.also {
       ExternalMovementContext.get().copy(reason = PrisonerMerged.DESCRIPTION, source = DataSource.NOMIS).set()
       val toPerson = personSummaryService.getWithSave(pmi.nomsNumber)
-      authorisationRepository.findAll(authorisationMatchesPersonIdentifier(pmi.removedNomsNumber))
+      authorisationRepository.findAll(authorisationMatchesPersonIdentifier(pmi.removedNomsNumber, null))
         .forEach { auth -> auth.moveTo(toPerson) }
-      occurrenceRepository.findAll(occurrenceMatchesPersonIdentifier(pmi.removedNomsNumber))
+      occurrenceRepository.findAll(occurrenceMatchesPersonIdentifier(pmi.removedNomsNumber, null))
         .forEach { occ -> occ.moveTo(toPerson) }
       movementRepository.findAllByPersonIdentifier(pmi.removedNomsNumber)
         .forEach { movement -> movement.moveTo(toPerson) }

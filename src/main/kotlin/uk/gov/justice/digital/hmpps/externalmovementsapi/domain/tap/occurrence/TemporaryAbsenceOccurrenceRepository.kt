@@ -131,15 +131,19 @@ interface TemporaryAbsenceOccurrenceRepository :
 fun TemporaryAbsenceOccurrenceRepository.getOccurrence(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence occurrence not found")
 
 fun occurrenceMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  cb.and(
-    tao.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER)
-      .matchesPrisonCode(cb, prisonCode),
-    cb.equal(tao.get<String>(PRISON_CODE), prisonCode),
-  )
+  cb.equal(tao.get<String>(PRISON_CODE), prisonCode)
 }
 
-fun occurrenceMatchesPersonIdentifier(personIdentifier: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  tao.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER).matchesIdentifier(cb, personIdentifier)
+fun occurrenceMatchesPersonPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  tao.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER).matchesPrisonCode(cb, prisonCode)
+}
+
+fun occurrenceMatchesPersonIdentifier(personIdentifier: String, prisonCode: String?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  val person = tao.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER)
+  cb.and(
+    person.matchesIdentifier(cb, personIdentifier),
+    prisonCode?.let { person.matchesPrisonCode(cb, it) } ?: cb.conjunction(),
+  )
 }
 
 fun occurrencePersonIdentifierIn(personIdentifiers: SequencedSet<String>) = Specification<TemporaryAbsenceOccurrence> { tao, _, _ ->
@@ -147,8 +151,12 @@ fun occurrencePersonIdentifierIn(personIdentifiers: SequencedSet<String>) = Spec
   person.get<String>(PersonSummary.IDENTIFIER).`in`(personIdentifiers)
 }
 
-fun occurrenceMatchesPersonName(name: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  tao.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER).matchesName(cb, name)
+fun occurrenceMatchesPersonName(name: String, prisonCode: String?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  val person = tao.join<TemporaryAbsenceOccurrence, PersonSummary>(PERSON, JoinType.INNER)
+  cb.and(
+    person.matchesName(cb, name),
+    prisonCode?.let { person.matchesPrisonCode(cb, it) } ?: cb.conjunction(),
+  )
 }
 
 fun occurrenceOverlapsDateRange(start: LocalDate?, end: LocalDate?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->

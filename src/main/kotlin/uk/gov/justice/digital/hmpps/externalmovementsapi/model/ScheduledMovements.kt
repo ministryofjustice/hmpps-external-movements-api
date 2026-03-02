@@ -34,6 +34,7 @@ data class ScheduledMovement(
 
 @ValidStartAndEnd
 data class SearchScheduledMovementsRequest(
+  val movementTypes: Set<ScheduledMovementType> = setOf(),
   val personIdentifiers: SequencedSet<String> = linkedSetOf(),
   override val start: LocalDateTime = LocalDate.now().atStartOfDay(),
   override val end: LocalDateTime = LocalDate.now().plusDays(1).atStartOfDay(),
