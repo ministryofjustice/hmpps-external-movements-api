@@ -14,6 +14,8 @@ import jakarta.persistence.Transient
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.hibernate.annotations.Fetch
+import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
@@ -133,19 +135,21 @@ class TemporaryAbsenceOccurrence(
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne
+  @ManyToOne(optional = false)
   @JoinColumn(name = "absence_reason_id", nullable = false)
   override var absenceReason: AbsenceReason = absenceReason
     private set
 
   @Audited
-  @ManyToOne
+  @Fetch(FetchMode.JOIN)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "authorisation_id", nullable = false)
   var authorisation: TemporaryAbsenceAuthorisation = authorisation
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne
+  @Fetch(FetchMode.JOIN)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "person_identifier", nullable = false)
   var person: PersonSummary = authorisation.person
     private set

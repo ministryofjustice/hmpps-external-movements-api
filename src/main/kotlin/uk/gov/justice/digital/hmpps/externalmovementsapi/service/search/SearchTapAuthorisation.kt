@@ -11,13 +11,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonName
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationOverlapsDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.matchesAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PageMetadata
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationResult
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchRequest
@@ -32,11 +32,9 @@ class SearchTapAuthorisation(
 ) {
   fun find(request: TapAuthorisationSearchRequest): TapAuthorisationSearchResponse {
     val page = authRepository.findAll(request.asSpecification(), request.pageable())
-    val occurrences = occurrenceRepository.findByAuthorisationIdIn(page.content.map { it.id }.toSet())
+    val occurrences = occurrenceRepository.findByAuthorisationIdIn(page.map { it.id }.toSet())
       .groupBy { it.authorisation.id }
-    return page.map { taa ->
-      taa.with(taa.person.asPerson(), occurrences[taa.id] ?: emptyList())
-    }.asResponse()
+    return page.map { it.with(occurrences[it.id] ?: emptyList()) }.asResponse()
   }
 
   private fun TapAuthorisationSearchRequest.asSpecification(): Specification<TemporaryAbsenceAuthorisation> = listOfNotNull(
@@ -46,19 +44,18 @@ class SearchTapAuthorisation(
     absenceCategorisation?.matchesAuthorisation(),
     queryString?.let {
       if (isPersonIdentifier()) {
-        authorisationMatchesPersonIdentifier(it)
+        authorisationMatchesPersonIdentifier(it, prisonCode)
       } else {
-        authorisationMatchesPersonName(it)
+        authorisationMatchesPersonName(it, prisonCode)
       }
-    },
+    } ?: authorisationMatchesPersonPrisonCode(prisonCode),
   ).reduce(Specification<TemporaryAbsenceAuthorisation>::and)
 
   private fun TemporaryAbsenceAuthorisation.with(
-    person: Person,
     occurrences: List<TemporaryAbsenceOccurrence>,
   ): TapAuthorisationResult = TapAuthorisationResult(
     id = id,
-    person = person,
+    person = person.asPerson(),
     status = status.asCodedDescription(),
     absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
     absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),

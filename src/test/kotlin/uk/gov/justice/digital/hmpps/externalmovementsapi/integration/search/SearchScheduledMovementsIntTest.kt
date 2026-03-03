@@ -155,6 +155,37 @@ class SearchScheduledMovementsIntTest(
     res2.content.single { it.id == occ2.id }.verifyAgainst(occ2)
   }
 
+  @Test
+  fun `200 ok - no movement type finds no results`() {
+    val prisonCode = prisonCode()
+    val auth1 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        accompaniedByCode = AccompaniedBy.Code.UNACCOMPANIED.value,
+      ),
+    )
+    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth1))
+    val auth2 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    val occ2 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth2))
+
+    val res1 = searchScheduleMovements(
+      prisonCode,
+      movementTypes = emptySet(),
+      start = occ1.start.truncatedTo(ChronoUnit.MINUTES),
+      end = occ1.end.truncatedTo(ChronoUnit.MINUTES),
+    ).successResponse<ScheduledMovements>()
+    assertThat(res1.content).isEmpty()
+
+    val res2 = searchScheduleMovements(
+      prisonCode,
+      movementTypes = emptySet(),
+      start = occ2.start.truncatedTo(ChronoUnit.MINUTES),
+      end = occ2.end.truncatedTo(ChronoUnit.MINUTES),
+      includeSensitive = true,
+    ).successResponse<ScheduledMovements>()
+    assertThat(res2.content).isEmpty()
+  }
+
   private fun ScheduledMovement.verifyAgainst(tao: TemporaryAbsenceOccurrence) {
     assertThat(id).isEqualTo(tao.id)
     assertThat(personIdentifier).isEqualTo(tao.person.identifier)
@@ -178,6 +209,7 @@ class SearchScheduledMovementsIntTest(
 
   private fun searchScheduleMovements(
     prisonCode: String,
+    movementTypes: Set<ScheduledMovementType> = setOf(ScheduledMovementType.TEMPORARY_ABSENCE),
     start: LocalDateTime? = null,
     end: LocalDateTime? = null,
     personIdentifiers: List<String> = listOf(),
@@ -188,6 +220,7 @@ class SearchScheduledMovementsIntTest(
     .get()
     .uri { uri ->
       uri.path(SEARCH_EM_URL)
+      movementTypes.takeIf { it.isNotEmpty() }?.also { uri.queryParam("movementTypes", *it.toTypedArray()) }
       start?.also { uri.queryParam("start", ISO_DATE_TIME.format(it)) }
       end?.also { uri.queryParam("end", ISO_DATE_TIME.format(it)) }
       personIdentifiers.takeIf { it.isNotEmpty() }?.also { uri.queryParam("personIdentifiers", *it.toTypedArray()) }

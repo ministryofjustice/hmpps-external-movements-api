@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.P
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersExtension
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.NomisMigrationExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonRegisterMockServer.Companion.prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension.Companion.prisonRegister
@@ -60,6 +61,7 @@ import java.util.concurrent.TimeUnit
   value = [
     HmppsAuthApiExtension::class,
     ManageUsersExtension::class,
+    NomisMigrationExtension::class,
     PrisonerRegisterExtension::class,
     PrisonerSearchExtension::class,
   ],
