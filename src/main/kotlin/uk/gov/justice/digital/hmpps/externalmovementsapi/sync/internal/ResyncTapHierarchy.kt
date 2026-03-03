@@ -122,6 +122,9 @@ class ResyncTapHierarchy(
     val unscheduled = request.unscheduledMovements.map { it.resync(person, null, allRd, movementProvider) }
     val (auth, occ) = removeNotInResync(tap, unscheduled, authorisations, occurrences, movements)
     createMissingOccurrences(auth, occ, allRd.filterIsInstance<OccurrenceStatus>())
+    if (request.isEmpty() && auth.isEmpty() && occ.isEmpty()) {
+      personSummaryService.remove(person)
+    }
     return MigrateTapResponse(tap, unscheduled)
   }
 
