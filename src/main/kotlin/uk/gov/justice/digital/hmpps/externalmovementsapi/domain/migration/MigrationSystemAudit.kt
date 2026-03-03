@@ -23,9 +23,13 @@ class MigrationSystemAudit(
   @Id
   @Column("id")
   val uuid: UUID,
+  @Column(name = "created_at", nullable = false)
   val createdAt: LocalDateTime,
+  @Column(name = "created_by", nullable = false)
   val createdBy: String,
+  @Column(name = "updated_at")
   var updatedAt: LocalDateTime?,
+  @Column(name = "updated_by")
   var updatedBy: String?,
 ) : Persistable<UUID> {
   override fun getId() = uuid

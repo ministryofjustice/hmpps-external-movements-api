@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size
 import org.springframework.data.jpa.repository.JpaRepository
 
 @Entity
-@Table
+@Table(name = "person_summary")
 class PersonSummary(
   firstName: String,
   lastName: String,
@@ -20,12 +20,16 @@ class PersonSummary(
   @Column(name = "person_identifier")
   val identifier: String,
 ) {
+  @Column(name = "first_name")
   var firstName: String = firstName
     private set
+  @Column(name = "last_name")
   var lastName: String = lastName
     private set
+  @Column(name = "prison_code")
   var prisonCode: String? = prisonCode
     private set
+  @Column(name = "cell_location")
   var cellLocation: String? = cellLocation
     private set
 
