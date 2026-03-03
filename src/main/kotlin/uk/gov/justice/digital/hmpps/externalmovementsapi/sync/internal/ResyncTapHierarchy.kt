@@ -322,9 +322,11 @@ class ResyncTapHierarchy(
     checkSchedule(request, rdPaths)
     applyLogistics(request, rdPaths)
     applyComments(ChangeAuthorisationComments(request.comments))
+    applyLegacyId(request.legacyId)
     request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
     (
-      request.occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
+      request.occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
+        .takeIf { it.isNotEmpty() }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
   }
@@ -422,6 +424,7 @@ class ResyncTapHierarchy(
     applyDirection(ChangeMovementDirection(request.direction))
     applyOccurredAt(ChangeMovementOccurredAt(request.occurredAt))
     applyComments(ChangeMovementComments(request.comments))
+    applyLegacyId(request.legacyId)
     applyAccompaniedBy(
       ChangeMovementAccompaniment(
         request.accompaniedByCode,

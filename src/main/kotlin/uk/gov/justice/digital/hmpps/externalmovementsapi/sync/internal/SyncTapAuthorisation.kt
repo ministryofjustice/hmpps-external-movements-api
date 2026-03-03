@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.isNullOrEmpty
@@ -149,6 +150,7 @@ class SyncTapAuthorisation(
     request: TapAuthorisation,
     rdPaths: ReferenceDataPaths,
   ) = apply {
+    applyLegacyId(request.legacyId)
     applyPrisonPerson(ChangePrisonPerson(person.identifier, request.prisonCode)) { person }
     applyAbsenceCategorisation(request, rdPaths)
     checkStatus(request, rdPaths)
@@ -157,8 +159,9 @@ class SyncTapAuthorisation(
     applyComments(ChangeAuthorisationComments(request.comments))
     val occurrences = occurrenceRepository.findByAuthorisationId(id)
     (
-      occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
-        ?: request.location?.takeIf { it.isNullOrEmpty() }?.let { linkedSetOf(it) }
+      occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
+        .takeIf { it.isNotEmpty() }
+        ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
     val schedule = request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
     if (schedule != null && !repeat && status.code != APPROVED.name) {
@@ -168,6 +171,7 @@ class SyncTapAuthorisation(
           null
         } else {
           occ.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
+          request.location?.also { occ.applyLocation(ChangeOccurrenceLocation(it)) }
           occ.calculateStatus { rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus }
         }
       } ?: createOccurrence(objectMapper, rdPaths)
