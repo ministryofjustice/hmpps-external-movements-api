@@ -342,6 +342,10 @@ class TemporaryAbsenceAuthorisation(
     schedule = json
   }
 
+  fun applyLegacyId(legacyId: Long) = apply {
+    this.legacyId = legacyId
+  }
+
   companion object {
     val PRISON_CODE = TemporaryAbsenceAuthorisation::prisonCode.name
     val PERSON = TemporaryAbsenceAuthorisation::person.name

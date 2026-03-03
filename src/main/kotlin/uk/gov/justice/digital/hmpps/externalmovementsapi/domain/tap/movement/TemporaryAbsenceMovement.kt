@@ -238,6 +238,10 @@ class TemporaryAbsenceMovement(
     }
   }
 
+  fun applyLegacyId(legacyId: String) = apply {
+    this.legacyId = legacyId
+  }
+
   companion object {
     val EXCLUDE_FROM_PUBLISH: Set<String> = setOf(
       TapMovementOccurrenceChanged.EVENT_TYPE,
