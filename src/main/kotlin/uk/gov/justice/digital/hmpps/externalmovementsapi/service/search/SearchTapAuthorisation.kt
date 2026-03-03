@@ -32,7 +32,7 @@ class SearchTapAuthorisation(
 ) {
   fun find(request: TapAuthorisationSearchRequest): TapAuthorisationSearchResponse {
     val page = authRepository.findAll(request.asSpecification(), request.pageable())
-    val occurrences = occurrenceRepository.findByAuthorisationIdIn(page.content.map { it.id }.toSet())
+    val occurrences = occurrenceRepository.findByAuthorisationIdIn(page.map { it.id }.toSet())
       .groupBy { it.authorisation.id }
     return page.map { it.with(occurrences[it.id] ?: emptyList()) }.asResponse()
   }

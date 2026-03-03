@@ -15,6 +15,8 @@ import jakarta.persistence.Version
 import jakarta.persistence.criteria.JoinType
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.hibernate.annotations.Fetch
+import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
@@ -114,7 +116,8 @@ class TemporaryAbsenceAuthorisation(
   DomainEventProducer {
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne
+  @Fetch(FetchMode.JOIN)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "person_identifier", nullable = false)
   var person: PersonSummary = person
     private set
@@ -144,7 +147,7 @@ class TemporaryAbsenceAuthorisation(
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @ManyToOne
+  @ManyToOne(optional = false)
   @JoinColumn(name = "absence_reason_id", nullable = false)
   override var absenceReason: AbsenceReason = absenceReason
     private set
