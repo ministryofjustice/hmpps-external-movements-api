@@ -25,7 +25,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDeferred
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRecategorised
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationTransportChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -539,7 +541,7 @@ class SyncTapAuthorisationIntTest(
         personIdentifier = ps.identifier,
         start = now().plusDays(2),
         end = now().plusDays(2),
-        locations = linkedSetOf(location()),
+        locations = linkedSetOf(),
       ),
     )
     givenTemporaryAbsenceOccurrence(
@@ -547,7 +549,7 @@ class SyncTapAuthorisationIntTest(
         existing,
         start = existing.start.atTime(9, 0),
         end = existing.end.atTime(17, 0),
-        location = existing.locations.single(),
+        location = Location.empty(),
         dpsOnly = true,
       ),
     )
@@ -562,7 +564,7 @@ class SyncTapAuthorisationIntTest(
       end = existing.end,
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(14, 0),
-      location = existing.locations.single(),
+      location = location(),
     )
     val res = syncAuthorisation(existing.person.identifier, request).successResponse<SyncResponse>()
 
@@ -594,6 +596,10 @@ class SyncTapAuthorisationIntTest(
       setOf(
         TemporaryAbsenceRescheduled(occurrence.person.identifier, occurrence.id, DataSource.NOMIS)
           .publication(occurrence.id) { false },
+        TemporaryAbsenceRelocated(occurrence.person.identifier, occurrence.id, DataSource.NOMIS)
+          .publication(occurrence.id) { false },
+        TemporaryAbsenceAuthorisationRelocated(occurrence.person.identifier, saved.id, DataSource.NOMIS)
+          .publication(saved.id) { true },
       ),
     )
   }

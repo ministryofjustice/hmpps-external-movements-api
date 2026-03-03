@@ -832,6 +832,51 @@ class ResyncTapHierarchyIntTest(
     )
   }
 
+  @Test
+  fun `200 ok - removes everything if request is empty`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now().plusDays(2),
+        end = LocalDate.now().plusDays(2),
+        status = AuthorisationStatus.Code.APPROVED,
+        locations = linkedSetOf(location()),
+        legacyId = newId(),
+      ),
+    )
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = auth.start.atTime(11, 0),
+        end = auth.end.atTime(15, 0),
+        location = auth.locations.single(),
+        legacyId = newId(),
+        movements = listOf(temporaryAbsenceMovement(Direction.OUT, auth.person.identifier, location = auth.locations.first)),
+      ),
+    )
+
+    val request = resyncTapRequest(
+      temporaryAbsences = listOf(),
+      unscheduledMovements = listOf(),
+    )
+    resyncTap(auth.person.identifier, request).successResponse<MigrateTapResponse>()
+
+    val person = findPersonSummary(auth.person.identifier)
+    assertThat(person).isNull()
+
+    verifyAudit(
+      auth,
+      RevisionType.DEL,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceMovement::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS, reason = null),
+    )
+
+    verifyEvents(auth, setOf())
+  }
+
   private fun resyncTapRequest(
     temporaryAbsences: List<TapAuthorisation> = listOf(tapAuthorisation()),
     unscheduledMovements: List<TapMovement> = listOf(tapMovement()),

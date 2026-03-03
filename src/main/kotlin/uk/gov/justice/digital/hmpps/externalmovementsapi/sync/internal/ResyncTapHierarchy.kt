@@ -122,6 +122,9 @@ class ResyncTapHierarchy(
     val unscheduled = request.unscheduledMovements.map { it.resync(person, null, allRd, movementProvider) }
     val (auth, occ) = removeNotInResync(tap, unscheduled, authorisations, occurrences, movements)
     createMissingOccurrences(auth, occ, allRd.filterIsInstance<OccurrenceStatus>())
+    if (request.isEmpty() && auth.isEmpty() && occ.isEmpty()) {
+      personSummaryService.remove(person)
+    }
     return MigrateTapResponse(tap, unscheduled)
   }
 
@@ -322,9 +325,11 @@ class ResyncTapHierarchy(
     checkSchedule(request, rdPaths)
     applyLogistics(request, rdPaths)
     applyComments(ChangeAuthorisationComments(request.comments))
+    applyLegacyId(request.legacyId)
     request.schedule()?.also { applySchedule(jsonMapper.valueToTree(it)) }
     (
-      request.occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
+      request.occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
+        .takeIf { it.isNotEmpty() }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
   }
@@ -422,6 +427,7 @@ class ResyncTapHierarchy(
     applyDirection(ChangeMovementDirection(request.direction))
     applyOccurredAt(ChangeMovementOccurredAt(request.occurredAt))
     applyComments(ChangeMovementComments(request.comments))
+    applyLegacyId(request.legacyId)
     applyAccompaniedBy(
       ChangeMovementAccompaniment(
         request.accompaniedByCode,

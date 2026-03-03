@@ -33,6 +33,7 @@ class HmppsDomainEvent(
 ) {
   @Version
   val version: Int? = null
+
   @Column(name = "event_type")
   val eventType: String = event.eventType
   var published: Boolean = false

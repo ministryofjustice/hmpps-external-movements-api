@@ -27,7 +27,9 @@ import java.util.UUID
 data class MigrateTapRequest(
   val temporaryAbsences: List<TapAuthorisation>,
   val unscheduledMovements: List<TapMovement>,
-)
+) {
+  fun isEmpty(): Boolean = temporaryAbsences.isEmpty() && unscheduledMovements.isEmpty()
+}
 
 data class MigrateTapResponse(
   val temporaryAbsences: List<MigratedAuthorisation>,
