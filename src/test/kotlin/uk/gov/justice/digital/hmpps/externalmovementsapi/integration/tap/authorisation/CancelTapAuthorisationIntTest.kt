@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -77,7 +78,7 @@ class CancelTapAuthorisationIntTest(
 
   @Test
   fun `200 ok - authorisation cancelled`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val pastOccurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
@@ -99,8 +100,10 @@ class CancelTapAuthorisationIntTest(
     assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
     val previousAbsence = requireNotNull(findTemporaryAbsenceOccurrence(pastOccurrence.id))
     assertThat(previousAbsence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+    assertThat(previousAbsence.dpsOnly).isFalse
     val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
     assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
+    assertThat(absence.dpsOnly).isFalse
 
     verifyAudit(
       saved,
@@ -118,6 +121,57 @@ class CancelTapAuthorisationIntTest(
       setOf(
         TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
         TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id).publication(occurrence.id),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - single authorisation cancelled`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        repeat = false,
+        start = LocalDate.now().plusDays(1),
+        end = LocalDate.now().plusDays(1),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().plusDays(1),
+        end = LocalDateTime.now().plusDays(1),
+      ),
+    )
+    val request = cancelAuthorisationRequest(reason = "Occurrence is delete by nomis")
+
+    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change("status", "Approved", "Cancelled"),
+    )
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
+    assertThat(occurrence.dpsOnly).isTrue
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
+        TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id).publication(occurrence.id) { false },
       ),
     )
   }
