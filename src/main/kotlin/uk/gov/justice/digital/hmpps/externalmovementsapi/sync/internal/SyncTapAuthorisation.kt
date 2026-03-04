@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -41,7 +42,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.isNullOrEmpty
@@ -49,6 +54,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSu
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate.now
+import java.time.LocalDateTime.of
 import java.util.UUID
 
 @Transactional
@@ -170,9 +176,7 @@ class SyncTapAuthorisation(
           occurrenceRepository.delete(occ)
           null
         } else {
-          occ.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
-          request.location?.also { occ.applyLocation(ChangeOccurrenceLocation(it)) }
-          occ.calculateStatus { rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus }
+          occ.updateFrom(this, request, rdPaths)
         }
       } ?: createOccurrence(objectMapper, rdPaths)
     }
@@ -185,6 +189,27 @@ class SyncTapAuthorisation(
     occurrence(objectMapper)?.calculateStatus { code ->
       rdPaths.getReferenceData(OccurrenceStatus::class, code) as OccurrenceStatus
     }?.also(occurrenceRepository::save)
+  }
+
+  private fun TemporaryAbsenceOccurrence.updateFrom(
+    authorisation: TemporaryAbsenceAuthorisation,
+    request: TapAuthorisation,
+    rdPaths: ReferenceDataPaths,
+  ) = apply {
+    authorisationPersonAndPrison(authorisation)
+    applyAbsenceCategorisation(
+      RecategoriseOccurrence(absenceType?.code, absenceSubType?.code, absenceReasonCategory?.code, absenceReason.code),
+      rdPaths::getReferenceData,
+    )
+    reschedule(RescheduleOccurrence(of(request.start, request.startTime), of(request.end, request.endTime)))
+    applyLocation(ChangeOccurrenceLocation(request.location ?: Location.empty()))
+    applyAccompaniment(ChangeOccurrenceAccompaniment(request.accompaniedByCode), rdPaths::getReferenceData)
+    applyTransport(ChangeOccurrenceTransport(request.transportCode), rdPaths::getReferenceData)
+    applyComments(ChangeOccurrenceComments(request.comments))
+    makeDpsOnly()
+    calculateStatus {
+      rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus
+    }
   }
 
   private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(
