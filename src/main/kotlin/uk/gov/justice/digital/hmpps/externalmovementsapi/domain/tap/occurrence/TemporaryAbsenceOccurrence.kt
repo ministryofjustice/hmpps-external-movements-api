@@ -365,6 +365,11 @@ class TemporaryAbsenceOccurrence(
     this.dpsOnly = false
   }
 
+  fun makeDpsOnly() = apply {
+    dpsOnly = true
+    legacyId = null
+  }
+
   private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
     ?.map { it.direction }?.let {
       if (it.contains(TemporaryAbsenceMovement.Direction.IN)) {

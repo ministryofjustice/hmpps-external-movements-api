@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
@@ -28,6 +29,7 @@ data class MigrateTapRequest(
   val temporaryAbsences: List<TapAuthorisation>,
   val unscheduledMovements: List<TapMovement>,
 ) {
+  @JsonIgnore
   fun isEmpty(): Boolean = temporaryAbsences.isEmpty() && unscheduledMovements.isEmpty()
 }
 
