@@ -119,7 +119,7 @@ class TapAuthorisationModifications(
       }
       taaRepository.flush()
       readVersion!! to authorisation.version!!
-    }!!
+    }
     return AuditHistory(listOfNotNull(authorisationHistory.currentAction(id, readVersion, writeVersion)))
   }
 

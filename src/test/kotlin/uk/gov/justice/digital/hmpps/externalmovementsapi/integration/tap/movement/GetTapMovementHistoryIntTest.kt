@@ -158,7 +158,7 @@ class GetTapMovementHistoryIntTest(
         )
       }
       movement
-    }!!
+    }
     val m2 = transactionTemplate.execute {
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME).set()
       val movement = givenTemporaryAbsenceMovement(
@@ -170,7 +170,7 @@ class GetTapMovementHistoryIntTest(
         )
       }
       movement
-    }!!
+    }
     ExternalMovementContext.clear()
 
     val h1 = getTapMovementHistory(m1.id).successResponse<AuditHistory>()

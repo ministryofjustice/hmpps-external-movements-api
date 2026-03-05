@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.treeToValue
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.treeToValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
@@ -105,8 +105,8 @@ internal fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence
   }
 }
 
-fun TemporaryAbsenceAuthorisation.occurrence(objectMapper: ObjectMapper): TemporaryAbsenceOccurrence? = this.schedule?.let {
-  val schedule = objectMapper.treeToValue<AuthorisationSchedule>(it)
+fun TemporaryAbsenceAuthorisation.occurrence(jsonMapper: JsonMapper): TemporaryAbsenceOccurrence? = this.schedule?.let {
+  val schedule = jsonMapper.treeToValue<AuthorisationSchedule>(it)
   TemporaryAbsenceOccurrence(
     authorisation = this,
     absenceType = absenceType,

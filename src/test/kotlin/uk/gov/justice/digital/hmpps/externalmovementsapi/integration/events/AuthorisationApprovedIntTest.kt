@@ -42,7 +42,7 @@ class AuthorisationApprovedIntTest(
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
       toApprove
-    }!!
+    }
 
     assertThat(approved.status.code).isEqualTo(AuthorisationStatus.Code.APPROVED.name)
     occurrences.forEach {
