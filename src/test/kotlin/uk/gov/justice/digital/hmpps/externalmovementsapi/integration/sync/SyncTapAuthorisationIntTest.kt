@@ -209,7 +209,6 @@ class SyncTapAuthorisationIntTest(
       RevisionType.ADD,
       setOf(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
-        TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
