@@ -82,7 +82,7 @@ class SyncTapOccurrence(
 
   fun deleteById(id: UUID) {
     ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
-    occurrenceRepository.findByIdOrNull(id)?.also { occurrence ->
+    occurrenceRepository.findByIdOrNull(id)?.takeUnless { it.dpsOnly }?.also { occurrence ->
       val movementCount = movementRepository.countByOccurrenceId(occurrence.id)
       if (movementCount > 0) {
         throw ConflictException("Cannot delete an occurrence with a movement")
