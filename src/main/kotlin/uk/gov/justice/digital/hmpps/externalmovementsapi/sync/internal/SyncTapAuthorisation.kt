@@ -80,7 +80,7 @@ class SyncTapAuthorisation(
       ?: let {
         ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
         val saved = authorisationRepository.save(request.asEntity(person, rdPaths))
-        if (!saved.repeat && saved.schedule != null && saved.status.code != APPROVED.name) {
+        if (!saved.repeat && saved.schedule != null && saved.status.code !in listOf(APPROVED.name, EXPIRED.name)) {
           saved.createOccurrence(objectMapper, rdPaths)
         }
         saved
