@@ -13,7 +13,6 @@ class CommentsActionTest {
       override val comments: String? = newComment
       override val reason: String? = null
     }
-    println(LOREM_IPSUM)
     assertThat(action.changes(originalComment)).isEqualTo(hasChanged)
   }
 

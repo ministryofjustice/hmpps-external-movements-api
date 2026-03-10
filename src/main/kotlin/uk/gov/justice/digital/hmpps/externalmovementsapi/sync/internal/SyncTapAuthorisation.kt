@@ -166,11 +166,10 @@ class SyncTapAuthorisation(
     val occurrences = occurrenceRepository.findByAuthorisationId(id)
     (
       occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
-        .takeIf { it.isNotEmpty() }
+        .takeIf { it.isNotEmpty() && !repeat }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
-    val schedule = request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
-    if (schedule != null && !repeat && status.code != APPROVED.name) {
+    if (!repeat && status.code != APPROVED.name) {
       occurrences.singleOrNull()?.let { occ ->
         if (occ.status.code == OccurrenceStatus.Code.SCHEDULED.name) {
           occurrenceRepository.delete(occ)
@@ -247,5 +246,6 @@ class SyncTapAuthorisation(
 
   private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
     applyDateRange(ChangeAuthorisationDateRange(request.start, request.end), rdPaths::getReferenceData)
+    request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
   }
 }
