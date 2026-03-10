@@ -475,7 +475,7 @@ class SyncTapAuthorisationIntTest(
   }
 
   @Test
-  fun `200 ok approved authorisation returned to pending`() {
+  fun `200 ok approved single authorisation returned to pending`() {
     val legacyId = newId()
     val prisonCode = prisonCode()
     val ps = givenPersonSummary(personSummary())
@@ -485,12 +485,13 @@ class SyncTapAuthorisationIntTest(
         prisonCode = prisonCode,
         personIdentifier = ps.identifier,
         locations = linkedSetOf(location()),
+        repeat = false,
       ),
     )
     val request = tapAuthorisation(
       id = existing.id,
       prisonCode = existing.prisonCode,
-      legacyId = legacyId,
+      legacyId = existing.legacyId!!,
       statusCode = "PENDING",
       comments = existing.comments,
       start = existing.start,
