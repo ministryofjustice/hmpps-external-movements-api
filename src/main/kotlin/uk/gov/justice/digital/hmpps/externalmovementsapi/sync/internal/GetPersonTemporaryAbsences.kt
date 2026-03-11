@@ -51,6 +51,10 @@ class GetPersonTemporaryAbsences(
             occ.id,
             OccurrenceStatus.Code.valueOf(occ.status.code),
             occ.prisonCode,
+            occ.absenceReason.code,
+            occ.start,
+            occ.end,
+            occ.location.takeUnless { it.isEmpty() },
             movements[occ.id]?.map { m -> PersonTapDetail.Movement(m.id, m.direction, m.prisonCode) } ?: emptyList(),
           )
         } ?: emptyList(),
