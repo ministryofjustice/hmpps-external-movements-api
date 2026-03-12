@@ -54,6 +54,10 @@ kotlin {
   jvmToolchain(25)
 }
 
+dependencyCheck {
+  suppressionFiles.add("rem-suppressions.xml")
+}
+
 tasks {
   withType<KotlinCompile> {
     compilerOptions {
