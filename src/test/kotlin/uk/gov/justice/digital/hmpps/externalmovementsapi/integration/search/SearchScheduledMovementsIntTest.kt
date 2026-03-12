@@ -215,7 +215,7 @@ class SearchScheduledMovementsIntTest(
     personIdentifiers: List<String> = listOf(),
     includeLocation: Boolean = false,
     includeSensitive: Boolean = false,
-    role: String? = Roles.EXTERNAL_MOVEMENTS_RO,
+    role: String? = listOf(Roles.EXTERNAL_MOVEMENTS_RO, Roles.EXTERNAL_MOVEMENTS_RW).random(),
   ) = webTestClient
     .get()
     .uri { uri ->
