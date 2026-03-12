@@ -50,11 +50,6 @@ dependencies {
   testImplementation("org.wiremock:wiremock-standalone:$wiremockVersion")
 }
 
-dependencyCheck {
-  suppressionFiles.addAll(listOf("suppressions.xml", ".dependency-check-ignore.xml"))
-  nvd.datafeedUrl = "file:///opt/vulnz/cache"
-}
-
 kotlin {
   jvmToolchain(25)
 }
