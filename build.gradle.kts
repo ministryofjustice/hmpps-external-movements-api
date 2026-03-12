@@ -55,7 +55,7 @@ kotlin {
 }
 
 dependencyCheck {
-  suppressionFiles.add("rem-suppressions.xml")
+  suppressionFiles.add("$rootDir/rem-suppressions.xml")
 }
 
 tasks {
