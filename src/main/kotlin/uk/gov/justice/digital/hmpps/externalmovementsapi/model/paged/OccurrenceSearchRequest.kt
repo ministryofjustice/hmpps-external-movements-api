@@ -13,13 +13,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.END
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.LOCATION
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.TRANSPORT
 
 interface OccurrenceSearchRequest : PagedRequest {
-  override fun validSortFields(): Set<String> = setOf(START, END, STATUS, FIRST_NAME, LAST_NAME, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT, LOCATION)
+  override fun validSortFields(): Set<String> = setOf(START, END, STATUS, FIRST_NAME, LAST_NAME, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT)
 
   override fun buildSort(field: String, direction: Direction): Sort = when (field) {
     LAST_NAME -> sortByPersonName(direction)
@@ -27,11 +26,8 @@ interface OccurrenceSearchRequest : PagedRequest {
     START -> sortByDate(direction, START, END)
     END -> sortByDate(direction, END, START)
     STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}").and(sortByPersonName())
-    ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT -> by(direction, "${field}_description").and(
-      sortByPersonName(),
-    )
+    ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, TRANSPORT -> by(direction, "${field}_description").and(sortByPersonName())
 
-    LOCATION -> by(direction, "locationDescription").and(sortByPersonName())
     else -> throw IllegalArgumentException("Unrecognised sort field")
   }
 

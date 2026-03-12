@@ -17,10 +17,8 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.annotations.Fetch
 import org.hibernate.annotations.FetchMode
-import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
-import org.hibernate.envers.NotAudited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
@@ -186,11 +184,6 @@ class TemporaryAbsenceOccurrence(
   @Column(name = "location", nullable = false)
   var location: Location = location
     private set
-
-  // Use only for sorting
-  @NotAudited
-  @Formula(value = "(coalesce({alias}.location->>'description'),'') || coalesce(({alias}.location->>'address'),'') || coalesce(({alias}.location->>'postcode'),'')")
-  private val locationDescription: String? = null
 
   @Column(name = "contact_information")
   var contactInformation: String? = contactInformation

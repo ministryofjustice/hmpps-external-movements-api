@@ -16,10 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Tem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
@@ -544,64 +541,6 @@ class PersonTapSearchIntTest(
       two.absenceReason.description,
       one.absenceReason.description,
     )
-  }
-
-  @Test
-  fun `can sort by location`() {
-    val prisonCode = givenPrison().code
-    val personIdentifier = personIdentifier()
-
-    val authOne = givenTemporaryAbsenceAuthorisation(
-      temporaryAbsenceAuthorisation(
-        prisonCode = prisonCode,
-        personIdentifier = personIdentifier,
-      ),
-    )
-    val one = givenTemporaryAbsenceOccurrence(
-      temporaryAbsenceOccurrence(
-        authOne,
-        location = location(
-          description = "A description of the location",
-          address = null,
-          postcode = null,
-          uprn = null,
-        ),
-      ),
-    )
-    val authTwo = givenTemporaryAbsenceAuthorisation(
-      temporaryAbsenceAuthorisation(
-        prisonCode = prisonCode,
-        personIdentifier = personIdentifier,
-      ),
-    )
-    val two = givenTemporaryAbsenceOccurrence(
-      temporaryAbsenceOccurrence(
-        authTwo,
-        location = location(description = null, address = "An address", postcode = "H3 4TH"),
-      ),
-    )
-    val authThree = givenTemporaryAbsenceAuthorisation(
-      temporaryAbsenceAuthorisation(
-        prisonCode = prisonCode,
-        personIdentifier = personIdentifier,
-      ),
-    )
-    val three = givenTemporaryAbsenceOccurrence(
-      temporaryAbsenceOccurrence(
-        authThree,
-        location = location(description = "Special Description", address = "Address Line", postcode = postcode()),
-      ),
-    )
-
-    val res1 = searchPersonTap(personIdentifier, sort = "location,asc").successResponse<PersonTapSearchResponse>()
-    assertThat(res1.content.size).isEqualTo(3)
-    assertThat(res1.metadata.totalElements).isEqualTo(3)
-    assertThat(res1.content.map { it.location }).containsExactly(one.location, two.location, three.location)
-
-    val res2 = searchPersonTap(personIdentifier, sort = "location,desc").successResponse<PersonTapSearchResponse>()
-    assertThat(res2.content.size).isEqualTo(3)
-    assertThat(res2.metadata.totalElements).isEqualTo(3)
-    assertThat(res2.content.map { it.location }).containsExactly(three.location, two.location, one.location)
   }
 
   private fun searchPersonTap(
