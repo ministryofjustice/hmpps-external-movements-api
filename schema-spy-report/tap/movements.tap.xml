@@ -244,6 +244,11 @@
             <column ascending="true" name="status_id"/>
             <column ascending="true" name="end"/>
          </index>
+         <index name="idx_tap_authorisation_status_end_prison" unique="false">
+            <column ascending="true" name="status_id"/>
+            <column ascending="true" name="end"/>
+            <column ascending="true" name="prison_code"/>
+         </index>
          <index name="uq_tap_authorisation_legacy_id" unique="true">
             <column ascending="true" name="legacy_id"/>
          </index>
@@ -412,9 +417,18 @@
             <column ascending="true" name="person_identifier"/>
             <column ascending="true" name="dps_only"/>
          </index>
+         <index name="idx_tap_occurrence_prison_end" unique="false">
+            <column ascending="true" name="prison_code"/>
+            <column ascending="true" name="end"/>
+         </index>
          <index name="idx_tap_occurrence_prison_person_start_end" unique="false">
             <column ascending="true" name="prison_code"/>
             <column ascending="true" name="person_identifier"/>
+            <column ascending="true" name="start"/>
+            <column ascending="true" name="end"/>
+         </index>
+         <index name="idx_tap_occurrence_prison_start_end" unique="false">
+            <column ascending="true" name="prison_code"/>
             <column ascending="true" name="start"/>
             <column ascending="true" name="end"/>
          </index>
