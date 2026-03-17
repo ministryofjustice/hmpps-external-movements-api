@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.treeToValue
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.SingleSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
@@ -63,7 +63,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.MigratedOc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import java.time.LocalDate
 import java.time.LocalDateTime.of
 import java.util.UUID
@@ -264,13 +263,13 @@ class ResyncTapHierarchy(
       .forEach { auth ->
         val authOccurrences = occurrencesByAuthId[auth.id] ?: emptyList()
         if (authOccurrences.isEmpty()) {
-          auth.occurrence(objectMapper)
+          auth.occurrence()
             ?.calculateStatus { code -> rdSupplier(OccurrenceStatus::class, code) as OccurrenceStatus }
             ?.also(occurrenceRepository::save)
         } else {
-          val schedule = auth.schedule?.let { objectMapper.treeToValue<AuthorisationSchedule>(it) }
           // if legacyId is not null this has likely been updated from nomis
-          authOccurrences.single().takeIf { it.dpsOnly }?.updateFrom(auth, rdSupplier, schedule)
+          authOccurrences.single().takeIf { it.dpsOnly }
+            ?.updateFrom(auth, rdSupplier, auth.schedule.takeIf { it is SingleSchedule } as? SingleSchedule)
         }
       }
   }
@@ -307,7 +306,7 @@ class ResyncTapHierarchy(
       comments = comments,
       start = start,
       end = end,
-      schedule = schedule()?.let { objectMapper.valueToTree(it) },
+      schedule = schedule(),
       reasonPath = reasonPath,
       locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
         ?: location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) } ?: linkedSetOf(),
@@ -327,7 +326,7 @@ class ResyncTapHierarchy(
     applyLogistics(request, rdPaths)
     applyComments(ChangeAuthorisationComments(request.comments))
     applyLegacyId(request.legacyId)
-    request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
+    request.schedule()?.also { applySchedule(it) }
     (
       request.occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
         .takeIf { it.isNotEmpty() }
@@ -403,7 +402,7 @@ class ResyncTapHierarchy(
   private fun TemporaryAbsenceOccurrence.updateFrom(
     authorisation: TemporaryAbsenceAuthorisation,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
-    schedule: AuthorisationSchedule?,
+    schedule: SingleSchedule?,
   ) = apply {
     authorisationPersonAndPrison(authorisation)
     applyAbsenceCategorisation(

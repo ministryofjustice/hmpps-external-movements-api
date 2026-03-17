@@ -10,6 +10,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.SingleSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -50,7 +52,7 @@ data class TapAuthorisation(
   ) + OccurrenceStatus.Code.entries.map { TAP_OCCURRENCE_STATUS of it.name }
 
   fun schedule(): AuthorisationSchedule? = if (!repeat) {
-    AuthorisationSchedule(startTime, endTime)
+    SingleSchedule(startTime, endTime)
   } else {
     null
   }
