@@ -41,7 +41,7 @@ data object FreeFormSchedule : AuthorisationSchedule {
 data class WeekDayPattern(val day: Int, val overnight: Boolean, val startTime: LocalTime, val returnTime: LocalTime)
 
 data class WeeklySchedule(
-  val weeklyPattern: List<WeekDayPattern>,
+  val weeklyPattern: List<WeekDayPattern> = listOf(),
   val absencesPerDay: Int?,
 ) : AuthorisationSchedule {
   override val type = AuthorisationSchedule.Type.WEEKLY
@@ -56,7 +56,7 @@ data class BiWeeklySchedule(
   override val type = AuthorisationSchedule.Type.BIWEEKLY
 }
 
-data class ShiftPattern(val type: ShiftPattern.Type, val start: LocalTime?, val returnTime: LocalTime?) {
+data class ShiftPattern(val type: ShiftPattern.Type, val startTime: LocalTime?, val returnTime: LocalTime?) {
   enum class Type {
     DAY,
     NIGHT,
@@ -65,7 +65,7 @@ data class ShiftPattern(val type: ShiftPattern.Type, val start: LocalTime?, val 
 }
 
 data class ShiftSchedule(
-  val shiftPattern: List<ShiftPattern>,
+  val shiftPattern: List<ShiftPattern> = listOf(),
 ) : AuthorisationSchedule {
   override val type = AuthorisationSchedule.Type.SHIFT
 }
