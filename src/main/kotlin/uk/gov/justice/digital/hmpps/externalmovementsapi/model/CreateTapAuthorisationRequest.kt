@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
@@ -40,6 +41,7 @@ data class CreateTapAuthorisationRequest(
   override val start: LocalDate,
   override val end: LocalDate,
   val contactInformation: String?,
+  val schedule: AuthorisationSchedule?,
   @JsonIgnore
   val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,
   @JsonIgnore
@@ -48,7 +50,6 @@ data class CreateTapAuthorisationRequest(
   val approvedAt: LocalDateTime? = if (statusCode == AuthorisationStatus.Code.APPROVED) ExternalMovementContext.get().requestAt else null,
   @JsonIgnore
   val approvedBy: String? = if (statusCode == AuthorisationStatus.Code.APPROVED) ExternalMovementContext.get().username else null,
-  val schedule: JsonNode? = null,
 ) : ReferenceDataRequired,
   DateRange,
   StartAndEnd<LocalDate> {

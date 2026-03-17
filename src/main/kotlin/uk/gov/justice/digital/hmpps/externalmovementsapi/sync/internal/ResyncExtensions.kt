@@ -1,9 +1,8 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.treeToValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.SingleSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.APPROVED
@@ -31,7 +30,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.migrate.TapOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import java.time.LocalDate.now
 
 internal fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(
@@ -105,16 +103,16 @@ internal fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence
   }
 }
 
-fun TemporaryAbsenceAuthorisation.occurrence(objectMapper: ObjectMapper): TemporaryAbsenceOccurrence? = this.schedule?.let {
-  val schedule = objectMapper.treeToValue<AuthorisationSchedule>(it)
+fun TemporaryAbsenceAuthorisation.occurrence(): TemporaryAbsenceOccurrence? = this.schedule?.takeIf { it is SingleSchedule }?.let {
+  it as SingleSchedule
   TemporaryAbsenceOccurrence(
     authorisation = this,
     absenceType = absenceType,
     absenceSubType = absenceSubType,
     absenceReasonCategory = absenceReasonCategory,
     absenceReason = absenceReason,
-    start = start.atTime(schedule.startTime),
-    end = end.atTime(schedule.returnTime),
+    start = start.atTime(it.startTime),
+    end = end.atTime(it.returnTime),
     contactInformation = null,
     accompaniedBy = accompaniedBy,
     transport = transport,

@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
-import com.fasterxml.jackson.databind.JsonNode
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
@@ -28,7 +28,7 @@ data class TapAuthorisation(
   val totalOccurrenceCount: Long,
   val occurrences: List<Occurrence>,
   val locations: SequencedSet<Location>,
-  val schedule: JsonNode?,
+  val schedule: AuthorisationSchedule?,
   val comments: String?,
 ) {
   @Schema(name = "TapAuthorisation.Occurrence")

@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -64,7 +63,6 @@ class SyncTapAuthorisation(
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
-  private val objectMapper: ObjectMapper,
 ) {
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
     val person = personSummaryService.getWithSave(personIdentifier)
@@ -81,7 +79,7 @@ class SyncTapAuthorisation(
         ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
         val saved = authorisationRepository.save(request.asEntity(person, rdPaths))
         if (!saved.repeat && saved.schedule != null && saved.status.code !in listOf(APPROVED.name, EXPIRED.name)) {
-          saved.createOccurrence(objectMapper, rdPaths)
+          saved.createOccurrence(rdPaths)
         }
         saved
       }
@@ -145,7 +143,7 @@ class SyncTapAuthorisation(
       end = end,
       locations = location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) } ?: linkedSetOf(),
       reasonPath = reasonPath,
-      schedule = schedule()?.let { objectMapper.valueToTree(it) },
+      schedule = schedule(),
       legacyId = legacyId,
       id = id ?: newUuid(),
     )
@@ -177,15 +175,14 @@ class SyncTapAuthorisation(
         } else {
           occ.updateFrom(this, request, rdPaths)
         }
-      } ?: createOccurrence(objectMapper, rdPaths)
+      } ?: createOccurrence(rdPaths)
     }
   }
 
   private fun TemporaryAbsenceAuthorisation.createOccurrence(
-    objectMapper: ObjectMapper,
     rdPaths: ReferenceDataPaths,
   ) {
-    occurrence(objectMapper)?.calculateStatus { code ->
+    occurrence()?.calculateStatus { code ->
       rdPaths.getReferenceData(OccurrenceStatus::class, code) as OccurrenceStatus
     }?.also(occurrenceRepository::save)
   }
@@ -246,6 +243,6 @@ class SyncTapAuthorisation(
 
   private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
     applyDateRange(ChangeAuthorisationDateRange(request.start, request.end), rdPaths::getReferenceData)
-    request.schedule()?.also { applySchedule(objectMapper.valueToTree(it)) }
+    request.schedule()?.also { applySchedule(it) }
   }
 }
