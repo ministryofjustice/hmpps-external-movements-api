@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
@@ -12,7 +11,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
@@ -46,18 +47,24 @@ class DeleteTapOccurrenceIntTest(
   }
 
   @Test
-  fun `409 cannot delete occurrence with movement`() {
+  fun `204 does not delete occurrence with movement - make dps only`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val occurrence =
-      requireNotNull(findTemporaryAbsenceOccurrence(givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth)).id))
-    givenTemporaryAbsenceMovement(temporaryAbsenceMovement(TemporaryAbsenceMovement.Direction.OUT, occurrence.authorisation.person.identifier, occurrence))
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        movements = listOf(
+          temporaryAbsenceMovement(
+            TemporaryAbsenceMovement.Direction.OUT,
+            auth.person.identifier,
+          ),
+        ),
+      ),
+    )
 
-    val res = deleteTapOccurrence(occurrence.id).errorResponse(HttpStatus.CONFLICT)
+    deleteTapOccurrence(occurrence.id).expectStatus().isNoContent
 
-    val saved = findTemporaryAbsenceOccurrence(occurrence.id)
-    assertThat(saved).isNotNull
-
-    assertThat(res.userMessage).isEqualTo("Cannot delete an occurrence with a movement")
+    val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
+    assertThat(saved.dpsOnly).isTrue
   }
 
   @Test
@@ -81,6 +88,37 @@ class DeleteTapOccurrenceIntTest(
       RevisionType.DEL,
       setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
       ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(occurrence, setOf())
+  }
+
+  @Test
+  fun `204 no content when occurrence is dps only`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        status = AuthorisationStatus.Code.PENDING,
+        locations = linkedSetOf(location()),
+      ),
+    )
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        location = auth.locations.first(),
+        dpsOnly = true,
+      ),
+    )
+
+    deleteTapOccurrence(occurrence.id).expectStatus().isNoContent
+
+    val deleted = findTemporaryAbsenceOccurrence(occurrence.id)
+    assertThat(deleted).isNotNull
+
+    verifyAudit(
+      occurrence,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.DPS),
     )
 
     verifyEvents(occurrence, setOf())

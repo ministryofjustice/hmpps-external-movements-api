@@ -85,7 +85,7 @@ class SyncTapOccurrence(
     occurrenceRepository.findByIdOrNull(id)?.takeUnless { it.dpsOnly }?.also { occurrence ->
       val movementCount = movementRepository.countByOccurrenceId(occurrence.id)
       if (movementCount > 0) {
-        throw ConflictException("Cannot delete an occurrence with a movement")
+        occurrence.makeDpsOnly()
       } else {
         occurrenceRepository.delete(occurrence)
       }
@@ -125,7 +125,6 @@ class SyncTapOccurrence(
       comments = comments,
       legacyId = legacyId,
       reasonPath = reasonPath,
-      scheduleReference = null,
       dpsOnly = false,
       id = id ?: newUuid(),
     ).apply {

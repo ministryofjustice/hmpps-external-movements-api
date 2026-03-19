@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged
 
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.Person
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
@@ -37,4 +38,5 @@ data class TapOccurrenceAuthorisation(
   val absenceReasonCategory: CodedDescription?,
   val absenceReason: CodedDescription?,
   val repeat: Boolean,
+  val schedule: AuthorisationSchedule?,
 )
