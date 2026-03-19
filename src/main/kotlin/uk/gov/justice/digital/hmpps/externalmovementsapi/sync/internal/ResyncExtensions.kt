@@ -119,7 +119,6 @@ fun TemporaryAbsenceAuthorisation.occurrence(): TemporaryAbsenceOccurrence? = th
     location = locations.firstOrNull() ?: Location.empty(),
     comments = comments,
     reasonPath = reasonPath,
-    scheduleReference = null,
     legacyId = null,
     dpsOnly = true,
   )

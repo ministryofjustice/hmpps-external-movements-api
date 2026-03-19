@@ -361,7 +361,6 @@ class ResyncTapHierarchy(
       comments = comments,
       legacyId = legacyId,
       reasonPath = reasonPath,
-      scheduleReference = null,
       dpsOnly = false,
     ).apply {
       if (isCancelled) {

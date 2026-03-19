@@ -159,7 +159,6 @@ class CreateScheduledAbsence(
     contactInformation = authRequest.contactInformation,
     comments = authorisation.comments,
     reasonPath = authorisation.reasonPath,
-    scheduleReference = scheduleReference,
     legacyId = null,
     dpsOnly = authorisation.status.code != AuthorisationStatus.Code.APPROVED.name,
   ).calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus }
@@ -186,7 +185,6 @@ class CreateScheduledAbsence(
     contactInformation = null,
     comments = comments ?: authorisation.comments,
     reasonPath = authorisation.reasonPath,
-    scheduleReference = null,
     legacyId = null,
     dpsOnly = authorisation.status.code != AuthorisationStatus.Code.APPROVED.name,
   )

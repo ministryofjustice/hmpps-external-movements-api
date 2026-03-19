@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.databind.JsonNode
 import jakarta.validation.Valid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
@@ -75,6 +74,5 @@ data class CreateTapAuthorisationRequest(
     override val end: LocalDateTime,
     @Valid
     val location: Location,
-    val scheduleReference: JsonNode?,
   ) : StartAndEnd<LocalDateTime>
 }

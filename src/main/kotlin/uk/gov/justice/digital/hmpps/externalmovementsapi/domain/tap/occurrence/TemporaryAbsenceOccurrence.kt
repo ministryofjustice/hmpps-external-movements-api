@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence
 
-import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -99,7 +98,6 @@ class TemporaryAbsenceOccurrence(
   contactInformation: String?,
   comments: String?,
   reasonPath: ReasonPath,
-  scheduleReference: JsonNode?,
   legacyId: Long?,
   dpsOnly: Boolean = false,
   @Id
@@ -196,11 +194,6 @@ class TemporaryAbsenceOccurrence(
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "reason_path", nullable = false)
   var reasonPath: ReasonPath = reasonPath
-    private set
-
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "schedule_reference")
-  var scheduleReference: JsonNode? = scheduleReference
     private set
 
   @Column(name = "legacy_id")
@@ -460,7 +453,6 @@ class TemporaryAbsenceOccurrence(
     val ABSENCE_REASON = TemporaryAbsenceOccurrence::absenceReason.name
     val ACCOMPANIED_BY = TemporaryAbsenceOccurrence::accompaniedBy.name
     val TRANSPORT = TemporaryAbsenceOccurrence::transport.name
-    val LOCATION = TemporaryAbsenceOccurrence::location.name
 
     fun changeableProperties(): Set<KProperty1<TemporaryAbsenceOccurrence, Any?>> = setOf(
       TemporaryAbsenceOccurrence::start,

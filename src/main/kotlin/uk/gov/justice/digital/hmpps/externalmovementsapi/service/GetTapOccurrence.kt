@@ -70,7 +70,6 @@ private fun TemporaryAbsenceOccurrence.toModel(prison: Prison, position: Int, to
   accompaniedBy = accompaniedBy.asCodedDescription(),
   transport = transport.asCodedDescription(),
   contactInformation = contactInformation,
-  scheduleReference = scheduleReference,
   comments = comments,
   occurrencePosition = position,
   totalOccurrences = total,
