@@ -74,7 +74,12 @@ class TapAuthorisationModifications(
           throw ConflictException("Temporary absence authorisation not approved")
         } else {
           authorisation.cancel(action, rdSupplier)
-          authorisation.affectedOccurrences().forEach { it.cancel(CancelOccurrence(), rdSupplier) }
+          authorisation.affectedOccurrences().forEach {
+            if (!authorisation.repeat) {
+              it.makeDpsOnly()
+            }
+            it.cancel(CancelOccurrence(), rdSupplier)
+          }
         }
 
         is ChangeAuthorisationAccompaniment -> {
@@ -125,6 +130,9 @@ class TapAuthorisationModifications(
 
   private fun TemporaryAbsenceAuthorisation.updateOccurrenceStatus() {
     affectedOccurrences().forEach {
+      if (!repeat && status.code != APPROVED.name) {
+        it.makeDpsOnly()
+      }
       it.calculateStatus { statusCode -> occurrenceStatusRepository.getByCode(statusCode) }
     }
   }

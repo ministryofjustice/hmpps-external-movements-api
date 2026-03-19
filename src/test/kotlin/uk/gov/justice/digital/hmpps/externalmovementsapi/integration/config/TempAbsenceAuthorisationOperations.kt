@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config
 import org.assertj.core.api.Assertions.assertThat
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
-import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
@@ -14,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
@@ -62,7 +62,7 @@ interface TempAbsenceAuthorisationOperations : PersonSummaryOperations {
           absenceReason.also { add(ABSENCE_REASON of it) }
         },
       ),
-      schedule: JsonNode? = null,
+      schedule: AuthorisationSchedule? = null,
       legacyId: Long? = null,
     ): ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String, String) -> PersonSummary) -> TemporaryAbsenceAuthorisation = { rdSupplier, personSupplier ->
       TemporaryAbsenceAuthorisation(

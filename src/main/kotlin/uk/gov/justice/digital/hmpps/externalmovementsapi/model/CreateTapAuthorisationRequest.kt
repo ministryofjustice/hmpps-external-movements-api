@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.validation.Valid
-import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
@@ -15,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataKey
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
@@ -40,6 +40,7 @@ data class CreateTapAuthorisationRequest(
   override val start: LocalDate,
   override val end: LocalDate,
   val contactInformation: String?,
+  val schedule: AuthorisationSchedule?,
   @JsonIgnore
   val submittedAt: LocalDateTime = ExternalMovementContext.get().requestAt,
   @JsonIgnore
@@ -48,7 +49,6 @@ data class CreateTapAuthorisationRequest(
   val approvedAt: LocalDateTime? = if (statusCode == AuthorisationStatus.Code.APPROVED) ExternalMovementContext.get().requestAt else null,
   @JsonIgnore
   val approvedBy: String? = if (statusCode == AuthorisationStatus.Code.APPROVED) ExternalMovementContext.get().username else null,
-  val schedule: JsonNode? = null,
 ) : ReferenceDataRequired,
   DateRange,
   StartAndEnd<LocalDate> {
@@ -74,6 +74,5 @@ data class CreateTapAuthorisationRequest(
     override val end: LocalDateTime,
     @Valid
     val location: Location,
-    val scheduleReference: JsonNode?,
   ) : StartAndEnd<LocalDateTime>
 }

@@ -86,6 +86,7 @@ class CancelTapOccurrenceIntTest(
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
     assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.dpsOnly).isTrue
     assertThat(saved.authorisation.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
 
     verifyAudit(
@@ -102,7 +103,10 @@ class CancelTapOccurrenceIntTest(
     verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceCancelled(occurrence.authorisation.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceCancelled(
+          occurrence.authorisation.person.identifier,
+          occurrence.id,
+        ).publication(occurrence.id) { false },
         TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
       ),
     )
@@ -120,6 +124,7 @@ class CancelTapOccurrenceIntTest(
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
     assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
+    assertThat(saved.dpsOnly).isFalse
     assertThat(saved.authorisation.status.code).isEqualTo(auth.status.code)
 
     verifyAudit(

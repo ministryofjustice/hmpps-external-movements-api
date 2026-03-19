@@ -61,10 +61,15 @@ class AuditedTapOccurrence(
   @Column(name = "contact_information")
   val contactInformation: String?,
   val comments: String?,
+  @Column(name = "legacy_id")
   val legacyId: Long?,
+  @Column(name = "created_at")
   val createdAt: LocalDateTime,
+  @Column(name = "created_by")
   val createdBy: String,
+  @Column(name = "updated_at")
   val updatedAt: LocalDateTime?,
+  @Column(name = "updated_by")
   val updatedBy: String?,
   @Id
   @Column(name = "id", nullable = false, updatable = false)

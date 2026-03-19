@@ -28,7 +28,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.findByIdOrNull
-import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
@@ -106,7 +105,7 @@ class TemporaryAbsenceAuthorisation(
   end: LocalDate,
   locations: SequencedSet<Location>,
   reasonPath: ReasonPath,
-  schedule: JsonNode?,
+  schedule: AuthorisationSchedule?,
   legacyId: Long?,
   @Id
   @Column(name = "id", nullable = false, updatable = false)
@@ -201,7 +200,7 @@ class TemporaryAbsenceAuthorisation(
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "schedule")
-  var schedule: JsonNode? = schedule
+  var schedule: AuthorisationSchedule? = schedule
     private set
 
   @Column(name = "legacy_id")
@@ -338,8 +337,8 @@ class TemporaryAbsenceAuthorisation(
     }
   }
 
-  fun applySchedule(json: JsonNode) = apply {
-    schedule = json
+  fun applySchedule(schedule: AuthorisationSchedule) = apply {
+    this.schedule = schedule
   }
 
   fun applyLegacyId(legacyId: Long) = apply {

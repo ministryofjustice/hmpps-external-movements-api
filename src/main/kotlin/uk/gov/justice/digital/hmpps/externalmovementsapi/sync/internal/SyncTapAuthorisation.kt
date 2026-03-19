@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import tools.jackson.databind.json.JsonMapper
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
@@ -14,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -41,7 +41,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.isNullOrEmpty
@@ -49,6 +53,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSu
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate.now
+import java.time.LocalDateTime.of
 import java.util.UUID
 
 @Transactional
@@ -58,7 +63,6 @@ class SyncTapAuthorisation(
   private val referenceDataRepository: ReferenceDataRepository,
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
-  private val jsonMapper: JsonMapper,
 ) {
   fun sync(personIdentifier: String, request: TapAuthorisation): SyncResponse {
     val person = personSummaryService.getWithSave(personIdentifier)
@@ -74,8 +78,8 @@ class SyncTapAuthorisation(
       ?: let {
         ExternalMovementContext.get().copy(requestAt = request.created.at, username = request.created.by).set()
         val saved = authorisationRepository.save(request.asEntity(person, rdPaths))
-        if (!saved.repeat && saved.schedule != null && saved.status.code != APPROVED.name) {
-          saved.createOccurrence(jsonMapper, rdPaths)
+        if (!saved.repeat && saved.schedule != null && saved.status.code !in listOf(APPROVED.name, EXPIRED.name)) {
+          saved.createOccurrence(rdPaths)
         }
         saved
       }
@@ -139,7 +143,7 @@ class SyncTapAuthorisation(
       end = end,
       locations = location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) } ?: linkedSetOf(),
       reasonPath = reasonPath,
-      schedule = schedule()?.let { jsonMapper.valueToTree(it) },
+      schedule = schedule(),
       legacyId = legacyId,
       id = id ?: newUuid(),
     )
@@ -160,31 +164,48 @@ class SyncTapAuthorisation(
     val occurrences = occurrenceRepository.findByAuthorisationId(id)
     (
       occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
-        .takeIf { it.isNotEmpty() }
+        .takeIf { it.isNotEmpty() && !repeat }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
-    val schedule = request.schedule()?.also { applySchedule(jsonMapper.valueToTree(it)) }
-    if (schedule != null && !repeat && status.code != APPROVED.name) {
+    if (!repeat && status.code != APPROVED.name) {
       occurrences.singleOrNull()?.let { occ ->
         if (occ.status.code == OccurrenceStatus.Code.SCHEDULED.name) {
           occurrenceRepository.delete(occ)
           null
         } else {
-          occ.reschedule(RescheduleOccurrence(start.atTime(schedule.startTime), end.atTime(schedule.returnTime)))
-          request.location?.also { occ.applyLocation(ChangeOccurrenceLocation(it)) }
-          occ.calculateStatus { rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus }
+          occ.updateFrom(this, request, rdPaths)
         }
-      } ?: createOccurrence(jsonMapper, rdPaths)
+      } ?: createOccurrence(rdPaths)
     }
   }
 
   private fun TemporaryAbsenceAuthorisation.createOccurrence(
-    jsonMapper: JsonMapper,
     rdPaths: ReferenceDataPaths,
   ) {
-    occurrence(jsonMapper)?.calculateStatus { code ->
+    occurrence()?.calculateStatus { code ->
       rdPaths.getReferenceData(OccurrenceStatus::class, code) as OccurrenceStatus
     }?.also(occurrenceRepository::save)
+  }
+
+  private fun TemporaryAbsenceOccurrence.updateFrom(
+    authorisation: TemporaryAbsenceAuthorisation,
+    request: TapAuthorisation,
+    rdPaths: ReferenceDataPaths,
+  ) = apply {
+    authorisationPersonAndPrison(authorisation)
+    applyAbsenceCategorisation(
+      RecategoriseOccurrence(absenceType?.code, absenceSubType?.code, absenceReasonCategory?.code, absenceReason.code),
+      rdPaths::getReferenceData,
+    )
+    reschedule(RescheduleOccurrence(of(request.start, request.startTime), of(request.end, request.endTime)))
+    applyLocation(ChangeOccurrenceLocation(request.location ?: Location.empty()))
+    applyAccompaniment(ChangeOccurrenceAccompaniment(request.accompaniedByCode), rdPaths::getReferenceData)
+    applyTransport(ChangeOccurrenceTransport(request.transportCode), rdPaths::getReferenceData)
+    applyComments(ChangeOccurrenceComments(request.comments))
+    makeDpsOnly()
+    calculateStatus {
+      rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus
+    }
   }
 
   private fun TemporaryAbsenceAuthorisation.applyAbsenceCategorisation(
@@ -222,5 +243,6 @@ class SyncTapAuthorisation(
 
   private fun TemporaryAbsenceAuthorisation.checkSchedule(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
     applyDateRange(ChangeAuthorisationDateRange(request.start, request.end), rdPaths::getReferenceData)
+    request.schedule()?.also { applySchedule(it) }
   }
 }

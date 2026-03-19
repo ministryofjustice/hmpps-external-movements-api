@@ -66,7 +66,9 @@ class TapOccurrenceModifications(
           if (occurrence.status.code !in listOf(SCHEDULED.name, CANCELLED.name)) {
             throw ConflictException("Temporary absence not currently scheduled")
           } else {
-            single?.cancel(CancelAuthorisation(action.reason), rdSupplier)
+            single?.cancel(CancelAuthorisation(action.reason), rdSupplier)?.also {
+              occurrence.makeDpsOnly()
+            }
             occurrence.cancel(action, rdSupplier)
           }
         }

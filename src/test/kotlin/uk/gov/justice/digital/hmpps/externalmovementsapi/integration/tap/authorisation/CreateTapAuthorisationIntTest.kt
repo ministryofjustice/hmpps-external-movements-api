@@ -7,7 +7,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
@@ -18,7 +17,17 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.p
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.BiweeklyPattern
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.BiweeklySchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.DayShiftPattern
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.FreeFormSchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.NightShiftPattern
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.RestShiftPattern
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.ShiftSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.WeekDayPattern
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.WeeklySchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
@@ -41,6 +50,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 class CreateTapAuthorisationIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
@@ -286,16 +296,198 @@ class CreateTapAuthorisationIntTest(
     )
   }
 
+  @Test
+  fun `200 ok tap repeat authorisation with freeform created successfully`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = createTapAuthorisationRequest(repeat = true, schedule = FreeFormSchedule)
+    val username = word(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.schedule).isInstanceOf(FreeFormSchedule::class.java)
+    val occurrence = findForAuthorisation(saved.id).first()
+    occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
+    assertThat(occurrence.absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+    assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
+    assertThat(occurrence.absenceReason.code).isEqualTo(request.absenceReasonCode)
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
+  }
+
+  @Test
+  fun `200 ok tap repeat authorisation with weekly created successfully`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = createTapAuthorisationRequest(
+      repeat = true,
+      schedule = WeeklySchedule(
+        listOf(
+          WeekDayPattern(day = 2, overnight = false, startTime = LocalTime.of(10, 0), returnTime = LocalTime.of(14, 0)),
+        ),
+        absencesPerDay = 1,
+      ),
+    )
+    val username = word(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.schedule).isInstanceOf(WeeklySchedule::class.java)
+    val occurrence = findForAuthorisation(saved.id).first()
+    occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
+    assertThat(occurrence.absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+    assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
+    assertThat(occurrence.absenceReason.code).isEqualTo(request.absenceReasonCode)
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
+  }
+
+  @Test
+  fun `200 ok tap repeat authorisation with bi-weekly created successfully`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = createTapAuthorisationRequest(
+      repeat = true,
+      schedule = BiweeklySchedule(
+        BiweeklyPattern(
+          weekA = listOf(
+            WeekDayPattern(
+              day = 2,
+              overnight = false,
+              startTime = LocalTime.of(10, 0),
+              returnTime = LocalTime.of(14, 0),
+            ),
+          ),
+          weekB = listOf(
+            WeekDayPattern(
+              day = 5,
+              overnight = true,
+              startTime = LocalTime.of(22, 0),
+              returnTime = LocalTime.of(2, 0),
+            ),
+          ),
+        ),
+        absencesPerDay = null,
+      ),
+    )
+    val username = word(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.schedule).isInstanceOf(BiweeklySchedule::class.java)
+    val occurrence = findForAuthorisation(saved.id).first()
+    occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
+    assertThat(occurrence.absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+    assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
+    assertThat(occurrence.absenceReason.code).isEqualTo(request.absenceReasonCode)
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
+  }
+
+  @Test
+  fun `200 ok tap repeat authorisation with shift created successfully`() {
+    val prisonCode = prisonCode()
+    val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = createTapAuthorisationRequest(
+      repeat = true,
+      schedule = ShiftSchedule(
+        listOf(
+          DayShiftPattern(2, LocalTime.of(9, 30), LocalTime.of(17, 30)),
+          NightShiftPattern(2, LocalTime.of(21, 30), LocalTime.of(3, 30)),
+          RestShiftPattern(2),
+        ),
+      ),
+    )
+    val username = word(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    assertThat(saved.schedule).isInstanceOf(ShiftSchedule::class.java)
+    val occurrence = findForAuthorisation(saved.id).first()
+    occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
+    assertThat(occurrence.absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+    assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
+    assertThat(occurrence.absenceReason.code).isEqualTo(request.absenceReasonCode)
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username),
+    )
+
+    verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
+  }
+
   private fun createTapOccurrenceRequest(
     start: LocalDateTime = LocalDateTime.now().minusHours(3),
     end: LocalDateTime = LocalDateTime.now().plusHours(3),
     location: Location = location(),
-    scheduleReference: JsonNode? = null,
   ) = CreateTapAuthorisationRequest.OccurrenceRequest(
     start = start,
     end = end,
     location = location,
-    scheduleReference = scheduleReference,
   )
 
   private fun location(
@@ -319,6 +511,7 @@ class CreateTapAuthorisationIntTest(
     comments: String? = null,
     repeat: Boolean = false,
     contactInformation: String? = null,
+    schedule: AuthorisationSchedule? = null,
   ) = CreateTapAuthorisationRequest(
     absenceTypeCode,
     absenceSubTypeCode,
@@ -333,6 +526,7 @@ class CreateTapAuthorisationIntTest(
     start,
     end,
     contactInformation,
+    schedule,
   )
 
   private fun createTapAuthorisation(

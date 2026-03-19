@@ -96,9 +96,6 @@ spring:
 sentry:
   exception-resolver-order: -2147483647
 
-springdoc:
-  paths-to-exclude: "/queue-admin/**"
-
 server:
   port: 8080
   servlet:
@@ -137,6 +134,13 @@ service:
     poll-interval: PT0s
   authorisation-expiration:
     cron: ""
+
+springdoc:
+  paths-to-exclude: "/queue-admin/**"
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 client:
   id: external-movements

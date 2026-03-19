@@ -16,13 +16,10 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.annotations.Fetch
 import org.hibernate.annotations.FetchMode
-import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
-import org.hibernate.envers.NotAudited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
-import tools.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -101,7 +98,6 @@ class TemporaryAbsenceOccurrence(
   contactInformation: String?,
   comments: String?,
   reasonPath: ReasonPath,
-  scheduleReference: JsonNode?,
   legacyId: Long?,
   dpsOnly: Boolean = false,
   @Id
@@ -187,11 +183,6 @@ class TemporaryAbsenceOccurrence(
   var location: Location = location
     private set
 
-  // Use only for sorting
-  @NotAudited
-  @Formula(value = "(coalesce({alias}.location->>'description'),'') || coalesce(({alias}.location->>'address'),'') || coalesce(({alias}.location->>'postcode'),'')")
-  private val locationDescription: String? = null
-
   @Column(name = "contact_information")
   var contactInformation: String? = contactInformation
     private set
@@ -203,11 +194,6 @@ class TemporaryAbsenceOccurrence(
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "reason_path", nullable = false)
   var reasonPath: ReasonPath = reasonPath
-    private set
-
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "schedule_reference")
-  var scheduleReference: JsonNode? = scheduleReference
     private set
 
   @Column(name = "legacy_id")
@@ -365,6 +351,11 @@ class TemporaryAbsenceOccurrence(
     this.dpsOnly = false
   }
 
+  fun makeDpsOnly() = apply {
+    dpsOnly = true
+    legacyId = null
+  }
+
   private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
     ?.map { it.direction }?.let {
       if (it.contains(TemporaryAbsenceMovement.Direction.IN)) {
@@ -462,7 +453,6 @@ class TemporaryAbsenceOccurrence(
     val ABSENCE_REASON = TemporaryAbsenceOccurrence::absenceReason.name
     val ACCOMPANIED_BY = TemporaryAbsenceOccurrence::accompaniedBy.name
     val TRANSPORT = TemporaryAbsenceOccurrence::transport.name
-    val LOCATION = TemporaryAbsenceOccurrence::location.name
 
     fun changeableProperties(): Set<KProperty1<TemporaryAbsenceOccurrence, Any?>> = setOf(
       TemporaryAbsenceOccurrence::start,

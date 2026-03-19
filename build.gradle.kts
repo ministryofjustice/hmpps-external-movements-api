@@ -18,7 +18,7 @@ configurations {
 val ehcacheVersion = "3.11.1"
 val hibernateJcacheVersion = "7.2.6.Final"
 val hmppsKotlinVersion = "2.0.0"
-val sentryVersion = "8.33.0"
+val sentryVersion = "8.34.1"
 val springDocVersion = "3.0.1"
 val sqsStarterVersion = "7.0.0"
 val testContainersVersion = "1.21.4"
@@ -50,13 +50,12 @@ dependencies {
   testImplementation("org.wiremock:wiremock-standalone:$wiremockVersion")
 }
 
-dependencyCheck {
-  suppressionFiles.addAll(listOf("suppressions.xml", ".dependency-check-ignore.xml"))
-  nvd.datafeedUrl = "file:///opt/vulnz/cache"
-}
-
 kotlin {
   jvmToolchain(25)
+}
+
+dependencyCheck {
+  suppressionFiles.add("$rootDir/rem-suppressions.xml")
 }
 
 tasks {

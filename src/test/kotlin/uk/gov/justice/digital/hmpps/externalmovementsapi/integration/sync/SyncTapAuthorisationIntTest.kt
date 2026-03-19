@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import tools.jackson.module.kotlin.treeToValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
@@ -13,6 +12,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newU
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.SingleSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -42,7 +43,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.AtAndBy
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.TapAuthorisation
 import java.time.LocalDate
@@ -98,10 +98,11 @@ class SyncTapAuthorisationIntTest(
     )
     assertThat(saved.locations).containsExactly(request.location)
     assertThat(saved.schedule).isNotNull
-    val schedule: AuthorisationSchedule = jsonMapper.treeToValue(saved.schedule!!)
+    assertThat(saved.schedule).isInstanceOf(SingleSchedule::class.java)
+    val schedule: SingleSchedule = saved.schedule as SingleSchedule
     assertThat(schedule.startTime).isEqualTo(request.startTime)
     assertThat(schedule.returnTime).isEqualTo(request.endTime)
-    assertThat(schedule.type).isEqualTo("SINGLE")
+    assertThat(schedule.type).isEqualTo(AuthorisationSchedule.Type.SINGLE)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -152,10 +153,11 @@ class SyncTapAuthorisationIntTest(
     )
     assertThat(saved.locations).isEmpty()
     assertThat(saved.schedule).isNotNull
-    val schedule: AuthorisationSchedule = jsonMapper.treeToValue(saved.schedule!!)
+    assertThat(saved.schedule).isInstanceOf(SingleSchedule::class.java)
+    val schedule: SingleSchedule = saved.schedule as SingleSchedule
     assertThat(schedule.startTime).isEqualTo(request.startTime)
     assertThat(schedule.returnTime).isEqualTo(request.endTime)
-    assertThat(schedule.type).isEqualTo("SINGLE")
+    assertThat(schedule.type).isEqualTo(AuthorisationSchedule.Type.SINGLE)
     val person = requireNotNull(findPersonSummary(pi))
     person.verifyAgainst(prisoners.first())
 
@@ -208,7 +210,6 @@ class SyncTapAuthorisationIntTest(
       RevisionType.ADD,
       setOf(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
-        TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
@@ -475,7 +476,7 @@ class SyncTapAuthorisationIntTest(
   }
 
   @Test
-  fun `200 ok approved authorisation returned to pending`() {
+  fun `200 ok approved single authorisation returned to pending`() {
     val legacyId = newId()
     val prisonCode = prisonCode()
     val ps = givenPersonSummary(personSummary())
@@ -485,12 +486,13 @@ class SyncTapAuthorisationIntTest(
         prisonCode = prisonCode,
         personIdentifier = ps.identifier,
         locations = linkedSetOf(location()),
+        repeat = false,
       ),
     )
     val request = tapAuthorisation(
       id = existing.id,
       prisonCode = existing.prisonCode,
-      legacyId = legacyId,
+      legacyId = existing.legacyId!!,
       statusCode = "PENDING",
       comments = existing.comments,
       start = existing.start,
@@ -550,6 +552,7 @@ class SyncTapAuthorisationIntTest(
         start = existing.start.atTime(9, 0),
         end = existing.end.atTime(17, 0),
         location = Location.empty(),
+        comments = existing.comments,
         dpsOnly = true,
       ),
     )

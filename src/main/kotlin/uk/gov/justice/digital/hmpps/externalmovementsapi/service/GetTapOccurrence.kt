@@ -45,6 +45,7 @@ private fun TemporaryAbsenceAuthorisation.forOccurrence() = TapOccurrence.Author
   accompaniedBy = accompaniedBy.asCodedDescription(),
   repeat = repeat,
   comments = comments,
+  schedule = schedule,
 )
 
 private fun TemporaryAbsenceOccurrence.toModel(prison: Prison, position: Int, total: Int) = TapOccurrence(
@@ -70,7 +71,6 @@ private fun TemporaryAbsenceOccurrence.toModel(prison: Prison, position: Int, to
   accompaniedBy = accompaniedBy.asCodedDescription(),
   transport = transport.asCodedDescription(),
   contactInformation = contactInformation,
-  scheduleReference = scheduleReference,
   comments = comments,
   occurrencePosition = position,
   totalOccurrences = total,

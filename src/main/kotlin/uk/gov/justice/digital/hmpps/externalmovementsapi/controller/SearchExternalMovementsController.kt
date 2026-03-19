@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.SearchScheduledMo
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.search.SearchScheduledMovements
 
 @RestController
-@PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_RO}')")
+@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_RO}', '${Roles.EXTERNAL_MOVEMENTS_RW}')")
 @RequestMapping("/search/prisons/{prisonCode}/external-movements")
 class SearchExternalMovementsController(private val scheduledMovements: SearchScheduledMovements) {
   @GetMapping("/schedules")
