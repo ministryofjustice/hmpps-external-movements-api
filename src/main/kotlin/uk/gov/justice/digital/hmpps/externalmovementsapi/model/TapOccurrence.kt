@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -44,6 +45,7 @@ data class TapOccurrence(
     val accompaniedBy: CodedDescription,
     val repeat: Boolean,
     val comments: String?,
+    val schedule: AuthorisationSchedule?,
   )
 
   @Schema(name = "TapOccurrence.Movement")
