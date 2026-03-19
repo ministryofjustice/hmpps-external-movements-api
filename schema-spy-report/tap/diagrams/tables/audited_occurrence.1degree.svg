@@ -112,13 +112,13 @@
 <polygon fill="none" stroke="#000000" points="223,-83.7 223,-105.7 322,-105.7 322,-83.7 223,-83.7"/>
 <text text-anchor="start" x="225.7258" y="-91.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">jsonb[2147483647]</text>
 <polygon fill="none" stroke="#000000" points="10,-61.7 10,-83.7 223,-83.7 223,-61.7 10,-61.7"/>
-<text text-anchor="start" x="30" y="-68.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">schedule_reference</text>
+<text text-anchor="start" x="30" y="-68.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">legacy_id</text>
 <polygon fill="none" stroke="#000000" points="223,-61.7 223,-83.7 322,-83.7 322,-61.7 223,-61.7"/>
-<text text-anchor="start" x="225.7258" y="-69.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">jsonb[2147483647]</text>
+<text text-anchor="start" x="226" y="-69.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">int8[19]</text>
 <polygon fill="none" stroke="#000000" points="10,-39.7 10,-61.7 223,-61.7 223,-39.7 10,-39.7"/>
-<text text-anchor="start" x="30" y="-46.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">legacy_id</text>
+<text text-anchor="start" x="30" y="-46.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">dps_only</text>
 <polygon fill="none" stroke="#000000" points="223,-39.7 223,-61.7 322,-61.7 322,-39.7 223,-39.7"/>
-<text text-anchor="start" x="226" y="-47.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">int8[19]</text>
+<text text-anchor="start" x="226" y="-47.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">bool[1]</text>
 <polygon fill="none" stroke="#000000" stroke-width="2" points="9,-39.2 9,-614.2 323,-614.2 323,-39.2 9,-39.2"/>
 </a>
 </g>

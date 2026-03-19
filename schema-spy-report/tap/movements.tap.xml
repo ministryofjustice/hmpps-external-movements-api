@@ -167,7 +167,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="prison_code" nullable="true" remarks="" size="6" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="legacy_id" nullable="true" remarks="" size="32" type="varchar" typeCode="12"/>
       </table>
-      <table catalog="movements" name="audited_occurrence" numRows="0" remarks="" schema="tap" type="VIEW" viewSql=" SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    tao.id,&#10;    tao.version,&#10;    tao.person_identifier,&#10;    tao.prison_code,&#10;    tao.authorisation_id,&#10;    tao.status_id,&#10;    tao.absence_type_id,&#10;    tao.absence_sub_type_id,&#10;    tao.absence_reason_category_id,&#10;    tao.absence_reason_id,&#10;    tao.accompanied_by_id,&#10;    tao.transport_id,&#10;    tao.start,&#10;    tao.&quot;end&quot;,&#10;    tao.location,&#10;    tao.contact_information,&#10;    tao.comments,&#10;    tao.reason_path,&#10;    tao.schedule_reference,&#10;    tao.legacy_id&#10;   FROM ((((tap.occurrence tao&#10;     JOIN tap.occurrence_audit created_audit ON (((created_audit.id = tao.id) AND (created_audit.rev_type = 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id = created_audit.rev_id)))&#10;     LEFT JOIN tap.occurrence_audit updated_audit ON (((updated_audit.id = tao.id) AND (updated_audit.rev_type = 1) AND (updated_audit.rev_id = ( SELECT max(audit.rev_id) AS max&#10;           FROM tap.occurrence_audit audit&#10;          WHERE ((audit.id = tao.id) AND (audit.rev_type = 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id = updated_audit.rev_id)));">
+      <table catalog="movements" name="audited_occurrence" numRows="0" remarks="" schema="tap" type="VIEW" viewSql=" SELECT created_revision.username AS created_by,&#10;    created_revision.&quot;timestamp&quot; AS created_at,&#10;    updated_revision.username AS updated_by,&#10;    updated_revision.&quot;timestamp&quot; AS updated_at,&#10;    COALESCE(updated_audit.rev_type, created_audit.rev_type) AS rev_type,&#10;    tao.id,&#10;    tao.version,&#10;    tao.person_identifier,&#10;    tao.prison_code,&#10;    tao.authorisation_id,&#10;    tao.status_id,&#10;    tao.absence_type_id,&#10;    tao.absence_sub_type_id,&#10;    tao.absence_reason_category_id,&#10;    tao.absence_reason_id,&#10;    tao.accompanied_by_id,&#10;    tao.transport_id,&#10;    tao.start,&#10;    tao.&quot;end&quot;,&#10;    tao.location,&#10;    tao.contact_information,&#10;    tao.comments,&#10;    tao.reason_path,&#10;    tao.legacy_id,&#10;    tao.dps_only&#10;   FROM ((((tap.occurrence tao&#10;     JOIN tap.occurrence_audit created_audit ON (((created_audit.id = tao.id) AND (created_audit.rev_type = 0))))&#10;     JOIN audit_revision created_revision ON ((created_revision.id = created_audit.rev_id)))&#10;     LEFT JOIN tap.occurrence_audit updated_audit ON (((updated_audit.id = tao.id) AND (updated_audit.rev_type = 1) AND (updated_audit.rev_id = ( SELECT max(audit.rev_id) AS max&#10;           FROM tap.occurrence_audit audit&#10;          WHERE ((audit.id = tao.id) AND (audit.rev_type = 1)))))))&#10;     LEFT JOIN audit_revision updated_revision ON ((updated_revision.id = updated_audit.rev_id)));">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="created_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="created_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="updated_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
@@ -191,8 +191,8 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="contact_information" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="comments" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="reason_path" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="23" name="schedule_reference" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="24" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="23" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="24" name="dps_only" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
       </table>
       <table catalog="movements" name="authorisation" remarks="" schema="tap" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
@@ -403,9 +403,8 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="contact_information" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="comments" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="schedule_reference" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="dps_only" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="dps_only" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_tap_occurrence" unique="true">
             <column ascending="true" name="id"/>
@@ -464,9 +463,8 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="contact_information" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="18" name="comments" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="reason_path" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="schedule_reference" nullable="true" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="dps_only" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="legacy_id" nullable="true" remarks="" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="dps_only" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <primaryKey column="rev_id" sequenceNumberInPK="2"/>
          <index name="pk_tap_occurrence_audit" unique="true">
