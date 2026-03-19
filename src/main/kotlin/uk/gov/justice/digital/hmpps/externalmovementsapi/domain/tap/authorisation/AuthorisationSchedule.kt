@@ -58,17 +58,45 @@ data class BiWeeklySchedule(
   override val type = AuthorisationSchedule.Type.BIWEEKLY
 }
 
-data class ShiftPattern(
-  val type: ShiftPattern.Type,
-  val count: Int,
-  val startTime: LocalTime?,
-  val returnTime: LocalTime?,
-) {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes(
+  value = [
+    Type(value = DayShiftPattern::class, name = "DAY"),
+    Type(value = NightShiftPattern::class, name = "NIGHT"),
+    Type(value = RestShiftPattern::class, name = "REST"),
+  ],
+)
+interface ShiftPattern {
+  val type: ShiftPattern.Type
+  val count: Int
+
   enum class Type {
     DAY,
     NIGHT,
     REST,
   }
+}
+
+data class DayShiftPattern(
+  override val count: Int,
+  val startTime: LocalTime,
+  val returnTime: LocalTime,
+) : ShiftPattern {
+  override val type = ShiftPattern.Type.DAY
+}
+
+data class NightShiftPattern(
+  override val count: Int,
+  val startTime: LocalTime,
+  val returnTime: LocalTime,
+) : ShiftPattern {
+  override val type = ShiftPattern.Type.NIGHT
+}
+
+data class RestShiftPattern(
+  override val count: Int,
+) : ShiftPattern {
+  override val type = ShiftPattern.Type.REST
 }
 
 data class ShiftSchedule(
