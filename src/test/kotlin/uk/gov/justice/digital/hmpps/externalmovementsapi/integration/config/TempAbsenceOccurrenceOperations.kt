@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config
 
-import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.springframework.data.repository.findByIdOrNull
@@ -58,7 +57,6 @@ interface TempAbsenceOccurrenceOperations {
       cancelledAt: LocalDateTime? = null,
       cancelledBy: String? = null,
       reasonPath: ReasonPath = authorisation.reasonPath,
-      scheduleReference: JsonNode? = null,
       legacyId: Long? = null,
       dpsOnly: Boolean = false,
       movements: List<((KClass<out ReferenceData>, String) -> ReferenceData, (String) -> PersonSummary) -> TemporaryAbsenceMovement> = listOf(),
@@ -79,7 +77,6 @@ interface TempAbsenceOccurrenceOperations {
         transport = rdSupplier(Transport::class, transport) as Transport,
         comments = comments,
         reasonPath = reasonPath,
-        scheduleReference = scheduleReference,
         legacyId = legacyId,
         dpsOnly = dpsOnly,
       )
@@ -114,7 +111,6 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(accompaniedBy.code).isEqualTo(authRequest.accompaniedByCode)
     assertThat(transport.code).isEqualTo(authRequest.transportCode)
     assertThat(contactInformation).isEqualTo(authRequest.contactInformation)
-    assertThat(scheduleReference).isEqualTo(request.scheduleReference)
   }
 
   fun TemporaryAbsenceOccurrence.verifyAgainst(occurrence: TapAuthorisation.Occurrence) {
@@ -138,7 +134,6 @@ interface TempAbsenceOccurrenceOperations {
     assertThat(start).isCloseTo(occurrence.start, within(2, SECONDS))
     assertThat(end).isCloseTo(occurrence.end, within(2, SECONDS))
     assertThat(contactInformation).isEqualTo(occurrence.contactInformation)
-    assertThat(scheduleReference).isEqualTo(occurrence.scheduleReference)
   }
 }
 

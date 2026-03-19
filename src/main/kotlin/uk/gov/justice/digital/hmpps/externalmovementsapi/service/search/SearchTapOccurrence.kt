@@ -97,6 +97,7 @@ private fun TemporaryAbsenceAuthorisation.asOccurrenceAuth() = TapOccurrenceAuth
     ?.asCodedDescription(),
   absenceReason = absenceReason.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
   repeat = repeat,
+  schedule = schedule,
 )
 
 fun Page<TapOccurrenceResult>.asResponse() = TapOccurrenceSearchResponse(content, PageMetadata(totalElements))

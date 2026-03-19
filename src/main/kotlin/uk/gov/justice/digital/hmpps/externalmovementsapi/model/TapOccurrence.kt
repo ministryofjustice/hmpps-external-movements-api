@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
-import com.fasterxml.jackson.databind.JsonNode
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -26,7 +26,6 @@ data class TapOccurrence(
   val accompaniedBy: CodedDescription,
   val transport: CodedDescription,
   val contactInformation: String?,
-  val scheduleReference: JsonNode?,
   val comments: String?,
   val occurrencePosition: Int,
   val totalOccurrences: Int,
@@ -46,6 +45,7 @@ data class TapOccurrence(
     val accompaniedBy: CodedDescription,
     val repeat: Boolean,
     val comments: String?,
+    val schedule: AuthorisationSchedule?,
   )
 
   @Schema(name = "TapOccurrence.Movement")

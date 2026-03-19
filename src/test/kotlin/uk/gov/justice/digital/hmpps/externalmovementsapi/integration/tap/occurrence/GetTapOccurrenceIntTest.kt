@@ -10,6 +10,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_M
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.ShiftSchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.WeeklySchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.IN
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction.OUT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -185,7 +187,9 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve completed occurrence`() {
     val prison = givenPrison()
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(prison.code, repeat = true, schedule = WeeklySchedule()),
+    )
     val occurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
@@ -208,6 +212,7 @@ class GetTapOccurrenceIntTest(
 
     val response = getTapOccurrence(occurrence.id).successResponse<TapOccurrence>()
     occurrence.verifyAgainst(response)
+    assertThat(response.authorisation.schedule).isEqualTo(auth.schedule)
     assertThat(response.location).isEqualTo(occurrence.location)
     assertThat(response.status.code).isEqualTo("COMPLETED")
     assertThat(response.movements).hasSize(2)
@@ -216,7 +221,13 @@ class GetTapOccurrenceIntTest(
   @Test
   fun `can retrieve occurrence with position and total count`() {
     val prison = givenPrison()
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prison.code))
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prison.code,
+        repeat = true,
+        schedule = ShiftSchedule(),
+      ),
+    )
     val occ1 =
       givenTemporaryAbsenceOccurrence(
         temporaryAbsenceOccurrence(
@@ -242,16 +253,19 @@ class GetTapOccurrenceIntTest(
 
     val res1 = getTapOccurrence(occ1.id).successResponse<TapOccurrence>()
     occ1.verifyAgainst(res1)
+    assertThat(res1.authorisation.schedule).isEqualTo(auth.schedule)
     assertThat(res1.occurrencePosition).isEqualTo(1)
     assertThat(res1.totalOccurrences).isEqualTo(3)
 
     val res2 = getTapOccurrence(occ2.id).successResponse<TapOccurrence>()
     occ2.verifyAgainst(res2)
+    assertThat(res2.authorisation.schedule).isEqualTo(auth.schedule)
     assertThat(res2.occurrencePosition).isEqualTo(2)
     assertThat(res2.totalOccurrences).isEqualTo(3)
 
     val res3 = getTapOccurrence(occ3.id).successResponse<TapOccurrence>()
     occ3.verifyAgainst(res3)
+    assertThat(res3.authorisation.schedule).isEqualTo(auth.schedule)
     assertThat(res3.occurrencePosition).isEqualTo(3)
     assertThat(res3.totalOccurrences).isEqualTo(3)
   }

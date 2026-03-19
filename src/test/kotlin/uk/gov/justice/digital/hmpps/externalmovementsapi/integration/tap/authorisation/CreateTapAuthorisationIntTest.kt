@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.authorisation
 
-import com.fasterxml.jackson.databind.JsonNode
 import org.assertj.core.api.Assertions.assertThat
 import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
@@ -479,12 +478,10 @@ class CreateTapAuthorisationIntTest(
     start: LocalDateTime = LocalDateTime.now().minusHours(3),
     end: LocalDateTime = LocalDateTime.now().plusHours(3),
     location: Location = location(),
-    scheduleReference: JsonNode? = null,
   ) = CreateTapAuthorisationRequest.OccurrenceRequest(
     start = start,
     end = end,
     location = location,
-    scheduleReference = scheduleReference,
   )
 
   private fun location(
