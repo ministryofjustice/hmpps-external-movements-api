@@ -18,10 +18,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.AuthorisationSchedule
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.BiWeeklyPattern
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.BiWeeklySchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.BiweeklyPattern
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.BiweeklySchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.DayShiftPattern
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.FreeFormSchedule
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.ShiftPattern
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.NightShiftPattern
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.ShiftSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.WeekDayPattern
@@ -381,8 +382,8 @@ class CreateTapAuthorisationIntTest(
     val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = createTapAuthorisationRequest(
       repeat = true,
-      schedule = BiWeeklySchedule(
-        BiWeeklyPattern(
+      schedule = BiweeklySchedule(
+        BiweeklyPattern(
           weekA = listOf(
             WeekDayPattern(
               day = 2,
@@ -409,7 +410,7 @@ class CreateTapAuthorisationIntTest(
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
     saved.verifyAgainst(pi, request)
-    assertThat(saved.schedule).isInstanceOf(BiWeeklySchedule::class.java)
+    assertThat(saved.schedule).isInstanceOf(BiweeklySchedule::class.java)
     val occurrence = findForAuthorisation(saved.id).first()
     occurrence.verifyAgainst(pi, request.occurrences.first(), request)
     assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
@@ -441,7 +442,10 @@ class CreateTapAuthorisationIntTest(
     val request = createTapAuthorisationRequest(
       repeat = true,
       schedule = ShiftSchedule(
-        listOf(ShiftPattern(ShiftPattern.Type.DAY, 2, LocalTime.of(9, 30), LocalTime.of(17, 30))),
+        listOf(
+          DayShiftPattern(2, LocalTime.of(9, 30), LocalTime.of(17, 30)),
+          NightShiftPattern(2, LocalTime.of(21, 30), LocalTime.of(3, 30)),
+        ),
       ),
     )
     val username = word(8)

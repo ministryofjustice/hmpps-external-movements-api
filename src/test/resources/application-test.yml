@@ -53,3 +53,9 @@ service:
   occurrence-status:
     poll-interval: PT0s
   ui-base-url: "https://local-ui"
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
