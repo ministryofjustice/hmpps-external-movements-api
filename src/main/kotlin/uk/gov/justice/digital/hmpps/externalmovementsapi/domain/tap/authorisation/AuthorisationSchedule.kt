@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalTime
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -19,6 +20,7 @@ import java.time.LocalTime
 sealed interface AuthorisationSchedule {
   val type: Type
 
+  @Schema(name = "AuthorisationSchedule.Type")
   enum class Type {
     SINGLE,
     FREEFORM,
@@ -70,6 +72,7 @@ interface ShiftPattern {
   val type: ShiftPattern.Type
   val count: Int
 
+  @Schema(name = "ShiftPattern.Type")
   enum class Type {
     DAY,
     NIGHT,
