@@ -84,7 +84,7 @@ import kotlin.reflect.KProperty1
 @Audited
 @Entity
 @Table(schema = "tap", name = "occurrence")
-class TemporaryAbsenceOccurrence(
+final class TemporaryAbsenceOccurrence(
   authorisation: TemporaryAbsenceAuthorisation,
   absenceType: AbsenceType?,
   absenceSubType: AbsenceSubType?,

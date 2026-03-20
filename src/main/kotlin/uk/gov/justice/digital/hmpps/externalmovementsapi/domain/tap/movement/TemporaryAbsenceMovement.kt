@@ -59,7 +59,7 @@ import kotlin.reflect.KProperty1
 @Audited
 @Entity
 @Table(schema = "tap", name = "movement")
-class TemporaryAbsenceMovement(
+final class TemporaryAbsenceMovement(
   person: PersonSummary,
   occurrence: TemporaryAbsenceOccurrence?,
   occurredAt: LocalDateTime,
