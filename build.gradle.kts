@@ -4,9 +4,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.0.3"
-  kotlin("plugin.spring") version "2.3.10"
-  kotlin("plugin.jpa") version "2.3.10"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.1.0"
+  kotlin("plugin.spring") version "2.3.20"
+  kotlin("plugin.jpa") version "2.3.20"
   id("com.google.cloud.tools.jib") version "3.5.3"
   id("de.undercouch.download") version "5.7.0"
 }
@@ -16,11 +16,11 @@ configurations {
 }
 
 val ehcacheVersion = "3.11.1"
-val hibernateJcacheVersion = "7.2.6.Final"
-val hmppsKotlinVersion = "2.0.0"
-val sentryVersion = "8.34.1"
-val springDocVersion = "3.0.1"
-val sqsStarterVersion = "7.0.0"
+val hibernateJcacheVersion = "7.3.0.Final"
+val hmppsKotlinVersion = "2.1.0"
+val sentryVersion = "8.36.0"
+val springDocVersion = "3.0.2"
+val sqsStarterVersion = "7.2.0"
 val testContainersVersion = "1.21.4"
 val uuidGeneratorVersion = "5.2.0"
 val wiremockVersion = "3.13.2"
@@ -63,7 +63,6 @@ tasks {
     compilerOptions {
       jvmTarget = JVM_25
       freeCompilerArgs.addAll(
-        "-Xwhen-guards",
         "-Xannotation-default-target=param-property",
       )
     }

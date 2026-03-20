@@ -89,7 +89,7 @@ import kotlin.reflect.KProperty1
 @Audited
 @Entity
 @Table(schema = "tap", name = "authorisation")
-class TemporaryAbsenceAuthorisation(
+final class TemporaryAbsenceAuthorisation(
   person: PersonSummary,
   prisonCode: String,
   status: AuthorisationStatus,

@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 @Entity
 @Table(name = "person_summary")
-class PersonSummary(
+final class PersonSummary(
   firstName: String,
   lastName: String,
   prisonCode: String?,
