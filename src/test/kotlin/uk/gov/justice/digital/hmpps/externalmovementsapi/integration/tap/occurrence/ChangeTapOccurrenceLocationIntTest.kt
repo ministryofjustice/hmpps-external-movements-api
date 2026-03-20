@@ -112,6 +112,49 @@ class ChangeTapOccurrenceLocationIntTest(
     )
   }
 
+  @Test
+  fun `200 ok tap occurrence location for repeat updated successfully`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true, locations = linkedSetOf(location())))
+    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, location = auth.locations.first))
+    val occ2 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, location = auth.locations.first))
+    val request = action()
+    val res = applyLocation(occ1.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRelocated.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change(
+        "location",
+        occ1.location.toString(),
+        request.location.toString(),
+      ),
+    )
+
+    val saved = requireNotNull(findTemporaryAbsenceOccurrence(occ1.id))
+    assertThat(saved.location).isEqualTo(request.location)
+
+    val updatedAuth = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(updatedAuth.locations).containsExactly(occ2.location, request.location)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceRelocated(auth.person.identifier, occ1.id).publication(occ1.id),
+        TemporaryAbsenceAuthorisationRelocated(auth.person.identifier, auth.id).publication(auth.id),
+      ),
+    )
+  }
+
   private fun action(
     location: Location = location(),
     reason: String? = (0..5).joinToString(separator = " ") { word(4) },

@@ -99,14 +99,21 @@ class TapOccurrenceModifications(
 
         is ChangeOccurrenceLocation -> {
           occurrence.applyLocation(action)
-          occurrence.authorisation.applyLocations(ChangeAuthorisationLocations(action.location, action.reason))
+          with(occurrence.authorisation) {
+            val newLocations = if (repeat) {
+              (locations + occurrence.location).mapTo(linkedSetOf()) { it }
+            } else {
+              linkedSetOf(occurrence.location)
+            }
+            applyLocations(ChangeAuthorisationLocations(newLocations, action.reason))
+          }
         }
 
         else -> throw IllegalArgumentException("Action not supported")
       }
       taoRepository.flush()
       readVersion!! to occurrence.version!!
-    }!!
+    }
     return AuditHistory(listOfNotNull(occurrenceHistory.currentAction(id, readVersion, writeVersion)))
   }
 
