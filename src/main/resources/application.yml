@@ -23,12 +23,6 @@ spring:
     validate-on-migrate: false
     locations: classpath:db/schema,classpath:db/data
 
-  jackson2:
-    date-format: "yyyy-MM-dd HH:mm:ss"
-    default-property-inclusion: non_null
-    serialization:
-      WRITE_DATES_AS_TIMESTAMPS: false
-
   jackson:
     date-format: "yyyy-MM-dd HH:mm:ss"
     default-property-inclusion: non_null
