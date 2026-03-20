@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.DayShiftPattern
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.FreeFormSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.NightShiftPattern
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.RestShiftPattern
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.ShiftSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.WeekDayPattern
@@ -445,6 +446,7 @@ class CreateTapAuthorisationIntTest(
         listOf(
           DayShiftPattern(2, LocalTime.of(9, 30), LocalTime.of(17, 30)),
           NightShiftPattern(2, LocalTime.of(21, 30), LocalTime.of(3, 30)),
+          RestShiftPattern(2),
         ),
       ),
     )

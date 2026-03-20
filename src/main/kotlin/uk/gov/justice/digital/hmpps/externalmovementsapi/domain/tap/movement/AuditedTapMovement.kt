@@ -26,13 +26,16 @@ import java.util.UUID
 @Entity
 @Table(schema = "tap", name = "audited_movement")
 class AuditedTapMovement(
+  @Column(name = "person_identifier")
   val personIdentifier: String,
   @ManyToOne
   @JoinColumn(name = "occurrence_id")
   val occurrence: TemporaryAbsenceOccurrence?,
+  @Column(name = "occurred_at")
   val occurredAt: LocalDateTime,
   @Enumerated(EnumType.STRING)
   val direction: TemporaryAbsenceMovement.Direction,
+  @Column(name = "prison_code")
   val prisonCode: String,
   @ManyToOne(optional = false)
   @JoinColumn(name = "absence_reason_id", nullable = false)
@@ -40,15 +43,21 @@ class AuditedTapMovement(
   @ManyToOne(optional = false)
   @JoinColumn(name = "accompanied_by_id", nullable = false)
   val accompaniedBy: AccompaniedBy,
+  @Column(name = "accompanied_by_comments")
   val accompaniedByComments: String?,
   val comments: String?,
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "location")
   var location: Location,
-  val legacyId: String?,
+  @Column(name = "legacy_id")
+  val legacyId: Long?,
+  @Column(name = "created_at")
   val createdAt: LocalDateTime,
+  @Column(name = "created_by")
   val createdBy: String,
+  @Column(name = "updated_at")
   val updatedAt: LocalDateTime?,
+  @Column(name = "updated_by")
   val updatedBy: String?,
   @Id
   val id: UUID = newUuid(),

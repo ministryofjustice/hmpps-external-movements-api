@@ -220,10 +220,10 @@ class SearchScheduledMovementsIntTest(
     .get()
     .uri { uri ->
       uri.path(SEARCH_EM_URL)
-      movementTypes.takeIf { it.isNotEmpty() }?.also { uri.queryParam("movementTypes", it) }
+      movementTypes.takeIf { it.isNotEmpty() }?.also { uri.queryParam("movementTypes", *it.toTypedArray()) }
       start?.also { uri.queryParam("start", ISO_DATE_TIME.format(it)) }
       end?.also { uri.queryParam("end", ISO_DATE_TIME.format(it)) }
-      personIdentifiers.takeIf { it.isNotEmpty() }?.also { uri.queryParam("personIdentifiers", it) }
+      personIdentifiers.takeIf { it.isNotEmpty() }?.also { uri.queryParam("personIdentifiers", *it.toTypedArray()) }
       if (includeLocation) {
         uri.queryParam("includeLocation", true)
       }

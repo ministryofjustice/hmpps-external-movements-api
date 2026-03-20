@@ -145,7 +145,7 @@ class TempAbsenceAuthorisationOperationsImpl(
       { identifier, prisonCode -> psOperations.findPersonSummary(identifier) ?: psOperations.givenPersonSummary(personSummary(identifier, prisonCode = prisonCode)) },
     )
     temporaryAbsenceAuthorisationRepository.save(authorisation)
-  }!!
+  }
 
   override fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation? = temporaryAbsenceAuthorisationRepository.findByIdOrNull(id)
 }

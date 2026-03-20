@@ -1,6 +1,9 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
+import jakarta.persistence.Column
 import jakarta.persistence.EntityManager
+import jakarta.persistence.Id
+import jakarta.persistence.MappedSuperclass
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.cache.cacheable
@@ -9,12 +12,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import java.util.UUID
 import kotlin.reflect.KClass
 
-interface ReferenceData {
-  val code: String
-  val description: String
-  val sequenceNumber: Int
-  val active: Boolean
-  val id: UUID
+@MappedSuperclass
+abstract class ReferenceData(
+  val code: String,
+  val description: String,
+  @Column(name = "sequence_number")
+  val sequenceNumber: Int,
+  val active: Boolean,
+  @Id
+  val id: UUID,
+) {
 
   companion object {
     val CODE = ReferenceData::code.name
