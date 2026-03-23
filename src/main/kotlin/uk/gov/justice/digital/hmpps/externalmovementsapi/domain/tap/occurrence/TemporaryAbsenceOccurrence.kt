@@ -239,7 +239,13 @@ final class TemporaryAbsenceOccurrence(
 
   override fun initialEvents(): Set<DomainEventPublication> = when (status.code) {
     SCHEDULED.name -> setOf(TemporaryAbsenceScheduled(person.identifier, id).publication(id))
-    else -> emptySet()
+    else -> {
+      // if initial creation produces no events and not created by nomis, it should be dps only
+      if (legacyId == null) {
+        dpsOnly = true
+      }
+      emptySet()
+    }
   }
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
