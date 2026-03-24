@@ -120,7 +120,7 @@ management:
         time-to-live: 2000ms
 
 service:
-  active-prisons:
+  active-prisons: "***"
   domain-events:
     poll-interval: PT0s
     batch-size: 10
