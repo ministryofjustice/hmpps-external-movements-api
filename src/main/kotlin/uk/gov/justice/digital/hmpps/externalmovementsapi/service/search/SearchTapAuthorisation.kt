@@ -65,7 +65,7 @@ class SearchTapAuthorisation(
     repeat = repeat,
     start = start,
     end = end,
-    locations = occurrences.map { it.location }.distinct(),
+    locations = locations.toList(),
     occurrenceCount = occurrences.size,
     absenceCategorisation = hierarchyDescription(reasonPath),
   )

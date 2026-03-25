@@ -19,16 +19,15 @@ integration:
 
 spring:
   datasource:
-    url: 'jdbc:postgresql://localhost:5432/movements?reWriteBatchedInserts=true'
-    username: external
-    password: movements
+    hikari:
+      data-source-properties:
+        sslmode: 'disable'
   flyway:
     locations: classpath:db/schema,classpath:db/data
   jpa:
     show-sql: true
     properties:
       hibernate.generate_statistics: true
-
 
 hmpps.sqs:
   provider: localstack
@@ -46,6 +45,12 @@ hmpps.sqs:
       arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
     hmppseventtesttopic:
       arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
+
+db:
+  server: "localhost:5432"
+  name: "movements"
+  user: "external"
+  pass: "movements"
 
 service:
   domain-events:
