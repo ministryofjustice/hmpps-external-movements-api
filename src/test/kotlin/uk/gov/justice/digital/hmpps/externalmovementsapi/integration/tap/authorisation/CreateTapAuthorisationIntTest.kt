@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.WeeklySchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
@@ -478,6 +479,59 @@ class CreateTapAuthorisationIntTest(
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
+  }
+
+  @Test
+  fun `200 ok repeat tap authorisation created with first occurrence expired`() {
+    val (prisonCode, pi) = prisonCode() to personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = createTapAuthorisationRequest(
+      repeat = true,
+      statusCode = AuthorisationStatus.Code.APPROVED,
+      start = LocalDate.now(),
+      end = LocalDate.now().plusDays(2),
+      occurrences = listOf(
+        createTapOccurrenceRequest(
+          start = LocalDateTime.now().minusHours(2),
+          end = LocalDateTime.now().minusMinutes(1),
+        ),
+        createTapOccurrenceRequest(start = LocalDateTime.now(), end = LocalDateTime.now().plusHours(2)),
+      ),
+    )
+    val username = word(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    val occurrences = findForAuthorisation(saved.id)
+    assertThat(occurrences).hasSize(2)
+    val expired = occurrences.first { it.status.code == OccurrenceStatus.Code.EXPIRED.name }
+    assertThat(expired.dpsOnly).isTrue
+    val scheduled = occurrences.first { it.status.code == OccurrenceStatus.Code.SCHEDULED.name }
+    assertThat(scheduled.dpsOnly).isFalse
+
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id),
+        TemporaryAbsenceScheduled(pi, scheduled.id).publication(scheduled.id),
+      ),
+    )
   }
 
   private fun createTapOccurrenceRequest(
