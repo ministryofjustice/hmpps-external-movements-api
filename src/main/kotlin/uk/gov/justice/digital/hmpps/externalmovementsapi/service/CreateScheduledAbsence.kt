@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthoris
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
+import java.time.LocalDateTime.now
 import java.util.UUID
 import kotlin.reflect.KClass
 
@@ -160,7 +161,7 @@ class CreateScheduledAbsence(
     comments = authorisation.comments,
     reasonPath = authorisation.reasonPath,
     legacyId = null,
-    dpsOnly = authorisation.status.code != AuthorisationStatus.Code.APPROVED.name,
+    dpsOnly = authorisation.status.code != AuthorisationStatus.Code.APPROVED.name || end.isBefore(now()),
   ).calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus }
 
   private fun CreateOccurrenceRequest.asOccurrence(
