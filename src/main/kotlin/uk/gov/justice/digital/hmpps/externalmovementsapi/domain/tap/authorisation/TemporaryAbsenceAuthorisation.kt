@@ -43,6 +43,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonRelated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
@@ -111,6 +112,7 @@ final class TemporaryAbsenceAuthorisation(
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
 ) : Identifiable,
+  PrisonRelated,
   CategorisedAbsenceReason,
   DomainEventProducer {
 
@@ -124,7 +126,7 @@ final class TemporaryAbsenceAuthorisation(
   @Size(max = 6)
   @NotNull
   @Column(name = "prison_code", nullable = false, length = 6)
-  var prisonCode: String = prisonCode
+  override var prisonCode: String = prisonCode
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)

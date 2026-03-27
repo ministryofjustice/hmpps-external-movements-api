@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.D
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonRelated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
@@ -75,6 +76,7 @@ final class TemporaryAbsenceMovement(
   @Column(name = "id", nullable = false, updatable = false)
   override val id: UUID = newUuid(),
 ) : Identifiable,
+  PrisonRelated,
   DomainEventProducer {
   @Audited(targetAuditMode = NOT_AUDITED)
   @ManyToOne
@@ -128,7 +130,7 @@ final class TemporaryAbsenceMovement(
   @Size(max = 6)
   @NotNull
   @Column(name = "prison_code", nullable = false, length = 6)
-  var prisonCode: String = prisonCode
+  override var prisonCode: String = prisonCode
     private set
 
   @Column(name = "legacy_id")
