@@ -58,6 +58,8 @@ service:
   occurrence-status:
     poll-interval: PT0s
   ui-base-url: "https://local-ui"
+  disable-prison-events:
+    - LEI
 
 springdoc:
   api-docs:

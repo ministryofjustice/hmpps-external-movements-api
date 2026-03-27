@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.DISABLED_EVENTS_PRISON_CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.postcode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -530,6 +531,47 @@ class CreateTapAuthorisationIntTest(
       setOf(
         TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id),
         TemporaryAbsenceScheduled(pi, scheduled.id).publication(scheduled.id),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok tap authorisation created successfully - events not published`() {
+    val prisonCode = DISABLED_EVENTS_PRISON_CODE
+    val pi = personIdentifier()
+    val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
+    val request = createTapAuthorisationRequest(statusCode = AuthorisationStatus.Code.APPROVED)
+    val username = word(8)
+    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+
+    assertThat(res.id).isNotNull
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
+    saved.verifyAgainst(pi, request)
+    val occurrence = findForAuthorisation(saved.id).first()
+    occurrence.verifyAgainst(pi, request.occurrences.first(), request)
+    assertThat(occurrence.absenceType?.code).isEqualTo(request.absenceTypeCode)
+    assertThat(occurrence.absenceSubType?.code).isEqualTo(request.absenceSubTypeCode)
+    assertThat(occurrence.absenceReasonCategory?.code).isEqualTo(request.absenceReasonCategoryCode)
+    assertThat(occurrence.absenceReason.code).isEqualTo(request.absenceReasonCode)
+    val person = requireNotNull(findPersonSummary(pi))
+    person.verifyAgainst(prisoners.first())
+
+    verifyAudit(
+      saved,
+      RevisionType.ADD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationApproved(pi, saved.id).publication(saved.id) { false },
+        TemporaryAbsenceScheduled(pi, occurrence.id).publication(occurrence.id) { false },
       ),
     )
   }
