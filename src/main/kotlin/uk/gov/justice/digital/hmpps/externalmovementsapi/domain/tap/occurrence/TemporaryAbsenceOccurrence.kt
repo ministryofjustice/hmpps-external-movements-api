@@ -55,6 +55,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceDenied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
@@ -247,6 +248,12 @@ final class TemporaryAbsenceOccurrence(
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
     action.domainEvent(this)?.publication(id) { !(dpsOnly || it.eventType in EXCLUDE_FROM_PUBLISH) }
   }.toSet()
+
+  override fun deletionEvents(): Set<DomainEventPublication> = if (dpsOnly) {
+    setOf()
+  } else {
+    setOf(TemporaryAbsenceUnScheduled(person.identifier, id).publication(id))
+  }
 
   fun moveTo(person: PersonSummary) = apply {
     this.person = person

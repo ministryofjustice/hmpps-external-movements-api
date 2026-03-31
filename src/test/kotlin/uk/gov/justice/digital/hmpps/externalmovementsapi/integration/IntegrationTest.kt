@@ -46,11 +46,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Pr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension.Companion.prisonRegister
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.ExternalMovementRecordedEvent
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.MissingTopicException
+import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 import uk.gov.justice.hmpps.sqs.publish
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.Duration
@@ -103,8 +105,22 @@ abstract class IntegrationTest {
       ?: throw MissingTopicException("hmppseventtesttopic not found")
   }
 
+  protected val offenderEventsTopic by lazy {
+    hmppsQueueService.findByTopicId("offendereventstopic")
+      ?: throw MissingTopicException("offendereventstopic not found")
+  }
+
+  protected val offenderEventsQueue by lazy {
+    hmppsQueueService.findByQueueId("offendereventsqueue")
+      ?: throw MissingQueueException("offendereventsqueue not found")
+  }
+
   protected fun sendDomainEvent(event: DomainEvent<*>) {
     domainEventsTopic.publish(event.eventType, jsonMapper.writeValueAsString(event))
+  }
+
+  protected fun sendOffenderEvent(event: ExternalMovementRecordedEvent) {
+    offenderEventsTopic.publish(ExternalMovementRecordedEvent.EVENT_TYPE, jsonMapper.writeValueAsString(event))
   }
 
   protected fun HmppsQueue.receiveDomainEventsOnQueue(maxMessages: Int = 10): List<DomainEvent<*>> = sqsClient.receiveMessage(
@@ -112,6 +128,8 @@ abstract class IntegrationTest {
   ).get().messages()
     .map { jsonMapper.readValue<Notification>(it.body()) }
     .map { jsonMapper.readValue<DomainEvent<*>>(it.message) }
+
+  protected fun HmppsQueue.isEmpty() = sqsClient.countAllMessagesOnQueue(queueUrl = queueUrl).get() == 0
 
   protected fun setAuthorisation(
     username: String? = DEFAULT_USERNAME,

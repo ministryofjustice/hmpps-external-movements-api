@@ -9,9 +9,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -86,11 +89,16 @@ class DeleteTapOccurrenceIntTest(
     verifyAudit(
       occurrence,
       RevisionType.DEL,
-      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      setOf(HmppsDomainEvent::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
       ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
     )
 
-    verifyEvents(occurrence, setOf())
+    verifyEventPublications(
+      occurrence,
+      setOf(
+        TemporaryAbsenceUnScheduled(occurrence.person.identifier, occurrence.id, DataSource.NOMIS).publication(occurrence.id),
+      ),
+    )
   }
 
   @Test

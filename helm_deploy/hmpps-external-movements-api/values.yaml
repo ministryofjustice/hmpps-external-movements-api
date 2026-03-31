@@ -39,6 +39,7 @@ generic-service:
     SENTRY_TRACES_SAMPLE_RATE: '0.05'
     SENTRY_IGNORED_EXCEPTIONS_FOR_TYPE: "org.apache.catalina.connector.ClientAbortException,org.springframework.web.servlet.resource.NoResourceFoundException,org.springframework.web.context.request.async.AsyncRequestNotUsableException"
     HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_PROPAGATE_TRACING: "false"
+    HMPPS_SQS_QUEUES_OFFENDEREVENTSQUEUE_PROPAGATE_TRACING: "false"
 
   namespace_secrets:
     hmpps-external-movements-api-application-insights:
@@ -60,6 +61,10 @@ generic-service:
       HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_QUEUE_NAME: "queue_name"
     domain-events-dlq-secret:
       HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_DLQ_NAME: "queue_name"
+    offender-events-queue-secret:
+      HMPPS_SQS_QUEUES_OFFENDEREVENTSQUEUE_QUEUE_NAME: "queue_name"
+    offender-events-dlq-secret:
+      HMPPS_SQS_QUEUES_OFFENDEREVENTSQUEUE_DLQ_NAME: "queue_name"
 
   allowlist:
     groups:

@@ -62,6 +62,8 @@ components:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-rescheduled.yaml
     person.temporary-absence.scheduled:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-scheduled.yaml
+    person.temporary-absence.unscheduled:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-unscheduled.yaml
     person.temporary-absence.transport-changed:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-transport-changed.yaml
     person.temporary-absence.started:
@@ -130,6 +132,8 @@ channels:
         $ref: '#/components/messages/person.temporary-absence.rescheduled'
       person.temporary-absence.scheduled:
         $ref: '#/components/messages/person.temporary-absence.scheduled'
+      person.temporary-absence.unscheduled:
+        $ref: '#/components/messages/person.temporary-absence.unscheduled'
       person.temporary-absence.transport-changed:
         $ref: '#/components/messages/person.temporary-absence.transport-changed'
       person.temporary-absence.started:
@@ -176,6 +180,7 @@ operations:
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.relocated'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.rescheduled'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.scheduled'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.unscheduled'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.transport-changed'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.started'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.completed'

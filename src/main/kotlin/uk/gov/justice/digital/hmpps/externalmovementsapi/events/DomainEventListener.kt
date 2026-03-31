@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import io.awspring.cloud.sqs.annotation.SqsListener
 import io.sentry.Sentry
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.readValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PrisonerMergedH
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonUpdatedHandler
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationApprovedHandler
 
-@Service
+@Component
 class DomainEventListener(
   private val jsonMapper: JsonMapper,
   private val person: PersonUpdatedHandler,
