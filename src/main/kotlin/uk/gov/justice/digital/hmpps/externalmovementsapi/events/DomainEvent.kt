@@ -47,6 +47,7 @@ import java.util.UUID
 
     Type(value = TemporaryAbsenceScheduled::class, name = TemporaryAbsenceScheduled.EVENT_TYPE),
     Type(value = TemporaryAbsenceRescheduled::class, name = TemporaryAbsenceRescheduled.EVENT_TYPE),
+    Type(value = TemporaryAbsenceUnScheduled::class, name = TemporaryAbsenceUnScheduled.EVENT_TYPE),
     Type(value = TemporaryAbsenceCancelled::class, name = TemporaryAbsenceCancelled.EVENT_TYPE),
     Type(value = TemporaryAbsenceDenied::class, name = TemporaryAbsenceDenied.EVENT_TYPE),
     Type(value = TemporaryAbsenceExpired::class, name = TemporaryAbsenceExpired.EVENT_TYPE),

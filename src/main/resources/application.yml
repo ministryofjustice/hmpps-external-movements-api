@@ -130,6 +130,7 @@ service:
     poll-interval: PT0s
   authorisation-expiration:
     cron: ""
+  auto-cancel-enabled: false
 
 springdoc:
   paths-to-exclude: "/queue-admin/**"

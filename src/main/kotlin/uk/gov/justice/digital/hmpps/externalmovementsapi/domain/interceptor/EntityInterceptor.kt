@@ -83,4 +83,27 @@ class EntityInterceptor : Interceptor {
     publishedEventKeys.get().clear()
     super.afterTransactionCompletion(tx)
   }
+
+  override fun onRemove(
+    entity: Any,
+    id: Any,
+    state: Array<out Any>,
+    propertyNames: Array<out String>,
+    types: Array<out Type>,
+  ) {
+    if (entity is DomainEventProducer) {
+      val migrating = ExternalMovementContext.get().migratingData
+      val prisonEventsDisabled = entity is PrisonRelated && entity.prisonCode in sc.disablePrisonEvents
+      entity.deletionEvents().forEach {
+        if (registerDomainEvent(it.entityId, it.event.eventType)) {
+          em.persist(
+            HmppsDomainEvent(it.event, it.entityId).apply {
+              published = migrating || prisonEventsDisabled || !it.publish
+            },
+          )
+        }
+      }
+    }
+    super.onRemove(entity, id, state, propertyNames, types)
+  }
 }

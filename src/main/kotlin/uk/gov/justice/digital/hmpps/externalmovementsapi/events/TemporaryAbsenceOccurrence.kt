@@ -50,6 +50,26 @@ data class TemporaryAbsenceRescheduled(
   }
 }
 
+data class TemporaryAbsenceUnScheduled(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = "A temporary absence has been unscheduled."
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.unscheduled"
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceUnScheduled(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
 data class TemporaryAbsenceCancelled(
   override val additionalInformation: TemporaryAbsenceInformation,
   override val personReference: PersonReference,

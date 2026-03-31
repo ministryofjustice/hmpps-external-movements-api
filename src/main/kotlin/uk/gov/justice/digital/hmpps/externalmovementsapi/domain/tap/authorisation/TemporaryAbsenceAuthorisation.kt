@@ -402,7 +402,18 @@ interface TemporaryAbsenceAuthorisationRepository :
   fun findByStatusAndEndBefore(statusId: UUID, date: LocalDate): List<TemporaryAbsenceAuthorisation>
 
   fun countByPersonIdentifier(personIdentifier: String): Int
-  fun findByPersonIdentifier(personIdentifiable: String): List<TemporaryAbsenceAuthorisation>
+  fun findByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceAuthorisation>
+
+  @Query(
+    """
+      select auth from TemporaryAbsenceAuthorisation auth
+      where auth.person.identifier = :personIdentifier
+      and auth.status.code in ('PENDING', 'APPROVED')
+      and auth.end >= current_date
+      and auth.prisonCode <> :prisonCode
+    """,
+  )
+  fun findAutoCancelAuthorisations(personIdentifier: String, prisonCode: String): List<TemporaryAbsenceAuthorisation>
 
   @Query("""select taa.id from TemporaryAbsenceAuthorisation taa where taa.person.identifier = :personIdentifier""")
   fun findIdsByPersonIdentifier(personIdentifier: String): List<UUID>

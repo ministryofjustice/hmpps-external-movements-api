@@ -58,6 +58,16 @@ interface TemporaryAbsenceOccurrenceRepository :
 
   @Query(
     """
+      select occ from TemporaryAbsenceOccurrence occ
+      where occ.authorisation.id in :authorisationIds
+      and occ.end >= current_timestamp
+      and occ.movements is empty
+    """,
+  )
+  fun findCancellableOccurrences(authorisationIds: Set<UUID>): Set<TemporaryAbsenceOccurrence>
+
+  @Query(
+    """
      with occurrences as (
       select ao.id as occurrenceId, row_number() over (partition by ao.authorisation.id order by ao.start, ao.end) as pos
       from TemporaryAbsenceOccurrence ao 
