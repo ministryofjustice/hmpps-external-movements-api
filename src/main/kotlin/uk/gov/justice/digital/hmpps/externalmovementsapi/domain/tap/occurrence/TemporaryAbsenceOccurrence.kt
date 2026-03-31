@@ -34,7 +34,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedA
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonRelated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Companion.EXCLUDE_FROM_PUBLISH
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Companion.formattedReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
@@ -250,9 +249,11 @@ final class TemporaryAbsenceOccurrence(
     action.domainEvent(this)?.publication(id) { !(dpsOnly || it.eventType in EXCLUDE_FROM_PUBLISH) }
   }.toSet()
 
-  override fun deletionEvents(): Set<DomainEventPublication> = setOf(
-    TemporaryAbsenceUnScheduled(person.identifier, id).publication(id) { !dpsOnly },
-  )
+  override fun deletionEvents(): Set<DomainEventPublication> = if (dpsOnly) {
+    setOf()
+  } else {
+    setOf(TemporaryAbsenceUnScheduled(person.identifier, id).publication(id))
+  }
 
   fun moveTo(person: PersonSummary) = apply {
     this.person = person

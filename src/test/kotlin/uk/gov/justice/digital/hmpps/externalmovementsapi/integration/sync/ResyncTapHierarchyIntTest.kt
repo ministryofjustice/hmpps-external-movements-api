@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationExpired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceExpired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -609,6 +610,11 @@ class ResyncTapHierarchyIntTest(
           auth.id,
           DataSource.NOMIS,
         ).publication(auth.id) { false },
+        TemporaryAbsenceUnScheduled(
+          occ.person.identifier,
+          occ.id,
+          DataSource.NOMIS,
+        ).publication(occ.id) { false },
       ),
     )
   }
@@ -722,6 +728,7 @@ class ResyncTapHierarchyIntTest(
     assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
     val dpsOccurrence = findForAuthorisation(saved.id).single()
     assertThat(dpsOccurrence.status.code).isEqualTo(AuthorisationStatus.Code.PENDING.name)
+    assertThat(dpsOccurrence.dpsOnly).isTrue
     val authRequest = request.temporaryAbsences.single()
     assertThat(dpsOccurrence.start).isEqualTo(authRequest.start.atTime(authRequest.startTime))
 
@@ -744,6 +751,7 @@ class ResyncTapHierarchyIntTest(
           auth.id,
           DataSource.NOMIS,
         ).publication(auth.id) { false },
+        TemporaryAbsenceUnScheduled(occ.person.identifier, occ.id, DataSource.NOMIS).publication(occ.id) { false },
       ),
     )
   }
@@ -844,14 +852,20 @@ class ResyncTapHierarchyIntTest(
         legacyId = newId(),
       ),
     )
-    givenTemporaryAbsenceOccurrence(
+    val occ = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
         auth,
         start = auth.start.atTime(11, 0),
         end = auth.end.atTime(15, 0),
         location = auth.locations.single(),
         legacyId = newId(),
-        movements = listOf(temporaryAbsenceMovement(Direction.OUT, auth.person.identifier, location = auth.locations.first)),
+        movements = listOf(
+          temporaryAbsenceMovement(
+            Direction.OUT,
+            auth.person.identifier,
+            location = auth.locations.first,
+          ),
+        ),
       ),
     )
 
@@ -868,6 +882,7 @@ class ResyncTapHierarchyIntTest(
       auth,
       RevisionType.DEL,
       setOf(
+        HmppsDomainEvent::class.simpleName!!,
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
         TemporaryAbsenceMovement::class.simpleName!!,
@@ -875,7 +890,10 @@ class ResyncTapHierarchyIntTest(
       ExternalMovementContext.get().copy(source = DataSource.NOMIS, reason = null),
     )
 
-    verifyEvents(auth, setOf())
+    verifyEventPublications(
+      auth,
+      setOf(TemporaryAbsenceUnScheduled(occ.person.identifier, occ.id, DataSource.NOMIS).publication(occ.id) { false }),
+    )
   }
 
   private fun resyncTapRequest(
