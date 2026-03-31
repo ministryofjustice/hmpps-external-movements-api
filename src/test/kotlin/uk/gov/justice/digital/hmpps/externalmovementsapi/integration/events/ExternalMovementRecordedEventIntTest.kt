@@ -94,7 +94,7 @@ class ExternalMovementRecordedEventIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(reason = "Transferred"),
+      ExternalMovementContext.get().copy(reason = "Prisoner has been transferred."),
     )
 
     listOf(occurrences[1], occurrences[2]).forEach {
@@ -106,7 +106,7 @@ class ExternalMovementRecordedEventIntTest(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
           TemporaryAbsenceOccurrence::class.simpleName!!,
         ),
-        ExternalMovementContext.get().copy(reason = "Transferred"),
+        ExternalMovementContext.get().copy(reason = "Prisoner has been transferred."),
       )
     }
 
@@ -162,7 +162,7 @@ class ExternalMovementRecordedEventIntTest(
           TemporaryAbsenceAuthorisation::class.simpleName!!,
           TemporaryAbsenceOccurrence::class.simpleName!!,
         ),
-        ExternalMovementContext.get().copy(reason = "Released"),
+        ExternalMovementContext.get().copy(reason = "Prisoner has been released."),
       )
     }
 
@@ -200,6 +200,67 @@ class ExternalMovementRecordedEventIntTest(
     }
 
     val event = emRecordedEvent(auth.person.identifier, "TRN", "IN", toAgencyId)
+    sendOffenderEvent(event)
+
+    waitUntil { offenderEventsQueue.isEmpty() }
+
+    val savedAuth = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(savedAuth.status.code).isEqualTo(AuthorisationStatus.Code.APPROVED.name)
+
+    occurrences.takeLast(2).forEach {
+      val occ = requireNotNull(findTemporaryAbsenceOccurrence(it.id))
+      assertThat(occ.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
+    }
+
+    verifyAudit(
+      savedAuth,
+      RevisionType.ADD,
+      setOf(
+        HmppsDomainEvent::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(reason = null),
+    )
+
+    verifyEvents(savedAuth, setOf(TemporaryAbsenceAuthorisationApproved(savedAuth.person.identifier, savedAuth.id)))
+
+    occurrences.forEach {
+      verifyAudit(
+        it,
+        RevisionType.ADD,
+        setOf(
+          HmppsDomainEvent::class.simpleName!!,
+          TemporaryAbsenceOccurrence::class.simpleName!!,
+        ),
+        ExternalMovementContext.get().copy(reason = null),
+      )
+    }
+  }
+
+  @Test
+  fun `movement recorded for transfer into tap prison`() {
+    val prison = givenPrison()
+    prisonRegister.getPrisons(setOf(prison))
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prison.code,
+        repeat = true,
+        locations = linkedSetOf(location()),
+      ),
+    )
+    val occurrences = (0L..1L).map {
+      givenTemporaryAbsenceOccurrence(
+        temporaryAbsenceOccurrence(
+          auth,
+          start = LocalDateTime.now().plusDays(it).plusHours(1).truncatedTo(SECONDS),
+          end = LocalDateTime.now().plusDays(it).plusHours(3).truncatedTo(SECONDS),
+          location = auth.locations.first,
+          movements = listOf(),
+        ),
+      )
+    }
+
+    val event = emRecordedEvent(auth.person.identifier, "TRN", "IN", prison.code)
     sendOffenderEvent(event)
 
     waitUntil { offenderEventsQueue.isEmpty() }

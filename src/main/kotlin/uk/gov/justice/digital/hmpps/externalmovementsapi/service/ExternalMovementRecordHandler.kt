@@ -30,14 +30,15 @@ class ExternalMovementHandler(
 ) {
   fun handle(pme: ExternalMovementRecordedEvent) {
     if (pme.offenderIdDisplay == null || pme.toAgencyLocationId == null || pme.cancellationReason() == null) return
-    ExternalMovementContext.get().copy(requestAt = pme.movementDateTime ?: now(), reason = pme.cancellationReason()).set()
+    ExternalMovementContext.get().copy(requestAt = pme.movementDateTime ?: now(), reason = pme.cancellationReason())
+      .set()
     val authCancelledStatus = authStatusRepository.getByCode(AuthorisationStatus.Code.CANCELLED.name)
     val authsToCancel = authRepository.findAutoCancelAuthorisations(pme.offenderIdDisplay, pme.toAgencyLocationId)
     authsToCancel.forEach {
       it.cancel(CancelAuthorisation()) { _: KClass<out ReferenceData>, _: String -> authCancelledStatus }
     }
     val occCancelledStatus = occStatusRepository.getByCode(OccurrenceStatus.Code.CANCELLED.name)
-    occRepository.findCancellableOccurrences(authsToCancel.map { it.id }.toSet()).forEach {
+    occRepository.findClearableOccurrences(authsToCancel.map { it.id }.toSet()).forEach {
       if (it.authorisation.repeat) {
         occRepository.delete(it)
       } else {
@@ -47,10 +48,13 @@ class ExternalMovementHandler(
     }
   }
 
-  private fun ExternalMovementRecordedEvent.cancellationReason(): String? = when (directionCode to movementType) {
-    "OUT" to "TRN", "IN" to "ADM" -> toAgencyLocationId?.takeIf { it.isPrison() }?.let { "Transferred" }
-    "OUT" to "REL" -> "Released"
-    else -> null
+  private fun ExternalMovementRecordedEvent.cancellationReason(): String? {
+    val reason = when (directionCode to movementType) {
+      "OUT" to "TRN", "IN" to "ADM" -> toAgencyLocationId?.takeIf { it.isPrison() }?.let { "transferred" }
+      "OUT" to "REL" -> "released"
+      else -> null
+    }
+    return reason?.let { "Prisoner has been $it." }
   }
 
   private fun String.isPrison(): Boolean = prc.findPrison(this) != null

@@ -64,7 +64,7 @@ interface TemporaryAbsenceOccurrenceRepository :
       and occ.movements is empty
     """,
   )
-  fun findCancellableOccurrences(authorisationIds: Set<UUID>): Set<TemporaryAbsenceOccurrence>
+  fun findClearableOccurrences(authorisationIds: Set<UUID>): Set<TemporaryAbsenceOccurrence>
 
   @Query(
     """
