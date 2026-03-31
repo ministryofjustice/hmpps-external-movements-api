@@ -266,7 +266,7 @@ class ResyncTapHierarchy(
             ?.also(occurrenceRepository::save)
         } else {
           // if legacyId is not null this has likely been updated from nomis
-          authOccurrences.single().takeIf { it.dpsOnly }
+          authOccurrences.singleOrNull { it.dpsOnly }
             ?.updateFrom(auth, rdSupplier, auth.schedule.takeIf { it is SingleSchedule } as? SingleSchedule)
         }
       }
