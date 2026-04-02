@@ -20,17 +20,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.p
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRecategorised
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
@@ -40,7 +37,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.Integration
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -162,82 +158,6 @@ class SyncTapOccurrenceIntTest(
         TemporaryAbsenceCancelled(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
         TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS),
       ),
-    )
-  }
-
-  @Test
-  fun `200 ok scheduled absence updated - updating location on movements`() {
-    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val existing = givenTemporaryAbsenceOccurrence(
-      temporaryAbsenceOccurrence(
-        authorisation,
-        legacyId = newId(),
-        movements = listOf(
-          temporaryAbsenceMovement(
-            TemporaryAbsenceMovement.Direction.OUT,
-            authorisation.person.identifier,
-          ),
-          temporaryAbsenceMovement(
-            TemporaryAbsenceMovement.Direction.IN,
-            authorisation.person.identifier,
-          ),
-        ),
-      ),
-    )
-    val request = tapOccurrence(
-      id = existing.id,
-      legacyId = existing.legacyId!!,
-      updated = AtAndBy(LocalDateTime.now().minusMinutes(10), SYSTEM_USERNAME),
-    )
-
-    val res = syncTapOccurrence(authorisation.id, request)
-      .expectStatus().isOk
-      .expectBody<SyncResponse>()
-      .returnResult()
-      .responseBody!!
-
-    assertThat(res.id).isEqualTo(existing.id)
-    val saved = requireNotNull(findTemporaryAbsenceOccurrence(existing.id))
-    saved.verifyAgainst(request)
-    assertThat(saved.status.code).isEqualTo(OccurrenceStatus.Code.COMPLETED.name)
-    assertThat(saved.movements().map { it.location }).containsOnly(request.location)
-
-    verifyAudit(
-      saved,
-      RevisionType.MOD,
-      setOf(
-        TemporaryAbsenceAuthorisation::class.simpleName!!,
-        TemporaryAbsenceOccurrence::class.simpleName!!,
-        TemporaryAbsenceMovement::class.simpleName!!,
-        HmppsDomainEvent::class.simpleName!!,
-      ),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS, reason = null),
-    )
-
-    verifyEventPublications(
-      saved,
-      setOf(
-        TemporaryAbsenceRescheduled(
-          saved.authorisation.person.identifier,
-          saved.id,
-          DataSource.NOMIS,
-        ).publication(saved.id),
-        TemporaryAbsenceRelocated(
-          saved.authorisation.person.identifier,
-          saved.id,
-          DataSource.NOMIS,
-        ).publication(saved.id),
-        TemporaryAbsenceCommentsChanged(saved.authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(
-          saved.id,
-        ),
-        TemporaryAbsenceAuthorisationRelocated(
-          saved.authorisation.person.identifier,
-          authorisation.id,
-          DataSource.NOMIS,
-        ).publication(authorisation.id),
-      ) + saved.movements().map {
-        TapMovementRelocated(saved.person.identifier, it.id, DataSource.NOMIS).publication(it.id)
-      },
     )
   }
 

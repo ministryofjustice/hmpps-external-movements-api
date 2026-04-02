@@ -454,11 +454,7 @@ class ResyncTapHierarchy(
       rdProvider,
     )
     applyReason(ChangeMovementReason(request.absenceReasonCode), rdProvider)
-    if (occurrence != null) {
-      occurrence.applyLocation(ChangeOccurrenceLocation(request.location))
-    } else {
-      applyLocation(ChangeMovementLocation(request.location))
-    }
+    applyLocation(ChangeMovementLocation(request.location))
   }
 
   private fun ReferenceDataRequired.rdPaths(
