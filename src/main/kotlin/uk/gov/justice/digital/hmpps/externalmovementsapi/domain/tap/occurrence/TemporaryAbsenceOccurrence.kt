@@ -56,7 +56,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
@@ -293,10 +292,6 @@ final class TemporaryAbsenceOccurrence(
     if (location != action.location) {
       location = action.location
       appliedActions += action
-    }
-  }.also {
-    movements.forEach {
-      it.applyLocation(ChangeMovementLocation(action.location))
     }
   }
 
