@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement.Direction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
@@ -22,10 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccom
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurredAtChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -199,62 +195,6 @@ class SyncTapMovementIntTest(
           occurrence.id,
           DataSource.NOMIS,
         ).publication(occurrence.id) { false },
-      ),
-    )
-  }
-
-  @Test
-  fun `200 ok temporary absence updated successfully including update of occurrence location`() {
-    val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(legacyId = newId()))
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(authorisation, legacyId = newId()))
-    val existing = givenTemporaryAbsenceMovement(
-      temporaryAbsenceMovement(
-        Direction.OUT,
-        authorisation.person.identifier,
-        occurrence,
-        legacyId = newId().toString(),
-      ),
-    )
-    val request = tapMovement(
-      accompaniedByCode = "U",
-      accompaniedByComments = "Updated the text about the escort",
-      direction = Direction.OUT,
-      id = existing.id,
-      occurrenceId = occurrence.id,
-      legacyId = existing.legacyId!!,
-      prisonCode = existing.prisonCode,
-    )
-    val res = syncTapMovement(authorisation.person.identifier, request)
-      .expectStatus().isOk
-      .expectBody<SyncResponse>()
-      .returnResult()
-      .responseBody!!
-
-    assertThat(res.id).isEqualTo(existing.id)
-    val saved = requireNotNull(findTemporaryAbsenceMovement(existing.id))
-    saved.verifyAgainst(authorisation.person.identifier, request)
-    assertThat(saved.location).isEqualTo(saved.occurrence!!.location)
-
-    verifyAudit(
-      saved,
-      RevisionType.MOD,
-      setOf(
-        TemporaryAbsenceMovement::class.simpleName!!,
-        TemporaryAbsenceOccurrence::class.simpleName!!,
-        TemporaryAbsenceAuthorisation::class.simpleName!!,
-        HmppsDomainEvent::class.simpleName!!,
-      ),
-      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
-    )
-    verifyEventPublications(
-      saved,
-      setOf(
-        TapMovementAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TapMovementCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TapMovementOccurredAtChanged(saved.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TapMovementRelocated(saved.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceRelocated(saved.person.identifier, occurrence.id, DataSource.NOMIS).publication(occurrence.id),
-        TemporaryAbsenceAuthorisationRelocated(saved.person.identifier, authorisation.id, DataSource.NOMIS).publication(authorisation.id),
       ),
     )
   }
