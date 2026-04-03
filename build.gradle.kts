@@ -15,7 +15,7 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
-val ehcacheVersion = "3.11.1"
+val ehcacheVersion = "3.12.0"
 val hibernateJcacheVersion = "7.3.0.Final"
 val hmppsKotlinVersion = "2.1.0"
 val sentryVersion = "8.37.1"
