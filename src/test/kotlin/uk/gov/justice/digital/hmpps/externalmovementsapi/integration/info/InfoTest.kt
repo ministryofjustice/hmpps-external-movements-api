@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.health
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.info
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

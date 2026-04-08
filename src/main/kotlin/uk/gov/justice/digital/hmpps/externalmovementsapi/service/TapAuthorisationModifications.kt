@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ClearAuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
@@ -79,6 +80,20 @@ class TapAuthorisationModifications(
               it.makeDpsOnly()
             }
             it.cancel(CancelOccurrence(), rdSupplier)
+          }
+        }
+
+        is ClearAuthorisationSchedule -> if (authorisation.status.code !in listOf(APPROVED.name, CANCELLED.name)) {
+          throw ConflictException("Temporary absence authorisation not approved")
+        } else {
+          authorisation.cancel(action, rdSupplier)
+          authorisation.affectedOccurrences().forEach {
+            if (authorisation.repeat) {
+              taoRepository.delete(it)
+            } else {
+              it.makeDpsOnly()
+              it.cancel(CancelOccurrence(), rdSupplier)
+            }
           }
         }
 

@@ -22,8 +22,6 @@ spring:
     hikari:
       data-source-properties:
         sslmode: 'disable'
-  flyway:
-    locations: classpath:db/schema,classpath:db/data
   jpa:
     show-sql: true
     properties:

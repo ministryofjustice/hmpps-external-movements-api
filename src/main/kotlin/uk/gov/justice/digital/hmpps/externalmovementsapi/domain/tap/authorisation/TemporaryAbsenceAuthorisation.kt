@@ -66,7 +66,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.AuthorisationAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
@@ -81,8 +80,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDate.now
-import java.util.SequencedSet
-import java.util.UUID
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -316,7 +314,7 @@ final class TemporaryAbsenceAuthorisation(
     applyStatus(DENIED, rdSupplier, action)
   }
 
-  fun cancel(action: CancelAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+  fun cancel(action: AuthorisationAction, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
     applyStatus(CANCELLED, rdSupplier, action)
   }
 
