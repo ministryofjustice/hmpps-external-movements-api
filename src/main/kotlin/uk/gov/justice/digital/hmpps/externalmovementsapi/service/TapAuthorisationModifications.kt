@@ -27,6 +27,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ClearAuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
@@ -34,10 +36,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationHistory
-import java.util.UUID
+import java.time.LocalDateTime
+import java.util.*
 import kotlin.reflect.KClass
 
 @Service
@@ -128,6 +132,15 @@ class TapAuthorisationModifications(
           authorisation.applyAbsenceCategorisation(action, rdSupplier)
           val ro = RecategoriseOccurrence(action)
           authorisation.affectedOccurrences().forEach { it.applyAbsenceCategorisation(ro, rdSupplier) }
+        }
+
+        is ChangeAuthorisationLocation -> {
+          val occurrences = taoRepository.findByAuthorisationId(authorisation.id)
+          occurrences.filter { it.end.isAfter(LocalDateTime.now()) }.forEach {
+            it.applyLocation(ChangeOccurrenceLocation(action.location))
+          }
+          val allLocations = occurrences.mapTo(linkedSetOf()) { it.location }
+          authorisation.applyLocations(ChangeAuthorisationLocations(allLocations))
         }
 
         else -> throw IllegalArgumentException("Action not supported")

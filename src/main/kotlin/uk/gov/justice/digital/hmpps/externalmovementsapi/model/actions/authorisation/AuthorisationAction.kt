@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.Action
     Type(value = ChangeAuthorisationComments::class, name = "ChangeAuthorisationComments"),
     Type(value = ChangeAuthorisationDateRange::class, name = "ChangeAuthorisationDateRange"),
     Type(value = RecategoriseAuthorisation::class, name = "RecategoriseAuthorisation"),
+    Type(value = ChangeAuthorisationLocation::class, name = "ChangeAuthorisationLocation"),
   ],
 )
 sealed interface AuthorisationAction : Action {
