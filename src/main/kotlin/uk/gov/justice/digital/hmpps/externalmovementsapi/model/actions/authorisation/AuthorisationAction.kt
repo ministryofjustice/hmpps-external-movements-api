@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.Action
     Type(value = ApproveAuthorisation::class, name = "ApproveAuthorisation"),
     Type(value = DenyAuthorisation::class, name = "DenyAuthorisation"),
     Type(value = CancelAuthorisation::class, name = "CancelAuthorisation"),
+    Type(value = ClearAuthorisationSchedule::class, name = "ClearAuthorisationSchedule"),
     Type(value = ChangeAuthorisationAccompaniment::class, name = "ChangeAuthorisationAccompaniment"),
     Type(value = ChangeAuthorisationComments::class, name = "ChangeAuthorisationComments"),
     Type(value = ChangeAuthorisationDateRange::class, name = "ChangeAuthorisationDateRange"),

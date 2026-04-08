@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -30,12 +31,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ClearAuthorisationSchedule
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-class CancelTapAuthorisationIntTest(
+class ClearTapAuthorisationScheduleIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -55,29 +56,29 @@ class CancelTapAuthorisationIntTest(
   @ParameterizedTest
   @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
   fun `403 forbidden without correct role`(role: String) {
-    cancelAuthorisation(
+    clearSchedule(
       newUuid(),
-      cancelAuthorisationRequest(),
+      clearScheduleRequest(),
       role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    cancelAuthorisation(newUuid(), cancelAuthorisationRequest()).expectStatus().isNotFound
+    clearSchedule(newUuid(), clearScheduleRequest()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "CANCELLED"])
-  fun `409 - authorisation not approved cannot be cancelled`(status: AuthorisationStatus.Code) {
+  fun `409 - authorisation not approved cannot be cleared`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = cancelAuthorisation(auth.id, cancelAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = clearSchedule(auth.id, clearScheduleRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.userMessage).isEqualTo("Temporary absence authorisation not approved")
   }
 
   @Test
-  fun `200 ok - authorisation cancelled`() {
+  fun `200 ok - authorisation schedule cleared`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val pastOccurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
@@ -87,9 +88,9 @@ class CancelTapAuthorisationIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = cancelAuthorisationRequest()
+    val request = clearScheduleRequest()
 
-    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = clearSchedule(auth.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
@@ -101,9 +102,8 @@ class CancelTapAuthorisationIntTest(
     val previousAbsence = requireNotNull(findTemporaryAbsenceOccurrence(pastOccurrence.id))
     assertThat(previousAbsence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
     assertThat(previousAbsence.dpsOnly).isFalse
-    val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
-    assertThat(absence.dpsOnly).isFalse
+    val absence = findTemporaryAbsenceOccurrence(occurrence.id)
+    assertThat(absence).isNull()
 
     verifyAudit(
       saved,
@@ -120,7 +120,7 @@ class CancelTapAuthorisationIntTest(
       saved,
       setOf(
         TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
-        TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceUnScheduled(auth.person.identifier, occurrence.id).publication(occurrence.id),
       ),
     )
   }
@@ -141,9 +141,9 @@ class CancelTapAuthorisationIntTest(
         end = LocalDateTime.now().plusDays(1),
       ),
     )
-    val request = cancelAuthorisationRequest(reason = "Occurrence is deleted by nomis")
+    val request = clearScheduleRequest(reason = "Occurrence is deleted by nomis")
 
-    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = clearSchedule(auth.id, request).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
@@ -176,13 +176,13 @@ class CancelTapAuthorisationIntTest(
     )
   }
 
-  private fun cancelAuthorisationRequest(
-    reason: String? = "Evidence justifying the cancellation",
-  ) = CancelAuthorisation(reason)
+  private fun clearScheduleRequest(
+    reason: String? = "Evidence justifying the clearing of the schedule",
+  ) = ClearAuthorisationSchedule(reason)
 
-  private fun cancelAuthorisation(
+  private fun clearSchedule(
     id: UUID,
-    request: CancelAuthorisation,
+    request: ClearAuthorisationSchedule,
     role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()
