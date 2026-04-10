@@ -178,8 +178,8 @@ fun occurrenceOverlapsDateRange(start: LocalDate?, end: LocalDate?) = Specificat
 
 fun occurrenceStatusCodeIn(vararg statusCodes: OccurrenceStatus.Code) = occurrenceStatusCodeIn(statusCodes.toSet())
 
-fun occurrenceStatusCodeIn(statusCodes: Set<OccurrenceStatus.Code>) = Specification<TemporaryAbsenceOccurrence> { taa, _, _ ->
-  val status = taa.join<TemporaryAbsenceOccurrence, OccurrenceStatus>(STATUS, JoinType.INNER)
+fun occurrenceStatusCodeIn(statusCodes: Set<OccurrenceStatus.Code>) = Specification<TemporaryAbsenceOccurrence> { tao, _, _ ->
+  val status = tao.join<TemporaryAbsenceOccurrence, OccurrenceStatus>(STATUS, JoinType.INNER)
   status.get<String>(CODE).`in`(statusCodes.map { it.name })
 }
 
