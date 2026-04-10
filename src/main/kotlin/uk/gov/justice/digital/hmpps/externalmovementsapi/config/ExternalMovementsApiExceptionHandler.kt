@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.config
 
 import jakarta.validation.ValidationException
-import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSourceResolvable
 import org.springframework.dao.DataAccessException
 import org.springframework.dao.DataIntegrityViolationException
@@ -34,7 +33,6 @@ class ExternalMovementsApiExceptionHandler {
     } else {
       "No option found for ${e.previous::class.simpleName} of ${e.previous.code}"
     }
-    log.error(devMessage, e)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
@@ -57,7 +55,11 @@ class ExternalMovementsApiExceptionHandler {
       ),
     )
 
-  @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class, HttpMessageNotReadableException::class)
+  @ExceptionHandler(
+    IllegalArgumentException::class,
+    IllegalStateException::class,
+    HttpMessageNotReadableException::class,
+  )
   fun handleIllegalArgumentOrStateException(e: RuntimeException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_REQUEST)
     .body(
@@ -124,10 +126,10 @@ class ExternalMovementsApiExceptionHandler {
     .body(
       ErrorResponse(
         status = INTERNAL_SERVER_ERROR,
-        userMessage = "Unexpected error: ${e.message}",
+        userMessage = "Unexpected error",
         developerMessage = e.message,
       ),
-    ).also { log.error("Unexpected exception: ${e::class.simpleName}") }
+    )
 
   @ExceptionHandler(DataIntegrityViolationException::class, DataAccessException::class)
   fun handleConflictException(e: RuntimeException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -139,10 +141,6 @@ class ExternalMovementsApiExceptionHandler {
         developerMessage = e.devMessage(),
       ),
     )
-
-  private companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
-  }
 }
 
 private fun List<MessageSourceResolvable>.mapErrors() = map { it.defaultMessage!! }.distinct().sorted().let {

@@ -13,8 +13,8 @@ class MovementHistory(
 ) : HistoryService<TemporaryAbsenceMovement>(entityManager, managerUsers) {
   override val entityClass = TemporaryAbsenceMovement::class.java
   override fun TemporaryAbsenceMovement.changesFrom(previous: TemporaryAbsenceMovement): List<AuditedAction.Change> = TemporaryAbsenceMovement.changeableProperties().mapNotNull {
-    val change = it.invoke(this).asChangeValue()
-    val previous = it.invoke(previous).asChangeValue()
+    val change = it(this).asChangeValue()
+    val previous = it(previous).asChangeValue()
     if (change != previous) {
       AuditedAction.Change(it.name, previous, change)
     } else {

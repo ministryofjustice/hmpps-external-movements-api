@@ -13,8 +13,8 @@ class AuthorisationHistory(
 ) : HistoryService<TemporaryAbsenceAuthorisation>(entityManager, managerUsers) {
   override val entityClass = TemporaryAbsenceAuthorisation::class.java
   override fun TemporaryAbsenceAuthorisation.changesFrom(previous: TemporaryAbsenceAuthorisation): List<AuditedAction.Change> = TemporaryAbsenceAuthorisation.changeableProperties().mapNotNull {
-    val change = it.invoke(this).asChangeValue()
-    val previous = it.invoke(previous).asChangeValue()
+    val change = it(this).asChangeValue()
+    val previous = it(previous).asChangeValue()
     if (change != previous) {
       AuditedAction.Change(it.name, previous, change)
     } else {

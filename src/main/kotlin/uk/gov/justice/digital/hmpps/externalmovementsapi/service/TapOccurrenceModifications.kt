@@ -59,7 +59,7 @@ class TapOccurrenceModifications(
             it.applyDateRange(cadr, rdSupplier)
           } ?: occurrence.validateDateRange(action)
           occurrence.reschedule(action)
-          occurrence.calculateStatus { rdSupplier.invoke(OccurrenceStatus::class, it) as OccurrenceStatus }
+          occurrence.calculateStatus { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
         }
 
         is CancelOccurrence -> {
