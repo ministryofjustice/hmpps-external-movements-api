@@ -23,7 +23,8 @@ class DomainEventListener(
       when (notification.eventType) {
         PrisonerUpdated.EVENT_TYPE -> person.handle(jsonMapper.readValue(notification.message))
         PrisonerMerged.EVENT_TYPE -> merged.handle(jsonMapper.readValue(notification.message))
-        TemporaryAbsenceAuthorisationApproved.EVENT_TYPE -> authApproved.handle(jsonMapper.readValue(notification.message))
+        TemporaryAbsenceAuthorisationApproved.EVENT_TYPE, TemporaryAbsenceAuthorisationResumed.EVENT_TYPE ->
+          authApproved.handle(jsonMapper.readValue(notification.message))
       }
     } catch (ex: Exception) {
       Sentry.captureException(ex)

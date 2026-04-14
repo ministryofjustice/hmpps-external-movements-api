@@ -8,7 +8,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationInformation
 
 @Transactional
 @Service
@@ -17,7 +18,7 @@ class AuthorisationApprovedHandler(
   private val occurrenceStatusRepository: OccurrenceStatusRepository,
   private val occRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
-  fun handle(de: TemporaryAbsenceAuthorisationApproved) {
+  fun handle(de: DomainEvent<TemporaryAbsenceAuthorisationInformation>) {
     de.takeIf { it.additionalInformation.source == DataSource.NOMIS }
       ?.let { authRepository.findByIdOrNull(de.additionalInformation.id) }
       ?.takeIf { it.repeat }?.also { auth ->

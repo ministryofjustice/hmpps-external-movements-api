@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications.Companion.NOT_AWAITING_APPROVAL
 import java.util.UUID
 
 class DenyTapAuthorisationIntTest(
@@ -72,7 +73,7 @@ class DenyTapAuthorisationIntTest(
     )
     val res = denyAuthorisation(auth.id, denyAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo("Temporary absence authorisation not awaiting approval")
+    assertThat(res.userMessage).isEqualTo(NOT_AWAITING_APPROVAL)
   }
 
   @Test

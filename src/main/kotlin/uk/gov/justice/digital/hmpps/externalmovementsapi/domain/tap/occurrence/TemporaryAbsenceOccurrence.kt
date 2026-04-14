@@ -44,6 +44,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.EXPIRED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.IN_PROGRESS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.OVERDUE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus.Code.SCHEDULED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
@@ -53,9 +54,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceDenied
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsencePaused
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnscheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
@@ -68,15 +70,17 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ExpireOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.MarkOccurrenceOverdue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.OccurrenceAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.PauseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RescheduleOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ResumeOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ScheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
 import java.time.temporal.ChronoUnit.SECONDS
+import java.util.*
 import java.util.Collections.unmodifiableList
-import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty1
@@ -245,13 +249,15 @@ final class TemporaryAbsenceOccurrence(
   }
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
-    action.domainEvent(this)?.publication(id) { !(dpsOnly || it.eventType in EXCLUDE_FROM_PUBLISH) }
+    action.domainEvent(this)?.publication(id) {
+      it.eventType in INCLUDE_DPS_ONLY_PUBLISH || !(dpsOnly || it.eventType in EXCLUDE_FROM_PUBLISH)
+    }
   }.toSet()
 
   override fun deletionEvents(): Set<DomainEventPublication> = if (dpsOnly) {
     setOf()
   } else {
-    setOf(TemporaryAbsenceUnScheduled(person.identifier, id).publication(id))
+    setOf(TemporaryAbsenceUnscheduled(person.identifier, id).publication(id))
   }
 
   fun moveTo(person: PersonSummary) = apply {
@@ -268,7 +274,7 @@ final class TemporaryAbsenceOccurrence(
     action: RecategoriseOccurrence,
     rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) = apply {
-    if (action.changes(this)) {
+    if (action changes this) {
       reasonPath = action.reasonPath
       absenceType = action.absenceTypeCode?.let { rdSupplier(AbsenceType::class, it) as AbsenceType }
       absenceSubType = action.absenceSubTypeCode?.let { rdSupplier(AbsenceSubType::class, it) as AbsenceSubType }
@@ -362,15 +368,10 @@ final class TemporaryAbsenceOccurrence(
 
   private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
     ?.map { it.direction }?.let {
-      if (it.contains(TemporaryAbsenceMovement.Direction.IN)) {
-        complete()
-      } else if (end.isAfter(now())) {
-        commence()
-      } else {
-        if (::status.isInitialized && status.code != OVERDUE.name) {
-          appliedActions += MarkOccurrenceOverdue()
-        }
-        OVERDUE
+      when {
+        it.contains(TemporaryAbsenceMovement.Direction.IN) -> applyStatusAction(COMPLETED, CompleteOccurrence())
+        end.isAfter(now()) -> applyStatusAction(IN_PROGRESS, CommenceOccurrence())
+        else -> applyStatusAction(OVERDUE, MarkOccurrenceOverdue())
       }
     }
 
@@ -396,21 +397,16 @@ final class TemporaryAbsenceOccurrence(
     val action = when (status) {
       DENIED -> DenyOccurrence()
       EXPIRED -> ExpireOccurrence()
+      PAUSED -> PauseOccurrence()
       else -> null
     }
-    action?.also {
-      if (::status.isInitialized && this.status.code != status.name) {
-        appliedActions += action
-      }
-    }
-    status
+    action?.let { applyStatusAction(status, action) } ?: status
   }
 
-  private fun approvedAuthorisationStatuses(): OccurrenceStatus.Code {
-    if (::status.isInitialized && status.code == PENDING.name) {
-      appliedActions += ScheduleOccurrence()
-    }
-    return SCHEDULED
+  private fun approvedAuthorisationStatuses(): OccurrenceStatus.Code = when {
+    ::status.isInitialized && status.code == PENDING.name -> applyStatusAction(SCHEDULED, ScheduleOccurrence())
+    ::status.isInitialized && status.code == PAUSED.name -> applyStatusAction(SCHEDULED, ResumeOccurrence())
+    else -> SCHEDULED
   }
 
   private fun isExpired() = ::status.isInitialized && status.code == EXPIRED.name
@@ -419,23 +415,17 @@ final class TemporaryAbsenceOccurrence(
     AuthorisationStatus.Code.PENDING.name,
     AuthorisationStatus.Code.APPROVED.name,
     AuthorisationStatus.Code.EXPIRED.name,
+    AuthorisationStatus.Code.PAUSED.name,
   )
 
-  private fun shouldExpire(): Boolean = (::status.isInitialized.not() || status.code in listOf(PENDING.name, SCHEDULED.name, EXPIRED.name)) &&
+  private fun shouldExpire(): Boolean = (::status.isInitialized.not() || status.code in listOf(PENDING.name, SCHEDULED.name, EXPIRED.name, PAUSED.name)) &&
     end.isBefore(now())
 
-  private fun commence(): OccurrenceStatus.Code {
-    if (::status.isInitialized && status.code != IN_PROGRESS.name) {
-      appliedActions += CommenceOccurrence()
+  private fun applyStatusAction(statusCode: OccurrenceStatus.Code, action: OccurrenceAction): OccurrenceStatus.Code {
+    if (::status.isInitialized.not() || status.code != statusCode.name) {
+      appliedActions += action
     }
-    return IN_PROGRESS
-  }
-
-  private fun complete(): OccurrenceStatus.Code {
-    if (::status.isInitialized && status.code != COMPLETED.name) {
-      appliedActions += CompleteOccurrence()
-    }
-    return COMPLETED
+    return statusCode
   }
 
   companion object {
@@ -443,6 +433,10 @@ final class TemporaryAbsenceOccurrence(
       TemporaryAbsenceStarted.EVENT_TYPE,
       TemporaryAbsenceCompleted.EVENT_TYPE,
       TemporaryAbsenceDenied.EVENT_TYPE,
+    )
+
+    val INCLUDE_DPS_ONLY_PUBLISH: Set<String> = setOf(
+      TemporaryAbsencePaused.EVENT_TYPE,
     )
 
     val PRISON_CODE = TemporaryAbsenceOccurrence::prisonCode.name

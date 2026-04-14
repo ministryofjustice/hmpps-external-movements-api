@@ -16,7 +16,7 @@ interface AbsenceCategorisationAction :
   val absenceReasonCode: String?
   val reasonPath: ReasonPath
 
-  fun changes(ac: CategorisedAbsenceReason): Boolean = ac.absenceType?.code != absenceTypeCode ||
+  infix fun changes(ac: CategorisedAbsenceReason): Boolean = ac.absenceType?.code != absenceTypeCode ||
     ac.absenceSubType?.code != absenceSubTypeCode ||
     ac.absenceReasonCategory?.code != absenceReasonCategoryCode ||
     ac.absenceReason.code != absenceReasonCode

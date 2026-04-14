@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceExpired
@@ -70,6 +71,29 @@ class TapOccurrenceStatusIntTest(
       ),
     )
     assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
+
+    TimeUnit.MILLISECONDS.sleep(durationAhead.toMillis() + 100)
+    update.pastOccurrencesOfInterest()
+
+    val updated = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
+    assertThat(updated.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+
+    verifyAudit(updated, RevisionType.MOD, setOf(TemporaryAbsenceOccurrence::class.simpleName!!, HmppsDomainEvent::class.simpleName!!))
+    verifyEvents(updated, setOf(TemporaryAbsenceExpired(occurrence.authorisation.person.identifier, occurrence.id)))
+  }
+
+  @Test
+  fun `occurrence status updated to expired when paused`() {
+    val durationAhead = Duration.ofMillis(100)
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = AuthorisationStatus.Code.PAUSED))
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().minusHours(2),
+        end = LocalDateTime.now().plus(durationAhead),
+      ),
+    )
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.PAUSED.name)
 
     TimeUnit.MILLISECONDS.sleep(durationAhead.toMillis() + 100)
     update.pastOccurrencesOfInterest()

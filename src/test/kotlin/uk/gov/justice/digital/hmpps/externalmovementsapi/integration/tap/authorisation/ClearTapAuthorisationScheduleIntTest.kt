@@ -19,11 +19,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.p
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnscheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -32,6 +33,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ClearAuthorisationSchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications.Companion.NOT_YET_APPROVED
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -69,12 +71,12 @@ class ClearTapAuthorisationScheduleIntTest(
   }
 
   @ParameterizedTest
-  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "CANCELLED"])
+  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "PAUSED", "CANCELLED"])
   fun `409 - authorisation not approved cannot be cleared`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
     val res = clearSchedule(auth.id, clearScheduleRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo("Temporary absence authorisation not approved")
+    assertThat(res.userMessage).isEqualTo(NOT_YET_APPROVED)
   }
 
   @Test
@@ -120,7 +122,7 @@ class ClearTapAuthorisationScheduleIntTest(
       saved,
       setOf(
         TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
-        TemporaryAbsenceUnScheduled(auth.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceUnscheduled(auth.person.identifier, occurrence.id).publication(occurrence.id),
       ),
     )
   }
@@ -172,6 +174,53 @@ class ClearTapAuthorisationScheduleIntTest(
       setOf(
         TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
         TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id).publication(occurrence.id) { false },
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - authorisation schedule cleared from paused`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true, status = PAUSED))
+    val pastOccurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().minusDays(3),
+        end = LocalDateTime.now().minusDays(2),
+      ),
+    )
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
+    val request = clearScheduleRequest()
+
+    val res = clearSchedule(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change("status", "Paused", "Cancelled"),
+    )
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
+    val previousAbsence = requireNotNull(findTemporaryAbsenceOccurrence(pastOccurrence.id))
+    assertThat(previousAbsence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+    assertThat(previousAbsence.dpsOnly).isFalse
+    val absence = findTemporaryAbsenceOccurrence(occurrence.id)
+    assertThat(absence).isNull()
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
       ),
     )
   }

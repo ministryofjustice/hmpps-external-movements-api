@@ -17,16 +17,19 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationAccompanimentChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDeferred
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationResumed
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationTransportChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
@@ -651,6 +654,159 @@ class SyncTapAuthorisationIntTest(
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationApproved(pi, saved.id, DataSource.NOMIS)))
   }
 
+  @Test
+  fun `200 ok paused authorisation not deferred if update from nomis`() {
+    val legacyId = newId()
+    val prisonCode = prisonCode()
+    val ps = givenPersonSummary(personSummary())
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        legacyId = legacyId,
+        status = AuthorisationStatus.Code.PAUSED,
+        prisonCode = prisonCode,
+        repeat = true,
+        personIdentifier = ps.identifier,
+        accompaniedByCode = "U",
+        transportCode = "TNR",
+        locations = linkedSetOf(location()),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
+    assertThat(occ.status.code).isEqualTo(OccurrenceStatus.Code.PAUSED.name)
+
+    val request = tapAuthorisation(
+      id = auth.id,
+      auth.prisonCode,
+      statusCode = "PENDING",
+      location = auth.locations.single(),
+      legacyId = legacyId,
+      repeat = true,
+    )
+    val res = syncAuthorisation(auth.person.identifier, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isEqualTo(auth.id)
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    saved.verifyAgainst(auth.person.identifier, request)
+    assertThat(saved.locations).containsExactly(request.location)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PAUSED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationAccompanimentChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceAuthorisationDateRangeChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceAuthorisationCommentsChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceAuthorisationTransportChanged(saved.person.identifier, saved.id, DataSource.NOMIS),
+        TemporaryAbsenceAuthorisationRelocated(saved.person.identifier, saved.id, DataSource.NOMIS),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok paused authorisation cancelled from nomis`() {
+    val legacyId = newId()
+    val prisonCode = prisonCode()
+    val ps = givenPersonSummary(personSummary())
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        legacyId = legacyId,
+        status = AuthorisationStatus.Code.PAUSED,
+        prisonCode = prisonCode,
+        repeat = true,
+        personIdentifier = ps.identifier,
+        locations = linkedSetOf(location()),
+      ),
+    )
+
+    val request = tapAuthorisation(
+      id = auth.id,
+      prisonCode = auth.prisonCode,
+      statusCode = "CANCELLED",
+      location = auth.locations.single(),
+      legacyId = legacyId,
+      repeat = true,
+      start = auth.start,
+      end = auth.end,
+      comments = auth.comments,
+    )
+    val res = syncAuthorisation(auth.person.identifier, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isEqualTo(auth.id)
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    saved.verifyAgainst(auth.person.identifier, request)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationCancelled(saved.person.identifier, saved.id, DataSource.NOMIS),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok paused authorisation resumed from nomis`() {
+    val legacyId = newId()
+    val prisonCode = prisonCode()
+    val ps = givenPersonSummary(personSummary())
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        legacyId = legacyId,
+        status = AuthorisationStatus.Code.PAUSED,
+        prisonCode = prisonCode,
+        repeat = true,
+        personIdentifier = ps.identifier,
+        locations = linkedSetOf(location()),
+      ),
+    )
+
+    val request = tapAuthorisation(
+      id = auth.id,
+      prisonCode = auth.prisonCode,
+      statusCode = "APPROVED",
+      location = auth.locations.single(),
+      legacyId = legacyId,
+      repeat = true,
+      start = auth.start,
+      end = auth.end,
+      comments = auth.comments,
+    )
+    val res = syncAuthorisation(auth.person.identifier, request).successResponse<SyncResponse>()
+
+    assertThat(res.id).isEqualTo(auth.id)
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    saved.verifyAgainst(auth.person.identifier, request)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.APPROVED.name)
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(TemporaryAbsenceAuthorisation::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      ExternalMovementContext.get().copy(source = DataSource.NOMIS),
+    )
+
+    verifyEvents(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationResumed(saved.person.identifier, saved.id, DataSource.NOMIS),
+      ),
+    )
+  }
+
   private fun tapAuthorisation(
     id: UUID? = null,
     prisonCode: String = prisonCode(),
@@ -712,7 +868,7 @@ private fun TemporaryAbsenceAuthorisation.verifyAgainst(personIdentifier: String
   assertThat(legacyId).isEqualTo(request.legacyId)
   if (request.statusCode == AuthorisationStatus.Code.PENDING.name && request.end.isBefore(now())) {
     assertThat(status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
-  } else {
+  } else if (status.code != AuthorisationStatus.Code.PAUSED.name) {
     assertThat(status.code).isEqualTo(request.statusCode)
   }
   assertThat(absenceType?.code).isEqualTo(request.absenceTypeCode)

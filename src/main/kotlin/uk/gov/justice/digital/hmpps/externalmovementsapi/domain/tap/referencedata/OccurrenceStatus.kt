@@ -29,6 +29,7 @@ class OccurrenceStatus(
   enum class Code {
     PENDING,
     SCHEDULED,
+    PAUSED,
     IN_PROGRESS,
     COMPLETED,
     OVERDUE,

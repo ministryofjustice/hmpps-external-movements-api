@@ -19,11 +19,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.p
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPaused
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsencePaused
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -32,13 +31,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.CancelAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.PauseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications.Companion.NOT_YET_APPROVED
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
-class CancelTapAuthorisationIntTest(
+class PauseTapAuthorisationIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -58,29 +57,29 @@ class CancelTapAuthorisationIntTest(
   @ParameterizedTest
   @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
   fun `403 forbidden without correct role`(role: String) {
-    cancelAuthorisation(
+    pauseAuthorisation(
       newUuid(),
-      cancelAuthorisationRequest(),
+      pauseAuthorisationRequest(),
       role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    cancelAuthorisation(newUuid(), cancelAuthorisationRequest()).expectStatus().isNotFound
+    pauseAuthorisation(newUuid(), pauseAuthorisationRequest()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
-  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "PAUSED", "CANCELLED"])
-  fun `409 - authorisation not approved cannot be cancelled`(status: AuthorisationStatus.Code) {
+  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "PAUSED"])
+  fun `409 - authorisation not approved cannot be paused`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = cancelAuthorisation(auth.id, cancelAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = pauseAuthorisation(auth.id, pauseAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.userMessage).isEqualTo(NOT_YET_APPROVED)
   }
 
   @Test
-  fun `200 ok - authorisation cancelled`() {
+  fun `200 ok - authorisation paused`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val pastOccurrence = givenTemporaryAbsenceOccurrence(
       temporaryAbsenceOccurrence(
@@ -90,122 +89,22 @@ class CancelTapAuthorisationIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = cancelAuthorisationRequest()
+    val request = pauseAuthorisationRequest()
 
-    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
+    val res = pauseAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationPaused.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("status", "Approved", "Cancelled"),
+      AuditedAction.Change("status", "Approved", "Paused"),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PAUSED.name)
     val previousAbsence = requireNotNull(findTemporaryAbsenceOccurrence(pastOccurrence.id))
     assertThat(previousAbsence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
     assertThat(previousAbsence.dpsOnly).isFalse
     val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
-    assertThat(absence.dpsOnly).isFalse
-
-    verifyAudit(
-      saved,
-      RevisionType.MOD,
-      setOf(
-        TemporaryAbsenceAuthorisation::class.simpleName!!,
-        TemporaryAbsenceOccurrence::class.simpleName!!,
-        HmppsDomainEvent::class.simpleName!!,
-      ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
-    )
-
-    verifyEventPublications(
-      saved,
-      setOf(
-        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
-        TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id).publication(occurrence.id),
-      ),
-    )
-  }
-
-  @Test
-  fun `200 ok - single authorisation cancelled`() {
-    val auth = givenTemporaryAbsenceAuthorisation(
-      temporaryAbsenceAuthorisation(
-        repeat = false,
-        start = LocalDate.now().plusDays(1),
-        end = LocalDate.now().plusDays(1),
-      ),
-    )
-    val occ = givenTemporaryAbsenceOccurrence(
-      temporaryAbsenceOccurrence(
-        auth,
-        start = LocalDateTime.now().plusDays(1),
-        end = LocalDateTime.now().plusDays(1),
-      ),
-    )
-    val request = cancelAuthorisationRequest(reason = "Occurrence is deleted by nomis")
-
-    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(
-      AuditedAction.Change("status", "Approved", "Cancelled"),
-    )
-
-    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
-    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
-    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
-    assertThat(occurrence.dpsOnly).isTrue
-
-    verifyAudit(
-      saved,
-      RevisionType.MOD,
-      setOf(
-        TemporaryAbsenceAuthorisation::class.simpleName!!,
-        TemporaryAbsenceOccurrence::class.simpleName!!,
-        HmppsDomainEvent::class.simpleName!!,
-      ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
-    )
-
-    verifyEventPublications(
-      saved,
-      setOf(
-        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
-        TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id).publication(occurrence.id) { false },
-      ),
-    )
-  }
-
-  @Test
-  fun `200 ok - paused authorisation cancelled`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true, status = PAUSED))
-    val pastOccurrence = givenTemporaryAbsenceOccurrence(
-      temporaryAbsenceOccurrence(
-        auth,
-        start = LocalDateTime.now().minusDays(3),
-        end = LocalDateTime.now().minusDays(2),
-      ),
-    )
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
-    val request = cancelAuthorisationRequest()
-
-    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
-    assertThat(res.changes).containsExactly(
-      AuditedAction.Change("status", "Paused", "Cancelled"),
-    )
-
-    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
-    val previousAbsence = requireNotNull(findTemporaryAbsenceOccurrence(pastOccurrence.id))
-    assertThat(previousAbsence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
-    assertThat(previousAbsence.dpsOnly).isFalse
-    val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
-    assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.CANCELLED.name)
+    assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.PAUSED.name)
     assertThat(absence.dpsOnly).isTrue
 
     verifyAudit(
@@ -222,19 +121,70 @@ class CancelTapAuthorisationIntTest(
     verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
-        TemporaryAbsenceCancelled(auth.person.identifier, occurrence.id).publication(occurrence.id) { false },
+        TemporaryAbsenceAuthorisationPaused(auth.person.identifier, auth.id).publication(auth.id),
+        TemporaryAbsencePaused(auth.person.identifier, occurrence.id).publication(occurrence.id),
       ),
     )
   }
 
-  private fun cancelAuthorisationRequest(
-    reason: String? = word(20),
-  ) = CancelAuthorisation(reason)
+  @Test
+  fun `200 ok - single authorisation paused`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        repeat = false,
+        start = LocalDate.now().plusDays(1),
+        end = LocalDate.now().plusDays(1),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().plusDays(1),
+        end = LocalDateTime.now().plusDays(1),
+      ),
+    )
+    val request = pauseAuthorisationRequest()
 
-  private fun cancelAuthorisation(
+    val res = pauseAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationPaused.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change("status", "Approved", "Paused"),
+    )
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.PAUSED.name)
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.PAUSED.name)
+    assertThat(occurrence.dpsOnly).isTrue
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationPaused(auth.person.identifier, auth.id).publication(auth.id),
+        TemporaryAbsencePaused(auth.person.identifier, occurrence.id).publication(occurrence.id),
+      ),
+    )
+  }
+
+  private fun pauseAuthorisationRequest(
+    reason: String? = word(20),
+  ) = PauseAuthorisation(reason)
+
+  private fun pauseAuthorisation(
     id: UUID,
-    request: CancelAuthorisation,
+    request: PauseAuthorisation,
     role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()

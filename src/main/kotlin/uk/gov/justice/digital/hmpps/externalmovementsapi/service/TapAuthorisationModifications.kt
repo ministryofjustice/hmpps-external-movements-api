@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.o
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.APPROVED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.DENIED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
@@ -32,7 +33,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ClearAuthorisationSchedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.PauseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ResumeAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.CancelOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
@@ -62,21 +65,35 @@ class TapAuthorisationModifications(
       val rdSupplier = referenceDataRepository.rdProvider()
       when (action) {
         is ApproveAuthorisation -> if (authorisation.status.code !in listOf(PENDING.name, APPROVED.name)) {
-          throw ConflictException("Temporary absence authorisation not awaiting approval")
+          throw ConflictException(NOT_AWAITING_APPROVAL)
         } else {
           authorisation.approve(action, rdSupplier)
           authorisation.updateOccurrenceStatus()
         }
 
         is DenyAuthorisation -> if (authorisation.status.code !in listOf(PENDING.name, DENIED.name)) {
-          throw ConflictException("Temporary absence authorisation not awaiting approval")
+          throw ConflictException(NOT_AWAITING_APPROVAL)
         } else {
           authorisation.deny(action, rdSupplier)
           authorisation.updateOccurrenceStatus()
         }
 
-        is CancelAuthorisation -> if (authorisation.status.code !in listOf(APPROVED.name, CANCELLED.name)) {
-          throw ConflictException("Temporary absence authorisation not approved")
+        is PauseAuthorisation -> if (authorisation.status.code !in listOf(APPROVED.name, PAUSED.name)) {
+          throw ConflictException(NOT_YET_APPROVED)
+        } else {
+          authorisation.pause(action, rdSupplier)
+          authorisation.updateOccurrenceStatus()
+        }
+
+        is ResumeAuthorisation -> if (authorisation.status.code !in listOf(APPROVED.name, PAUSED.name)) {
+          throw ConflictException(NOT_YET_APPROVED)
+        } else {
+          authorisation.resume(action, rdSupplier)
+          authorisation.updateOccurrenceStatus()
+        }
+
+        is CancelAuthorisation -> if (authorisation.status.code !in listOf(APPROVED.name, PAUSED.name, CANCELLED.name)) {
+          throw ConflictException(NOT_YET_APPROVED)
         } else {
           authorisation.cancel(action, rdSupplier)
           authorisation.affectedOccurrences().forEach {
@@ -87,8 +104,8 @@ class TapAuthorisationModifications(
           }
         }
 
-        is ClearAuthorisationSchedule -> if (authorisation.status.code !in listOf(APPROVED.name, CANCELLED.name)) {
-          throw ConflictException("Temporary absence authorisation not approved")
+        is ClearAuthorisationSchedule -> if (authorisation.status.code !in listOf(APPROVED.name, PAUSED.name, CANCELLED.name)) {
+          throw ConflictException(NOT_YET_APPROVED)
         } else {
           authorisation.cancel(action, rdSupplier)
           authorisation.affectedOccurrences().forEach {
@@ -153,12 +170,18 @@ class TapAuthorisationModifications(
 
   private fun TemporaryAbsenceAuthorisation.affectedOccurrences() = taoRepository.findAll(
     forAuthorisation(id)
-      .and(occurrenceStatusCodeIn(OccurrenceStatus.Code.PENDING, OccurrenceStatus.Code.SCHEDULED)),
+      .and(
+        occurrenceStatusCodeIn(
+          OccurrenceStatus.Code.PENDING,
+          OccurrenceStatus.Code.SCHEDULED,
+          OccurrenceStatus.Code.PAUSED,
+        ),
+      ),
   )
 
   private fun TemporaryAbsenceAuthorisation.updateOccurrenceStatus() {
     affectedOccurrences().forEach {
-      if (!repeat && status.code != APPROVED.name) {
+      if (status.code == PAUSED.name || (!repeat && status.code != APPROVED.name)) {
         it.makeDpsOnly()
       }
       it.calculateStatus { statusCode -> occurrenceStatusRepository.getByCode(statusCode) }
@@ -174,5 +197,10 @@ class TapAuthorisationModifications(
       absenceReasonCode = ca.absenceReason.code,
     )
     return newAction to { domain: KClass<out ReferenceData>, code: String -> requireNotNull(allRd[domain to code]) }
+  }
+
+  companion object {
+    const val NOT_AWAITING_APPROVAL = "Temporary absence authorisation not awaiting approval"
+    const val NOT_YET_APPROVED = "Temporary absence authorisation not approved"
   }
 }

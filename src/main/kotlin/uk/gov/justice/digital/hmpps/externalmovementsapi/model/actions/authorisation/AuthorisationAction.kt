@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.Action
 @JsonSubTypes(
   value = [
     Type(value = ApproveAuthorisation::class, name = "ApproveAuthorisation"),
+    Type(value = PauseAuthorisation::class, name = "PauseAuthorisation"),
+    Type(value = ResumeAuthorisation::class, name = "ResumeAuthorisation"),
     Type(value = DenyAuthorisation::class, name = "DenyAuthorisation"),
     Type(value = CancelAuthorisation::class, name = "CancelAuthorisation"),
     Type(value = ClearAuthorisationSchedule::class, name = "ClearAuthorisationSchedule"),

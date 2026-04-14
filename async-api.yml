@@ -24,6 +24,10 @@ components:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-accompaniment-changed.yaml
     person.temporary-absence-authorisation.approved:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-approved.yaml
+    person.temporary-absence-authorisation.paused:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-paused.yaml
+    person.temporary-absence-authorisation.resumed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-resumed.yaml
     person.temporary-absence-authorisation.cancelled:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-authorisation/temporary-absence-authorisation-cancelled.yaml
     person.temporary-absence-authorisation.comments-changed:
@@ -54,6 +58,10 @@ components:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-expired.yaml
     person.temporary-absence.overdue:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-overdue.yaml
+    person.temporary-absence.paused:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-paused.yaml
+    person.temporary-absence.resumed:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-resumed.yaml
     person.temporary-absence.recategorised:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-recategorised.yaml
     person.temporary-absence.relocated:
@@ -94,6 +102,10 @@ channels:
         $ref: '#/components/messages/person.temporary-absence-authorisation.accompaniment-changed'
       person.temporary-absence-authorisation.approved:
         $ref: '#/components/messages/person.temporary-absence-authorisation.approved'
+      person.temporary-absence-authorisation.paused:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.paused'
+      person.temporary-absence-authorisation.resumed:
+        $ref: '#/components/messages/person.temporary-absence-authorisation.resumed'
       person.temporary-absence-authorisation.cancelled:
         $ref: '#/components/messages/person.temporary-absence-authorisation.cancelled'
       person.temporary-absence-authorisation.comments-changed:
@@ -124,6 +136,10 @@ channels:
         $ref: '#/components/messages/person.temporary-absence.expired'
       person.temporary-absence.overdue:
         $ref: '#/components/messages/person.temporary-absence.overdue'
+      person.temporary-absence.paused:
+        $ref: '#/components/messages/person.temporary-absence.paused'
+      person.temporary-absence.resumed:
+        $ref: '#/components/messages/person.temporary-absence.resumed'
       person.temporary-absence.recategorised:
         $ref: '#/components/messages/person.temporary-absence.recategorised'
       person.temporary-absence.relocated:
@@ -161,6 +177,8 @@ operations:
     messages:
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.accompaniment-changed'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.approved'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.paused'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.resumed'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.cancelled'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.comments-changed'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-authorisation.date-range-changed'
@@ -176,6 +194,8 @@ operations:
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.denied'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.expired'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.overdue'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.paused'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.resumed'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.recategorised'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.relocated'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence.rescheduled'
