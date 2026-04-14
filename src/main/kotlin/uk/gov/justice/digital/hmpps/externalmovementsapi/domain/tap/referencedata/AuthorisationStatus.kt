@@ -29,6 +29,7 @@ class AuthorisationStatus(
   enum class Code {
     PENDING,
     APPROVED,
+    PAUSED,
     CANCELLED,
     DENIED,
     EXPIRED,

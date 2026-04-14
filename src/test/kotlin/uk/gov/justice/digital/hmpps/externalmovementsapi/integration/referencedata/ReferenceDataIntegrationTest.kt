@@ -48,6 +48,7 @@ class ReferenceDataIntegrationTest : IntegrationTest() {
     assertThat(rd.items).containsExactly(
       CodedDescription("PENDING", "To be reviewed"),
       CodedDescription("APPROVED", "Approved"),
+      CodedDescription("PAUSED", "Paused"),
       CodedDescription("DENIED", "Denied"),
       CodedDescription("CANCELLED", "Cancelled"),
       CodedDescription("EXPIRED", "Expired"),

@@ -25,7 +25,7 @@ generic-prometheus-alerts:
   rdsAlertsConnectionThreshold: 100
   sqsOldestAlertQueueNames:
     - "hmpps-external-movements-dev-domain_events_queue"
-  sqsAlertsOldestThreshold: 10
+  sqsAlertsOldestThreshold: 30
   sqsNumberAlertQueueNames:
     - "hmpps-external-movements-dev-domain_events_dlq"
   sqsAlertsTotalMessagesThreshold: 1

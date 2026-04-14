@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import java.util.UUID
+import java.util.*
 
 data class TemporaryAbsenceAuthorisationInformation(
   override val id: UUID,
@@ -15,11 +15,11 @@ data class TemporaryAbsenceAuthorisationPending(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence authorisation is pending."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.pending"
-
+    const val DESCRIPTION: String = "A temporary absence authorisation is pending."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -36,11 +36,11 @@ data class TemporaryAbsenceAuthorisationApproved(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence authorisation has been approved."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.approved"
-
+    const val DESCRIPTION: String = "A temporary absence authorisation has been approved."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -52,16 +52,58 @@ data class TemporaryAbsenceAuthorisationApproved(
   }
 }
 
+data class TemporaryAbsenceAuthorisationPaused(
+  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = DESCRIPTION
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.paused"
+    const val DESCRIPTION: String = "A temporary absence authorisation has been paused."
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorisationPaused(
+      TemporaryAbsenceAuthorisationInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceAuthorisationResumed(
+  override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = DESCRIPTION
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-authorisation.resumed"
+    const val DESCRIPTION: String = "A temporary absence authorisation has been resumed."
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceAuthorisationResumed(
+      TemporaryAbsenceAuthorisationInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
 data class TemporaryAbsenceAuthorisationDenied(
   override val additionalInformation: TemporaryAbsenceAuthorisationInformation,
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence authorisation has been denied."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.denied"
-
+    const val DESCRIPTION: String = "A temporary absence authorisation has been denied."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -78,11 +120,11 @@ data class TemporaryAbsenceAuthorisationCancelled(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence authorisation has been cancelled."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.cancelled"
-
+    const val DESCRIPTION: String = "A temporary absence authorisation has been cancelled."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -99,11 +141,11 @@ data class TemporaryAbsenceAuthorisationDeferred(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence authorisation has been deferred."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.deferred"
-
+    const val DESCRIPTION: String = "A temporary absence authorisation has been deferred."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -120,11 +162,11 @@ data class TemporaryAbsenceAuthorisationExpired(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence authorisation has expired."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.expired"
-
+    const val DESCRIPTION: String = "A temporary absence authorisation has expired."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -141,11 +183,11 @@ data class TemporaryAbsenceAuthorisationAccompanimentChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The accompaniment of a temporary absence authorisation has been changed."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.accompaniment-changed"
-
+    const val DESCRIPTION: String = "The accompaniment of a temporary absence authorisation has been changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -162,11 +204,11 @@ data class TemporaryAbsenceAuthorisationCommentsChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The comments on a temporary absence authorisation have been changed."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.comments-changed"
-
+    const val DESCRIPTION: String = "The comments on a temporary absence authorisation have been changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -183,11 +225,11 @@ data class TemporaryAbsenceAuthorisationDateRangeChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The date range of a temporary absence authorisation has been changed."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.date-range-changed"
-
+    const val DESCRIPTION: String = "The date range of a temporary absence authorisation has been changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -204,11 +246,11 @@ data class TemporaryAbsenceAuthorisationTransportChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The transport for a temporary absence authorisation has been changed."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.transport-changed"
-
+    const val DESCRIPTION: String = "The transport for a temporary absence authorisation has been changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -225,11 +267,11 @@ data class TemporaryAbsenceAuthorisationRecategorised(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence authorisation has been recategorised."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.recategorised"
-
+    const val DESCRIPTION: String = "A temporary absence authorisation has been recategorised."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -246,11 +288,11 @@ data class TemporaryAbsenceAuthorisationRelocated(
   override val personReference: PersonReference,
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The list of locations related to this authorisation has changed."
+  override val description: String = DESCRIPTION
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.relocated"
-
+    const val DESCRIPTION: String = "The list of locations related to this authorisation has changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,

@@ -30,7 +30,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnscheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -357,7 +357,7 @@ class SyncTapOccurrenceIntTest(
       saved,
       setOf(
         TemporaryAbsenceScheduled(authorisation.person.identifier, saved.id, DataSource.NOMIS).publication(saved.id),
-        TemporaryAbsenceUnScheduled(authorisation.person.identifier, dpsOccurrence.id, DataSource.NOMIS).publication(dpsOccurrence.id),
+        TemporaryAbsenceUnscheduled(authorisation.person.identifier, dpsOccurrence.id, DataSource.NOMIS).publication(dpsOccurrence.id),
       ),
     )
   }

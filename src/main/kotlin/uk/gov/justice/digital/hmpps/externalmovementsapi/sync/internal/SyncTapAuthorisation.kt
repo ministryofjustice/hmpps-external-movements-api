@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import sun.jvmstat.perfdata.monitor.CountedTimerTaskUtils.reschedule
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
@@ -21,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.DENIED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
@@ -41,6 +43,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ResumeAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.ChangeOccurrenceLocation
@@ -234,7 +237,8 @@ class SyncTapAuthorisation(
     when (request.statusCode) {
       EXPIRED.name -> expire(ExpireAuthorisation(), rdPaths::getReferenceData)
       PENDING.name if (now().isAfter(request.end)) -> expire(ExpireAuthorisation(), rdPaths::getReferenceData)
-      PENDING.name -> defer(DeferAuthorisation(), rdPaths::getReferenceData)
+      PENDING.name if (status.code != PAUSED.name) -> defer(DeferAuthorisation(), rdPaths::getReferenceData)
+      APPROVED.name if (status.code == PAUSED.name) -> resume(ResumeAuthorisation(), rdPaths::getReferenceData)
       APPROVED.name -> approve(ApproveAuthorisation(), rdPaths::getReferenceData)
       CANCELLED.name -> cancel(CancelAuthorisation(), rdPaths::getReferenceData)
       DENIED.name -> deny(DenyAuthorisation(), rdPaths::getReferenceData)

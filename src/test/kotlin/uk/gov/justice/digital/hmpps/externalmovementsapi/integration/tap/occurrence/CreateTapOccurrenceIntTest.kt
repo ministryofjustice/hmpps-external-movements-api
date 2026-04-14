@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.tap.occurr
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.hibernate.envers.RevisionType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -13,9 +14,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
@@ -29,7 +37,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import java.util.UUID
+import java.util.*
 
 class CreateTapOccurrenceIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
@@ -115,22 +123,6 @@ class CreateTapOccurrenceIntTest(
     occurrence.verifyAgainst(authorisation)
   }
 
-  private fun TemporaryAbsenceOccurrence.verifyAgainst(request: CreateOccurrenceRequest) {
-    assertThat(start).isCloseTo(request.start, within(1, ChronoUnit.SECONDS))
-    assertThat(end).isCloseTo(request.end, within(1, ChronoUnit.SECONDS))
-    assertThat(location).isEqualTo(request.location)
-    assertThat(comments).isEqualTo(request.comments ?: authorisation.comments)
-  }
-
-  private fun TemporaryAbsenceOccurrence.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
-    assertThat(absenceType?.code).isEqualTo(authorisation.absenceType?.code)
-    assertThat(absenceSubType?.code).isEqualTo(authorisation.absenceSubType?.code)
-    assertThat(absenceReasonCategory?.code).isEqualTo(authorisation.absenceReasonCategory?.code)
-    assertThat(absenceReason.code).isEqualTo(authorisation.absenceReason.code)
-    assertThat(accompaniedBy.code).isEqualTo(authorisation.accompaniedBy.code)
-    assertThat(transport.code).isEqualTo(authorisation.transport.code)
-  }
-
   @Test
   fun `200 ok - an occurrence is added to an authorisation with new location`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(
@@ -147,6 +139,75 @@ class CreateTapOccurrenceIntTest(
     occurrence.verifyAgainst(request)
     occurrence.verifyAgainst(authorisation)
     assertThat(occurrence.authorisation.locations).containsExactly(occ1.location, occurrence.location)
+
+    verifyAudit(
+      occurrence,
+      RevisionType.ADD,
+      setOf(
+        HmppsDomainEvent::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME),
+    )
+
+    verifyEventPublications(
+      authorisation,
+      setOf(
+        TemporaryAbsenceScheduled(occurrence.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id).publication(
+          authorisation.id,
+        ),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - an occurrence is added to a paused authorisation`() {
+    val authorisation = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        repeat = true,
+        status = AuthorisationStatus.Code.PAUSED,
+        locations = linkedSetOf(location()),
+      ),
+    )
+    assertThat(authorisation.status.code).isEqualTo(AuthorisationStatus.Code.PAUSED.name)
+    val occ1 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(authorisation, location = authorisation.locations.single(), dpsOnly = true),
+    )
+    assertThat(occ1.status.code).isEqualTo(OccurrenceStatus.Code.PAUSED.name)
+
+    val request = request(location = occ1.location)
+    val response = createOccurrence(authorisation.id, request).successResponse<ReferenceId>()
+
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
+    occurrence.verifyAgainst(request)
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.PAUSED.name)
+
+    verifyAudit(
+      occurrence,
+      RevisionType.ADD,
+      setOf(TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME),
+    )
+
+    verifyEvents(occurrence, setOf())
+  }
+
+  private fun TemporaryAbsenceOccurrence.verifyAgainst(request: CreateOccurrenceRequest) {
+    assertThat(start).isCloseTo(request.start, within(1, ChronoUnit.SECONDS))
+    assertThat(end).isCloseTo(request.end, within(1, ChronoUnit.SECONDS))
+    assertThat(location).isEqualTo(request.location)
+    assertThat(comments).isEqualTo(request.comments ?: authorisation.comments)
+  }
+
+  private fun TemporaryAbsenceOccurrence.verifyAgainst(authorisation: TemporaryAbsenceAuthorisation) {
+    assertThat(absenceType?.code).isEqualTo(authorisation.absenceType?.code)
+    assertThat(absenceSubType?.code).isEqualTo(authorisation.absenceSubType?.code)
+    assertThat(absenceReasonCategory?.code).isEqualTo(authorisation.absenceReasonCategory?.code)
+    assertThat(absenceReason.code).isEqualTo(authorisation.absenceReason.code)
+    assertThat(accompaniedBy.code).isEqualTo(authorisation.accompaniedBy.code)
+    assertThat(transport.code).isEqualTo(authorisation.transport.code)
   }
 
   private fun createOccurrence(

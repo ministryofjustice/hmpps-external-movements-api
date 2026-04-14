@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.Tem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnscheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -96,7 +96,7 @@ class DeleteTapOccurrenceIntTest(
     verifyEventPublications(
       occurrence,
       setOf(
-        TemporaryAbsenceUnScheduled(occurrence.person.identifier, occurrence.id, DataSource.NOMIS).publication(occurrence.id),
+        TemporaryAbsenceUnscheduled(occurrence.person.identifier, occurrence.id, DataSource.NOMIS).publication(occurrence.id),
       ),
     )
   }

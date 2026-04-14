@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnscheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
@@ -114,8 +114,8 @@ class ExternalMovementRecordedEventIntTest(
       savedAuth,
       setOf(
         TemporaryAbsenceAuthorisationCancelled(savedAuth.person.identifier, savedAuth.id).publication(savedAuth.id),
-        TemporaryAbsenceUnScheduled(savedAuth.person.identifier, occurrences[1].id).publication(occurrences[1].id),
-        TemporaryAbsenceUnScheduled(savedAuth.person.identifier, occurrences[2].id).publication(occurrences[2].id),
+        TemporaryAbsenceUnscheduled(savedAuth.person.identifier, occurrences[1].id).publication(occurrences[1].id),
+        TemporaryAbsenceUnscheduled(savedAuth.person.identifier, occurrences[2].id).publication(occurrences[2].id),
       ),
     )
   }

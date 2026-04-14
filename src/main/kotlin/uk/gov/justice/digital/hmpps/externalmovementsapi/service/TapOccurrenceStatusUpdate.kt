@@ -35,6 +35,7 @@ class OccurrenceStatusUpdate(
       OccurrenceStatus.Code.PENDING.name,
       OccurrenceStatus.Code.SCHEDULED.name,
       OccurrenceStatus.Code.IN_PROGRESS.name,
+      OccurrenceStatus.Code.PAUSED.name,
     )
   }
 }

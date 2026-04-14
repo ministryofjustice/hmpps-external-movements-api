@@ -55,6 +55,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.CANCELLED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.DENIED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.EXPIRED
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
@@ -75,7 +76,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisa
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DeferAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ExpireAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.PauseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.RecategoriseAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ResumeAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
@@ -314,17 +317,25 @@ final class TemporaryAbsenceAuthorisation(
     applyStatus(DENIED, rdSupplier, action)
   }
 
+  fun pause(action: PauseAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+    applyStatus(PAUSED, rdSupplier, action)
+  }
+
+  fun resume(action: ResumeAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
+    applyStatus(APPROVED, rdSupplier, action)
+  }
+
   fun cancel(action: AuthorisationAction, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
     applyStatus(CANCELLED, rdSupplier, action)
   }
 
   fun expire(action: ExpireAuthorisation, rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData) {
-    if (status.code == PENDING.name || status.code == APPROVED.name) {
+    if (status.code == PENDING.name || status.code == APPROVED.name || status.code == PAUSED.name) {
       applyStatus(EXPIRED, rdSupplier, action)
     }
   }
 
-  fun permitsOccurrences(): Boolean = status.code in listOf(PENDING.name, APPROVED.name)
+  fun permitsOccurrences(): Boolean = status.code in listOf(PENDING.name, APPROVED.name, PAUSED.name)
 
   private fun applyStatus(
     statusCode: AuthorisationStatus.Code,

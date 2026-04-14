@@ -19,11 +19,12 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.p
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PENDING
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationResumed
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceResumed
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -31,11 +32,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ApproveAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications.Companion.NOT_AWAITING_APPROVAL
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ResumeAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.TapAuthorisationModifications.Companion.NOT_YET_APPROVED
 import java.util.UUID
 
-class ApproveTapAuthorisationIntTest(
+class ResumeTapAuthorisationIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
   @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
 ) : IntegrationTest(),
@@ -55,44 +56,45 @@ class ApproveTapAuthorisationIntTest(
   @ParameterizedTest
   @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
   fun `403 forbidden without correct role`(role: String) {
-    approveAuthorisation(
+    resumeAuthorisation(
       newUuid(),
-      approveAuthorisationRequest(),
+      resumeAuthorisationRequest(),
       role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    approveAuthorisation(newUuid(), approveAuthorisationRequest()).expectStatus().isNotFound
+    resumeAuthorisation(newUuid(), resumeAuthorisationRequest()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
-  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "APPROVED"])
-  fun `409 - authorisation not awaiting approval cannot be approved`(status: AuthorisationStatus.Code) {
+  @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PAUSED", "APPROVED"])
+  fun `409 - authorisation not paused cannot be resumed`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = approveAuthorisation(auth.id, approveAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = resumeAuthorisation(auth.id, resumeAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo(NOT_AWAITING_APPROVAL)
+    assertThat(res.userMessage).isEqualTo(NOT_YET_APPROVED)
   }
 
   @Test
-  fun `200 ok - authorisation approved`() {
-    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
-    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = approveAuthorisationRequest()
+  fun `200 ok - authorisation resumed`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PAUSED))
+    val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
+    val request = resumeAuthorisationRequest()
 
-    val res = approveAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
-    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
+    val res = resumeAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationResumed.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
-      AuditedAction.Change("status", "To be reviewed", "Approved"),
+      AuditedAction.Change("status", "Paused", "Approved"),
     )
 
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
     assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.APPROVED.name)
     val absence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
     assertThat(absence.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
+    assertThat(absence.dpsOnly).isFalse
 
     verifyAudit(
       saved,
@@ -108,19 +110,19 @@ class ApproveTapAuthorisationIntTest(
     verifyEventPublications(
       saved,
       setOf(
-        TemporaryAbsenceAuthorisationApproved(auth.person.identifier, auth.id).publication(auth.id),
-        TemporaryAbsenceScheduled(auth.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationResumed(auth.person.identifier, auth.id).publication(auth.id),
+        TemporaryAbsenceResumed(auth.person.identifier, occurrence.id).publication(occurrence.id),
       ),
     )
   }
 
-  private fun approveAuthorisationRequest(
-    reason: String? = "Evidence justifying the approval",
-  ) = ApproveAuthorisation(reason)
+  private fun resumeAuthorisationRequest(
+    reason: String? = word(20),
+  ) = ResumeAuthorisation(reason)
 
-  private fun approveAuthorisation(
+  private fun resumeAuthorisation(
     id: UUID,
-    request: ApproveAuthorisation,
+    request: ResumeAuthorisation,
     role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()

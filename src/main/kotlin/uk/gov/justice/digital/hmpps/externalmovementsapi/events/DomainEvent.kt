@@ -13,6 +13,8 @@ import java.util.UUID
   value = [
     Type(value = TemporaryAbsenceAuthorisationPending::class, name = TemporaryAbsenceAuthorisationPending.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationApproved::class, name = TemporaryAbsenceAuthorisationApproved.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationPaused::class, name = TemporaryAbsenceAuthorisationPaused.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationResumed::class, name = TemporaryAbsenceAuthorisationResumed.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDeferred::class, name = TemporaryAbsenceAuthorisationDeferred.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDenied::class, name = TemporaryAbsenceAuthorisationDenied.EVENT_TYPE),
     Type(
@@ -46,8 +48,10 @@ import java.util.UUID
     ),
 
     Type(value = TemporaryAbsenceScheduled::class, name = TemporaryAbsenceScheduled.EVENT_TYPE),
+    Type(value = TemporaryAbsencePaused::class, name = TemporaryAbsencePaused.EVENT_TYPE),
+    Type(value = TemporaryAbsenceResumed::class, name = TemporaryAbsenceResumed.EVENT_TYPE),
     Type(value = TemporaryAbsenceRescheduled::class, name = TemporaryAbsenceRescheduled.EVENT_TYPE),
-    Type(value = TemporaryAbsenceUnScheduled::class, name = TemporaryAbsenceUnScheduled.EVENT_TYPE),
+    Type(value = TemporaryAbsenceUnscheduled::class, name = TemporaryAbsenceUnscheduled.EVENT_TYPE),
     Type(value = TemporaryAbsenceCancelled::class, name = TemporaryAbsenceCancelled.EVENT_TYPE),
     Type(value = TemporaryAbsenceDenied::class, name = TemporaryAbsenceDenied.EVENT_TYPE),
     Type(value = TemporaryAbsenceExpired::class, name = TemporaryAbsenceExpired.EVENT_TYPE),

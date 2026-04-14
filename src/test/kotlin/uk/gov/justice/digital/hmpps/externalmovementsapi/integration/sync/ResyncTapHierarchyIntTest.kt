@@ -27,7 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationExpired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceExpired
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnscheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -610,7 +610,7 @@ class ResyncTapHierarchyIntTest(
           auth.id,
           DataSource.NOMIS,
         ).publication(auth.id) { false },
-        TemporaryAbsenceUnScheduled(
+        TemporaryAbsenceUnscheduled(
           occ.person.identifier,
           occ.id,
           DataSource.NOMIS,
@@ -751,7 +751,7 @@ class ResyncTapHierarchyIntTest(
           auth.id,
           DataSource.NOMIS,
         ).publication(auth.id) { false },
-        TemporaryAbsenceUnScheduled(occ.person.identifier, occ.id, DataSource.NOMIS).publication(occ.id) { false },
+        TemporaryAbsenceUnscheduled(occ.person.identifier, occ.id, DataSource.NOMIS).publication(occ.id) { false },
       ),
     )
   }
@@ -892,7 +892,7 @@ class ResyncTapHierarchyIntTest(
 
     verifyEventPublications(
       auth,
-      setOf(TemporaryAbsenceUnScheduled(occ.person.identifier, occ.id, DataSource.NOMIS).publication(occ.id) { false }),
+      setOf(TemporaryAbsenceUnscheduled(occ.person.identifier, occ.id, DataSource.NOMIS).publication(occ.id) { false }),
     )
   }
 
