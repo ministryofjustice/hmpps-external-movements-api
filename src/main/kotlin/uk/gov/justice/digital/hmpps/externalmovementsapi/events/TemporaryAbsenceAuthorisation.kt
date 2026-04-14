@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import java.util.*
+import java.util.UUID
 
 data class TemporaryAbsenceAuthorisationInformation(
   override val id: UUID,
