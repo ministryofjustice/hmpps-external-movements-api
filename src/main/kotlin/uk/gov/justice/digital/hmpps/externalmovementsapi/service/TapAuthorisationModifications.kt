@@ -44,7 +44,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrenc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.AuthorisationHistory
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 import kotlin.reflect.KClass
 
 @Service

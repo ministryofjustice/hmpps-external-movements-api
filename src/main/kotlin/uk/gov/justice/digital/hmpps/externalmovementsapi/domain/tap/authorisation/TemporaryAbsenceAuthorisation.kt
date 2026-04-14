@@ -83,7 +83,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDate.now
-import java.util.*
+import java.util.SequencedSet
+import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

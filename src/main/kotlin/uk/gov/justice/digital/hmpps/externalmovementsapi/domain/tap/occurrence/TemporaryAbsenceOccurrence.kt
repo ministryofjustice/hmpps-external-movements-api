@@ -79,8 +79,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
 import java.time.temporal.ChronoUnit.SECONDS
-import java.util.*
 import java.util.Collections.unmodifiableList
+import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty1

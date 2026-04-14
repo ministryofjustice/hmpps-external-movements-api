@@ -30,7 +30,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 class ChangeAuthorisationLocationIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
