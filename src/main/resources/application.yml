@@ -133,8 +133,10 @@ service:
   auto-cancel-enabled: false
 
 springdoc:
+  default-flat-param-object: false
   paths-to-exclude: "/queue-admin/**"
   api-docs:
+    version: OPENAPI_3_0
     enabled: false
   swagger-ui:
     enabled: false
