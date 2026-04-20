@@ -130,7 +130,7 @@ service:
     poll-interval: PT0s
   authorisation-expiration:
     cron: ""
-  auto-cancel-enabled: false
+  auto-cancel-enabled: true
 
 springdoc:
   default-flat-param-object: false
