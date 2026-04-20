@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
@@ -24,6 +25,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.username
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
@@ -62,7 +64,7 @@ class CreateTapOccurrenceIntTest(
     createOccurrence(
       UUID.randomUUID(),
       request(),
-      role,
+      role = role,
     ).expectStatus().isForbidden
   }
 
@@ -104,23 +106,66 @@ class CreateTapOccurrenceIntTest(
   fun `200 ok - an occurrence is added to an authorisation with independent comments`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val request = request()
-    val response = createOccurrence(authorisation.id, request).successResponse<ReferenceId>()
+    val username = username()
+    val caseloadId = word(6)
+    val response = createOccurrence(authorisation.id, request, username, caseloadId)
+      .successResponse<ReferenceId>()
 
     val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
     occurrence.verifyAgainst(request)
     occurrence.verifyAgainst(authorisation)
+
+    verifyAudit(
+      occurrence,
+      RevisionType.ADD,
+      setOf(
+        HmppsDomainEvent::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username, caseloadId = caseloadId),
+    )
+
+    verifyEventPublications(
+      occurrence,
+      setOf(
+        TemporaryAbsenceScheduled(occurrence.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id).publication(authorisation.id),
+      ),
+    )
   }
 
   @Test
   fun `200 ok - an occurrence is added to an authorisation without comments`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val request = request(comments = null)
-    val response = createOccurrence(authorisation.id, request).successResponse<ReferenceId>()
+    val username = username()
+    val caseloadId = word(6)
+    val response = createOccurrence(authorisation.id, request, username, caseloadId).successResponse<ReferenceId>()
 
     val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
     assertThat(occurrence.authorisation.id).isEqualTo(authorisation.id)
     occurrence.verifyAgainst(request)
     occurrence.verifyAgainst(authorisation)
+
+    verifyAudit(
+      occurrence,
+      RevisionType.ADD,
+      setOf(
+        HmppsDomainEvent::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username, caseloadId = caseloadId),
+    )
+
+    verifyEventPublications(
+      occurrence,
+      setOf(
+        TemporaryAbsenceScheduled(occurrence.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id).publication(authorisation.id),
+      ),
+    )
   }
 
   @Test
@@ -133,7 +178,9 @@ class CreateTapOccurrenceIntTest(
     )
 
     val request = request()
-    val response = createOccurrence(authorisation.id, request).successResponse<ReferenceId>()
+    val username = username()
+    val caseloadId = word(6)
+    val response = createOccurrence(authorisation.id, request, username, caseloadId).successResponse<ReferenceId>()
 
     val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
     occurrence.verifyAgainst(request)
@@ -148,7 +195,7 @@ class CreateTapOccurrenceIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         TemporaryAbsenceOccurrence::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME),
+      ExternalMovementContext.get().copy(username = username, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -213,12 +260,15 @@ class CreateTapOccurrenceIntTest(
   private fun createOccurrence(
     id: UUID,
     request: CreateOccurrenceRequest,
+    username: String = DEFAULT_USERNAME,
+    caseloadId: String? = null,
     role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .post()
     .uri(CREATE_OCCURRENCE_URL, id)
     .bodyValue(request)
-    .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
+    .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
+    .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()
 
   companion object {

@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCommentsChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.username
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -54,7 +56,7 @@ class ChangeOccurrenceCommentsIntTest(
     applyOccurrenceComments(
       newUuid(),
       action(),
-      role,
+      role = role,
     ).expectStatus().isForbidden
   }
 
@@ -68,7 +70,9 @@ class ChangeOccurrenceCommentsIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val username = username()
+    val caseloadId = word(3)
+    val res = applyOccurrenceComments(occurrence.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
@@ -85,7 +89,7 @@ class ChangeOccurrenceCommentsIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -107,7 +111,7 @@ class ChangeOccurrenceCommentsIntTest(
     assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
 
     val request = action()
-    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val res = applyOccurrenceComments(occurrence.id, request, caseloadId = auth.prisonCode).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
@@ -124,7 +128,7 @@ class ChangeOccurrenceCommentsIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason, caseloadId = auth.prisonCode),
     )
 
     verifyEventPublications(
@@ -176,12 +180,15 @@ class ChangeOccurrenceCommentsIntTest(
   private fun applyOccurrenceComments(
     id: UUID,
     request: ChangeOccurrenceComments,
+    username: String = DEFAULT_USERNAME,
+    caseloadId: String? = null,
     role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()
-    .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)
+    .uri(ChangeTapOccurrenceLocationIntTest.TAP_OCCURRENCE_MODIFICATION_URL, id)
     .bodyValue(request)
-    .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
+    .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
+    .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()
 
   companion object {

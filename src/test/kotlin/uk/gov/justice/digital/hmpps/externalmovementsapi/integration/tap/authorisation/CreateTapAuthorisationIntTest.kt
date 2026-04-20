@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
@@ -121,7 +122,9 @@ class CreateTapAuthorisationIntTest(
     val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = createTapAuthorisationRequest()
     val username = word(8)
-    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val caseloadId = word(6)
+    val res = createTapAuthorisation(pi, request, username, caseloadId)
+      .successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -143,7 +146,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username),
+      ExternalMovementContext.get().copy(username = username, caseloadId = caseloadId),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
@@ -261,7 +264,8 @@ class CreateTapAuthorisationIntTest(
         statusCode = AuthorisationStatus.Code.APPROVED,
       )
     val username = word(8)
-    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val res = createTapAuthorisation(pi, request, username, prisonCode)
+      .successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -286,7 +290,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username),
+      ExternalMovementContext.get().copy(username = username, caseloadId = prisonCode),
     )
 
     verifyEventPublications(
@@ -305,7 +309,9 @@ class CreateTapAuthorisationIntTest(
     val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = createTapAuthorisationRequest(repeat = true, schedule = FreeFormSchedule)
     val username = word(8)
-    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val caseloadId = prisonCode()
+    val res = createTapAuthorisation(pi, request, username, caseloadId)
+      .successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -328,7 +334,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username),
+      ExternalMovementContext.get().copy(username = username, caseloadId = caseloadId),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
@@ -349,7 +355,8 @@ class CreateTapAuthorisationIntTest(
       ),
     )
     val username = word(8)
-    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val res = createTapAuthorisation(pi, request, username, prisonCode)
+      .successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -372,7 +379,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username),
+      ExternalMovementContext.get().copy(username = username, caseloadId = prisonCode),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
@@ -408,7 +415,9 @@ class CreateTapAuthorisationIntTest(
       ),
     )
     val username = word(8)
-    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val caseloadId = prisonCode()
+    val res = createTapAuthorisation(pi, request, username, caseloadId)
+      .successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -431,7 +440,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username),
+      ExternalMovementContext.get().copy(username = username, caseloadId = caseloadId),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
@@ -453,7 +462,8 @@ class CreateTapAuthorisationIntTest(
       ),
     )
     val username = word(8)
-    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val res = createTapAuthorisation(pi, request, username, prisonCode)
+      .successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -476,7 +486,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username),
+      ExternalMovementContext.get().copy(username = username, caseloadId = prisonCode),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceAuthorisationPending(pi, saved.id)))
@@ -500,7 +510,8 @@ class CreateTapAuthorisationIntTest(
       ),
     )
     val username = word(8)
-    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val res = createTapAuthorisation(pi, request, username, prisonCode)
+      .successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -523,7 +534,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username),
+      ExternalMovementContext.get().copy(username = username, caseloadId = prisonCode),
     )
 
     verifyEventPublications(
@@ -542,7 +553,8 @@ class CreateTapAuthorisationIntTest(
     val prisoners = prisonerSearch.getPrisoners(prisonCode, setOf(pi))
     val request = createTapAuthorisationRequest(statusCode = AuthorisationStatus.Code.APPROVED)
     val username = word(8)
-    val res = createTapAuthorisation(pi, request, username).successResponse<ReferenceId>(HttpStatus.CREATED)
+    val res = createTapAuthorisation(pi, request, username, prisonCode)
+      .successResponse<ReferenceId>(HttpStatus.CREATED)
 
     assertThat(res.id).isNotNull
     val saved = requireNotNull(findTemporaryAbsenceAuthorisation(res.id))
@@ -564,7 +576,7 @@ class CreateTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username),
+      ExternalMovementContext.get().copy(username = username, caseloadId = prisonCode),
     )
 
     verifyEventPublications(
@@ -629,12 +641,14 @@ class CreateTapAuthorisationIntTest(
     personIdentifier: String,
     request: CreateTapAuthorisationRequest,
     username: String = DEFAULT_USERNAME,
+    caseloadId: String? = null,
     role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .post()
     .uri(CREATE_TAP_AUTH_URL, personIdentifier)
     .bodyValue(request)
     .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
+    .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()
 
   companion object {

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
@@ -34,6 +35,7 @@ class TapAuthorisationController(
   private val history: AuthorisationHistory,
   private val modify: TapAuthorisationModifications,
 ) {
+  @CaseloadIdHeader
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping("/{personIdentifier}")
   fun createTapAuthorisation(
@@ -53,9 +55,11 @@ class TapAuthorisationController(
   @GetMapping("/{id}/history")
   fun getTapAuthorisationHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
+  @CaseloadIdHeader
   @PutMapping("/{id}")
   fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) = modify.apply(id, action)
 
+  @CaseloadIdHeader
   @PostMapping("/{id}/occurrences")
   fun createOccurrence(
     @PathVariable id: UUID,

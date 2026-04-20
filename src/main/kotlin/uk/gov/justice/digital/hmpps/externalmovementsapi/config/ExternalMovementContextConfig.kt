@@ -44,7 +44,8 @@ class ExternalMovementContextInterceptor : HandlerInterceptor {
     } else {
       DataSource.DPS
     }
-    ExternalMovementContext(getUsername(), source = contextSource).set()
+    val caseloadId = request.getHeader(CaseloadIdHeader.NAME)
+    ExternalMovementContext(getUsername(), source = contextSource, caseloadId = caseloadId).set()
     return true
   }
 

@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
@@ -24,6 +25,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationApproved
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.username
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -58,7 +61,7 @@ class ApproveTapAuthorisationIntTest(
     approveAuthorisation(
       newUuid(),
       approveAuthorisationRequest(),
-      role,
+      role = role,
     ).expectStatus().isForbidden
   }
 
@@ -81,8 +84,9 @@ class ApproveTapAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = approveAuthorisationRequest()
-
-    val res = approveAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val username = username()
+    val caseloadId = word(3)
+    val res = approveAuthorisation(auth.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
@@ -102,7 +106,7 @@ class ApproveTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -115,18 +119,21 @@ class ApproveTapAuthorisationIntTest(
   }
 
   private fun approveAuthorisationRequest(
-    reason: String? = "Evidence justifying the approval",
+    reason: String? = word(25),
   ) = ApproveAuthorisation(reason)
 
   private fun approveAuthorisation(
     id: UUID,
     request: ApproveAuthorisation,
+    username: String = DEFAULT_USERNAME,
+    caseloadId: String? = null,
     role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()
-    .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
+    .uri(PauseTapAuthorisationIntTest.TAP_AUTHORISATION_MODIFICATION_URL, id)
     .bodyValue(request)
-    .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
+    .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
+    .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()
 
   companion object {

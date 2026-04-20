@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
@@ -19,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.username
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
@@ -55,7 +57,7 @@ class ChangeTapOccurrenceLocationIntTest(
     applyLocation(
       newUuid(),
       action(),
-      role,
+      role = role,
     ).expectStatus().isForbidden
   }
 
@@ -78,7 +80,9 @@ class ChangeTapOccurrenceLocationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyLocation(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val username = username()
+    val caseloadId = word(3)
+    val res = applyLocation(occurrence.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRelocated.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
@@ -100,7 +104,7 @@ class ChangeTapOccurrenceLocationIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -118,7 +122,7 @@ class ChangeTapOccurrenceLocationIntTest(
     val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, location = auth.locations.first))
     val occ2 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, location = auth.locations.first))
     val request = action()
-    val res = applyLocation(occ1.id, request).successResponse<AuditHistory>().content.single()
+    val res = applyLocation(occ1.id, request, caseloadId = auth.prisonCode).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRelocated.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
@@ -143,7 +147,7 @@ class ChangeTapOccurrenceLocationIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason, caseloadId = auth.prisonCode),
     )
 
     verifyEventPublications(
@@ -163,12 +167,15 @@ class ChangeTapOccurrenceLocationIntTest(
   private fun applyLocation(
     id: UUID,
     request: ChangeOccurrenceLocation,
+    username: String = DEFAULT_USERNAME,
+    caseloadId: String? = null,
     role: String? = Roles.TEMPORARY_ABSENCE_RW,
   ) = webTestClient
     .put()
     .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)
     .bodyValue(request)
-    .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
+    .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
+    .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()
 
   companion object {
