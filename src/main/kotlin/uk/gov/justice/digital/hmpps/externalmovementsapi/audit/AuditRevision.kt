@@ -41,6 +41,9 @@ class AuditRevision {
 
   var reason: String? = null
 
+  @Column(name = "caseload_id")
+  var caseloadId: String? = null
+
   @JdbcTypeCode(SqlTypes.ARRAY)
   @Column(name = "affected_entities", nullable = false)
   var affectedEntities: MutableSet<String> = sortedSetOf(String.CASE_INSENSITIVE_ORDER)
@@ -54,6 +57,7 @@ class AuditRevisionEntityListener : EntityTrackingRevisionListener {
       username = context.username
       source = context.source
       reason = context.reason
+      caseloadId = context.caseloadId
     }
   }
 
