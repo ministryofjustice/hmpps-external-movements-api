@@ -69,6 +69,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="active" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="next_domain" nullable="true" remarks="" size="32" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="hint_text" nullable="true" remarks="" size="255" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="ARRAY[]::character varying[]" digits="0" id="7" name="groups" nullable="false" remarks="" size="2147483647" type="_text" typeCode="2003"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_absence_sub_type" unique="true">
             <column ascending="true" name="id"/>
