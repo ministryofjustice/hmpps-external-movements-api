@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Pr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.ExternalMovementRecordedEvent
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
+import java.util.concurrent.TimeUnit
 
 class ExternalMovementRecordedEventIntTest(
   @Autowired private val taa: TempAbsenceAuthorisationOperations,
@@ -296,6 +297,51 @@ class ExternalMovementRecordedEventIntTest(
         ExternalMovementContext.get().copy(reason = null),
       )
     }
+  }
+
+  @Test
+  fun `authorisation for single not cancelled if movements exist`() {
+    val fromPrison = givenPrison()
+    prisonRegister.getPrisons(setOf(), setOf("OUT"))
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = fromPrison.code,
+        repeat = false,
+        locations = linkedSetOf(location()),
+      ),
+    )
+    val occurrence = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().plusDays(1).plusHours(1).truncatedTo(SECONDS),
+        end = LocalDateTime.now().plusDays(2).plusHours(3).truncatedTo(SECONDS),
+        location = auth.locations.first,
+        movements = listOf(temporaryAbsenceMovement(Direction.OUT, auth.person.identifier)),
+      ),
+    )
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
+
+    val event = emRecordedEvent(auth.person.identifier, "REL", toAgencyId = "OUT")
+    sendOffenderEvent(event)
+
+    TimeUnit.SECONDS.sleep(1)
+
+    val savedAuth = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(savedAuth.status.code).isEqualTo(AuthorisationStatus.Code.APPROVED.name)
+
+    val savedOccurrence = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
+    assertThat(savedOccurrence.status.code).isEqualTo(OccurrenceStatus.Code.IN_PROGRESS.name)
+    assertThat(savedOccurrence.dpsOnly).isFalse
+
+    verifyAudit(
+      savedAuth,
+      RevisionType.ADD,
+      setOf(
+        HmppsDomainEvent::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(reason = null),
+    )
   }
 
   private fun emRecordedEvent(

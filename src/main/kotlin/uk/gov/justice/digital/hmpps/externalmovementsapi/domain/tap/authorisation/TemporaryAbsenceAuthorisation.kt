@@ -416,11 +416,12 @@ interface TemporaryAbsenceAuthorisationRepository :
 
   @Query(
     """
-      select auth from TemporaryAbsenceAuthorisation auth
+      select auth from TemporaryAbsenceOccurrence occ join occ.authorisation auth
       where auth.person.identifier = :personIdentifier
       and auth.status.code in ('PENDING', 'APPROVED')
       and auth.end >= current_date
       and auth.prisonCode <> :prisonCode
+      and (auth.repeat or occ.movements is empty)
     """,
   )
   fun findAutoCancelAuthorisations(personIdentifier: String, prisonCode: String): List<TemporaryAbsenceAuthorisation>
@@ -433,6 +434,16 @@ interface TemporaryAbsenceAuthorisationRepository :
 
   @EntityGraph("tap.authorisation.full")
   override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceAuthorisation>
+
+  @Query(
+    """
+    select count(mov.id) 
+    from TemporaryAbsenceOccurrence occ
+    join occ.movements mov
+    where occ.authorisation.id = :authorisationId
+  """,
+  )
+  fun countMovementsFor(authorisationId: UUID): Int
 }
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")
