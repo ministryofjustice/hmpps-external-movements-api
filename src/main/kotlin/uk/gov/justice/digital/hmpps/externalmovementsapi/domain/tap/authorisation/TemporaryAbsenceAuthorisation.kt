@@ -434,16 +434,6 @@ interface TemporaryAbsenceAuthorisationRepository :
 
   @EntityGraph("tap.authorisation.full")
   override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceAuthorisation>
-
-  @Query(
-    """
-    select count(mov.id) 
-    from TemporaryAbsenceOccurrence occ
-    join occ.movements mov
-    where occ.authorisation.id = :authorisationId
-  """,
-  )
-  fun countMovementsFor(authorisationId: UUID): Int
 }
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")

@@ -1,9 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.SequencedSet
 import java.util.UUID
 
 data class ScheduledMovements(
@@ -15,32 +13,13 @@ data class ScheduledMovement(
   val personIdentifier: String,
   val domain: CodedDescription,
   val type: CodedDescription,
-  val description: String,
+  val description: ScheduledMovementDescription,
   val start: LocalDateTime,
   val end: LocalDateTime,
-  val location: String,
+  val location: LocationDescription,
   val status: CodedDescription,
-  val detail: Detail,
-) {
-  data class Detail(
-    val uiUrl: String,
-    val requiredRoles: Set<String>,
-  ) {
-    companion object {
-      fun buildUiUrl(uiBaseUrl: String, occurrenceId: UUID): String = "$uiBaseUrl/temporary-absences/$occurrenceId"
-    }
-  }
-}
-
-@ValidStartAndEnd
-data class SearchScheduledMovementsRequest(
-  val movementTypes: Set<ScheduledMovementType> = setOf(),
-  val personIdentifiers: SequencedSet<String> = linkedSetOf(),
-  override val start: LocalDateTime = LocalDate.now().atStartOfDay(),
-  override val end: LocalDateTime = LocalDate.now().plusDays(1).atStartOfDay(),
-  val includeSensitive: Boolean = false,
-  val includeLocation: Boolean = false,
-) : StartAndEnd<LocalDateTime>
+  val detail: ScheduledMovementDetail,
+)
 
 interface NamedAndDescribed {
   val name: String
