@@ -19,4 +19,6 @@ interface CategorisedAbsenceReason {
     absenceReasonCategory?.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY) }?.description,
     absenceReason.takeIf { reasonPath.has(ReferenceDataDomain.Code.ABSENCE_REASON) }?.description,
   ).joinToString(" > ")
+
+  fun shortDescription(): String = absenceReasonCategory?.description ?: absenceReason.description
 }

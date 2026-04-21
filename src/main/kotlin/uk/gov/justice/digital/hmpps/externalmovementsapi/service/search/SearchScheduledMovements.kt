@@ -6,17 +6,24 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.ServiceConfig
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.isExternalActivity
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrencePersonIdentifierIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.startAfter
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.startBefore
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ExternalActivities
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ExternalActivity
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.LocationDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement.Detail
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement.Detail.Companion.buildUiUrl
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementDetail
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementDetail.Companion.buildUiUrl
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovements
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementsRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.SearchExternalActivitiesRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.SearchScheduledMovementsRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.asCodedDescription
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.asCodedDescription
@@ -28,7 +35,7 @@ class SearchScheduledMovements(
   private val serviceConfig: ServiceConfig,
   private val taoRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
-  fun search(prisonCode: String, request: SearchScheduledMovementsRequest): ScheduledMovements = if (request.movementTypes.contains(ScheduledMovementType.TEMPORARY_ABSENCE)) {
+  fun externalMovements(prisonCode: String, request: SearchScheduledMovementsRequest): ScheduledMovements = if (request.movementTypes.contains(ScheduledMovementType.TEMPORARY_ABSENCE)) {
     taoRepository.findAll(request.asSpecification(prisonCode)).mapNotNull {
       it.scheduledMovement(request.includeSensitive, request.includeLocation, serviceConfig.uiBaseUrl)
     }.let {
@@ -37,9 +44,15 @@ class SearchScheduledMovements(
   } else {
     ScheduledMovements(emptyList())
   }
+
+  fun externalActivities(prisonCode: String, request: SearchExternalActivitiesRequest): ExternalActivities = taoRepository.findAll(
+    request.asSpecification(prisonCode).and(isExternalActivity()),
+  )
+    .map { it.externalActivity(serviceConfig.uiBaseUrl) }
+    .let { ExternalActivities(it) }
 }
 
-private fun SearchScheduledMovementsRequest.asSpecification(prisonCode: String): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
+private fun ScheduledMovementsRequest.asSpecification(prisonCode: String): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
   occurrenceMatchesPrisonCode(prisonCode),
   personIdentifiers.takeIf { it.isNotEmpty() }?.let { occurrencePersonIdentifierIn(it) },
   startAfter(start),
@@ -56,12 +69,12 @@ private fun TemporaryAbsenceOccurrence.scheduledMovement(
     person.identifier,
     ScheduledMovementDomain.EXTERNAL_MOVEMENTS.asCodedDescription(),
     ScheduledMovementType.TEMPORARY_ABSENCE.asCodedDescription(),
-    hierarchyDescription(reasonPath),
+    description(),
     start,
     end,
-    if (includeLocation) location.toString() else "External",
+    LocationDescription(if (includeLocation) location.toString() else "External"),
     status.asCodedDescription(),
-    Detail(buildUiUrl(uiBaseUrl, id), setOf()),
+    ScheduledMovementDetail(buildUiUrl(uiBaseUrl, id), setOf()),
   )
 } else {
   null
@@ -74,3 +87,15 @@ private fun TemporaryAbsenceOccurrence.isNotSensitive(): Boolean = isToday() ||
     AccompaniedBy.Code.ACCOMPANIED.value,
     AccompaniedBy.Code.UNACCOMPANIED.value,
   )
+
+private fun TemporaryAbsenceOccurrence.description() = ScheduledMovementDescription(hierarchyDescription(reasonPath), shortDescription())
+
+private fun TemporaryAbsenceOccurrence.externalActivity(uiBaseUrl: String): ExternalActivity = ExternalActivity(
+  id,
+  person.identifier,
+  description(),
+  start,
+  end,
+  status.asCodedDescription(),
+  ScheduledMovementDetail(buildUiUrl(uiBaseUrl, id), setOf()),
+)
