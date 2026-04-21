@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.DateRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.AbsenceCategorisationFilter
@@ -207,4 +208,16 @@ fun AbsenceCategorisationFilter.matchesOccurrence() = Specification<TemporaryAbs
   }
   val rd = tao.join<TemporaryAbsenceOccurrence, ReferenceData>(fieldName, JoinType.INNER)
   rd.get<String>(CODE).`in`(codes)
+}
+
+fun isExternalActivity() = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  val rd = tao.join<TemporaryAbsenceOccurrence, AbsenceSubType>(TemporaryAbsenceOccurrence.ABSENCE_SUB_TYPE, JoinType.INNER)
+  cb.isTrue(
+    cb.function(
+      "array_contains",
+      Boolean::class.java,
+      rd.get<Set<String>>(AbsenceSubType::groups.name),
+      cb.literal(arrayOf("EXTERNAL_ACTIVITIES")),
+    ),
+  )
 }

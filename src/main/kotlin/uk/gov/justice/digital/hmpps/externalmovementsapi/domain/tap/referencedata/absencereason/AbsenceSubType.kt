@@ -7,6 +7,8 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Cache
 import org.hibernate.annotations.CacheConcurrencyStrategy
 import org.hibernate.annotations.Immutable
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.DomainLinkedReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.Hintable
@@ -26,6 +28,9 @@ class AbsenceSubType(
   nextDomain: ReferenceDataDomain.Code?,
   @Column(name = "hint_text")
   override val hintText: String?,
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "groups", nullable = false, columnDefinition = "varchar[]")
+  val groups: Array<String> = arrayOf(),
 ) : DomainLinkedReferenceData(code, description, sequenceNumber, active, nextDomain, id),
   Hintable {
   enum class Code(val value: String) {
