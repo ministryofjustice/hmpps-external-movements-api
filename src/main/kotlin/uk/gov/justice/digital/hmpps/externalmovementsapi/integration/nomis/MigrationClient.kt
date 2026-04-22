@@ -19,6 +19,6 @@ class MigrationClient(@Qualifier("nomisMigrationWebClient") private val webClien
   }
 
   companion object {
-    const val MIGRATION_REPAIR_URL = "/migrate/external-movements/repair/{personIdentifier}"
+    const val MIGRATION_REPAIR_URL = "/migrate/taps/repair/{personIdentifier}"
   }
 }
