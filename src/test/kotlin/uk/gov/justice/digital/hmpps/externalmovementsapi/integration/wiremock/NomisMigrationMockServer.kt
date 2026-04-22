@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersea
 class NomisMigrationServer : WireMockServer(9990) {
   fun requestRepair(status: HttpStatus = HttpStatus.OK) {
     stubFor(
-      put(urlMatching("/migrate/external-movements/repair/${Prisoner.PATTERN}"))
+      put(urlMatching("/migrate/taps/repair/${Prisoner.PATTERN}"))
         .willReturn(aResponse().withStatus(status.value())),
     )
   }
