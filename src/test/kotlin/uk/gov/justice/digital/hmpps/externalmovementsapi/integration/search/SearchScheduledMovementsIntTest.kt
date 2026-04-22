@@ -24,10 +24,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovements
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.SearchScheduledMovementsRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter.ISO_DATE_TIME
 import java.time.temporal.ChronoUnit
+import java.util.SequencedSet
 
 class SearchScheduledMovementsIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
@@ -118,7 +119,7 @@ class SearchScheduledMovementsIntTest(
       prisonCode,
       start = toFind.start.truncatedTo(ChronoUnit.MINUTES),
       end = toFind.end.truncatedTo(ChronoUnit.MINUTES),
-      personIdentifiers = listOf(auth1.person.identifier),
+      personIdentifiers = linkedSetOf(auth1.person.identifier),
     ).successResponse<ScheduledMovements>()
     assertThat(res.content).hasSize(1)
     res.content.first().verifyAgainst(toFind)
@@ -213,26 +214,14 @@ class SearchScheduledMovementsIntTest(
     movementTypes: Set<ScheduledMovementType> = setOf(ScheduledMovementType.TEMPORARY_ABSENCE),
     start: LocalDateTime? = null,
     end: LocalDateTime? = null,
-    personIdentifiers: List<String> = listOf(),
+    personIdentifiers: SequencedSet<String> = linkedSetOf(),
     includeLocation: Boolean = false,
     includeSensitive: Boolean = false,
     role: String? = listOf(Roles.EXTERNAL_MOVEMENTS_RO, Roles.EXTERNAL_MOVEMENTS_RW).random(),
   ) = webTestClient
-    .get()
-    .uri { uri ->
-      uri.path(SEARCH_EM_URL)
-      movementTypes.takeIf { it.isNotEmpty() }?.also { uri.queryParam("movementTypes", *it.toTypedArray()) }
-      start?.also { uri.queryParam("start", ISO_DATE_TIME.format(it)) }
-      end?.also { uri.queryParam("end", ISO_DATE_TIME.format(it)) }
-      personIdentifiers.takeIf { it.isNotEmpty() }?.also { uri.queryParam("personIdentifiers", *it.toTypedArray()) }
-      if (includeLocation) {
-        uri.queryParam("includeLocation", true)
-      }
-      if (includeSensitive) {
-        uri.queryParam("includeSensitive", true)
-      }
-      uri.build(prisonCode)
-    }
+    .post()
+    .uri(SEARCH_EM_URL, prisonCode)
+    .bodyValue(SearchScheduledMovementsRequest(movementTypes, personIdentifiers, start, end, includeSensitive, includeLocation))
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
