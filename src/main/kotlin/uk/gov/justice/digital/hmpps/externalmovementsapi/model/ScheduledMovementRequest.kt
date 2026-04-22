@@ -11,18 +11,24 @@ interface ScheduledMovementsRequest : StartAndEnd<LocalDateTime> {
 }
 
 @ValidStartAndEnd
-data class SearchScheduledMovementsRequest(
+class SearchScheduledMovementsRequest(
   val movementTypes: Set<ScheduledMovementType> = setOf(),
   override val personIdentifiers: SequencedSet<String> = linkedSetOf(),
-  override val start: LocalDateTime = LocalDate.now().atStartOfDay(),
-  override val end: LocalDateTime = LocalDate.now().plusDays(1).atStartOfDay(),
+  start: LocalDateTime? = null,
+  end: LocalDateTime? = null,
   val includeSensitive: Boolean = false,
   val includeLocation: Boolean = false,
-) : ScheduledMovementsRequest
+) : ScheduledMovementsRequest {
+  override val start: LocalDateTime = start ?: LocalDate.now().atStartOfDay()
+  override val end: LocalDateTime = end ?: LocalDate.now().plusDays(1).atStartOfDay()
+}
 
 @ValidStartAndEnd
-data class SearchExternalActivitiesRequest(
+class SearchExternalActivitiesRequest(
   override val personIdentifiers: SequencedSet<String> = linkedSetOf(),
-  override val start: LocalDateTime = LocalDate.now().atStartOfDay(),
-  override val end: LocalDateTime = LocalDate.now().plusDays(1).atStartOfDay(),
-) : ScheduledMovementsRequest
+  start: LocalDateTime? = null,
+  end: LocalDateTime? = null,
+) : ScheduledMovementsRequest {
+  override val start: LocalDateTime = start ?: LocalDate.now().atStartOfDay()
+  override val end: LocalDateTime = end ?: LocalDate.now().plusDays(1).atStartOfDay()
+}

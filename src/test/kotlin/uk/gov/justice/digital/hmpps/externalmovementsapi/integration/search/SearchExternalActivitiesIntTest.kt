@@ -22,9 +22,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ExternalActivities
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ExternalActivity
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.SearchExternalActivitiesRequest
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter.ISO_DATE_TIME
 import java.time.temporal.ChronoUnit
+import java.util.SequencedSet
 
 class SearchExternalActivitiesIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
@@ -123,7 +124,7 @@ class SearchExternalActivitiesIntTest(
       prisonCode,
       start = toFind.start.truncatedTo(ChronoUnit.MINUTES),
       end = toFind.end.truncatedTo(ChronoUnit.MINUTES),
-      personIdentifiers = listOf(auth1.person.identifier),
+      personIdentifiers = linkedSetOf(auth1.person.identifier),
     ).successResponse<ExternalActivities>()
     assertThat(res.content).hasSize(1)
     res.content.first().verifyAgainst(toFind)
@@ -150,17 +151,12 @@ class SearchExternalActivitiesIntTest(
     prisonCode: String,
     start: LocalDateTime? = null,
     end: LocalDateTime? = null,
-    personIdentifiers: List<String> = listOf(),
+    personIdentifiers: SequencedSet<String> = linkedSetOf(),
     role: String? = listOf(Roles.EXTERNAL_MOVEMENTS_RO, Roles.EXTERNAL_MOVEMENTS_RW).random(),
   ) = webTestClient
-    .get()
-    .uri { uri ->
-      uri.path(SEARCH_EA_URL)
-      start?.also { uri.queryParam("start", ISO_DATE_TIME.format(it)) }
-      end?.also { uri.queryParam("end", ISO_DATE_TIME.format(it)) }
-      personIdentifiers.takeIf { it.isNotEmpty() }?.also { uri.queryParam("personIdentifiers", *it.toTypedArray()) }
-      uri.build(prisonCode)
-    }
+    .post()
+    .uri(SEARCH_EA_URL, prisonCode)
+    .bodyValue(SearchExternalActivitiesRequest(personIdentifiers, start, end))
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
