@@ -12,4 +12,4 @@ data class ScheduledMovementDetail(
 }
 
 data class LocationDescription(val description: String)
-data class ScheduledMovementDescription(val full: String, val short: String)
+data class ScheduledMovementDescription(val full: String, val short: String, val code: String)
