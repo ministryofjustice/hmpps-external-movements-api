@@ -88,7 +88,7 @@ private fun TemporaryAbsenceOccurrence.isNotSensitive(): Boolean = isToday() ||
     AccompaniedBy.Code.UNACCOMPANIED.value,
   )
 
-private fun TemporaryAbsenceOccurrence.description() = ScheduledMovementDescription(hierarchyDescription(reasonPath), shortDescription())
+private fun TemporaryAbsenceOccurrence.description() = ScheduledMovementDescription(hierarchyDescription(reasonPath), shortDescription(), absenceReason.code)
 
 private fun TemporaryAbsenceOccurrence.externalActivity(uiBaseUrl: String): ExternalActivity = ExternalActivity(
   id,
