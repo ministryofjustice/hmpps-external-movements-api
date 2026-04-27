@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.matchesOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceIsAccompanied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPersonPrisonCode
@@ -53,6 +54,7 @@ class SearchTapOccurrence(
     occurrenceOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
     absenceCategorisation?.matchesOccurrence(),
+    isAccompanied?.let { occurrenceIsAccompanied(it) },
     queryString?.let {
       if (isPersonIdentifier()) {
         occurrenceMatchesPersonIdentifier(it, prisonCode)

@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence
 
 import jakarta.persistence.QueryHint
+import jakarta.persistence.criteria.Expression
 import jakarta.persistence.criteria.JoinType
+import jakarta.persistence.criteria.Predicate
 import org.hibernate.jpa.HibernateHints
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
@@ -20,12 +22,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.AUTHORISATION
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.PRISON_CODE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.STATUS
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
@@ -208,6 +212,12 @@ fun AbsenceCategorisationFilter.matchesOccurrence() = Specification<TemporaryAbs
   }
   val rd = tao.join<TemporaryAbsenceOccurrence, ReferenceData>(fieldName, JoinType.INNER)
   rd.get<String>(CODE).`in`(codes)
+}
+
+fun occurrenceIsAccompanied(accompanied: Boolean) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  val accompaniedBy = tao.join<TemporaryAbsenceOccurrence, AccompaniedBy>(ACCOMPANIED_BY, JoinType.INNER)
+  val equalFun: (Expression<*>, String) -> Predicate = if (accompanied) cb::notEqual else cb::equal
+  equalFun(accompaniedBy.get<String>(CODE), AccompaniedBy.Code.UNACCOMPANIED.value)
 }
 
 fun isExternalActivity() = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
