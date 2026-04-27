@@ -17,6 +17,7 @@ data class TapOccurrenceSearchRequest(
   override val end: LocalDate? = null,
   val status: Set<OccurrenceStatus.Code> = emptySet(),
   val absenceCategorisation: AbsenceCategorisationFilter? = null,
+  val isAccompanied: Boolean? = null,
   override val query: String? = null,
   override val page: Int = 1,
   override val size: Int = 10,

@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
@@ -642,6 +643,61 @@ class SearchTapOccurrenceIntTest(
     assertThat(res.content.single().id).isEqualTo(fOccurrence.id)
   }
 
+  @Test
+  fun `can find by accompanied`() {
+    val prisonCode = prisonCode()
+    val start = LocalDate.now().plusDays(1)
+    val end = LocalDate.now().plusDays(3)
+
+    val accompanied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = AuthorisationStatus.Code.PENDING,
+        accompaniedByCode = AccompaniedBy.Code.ACCOMPANIED.value,
+        start = start,
+        end = end,
+      ),
+    )
+    val ao = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        accompanied,
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
+      ),
+    )
+    val unaccompanied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = AuthorisationStatus.Code.PENDING,
+        accompaniedByCode = AccompaniedBy.Code.UNACCOMPANIED.value,
+        start = start,
+        end = end,
+      ),
+    )
+    val uo = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        unaccompanied,
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
+      ),
+    )
+
+    val res = searchTapOccurrences(prisonCode, isAccompanied = null).successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res.content.size).isEqualTo(2)
+    assertThat(res.metadata.totalElements).isEqualTo(2)
+    assertThat(res.content.map { it.id }).containsExactlyInAnyOrder(ao.id, uo.id)
+
+    val res2 = searchTapOccurrences(prisonCode, isAccompanied = true).successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(1)
+    assertThat(res2.metadata.totalElements).isEqualTo(1)
+    assertThat(res2.content.first().id).isEqualTo(ao.id)
+
+    val res3 = searchTapOccurrences(prisonCode, isAccompanied = false).successResponse<TapOccurrenceSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(1)
+    assertThat(res3.metadata.totalElements).isEqualTo(1)
+    assertThat(res3.content.first().id).isEqualTo(uo.id)
+  }
+
   private fun searchTapOccurrences(
     prisonCode: String,
     start: LocalDate? = LocalDate.now(),
@@ -649,6 +705,7 @@ class SearchTapOccurrenceIntTest(
     query: String? = null,
     statuses: List<OccurrenceStatus.Code>? = null,
     absenceCategorisation: AbsenceCategorisationFilter? = null,
+    isAccompanied: Boolean? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
@@ -661,6 +718,7 @@ class SearchTapOccurrenceIntTest(
         end,
         statuses?.toSet() ?: emptySet(),
         absenceCategorisation,
+        isAccompanied,
         query,
         sort = sort ?: START,
       ),
