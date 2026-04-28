@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSum
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData.Companion.SEQUENCE_NUMBER
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.ABSENCE_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.REPEAT
@@ -32,13 +33,14 @@ data class TapAuthorisationSearchRequest(
   val status: Set<AuthorisationStatus.Code> = emptySet(),
   @Valid
   val absenceCategorisation: AbsenceCategorisationFilter? = null,
+  val isAccompanied: Boolean? = null,
   override val query: String? = null,
   override val page: Int = 1,
   override val size: Int = 10,
   override val sort: String = START,
 ) : PagedRequest,
   PersonIdentifierDateRange<LocalDate> {
-  override fun validSortFields(): Set<String> = setOf(START, END, STATUS, ABSENCE_TYPE, ABSENCE_REASON, REPEAT, FIRST_NAME, LAST_NAME)
+  override fun validSortFields(): Set<String> = setOf(START, END, STATUS, ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY, REPEAT, FIRST_NAME, LAST_NAME)
 
   private fun sortByDate(direction: Direction, first: String, second: String) = by(direction, first, second).and(sortByPersonName())
 
@@ -57,7 +59,7 @@ data class TapAuthorisationSearchRequest(
     START -> sortByDate(direction, START, END)
     END -> sortByDate(direction, END, START)
     STATUS -> by(direction, "${STATUS}_${SEQUENCE_NUMBER}").and(sortByPersonName())
-    ABSENCE_TYPE, ABSENCE_REASON -> by(direction, "${field}_description").and(sortByPersonName())
+    ABSENCE_TYPE, ABSENCE_REASON, ACCOMPANIED_BY -> by(direction, "${field}_description").and(sortByPersonName())
     else -> by(direction, field).and(sortByPersonName())
   }
 

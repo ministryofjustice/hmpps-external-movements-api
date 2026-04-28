@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationIsAccompanied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonIdentifier
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonName
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.authorisationMatchesPersonPrisonCode
@@ -42,6 +43,7 @@ class SearchTapAuthorisation(
     authorisationOverlapsDateRange(start, end),
     status.takeIf { it.isNotEmpty() }?.let { authorisationStatusCodeIn(it) },
     absenceCategorisation?.matchesAuthorisation(),
+    isAccompanied?.let { authorisationIsAccompanied(it) },
     queryString?.let {
       if (isPersonIdentifier()) {
         authorisationMatchesPersonIdentifier(it, prisonCode)

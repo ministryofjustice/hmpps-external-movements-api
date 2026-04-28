@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.validation.Valid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.PersonIdentifierDateRange
@@ -16,6 +17,7 @@ data class TapOccurrenceSearchRequest(
   override val start: LocalDate? = null,
   override val end: LocalDate? = null,
   val status: Set<OccurrenceStatus.Code> = emptySet(),
+  @Valid
   val absenceCategorisation: AbsenceCategorisationFilter? = null,
   val isAccompanied: Boolean? = null,
   override val query: String? = null,

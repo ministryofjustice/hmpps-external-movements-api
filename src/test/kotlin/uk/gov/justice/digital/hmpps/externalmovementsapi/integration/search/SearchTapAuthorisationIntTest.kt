@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -282,6 +283,45 @@ class SearchTapAuthorisationIntTest(
   }
 
   @Test
+  fun `can find by accompanied`() {
+    val prisonCode = prisonCode()
+    val start = LocalDate.now().plusDays(1)
+    val end = LocalDate.now().plusDays(3)
+
+    val accompanied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        start = start,
+        end = end,
+        accompaniedByCode = AccompaniedBy.Code.ACCOMPANIED.value,
+      ),
+    )
+    val unaccompanied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        start = start,
+        end = end,
+        accompaniedByCode = AccompaniedBy.Code.UNACCOMPANIED.value,
+      ),
+    )
+
+    val res = searchTapAuthorisations(prisonCode, isAccompanied = null).successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res.content.size).isEqualTo(2)
+    assertThat(res.metadata.totalElements).isEqualTo(2)
+    assertThat(res.content.map { it.id }).containsExactlyInAnyOrder(accompanied.id, unaccompanied.id)
+
+    val res1 = searchTapAuthorisations(prisonCode, isAccompanied = true).successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(1)
+    assertThat(res1.metadata.totalElements).isEqualTo(1)
+    assertThat(res1.content.single().id).isEqualTo(accompanied.id)
+
+    val res2 = searchTapAuthorisations(prisonCode, isAccompanied = false).successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(1)
+    assertThat(res2.metadata.totalElements).isEqualTo(1)
+    assertThat(res2.content.single().id).isEqualTo(unaccompanied.id)
+  }
+
+  @Test
   fun `can sort by name`() {
     val prisonCode = prisonCode()
     val start = LocalDate.now().plusDays(1)
@@ -397,6 +437,42 @@ class SearchTapAuthorisationIntTest(
       approved.person.identifier,
       pending.person.identifier,
     )
+  }
+
+  @Test
+  fun `can sort by accompanied by`() {
+    val prisonCode = prisonCode()
+    val start = LocalDate.now().plusDays(1)
+    val end = LocalDate.now().plusDays(2)
+
+    val accompanied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        start = start,
+        end = end,
+        accompaniedByCode = AccompaniedBy.Code.ACCOMPANIED.value,
+      ),
+    )
+    val unaccompanied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        start = start,
+        end = end,
+        accompaniedByCode = AccompaniedBy.Code.UNACCOMPANIED.value,
+      ),
+    )
+
+    val res1 = searchTapAuthorisations(prisonCode, sort = "accompaniedBy,asc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res1.content.size).isEqualTo(2)
+    assertThat(res1.metadata.totalElements).isEqualTo(2)
+    assertThat(res1.content.map { it.id }).containsExactly(accompanied.id, unaccompanied.id)
+
+    val res2 = searchTapAuthorisations(prisonCode, sort = "accompaniedBy,desc")
+      .successResponse<TapAuthorisationSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(2)
+    assertThat(res2.metadata.totalElements).isEqualTo(2)
+    assertThat(res2.content.map { it.id }).containsExactly(unaccompanied.id, accompanied.id)
   }
 
   @Test
@@ -530,6 +606,7 @@ class SearchTapAuthorisationIntTest(
     end: LocalDate? = LocalDate.now().plusDays(1),
     status: AuthorisationStatus.Code? = null,
     absenceCategorisation: AbsenceCategorisationFilter? = null,
+    isAccompanied: Boolean? = null,
     query: String? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
@@ -543,6 +620,7 @@ class SearchTapAuthorisationIntTest(
         end,
         setOfNotNull(status),
         absenceCategorisation,
+        isAccompanied,
         query,
         sort = sort ?: START,
       ),
