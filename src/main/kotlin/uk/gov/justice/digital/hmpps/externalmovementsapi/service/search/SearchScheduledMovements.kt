@@ -9,9 +9,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.isExternalActivity
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceMatchesPrisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrencePersonIdentifierIn
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.occurrenceStatusCodeIn
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.startAfter
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.startBefore
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ExternalActivities
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ExternalActivity
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.LocationDescription
@@ -46,10 +48,16 @@ class SearchScheduledMovements(
   }
 
   fun externalActivities(prisonCode: String, request: SearchExternalActivitiesRequest): ExternalActivities = taoRepository.findAll(
-    request.asSpecification(prisonCode).and(isExternalActivity()),
-  )
-    .map { it.externalActivity(serviceConfig.uiBaseUrl) }
-    .let { ExternalActivities(it) }
+    request.asSpecification(prisonCode)
+      .and(isExternalActivity())
+      .and(occurrenceStatusCodeIn(STATUSES_OF_INTEREST)),
+  ).map { it.externalActivity(serviceConfig.uiBaseUrl) }.let { ExternalActivities(it) }
+
+  companion object {
+    private val IGNORE_STATUS_CODES =
+      listOf(OccurrenceStatus.Code.PENDING, OccurrenceStatus.Code.DENIED, OccurrenceStatus.Code.EXPIRED)
+    private val STATUSES_OF_INTEREST = OccurrenceStatus.Code.entries.filter { it !in IGNORE_STATUS_CODES }.toSet()
+  }
 }
 
 private fun ScheduledMovementsRequest.asSpecification(prisonCode: String): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
