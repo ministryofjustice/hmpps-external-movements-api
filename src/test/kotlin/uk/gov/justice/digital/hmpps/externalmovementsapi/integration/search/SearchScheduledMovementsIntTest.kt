@@ -207,6 +207,7 @@ class SearchScheduledMovementsIntTest(
     assertThat(end).isCloseTo(tao.end, within(10, ChronoUnit.SECONDS))
     assertThat(detail.uiUrl).isEqualTo("https://local-ui/temporary-absences/$id")
     assertThat(description.short).isEqualTo(tao.absenceReasonCategory?.description ?: tao.absenceReason.description)
+    assertThat(description.code).isEqualTo(tao.absenceReason.code)
   }
 
   private fun searchScheduleMovements(
