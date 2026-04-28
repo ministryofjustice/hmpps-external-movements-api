@@ -14,6 +14,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -23,6 +25,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ExternalActivities
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ExternalActivity
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.SearchExternalActivitiesRequest
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.SequencedSet
@@ -128,6 +131,48 @@ class SearchExternalActivitiesIntTest(
     ).successResponse<ExternalActivities>()
     assertThat(res.content).hasSize(1)
     res.content.first().verifyAgainst(toFind)
+  }
+
+  @Test
+  fun `200 ok - pending denied expired are not returned`() {
+    val prisonCode = prisonCode()
+    val pendingAuth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = AuthorisationStatus.Code.PENDING,
+      ),
+    )
+    val pending = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(pendingAuth))
+    assertThat(pending.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
+    val deniedAuth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = AuthorisationStatus.Code.DENIED,
+      ),
+    )
+    val denied = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(deniedAuth))
+    assertThat(denied.status.code).isEqualTo(OccurrenceStatus.Code.DENIED.name)
+    val expiredAuth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode,
+        status = AuthorisationStatus.Code.EXPIRED,
+        end = LocalDate.now().minusDays(5),
+      ),
+    )
+    val expired = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(expiredAuth))
+    assertThat(expired.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode))
+    val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    assertThat(occ.status.code).isEqualTo(OccurrenceStatus.Code.SCHEDULED.name)
+
+    val res = searchExternalActivities(
+      prisonCode,
+      start = LocalDateTime.now().minusDays(7),
+      end = LocalDateTime.now().plusDays(7),
+    ).successResponse<ExternalActivities>()
+    assertThat(res.content).hasSize(1)
+    res.content.first().verifyAgainst(occ)
   }
 
   @Test
