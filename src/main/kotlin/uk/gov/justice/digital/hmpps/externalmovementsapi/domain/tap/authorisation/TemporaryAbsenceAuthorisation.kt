@@ -11,7 +11,9 @@ import jakarta.persistence.QueryHint
 import jakarta.persistence.Table
 import jakarta.persistence.Transient
 import jakarta.persistence.Version
+import jakarta.persistence.criteria.Expression
 import jakarta.persistence.criteria.JoinType
+import jakarta.persistence.criteria.Predicate
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.hibernate.annotations.Fetch
@@ -44,6 +46,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.CategorisedAbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonRelated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.ACCOMPANIED_BY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.END
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PERSON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.PRISON_CODE
@@ -369,6 +372,7 @@ final class TemporaryAbsenceAuthorisation(
     val ABSENCE_REASON_CATEGORY = TemporaryAbsenceAuthorisation::absenceReasonCategory.name
     val ABSENCE_REASON = TemporaryAbsenceAuthorisation::absenceReason.name
     val ID = TemporaryAbsenceAuthorisation::id.name
+    val ACCOMPANIED_BY = TemporaryAbsenceAuthorisation::accompaniedBy.name
 
     fun changeableProperties(): Set<KProperty1<TemporaryAbsenceAuthorisation, Any?>> = setOf(
       TemporaryAbsenceAuthorisation::absenceType,
@@ -484,4 +488,10 @@ fun AbsenceCategorisationFilter.matchesAuthorisation() = Specification<Temporary
   }
   val rd = taa.join<TemporaryAbsenceAuthorisation, ReferenceData>(fieldName, JoinType.INNER)
   rd.get<String>(CODE).`in`(codes)
+}
+
+fun authorisationIsAccompanied(accompanied: Boolean) = Specification<TemporaryAbsenceAuthorisation> { taa, _, cb ->
+  val accompaniedBy = taa.join<TemporaryAbsenceAuthorisation, AccompaniedBy>(ACCOMPANIED_BY, JoinType.INNER)
+  val equalFun: (Expression<*>, String) -> Predicate = if (accompanied) cb::notEqual else cb::equal
+  equalFun(accompaniedBy.get<String>(CODE), AccompaniedBy.Code.UNACCOMPANIED.value)
 }
