@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.controller
 
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags.UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.CreateTapAuthorisationRequest
@@ -26,6 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.service.history.Authori
 import java.time.LocalDate
 import java.util.UUID
 
+@Tag(name = UI)
 @RestController
 @RequestMapping("/temporary-absence-authorisations")
 @PreAuthorize("hasRole('${Roles.TEMPORARY_ABSENCE_RW}')")

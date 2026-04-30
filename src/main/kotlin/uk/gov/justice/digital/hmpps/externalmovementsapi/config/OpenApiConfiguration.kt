@@ -6,10 +6,12 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
 import io.swagger.v3.oas.models.tags.Tag
+import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.ApplicationContext
@@ -21,10 +23,19 @@ import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.method.HandlerMethod
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags.INTEGRATIONS
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags.SYNC
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags.UI
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 object OpenApiTags {
+  const val INTEGRATIONS = "Integrations"
   const val SYNC = "Sync"
+  const val UI = "UI"
 }
 
 @Configuration
@@ -32,14 +43,42 @@ class OpenApiConfiguration(buildProperties: BuildProperties, private val context
   private val version: String? = buildProperties.version
 
   @Bean
+  fun localDateTimeCustomiser(): OpenApiCustomizer = OpenApiCustomizer { openApi ->
+    openApi.components.schemas.values.forEach { schema ->
+      val props = schema.properties ?: return@forEach
+      props.forEach { (name, property) ->
+        if (property.type == "string" && property.format == "date-time") {
+          props[name] = Schema<String>().apply {
+            example = "${LocalDate.now()}T${DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now())}"
+            type = property.type
+            format = property.format
+            nullable = property.nullable
+            deprecated = property.deprecated
+            readOnly = property.readOnly
+            writeOnly = property.writeOnly
+            extensions = property.extensions
+            title = property.title
+          }
+        }
+      }
+    }
+  }
+
+  @Bean
   fun customOpenAPI(): OpenAPI = OpenAPI()
     .servers(
       listOf(
         Server().url("https://external-movements-api-dev.hmpps.service.justice.gov.uk").description("Development"),
-        Server().url("https://external-movements-api-preprod.hmpps.service.justice.gov.uk")
-          .description("Pre-Production"),
+        Server().url("https://external-movements-api-preprod.hmpps.service.justice.gov.uk").description("Pre-Production"),
         Server().url("https://external-movements-api.hmpps.service.justice.gov.uk").description("Production"),
         Server().url("http://localhost:8080").description("Local"),
+      ),
+    )
+    .tags(
+      listOf(
+        Tag().name(INTEGRATIONS).description("DPS integration endpoints"),
+        Tag().name(UI).description("UI endpoints - not to be use by any other client"),
+        Tag().name(SYNC).description("Legacy sync endpoints - not to be use by any other client"),
       ),
     )
     .info(
@@ -57,7 +96,6 @@ class OpenApiConfiguration(buildProperties: BuildProperties, private val context
       ),
     )
     .addSecurityItem(SecurityRequirement().addList("bearer-jwt", listOf("read", "write")))
-    .addTagsItem(Tag().name(SYNC).description("Endpoints for sync only"))
     .also { PrimitiveType.enablePartialTime() }
 
   @Bean
