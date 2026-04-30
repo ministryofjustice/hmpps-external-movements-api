@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.controller
 
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PathVariable
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags.UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PersonTapSearchRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.PersonTapSearchResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapAuthorisationSearchRequest
@@ -17,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.paged.TapOccurren
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.search.SearchTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.search.SearchTapOccurrence
 
+@Tag(name = UI)
 @RestController
 @RequestMapping("/search")
 @PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
