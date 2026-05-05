@@ -18,3 +18,4 @@ service:
   authorisation-expiration:
     cron: "0 30 2 * * *"
   ui-base-url: "https://external-movements.hmpps.service.justice.gov.uk"
+  api-base-url: "https://external-movements-api.hmpps.service.justice.gov.uk"

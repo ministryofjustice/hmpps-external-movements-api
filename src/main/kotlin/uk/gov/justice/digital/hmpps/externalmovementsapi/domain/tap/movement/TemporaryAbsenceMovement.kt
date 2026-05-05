@@ -277,6 +277,7 @@ interface TemporaryAbsenceMovementRepository :
   fun findByLegacyId(legacyId: String): TemporaryAbsenceMovement?
 
   fun countByOccurrenceId(occurrenceId: UUID): Int
+  fun findByOccurrenceId(occurrenceId: UUID): List<TemporaryAbsenceMovement>
   fun findAllByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceMovement>
 
   @Query(
