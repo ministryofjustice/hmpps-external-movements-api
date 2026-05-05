@@ -21,6 +21,7 @@ data class ServiceConfig(
   val domainEvents: DomainEventConfig,
   val occurrenceStatus: OccurrenceStatusConfig,
   val uiBaseUrl: String,
+  val apiBaseUrl: String,
   val disablePrisonEvents: Set<String> = setOf(),
   val autoCancelEnabled: Boolean = false,
 ) {

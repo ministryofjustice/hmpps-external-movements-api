@@ -65,6 +65,7 @@ service:
   disable-prison-events:
     - LEI
   auto-cancel-enabled: true
+  api-base-url: "http://local-api"
 
 springdoc:
   api-docs:
