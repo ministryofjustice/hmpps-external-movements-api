@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.integration.IntegrationUrlBuilder.movementUrl
 import java.util.UUID
 
 data class TapProgressInformation(
@@ -16,10 +17,12 @@ data class TemporaryAbsenceStarted(
   override val personReference: PersonReference,
 ) : DomainEvent<TapProgressInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence has started."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.started"
+    const val DESCRIPTION: String = "A temporary absence has started."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -37,10 +40,12 @@ data class TemporaryAbsenceCompleted(
   override val personReference: PersonReference,
 ) : DomainEvent<TapProgressInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence has completed."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.completed"
+    const val DESCRIPTION: String = "A temporary absence has completed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
