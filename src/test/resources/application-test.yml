@@ -66,6 +66,7 @@ service:
     - LEI
   auto-cancel-enabled: true
   api-base-url: "http://local-api"
+  http-protocol: http11
 
 springdoc:
   api-docs:
