@@ -17,35 +17,14 @@ import java.util.UUID
     Type(value = TemporaryAbsenceAuthorisationResumed::class, name = TemporaryAbsenceAuthorisationResumed.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDeferred::class, name = TemporaryAbsenceAuthorisationDeferred.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationDenied::class, name = TemporaryAbsenceAuthorisationDenied.EVENT_TYPE),
-    Type(
-      value = TemporaryAbsenceAuthorisationCancelled::class,
-      name = TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE,
-    ),
+    Type(value = TemporaryAbsenceAuthorisationCancelled::class, name = TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE),
     Type(value = TemporaryAbsenceAuthorisationExpired::class, name = TemporaryAbsenceAuthorisationExpired.EVENT_TYPE),
-    Type(
-      value = TemporaryAbsenceAuthorisationDateRangeChanged::class,
-      name = TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE,
-    ),
-    Type(
-      value = TemporaryAbsenceAuthorisationAccompanimentChanged::class,
-      name = TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE,
-    ),
-    Type(
-      value = TemporaryAbsenceAuthorisationTransportChanged::class,
-      name = TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE,
-    ),
-    Type(
-      value = TemporaryAbsenceAuthorisationCommentsChanged::class,
-      name = TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE,
-    ),
-    Type(
-      value = TemporaryAbsenceAuthorisationRecategorised::class,
-      name = TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE,
-    ),
-    Type(
-      value = TemporaryAbsenceAuthorisationRelocated::class,
-      name = TemporaryAbsenceAuthorisationRelocated.EVENT_TYPE,
-    ),
+    Type(value = TemporaryAbsenceAuthorisationDateRangeChanged::class, name = TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationAccompanimentChanged::class, name = TemporaryAbsenceAuthorisationAccompanimentChanged.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationTransportChanged::class, name = TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationCommentsChanged::class, name = TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationRecategorised::class, name = TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE),
+    Type(value = TemporaryAbsenceAuthorisationRelocated::class, name = TemporaryAbsenceAuthorisationRelocated.EVENT_TYPE),
 
     Type(value = TemporaryAbsenceScheduled::class, name = TemporaryAbsenceScheduled.EVENT_TYPE),
     Type(value = TemporaryAbsencePaused::class, name = TemporaryAbsencePaused.EVENT_TYPE),

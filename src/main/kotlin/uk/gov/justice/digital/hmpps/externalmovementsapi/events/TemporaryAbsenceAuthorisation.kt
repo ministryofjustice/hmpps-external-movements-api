@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.integration.IntegrationUrlBuilder.authorisationUrl
 import java.util.UUID
 
 data class TemporaryAbsenceAuthorisationInformation(
@@ -16,6 +17,7 @@ data class TemporaryAbsenceAuthorisationPending(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.pending"
@@ -37,6 +39,7 @@ data class TemporaryAbsenceAuthorisationApproved(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.approved"
@@ -58,6 +61,7 @@ data class TemporaryAbsenceAuthorisationPaused(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.paused"
@@ -79,6 +83,7 @@ data class TemporaryAbsenceAuthorisationResumed(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.resumed"
@@ -100,6 +105,7 @@ data class TemporaryAbsenceAuthorisationDenied(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.denied"
@@ -121,6 +127,7 @@ data class TemporaryAbsenceAuthorisationCancelled(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.cancelled"
@@ -142,6 +149,7 @@ data class TemporaryAbsenceAuthorisationDeferred(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.deferred"
@@ -163,6 +171,7 @@ data class TemporaryAbsenceAuthorisationExpired(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.expired"
@@ -184,6 +193,7 @@ data class TemporaryAbsenceAuthorisationAccompanimentChanged(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.accompaniment-changed"
@@ -205,6 +215,7 @@ data class TemporaryAbsenceAuthorisationCommentsChanged(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.comments-changed"
@@ -226,6 +237,7 @@ data class TemporaryAbsenceAuthorisationDateRangeChanged(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.date-range-changed"
@@ -247,6 +259,7 @@ data class TemporaryAbsenceAuthorisationTransportChanged(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.transport-changed"
@@ -268,6 +281,7 @@ data class TemporaryAbsenceAuthorisationRecategorised(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.recategorised"
@@ -289,6 +303,7 @@ data class TemporaryAbsenceAuthorisationRelocated(
 ) : DomainEvent<TemporaryAbsenceAuthorisationInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = authorisationUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-authorisation.relocated"

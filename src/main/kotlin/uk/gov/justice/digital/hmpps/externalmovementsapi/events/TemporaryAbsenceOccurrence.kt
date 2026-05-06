@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.integration.IntegrationUrlBuilder.occurrenceUrl
 import java.util.UUID
 
 data class TemporaryAbsenceInformation(
@@ -16,6 +17,7 @@ data class TemporaryAbsenceScheduled(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.scheduled"
@@ -37,6 +39,7 @@ data class TemporaryAbsencePaused(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.paused"
@@ -58,6 +61,7 @@ data class TemporaryAbsenceResumed(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.resumed"
@@ -79,6 +83,7 @@ data class TemporaryAbsenceRescheduled(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.rescheduled"
@@ -100,6 +105,7 @@ data class TemporaryAbsenceUnscheduled(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.unscheduled"
@@ -121,6 +127,7 @@ data class TemporaryAbsenceCancelled(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.cancelled"
@@ -142,6 +149,7 @@ data class TemporaryAbsenceDenied(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.denied"
@@ -163,6 +171,7 @@ data class TemporaryAbsenceExpired(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.expired"
@@ -184,6 +193,7 @@ data class TemporaryAbsenceOverdue(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.overdue"
@@ -205,6 +215,7 @@ data class TemporaryAbsenceAccompanimentChanged(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.accompaniment-changed"
@@ -226,6 +237,7 @@ data class TemporaryAbsenceCommentsChanged(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.comments-changed"
@@ -247,6 +259,7 @@ data class TemporaryAbsenceTransportChanged(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.transport-changed"
@@ -268,6 +281,7 @@ data class TemporaryAbsenceRecategorised(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.recategorised"
@@ -289,6 +303,7 @@ data class TemporaryAbsenceRelocated(
 ) : DomainEvent<TemporaryAbsenceInformation> {
   override val eventType: String = EVENT_TYPE
   override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence.relocated"

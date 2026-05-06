@@ -31,7 +31,7 @@ import java.util.UUID
 @Tag(name = UI)
 @RestController
 @RequestMapping("/temporary-absence-authorisations")
-@PreAuthorize("hasRole('${Roles.TEMPORARY_ABSENCE_RW}')")
+@PreAuthorize("hasRole('${Roles.EXTERNAL_MOVEMENTS_UI}')")
 class TapAuthorisationController(
   private val create: CreateScheduledAbsence,
   private val get: GetTapAuthorisation,
@@ -46,7 +46,6 @@ class TapAuthorisationController(
     @Valid @RequestBody request: CreateTapAuthorisationRequest,
   ) = create.tapAuthorisation(personIdentifier, request)
 
-  @PreAuthorize("hasAnyRole('${Roles.TEMPORARY_ABSENCE_RO}', '${Roles.TEMPORARY_ABSENCE_RW}')")
   @GetMapping("/{id}")
   fun getTapAuthorisation(
     @PathVariable id: UUID,
@@ -54,7 +53,6 @@ class TapAuthorisationController(
     @RequestParam end: LocalDate?,
   ): TapAuthorisation = get.byId(id, start, end)
 
-  @PreAuthorize("hasAnyRole('${Roles.TEMPORARY_ABSENCE_RO}', '${Roles.TEMPORARY_ABSENCE_RW}')")
   @GetMapping("/{id}/history")
   fun getTapAuthorisationHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
