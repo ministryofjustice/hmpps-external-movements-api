@@ -46,6 +46,7 @@ class TapAuthorisationController(
     @Valid @RequestBody request: CreateTapAuthorisationRequest,
   ) = create.tapAuthorisation(personIdentifier, request)
 
+  @PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_UI}','${Roles.TEMPORARY_ABSENCE_RO}','${Roles.TEMPORARY_ABSENCE_RW}')")
   @GetMapping("/{id}")
   fun getTapAuthorisation(
     @PathVariable id: UUID,
