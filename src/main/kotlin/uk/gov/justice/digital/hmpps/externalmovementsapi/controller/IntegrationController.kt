@@ -23,7 +23,7 @@ import java.util.UUID
 @Tag(name = INTEGRATIONS)
 @RestController
 @RequestMapping(value = ["integrations"])
-@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_RO}', '${Roles.EXTERNAL_MOVEMENTS_RW}')")
+@PreAuthorize("hasAnyRole('${Roles.EXTERNAL_MOVEMENTS_RO}', '${Roles.EXTERNAL_MOVEMENTS_RW}', '${Roles.TEMPORARY_ABSENCE_RO}', '${Roles.TEMPORARY_ABSENCE_RW}')")
 class IntegrationController(
   private val retrieve: IntegrationRetriever,
 ) {
