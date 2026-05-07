@@ -74,7 +74,7 @@ class DenyTapAuthorisationIntTest(
     )
     val res = denyAuthorisation(auth.id, denyAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo(NOT_AWAITING_APPROVAL)
+    assertThat(res.developerMessage).isEqualTo(NOT_AWAITING_APPROVAL)
   }
 
   @Test

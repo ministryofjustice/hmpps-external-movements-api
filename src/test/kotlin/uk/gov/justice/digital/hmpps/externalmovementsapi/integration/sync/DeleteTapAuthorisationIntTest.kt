@@ -52,7 +52,7 @@ class DeleteTapAuthorisationIntTest(
     val saved = findTemporaryAbsenceAuthorisation(auth.id)
     assertThat(saved).isNotNull
 
-    assertThat(res.userMessage).isEqualTo("Cannot delete an authorisation with a scheduled occurrence")
+    assertThat(res.developerMessage).isEqualTo("Cannot delete an authorisation with a scheduled occurrence")
   }
 
   @Test

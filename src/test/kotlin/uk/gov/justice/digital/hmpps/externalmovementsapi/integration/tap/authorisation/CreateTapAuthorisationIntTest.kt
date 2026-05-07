@@ -103,7 +103,7 @@ class CreateTapAuthorisationIntTest(
     )
     val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
+    assertThat(res.developerMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
   }
 
   @Test
@@ -113,7 +113,7 @@ class CreateTapAuthorisationIntTest(
       createTapAuthorisationRequest(start = LocalDate.now(), end = LocalDate.now().plusMonths(6).plusDays(1))
     val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
+    assertThat(res.developerMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
   }
 
   @Test

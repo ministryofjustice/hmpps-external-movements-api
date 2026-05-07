@@ -77,7 +77,7 @@ class ApproveTapAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
     val res = approveAuthorisation(auth.id, approveAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo(NOT_AWAITING_APPROVAL)
+    assertThat(res.developerMessage).isEqualTo(NOT_AWAITING_APPROVAL)
   }
 
   @Test

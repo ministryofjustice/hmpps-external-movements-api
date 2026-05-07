@@ -65,7 +65,7 @@ class SearchTapAuthorisationIntTest(
   ) {
     val res = searchTapAuthorisations(prisonCode(), start, end, query = query).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: A valid person identifier is required or valid start and end.")
+    assertThat(res.developerMessage).isEqualTo("Validation failure: A valid person identifier is required or valid start and end.")
   }
 
   @Test

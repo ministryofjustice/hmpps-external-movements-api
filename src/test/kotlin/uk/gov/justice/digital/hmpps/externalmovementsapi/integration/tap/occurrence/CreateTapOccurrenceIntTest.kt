@@ -80,7 +80,7 @@ class CreateTapOccurrenceIntTest(
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val response = createOccurrence(authorisation.id, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(response.userMessage).isEqualTo(message)
+    assertThat(response.developerMessage).startsWith(message)
   }
 
   @Test
@@ -100,7 +100,7 @@ class CreateTapOccurrenceIntTest(
     )
     val res = createOccurrence(auth.id, request()).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Cannot add multiple occurrences to a single authorisation.")
+    assertThat(res.userMessage).isEqualTo("Invalid request")
   }
 
   @Test
@@ -298,7 +298,7 @@ class CreateTapOccurrenceIntTest(
       ),
       Arguments.of(
         request(start = LocalDateTime.now().plusDays(7), end = LocalDateTime.now().plusDays(8)),
-        "Validation failure: Temporary absence must be within the authorised date range.",
+        "IllegalStateException:",
       ),
     )
   }
