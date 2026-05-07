@@ -94,6 +94,8 @@ sentry:
 
 server:
   port: 8080
+  http2:
+    enabled: true
   servlet:
     context-path: /
   forward-headers-strategy: native
@@ -131,6 +133,7 @@ service:
   authorisation-expiration:
     cron: ""
   auto-cancel-enabled: true
+  http-protocol: h2c, h2, http11
 
 springdoc:
   default-flat-param-object: false

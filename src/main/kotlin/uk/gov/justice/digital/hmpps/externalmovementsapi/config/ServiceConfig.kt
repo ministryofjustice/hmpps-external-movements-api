@@ -5,6 +5,7 @@ import org.springframework.boot.actuate.info.Info
 import org.springframework.boot.actuate.info.InfoContributor
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
+import reactor.netty.http.HttpProtocol
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.integration.IntegrationUrlBuilder
 import java.time.Duration
 
@@ -26,6 +27,7 @@ data class ServiceConfig(
   val apiBaseUrl: String,
   val disablePrisonEvents: Set<String> = setOf(),
   val autoCancelEnabled: Boolean = false,
+  val httpProtocol: Set<HttpProtocol>,
 ) {
   data class DomainEventConfig(val pollInterval: Duration, val batchSize: Int)
   data class OccurrenceStatusConfig(val pollInterval: Duration)
