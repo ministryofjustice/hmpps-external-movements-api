@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.config
 
+import io.sentry.Hint
+import io.sentry.Sentry
 import jakarta.validation.ValidationException
 import org.springframework.context.MessageSourceResolvable
 import org.springframework.dao.DataAccessException
@@ -24,7 +26,10 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
 class ExternalMovementsApiExceptionHandler {
-  private fun RuntimeException.devMessage(): String = message ?: "${this::class.simpleName}: ${cause?.message ?: ""}"
+  private fun Exception.devMessage(): String {
+    val sentryId = Sentry.captureException(this)
+    return "${this::class.simpleName}: $sentryId"
+  }
 
   @ExceptionHandler(AbsenceCategorisationException::class)
   fun handleAbsenceCategorisationException(e: AbsenceCategorisationException): ResponseEntity<ErrorResponse> {
@@ -33,6 +38,7 @@ class ExternalMovementsApiExceptionHandler {
     } else {
       "No option found for ${e.previous::class.simpleName} of ${e.previous.code}"
     }
+    Sentry.captureException(e, Hint().apply { set("reason", devMessage) })
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
@@ -47,13 +53,7 @@ class ExternalMovementsApiExceptionHandler {
   @ExceptionHandler(ConflictException::class)
   fun handleConflictException(e: ConflictException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(CONFLICT)
-    .body(
-      ErrorResponse(
-        status = CONFLICT,
-        userMessage = e.message,
-        developerMessage = e.devMessage(),
-      ),
-    )
+    .body(ErrorResponse(status = CONFLICT, developerMessage = e.message))
 
   @ExceptionHandler(
     IllegalArgumentException::class,
@@ -65,7 +65,7 @@ class ExternalMovementsApiExceptionHandler {
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
+        userMessage = "Invalid request",
         developerMessage = e.devMessage(),
       ),
     )
@@ -87,38 +87,15 @@ class ExternalMovementsApiExceptionHandler {
   @ExceptionHandler(MethodArgumentNotValidException::class)
   fun handleValidationException(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> = e.allErrors.mapErrors()
 
-  @ExceptionHandler(NoResourceFoundException::class)
-  fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
+  @ExceptionHandler(NoResourceFoundException::class, NotFoundException::class)
+  fun handleNotFoundException(): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(NOT_FOUND)
-    .body(
-      ErrorResponse(
-        status = NOT_FOUND,
-        userMessage = "No resource found failure: ${e.message}",
-        developerMessage = e.message,
-      ),
-    )
-
-  @ExceptionHandler(NotFoundException::class)
-  fun handleNoResourceFoundException(e: NotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(NOT_FOUND)
-    .body(
-      ErrorResponse(
-        status = NOT_FOUND,
-        userMessage = e.message,
-        developerMessage = e.devMessage(),
-      ),
-    )
+    .body(ErrorResponse(status = NOT_FOUND))
 
   @ExceptionHandler(AccessDeniedException::class)
-  fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ErrorResponse> = ResponseEntity
+  fun handleAccessDeniedException(): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(FORBIDDEN)
-    .body(
-      ErrorResponse(
-        status = FORBIDDEN,
-        userMessage = "Forbidden: ${e.message}",
-        developerMessage = e.devMessage(),
-      ),
-    )
+    .body(ErrorResponse(status = FORBIDDEN))
 
   @ExceptionHandler(Exception::class)
   fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -127,7 +104,7 @@ class ExternalMovementsApiExceptionHandler {
       ErrorResponse(
         status = INTERNAL_SERVER_ERROR,
         userMessage = "Unexpected error",
-        developerMessage = e.message,
+        developerMessage = e.devMessage(),
       ),
     )
 
@@ -159,8 +136,7 @@ private fun List<MessageSourceResolvable>.mapErrors() = map { it.defaultMessage!
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
-        userMessage = message,
-        developerMessage = "400 BAD_REQUEST $message",
+        developerMessage = message,
       ),
     )
 }

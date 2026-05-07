@@ -77,7 +77,7 @@ class ClearTapAuthorisationScheduleIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
     val res = clearSchedule(auth.id, clearScheduleRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo(NOT_YET_APPROVED)
+    assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
 
   @Test

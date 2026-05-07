@@ -70,7 +70,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
     val end = start.plusMonths(6).plusDays(1)
     val response = changeDateRange(auth.id, changeDateRange(start, end)).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(response.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
+    assertThat(response.developerMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
   }
 
   @Test
@@ -89,7 +89,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
       changeDateRange(occ1.start.plusDays(1).toLocalDate(), occ2.end.minusDays(1).toLocalDate()),
     ).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(response.userMessage).isEqualTo("Validation failure: Authorisation date range cannot be less than the date range of absences")
+    assertThat(response.developerMessage).startsWith("IllegalStateException:")
   }
 
   @Test

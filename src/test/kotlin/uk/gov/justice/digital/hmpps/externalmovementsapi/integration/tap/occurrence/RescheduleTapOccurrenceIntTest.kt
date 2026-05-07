@@ -72,7 +72,7 @@ class RescheduleTapOccurrenceIntTest(
     val request = rescheduleOccurrenceRequest(null, null)
     val res = rescheduleOccurrence(occurrence.id, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Either start or end must be provided.")
+    assertThat(res.developerMessage).isEqualTo("Validation failure: Either start or end must be provided.")
   }
 
   @Test
@@ -94,7 +94,7 @@ class RescheduleTapOccurrenceIntTest(
     val request = rescheduleOccurrenceRequest(LocalDateTime.now().plusDays(3), LocalDateTime.now().plusDays(4))
     val res = rescheduleOccurrence(occurrence.id, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Temporary absence must be within the authorised date range.")
+    assertThat(res.developerMessage).startsWith("IllegalStateException:")
   }
 
   @Test

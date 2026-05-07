@@ -73,7 +73,7 @@ class ChangeTapOccurrenceLocationIntTest(
       .errorResponse(HttpStatus.BAD_REQUEST)
 
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
+    assertThat(res.developerMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
   }
 
   @Test

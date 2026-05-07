@@ -72,7 +72,7 @@ class CancelTapOccurrenceIntTest(
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, end = LocalDateTime.now().minusHours(4)))
     val res = cancelOccurrence(occurrence.id, cancelOccurrenceRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo("Temporary absence not currently scheduled")
+    assertThat(res.developerMessage).isEqualTo("Temporary absence not currently scheduled")
   }
 
   @Test

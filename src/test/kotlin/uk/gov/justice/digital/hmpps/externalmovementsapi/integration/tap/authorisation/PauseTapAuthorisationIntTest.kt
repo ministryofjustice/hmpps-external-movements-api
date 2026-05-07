@@ -78,7 +78,7 @@ class PauseTapAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
     val res = pauseAuthorisation(auth.id, pauseAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo(NOT_YET_APPROVED)
+    assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
 
   @Test
