@@ -27,7 +27,7 @@ data class ServiceConfig(
   val apiBaseUrl: String,
   val disablePrisonEvents: Set<String> = setOf(),
   val autoCancelEnabled: Boolean = false,
-  val httpProtocol: HttpProtocol,
+  val httpProtocol: Set<HttpProtocol>,
 ) {
   data class DomainEventConfig(val pollInterval: Duration, val batchSize: Int)
   data class OccurrenceStatusConfig(val pollInterval: Duration)

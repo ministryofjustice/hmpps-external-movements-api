@@ -45,7 +45,7 @@ class WebClientConfiguration(
     return baseUrl(url)
       .clientConnector(
         ReactorClientHttpConnector(
-          HttpClient.create().protocol(serviceConfig.httpProtocol).responseTimeout(timeout),
+          HttpClient.create().protocol(*serviceConfig.httpProtocol.toTypedArray()).responseTimeout(timeout),
         ),
       )
       .filter(oauth2Client)
