@@ -7,10 +7,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -73,7 +74,7 @@ class CreateTapAuthorisationIntTest(
   }
 
   @ParameterizedTest
-  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, TEMPORARY_ABSENCE_RW, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_RW])
   fun `403 forbidden without correct role`(role: String) {
     createTapAuthorisation(
       personIdentifier(),
@@ -102,7 +103,7 @@ class CreateTapAuthorisationIntTest(
     )
     val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
+    assertThat(res.developerMessage).isEqualTo("Validation failure: Either a description or partial address must be specified.")
   }
 
   @Test
@@ -112,7 +113,7 @@ class CreateTapAuthorisationIntTest(
       createTapAuthorisationRequest(start = LocalDate.now(), end = LocalDate.now().plusMonths(6).plusDays(1))
     val res = createTapAuthorisation(pi, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
+    assertThat(res.developerMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
   }
 
   @Test
@@ -642,7 +643,7 @@ class CreateTapAuthorisationIntTest(
     request: CreateTapAuthorisationRequest,
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
-    role: String? = Roles.TEMPORARY_ABSENCE_RW,
+    role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .post()
     .uri(CREATE_TAP_AUTH_URL, personIdentifier)

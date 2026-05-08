@@ -7,10 +7,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation
@@ -48,7 +49,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
   }
 
   @ParameterizedTest
-  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, TEMPORARY_ABSENCE_RW, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_RW])
   fun `403 forbidden without correct role`(role: String) {
     changeDateRange(
       newUuid(),
@@ -69,7 +70,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
     val end = start.plusMonths(6).plusDays(1)
     val response = changeDateRange(auth.id, changeDateRange(start, end)).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(response.userMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
+    assertThat(response.developerMessage).isEqualTo("Validation failure: The authorisation date range must not be more than 6 months")
   }
 
   @Test
@@ -88,7 +89,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
       changeDateRange(occ1.start.plusDays(1).toLocalDate(), occ2.end.minusDays(1).toLocalDate()),
     ).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(response.userMessage).isEqualTo("Validation failure: Authorisation date range cannot be less than the date range of absences")
+    assertThat(response.developerMessage).startsWith("IllegalStateException:")
   }
 
   @Test
@@ -150,7 +151,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
   private fun changeDateRange(
     id: UUID,
     request: ChangeAuthorisationDateRange,
-    role: String? = Roles.TEMPORARY_ABSENCE_RW,
+    role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)

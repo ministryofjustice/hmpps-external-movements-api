@@ -18,6 +18,7 @@ service:
   authorisation-expiration:
     cron: "0 0 7 * * *"
   ui-base-url: "https://external-movements-dev.hmpps.service.justice.gov.uk"
+  api-base-url: "https://external-movements-api-dev.hmpps.service.justice.gov.uk"
 
 springdoc:
   api-docs:

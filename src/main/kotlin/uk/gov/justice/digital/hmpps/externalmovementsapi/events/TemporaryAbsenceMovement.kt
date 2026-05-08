@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.integration.IntegrationUrlBuilder.movementUrl
 import java.util.UUID
 
 data class TapMovementInformation(
@@ -15,10 +16,12 @@ data class TapMovementReversed(
   override val personReference: PersonReference,
 ) : DomainEvent<TapMovementInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary movement direction has been reversed."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-movement.reversed"
+    const val DESCRIPTION: String = "A temporary movement direction has been reversed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -35,10 +38,12 @@ data class TapMovementAccompanimentChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TapMovementInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The accompaniment of a temporary absence movement has been changed."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-movement.accompaniment-changed"
+    const val DESCRIPTION: String = "The accompaniment of a temporary absence movement has been changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -55,10 +60,12 @@ data class TapMovementCommentsChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TapMovementInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "The comments on a temporary absence movement have been changed."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-movement.comments-changed"
+    const val DESCRIPTION: String = "The comments on a temporary absence movement have been changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -75,10 +82,12 @@ data class TapMovementRecategorised(
   override val personReference: PersonReference,
 ) : DomainEvent<TapMovementInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence movement has been recategorised."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-movement.recategorised"
+    const val DESCRIPTION: String = "A temporary absence movement has been recategorised."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -95,10 +104,12 @@ data class TapMovementRelocated(
   override val personReference: PersonReference,
 ) : DomainEvent<TapMovementInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence movement has been relocated."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-movement.relocated"
+    const val DESCRIPTION: String = "A temporary absence movement has been relocated."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -115,10 +126,12 @@ data class TapMovementOccurredAtChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TapMovementInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "When a temporary absence movement occurred has been changed."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-movement.occurred-at-changed"
+    const val DESCRIPTION: String = "When a temporary absence movement occurred has been changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
@@ -135,10 +148,12 @@ data class TapMovementOccurrenceChanged(
   override val personReference: PersonReference,
 ) : DomainEvent<TapMovementInformation> {
   override val eventType: String = EVENT_TYPE
-  override val description: String = "A temporary absence movement's occurrence has been changed."
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
     const val EVENT_TYPE: String = "person.temporary-absence-movement.occurrence-changed"
+    const val DESCRIPTION: String = "A temporary absence movement's occurrence has been changed."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,

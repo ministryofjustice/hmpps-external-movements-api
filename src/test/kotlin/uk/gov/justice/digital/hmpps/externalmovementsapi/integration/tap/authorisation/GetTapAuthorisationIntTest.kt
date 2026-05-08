@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
-import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -41,7 +41,7 @@ class GetTapAuthorisationIntTest(
   }
 
   @ParameterizedTest
-  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI, "ROLE_ANY__OTHER_RW"])
+  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_RW])
   fun `403 forbidden without correct role`(role: String) {
     getTapAuthorisation(newUuid(), role = role).expectStatus().isForbidden
   }
@@ -152,7 +152,7 @@ class GetTapAuthorisationIntTest(
     id: UUID,
     start: LocalDate? = null,
     end: LocalDate? = null,
-    role: String? = listOf(Roles.TEMPORARY_ABSENCE_RO, Roles.TEMPORARY_ABSENCE_RW).random(),
+    role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()
     .uri { builder ->

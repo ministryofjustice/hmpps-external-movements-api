@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
@@ -50,7 +51,7 @@ class ChangeAuthorisationLocationIntTest(
   }
 
   @ParameterizedTest
-  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, TEMPORARY_ABSENCE_RW, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_RW])
   fun `403 forbidden without correct role`(role: String) {
     applyLocation(
       UUID.randomUUID(),
@@ -145,7 +146,7 @@ class ChangeAuthorisationLocationIntTest(
   private fun applyLocation(
     id: UUID,
     request: ChangeAuthorisationLocation,
-    role: String? = TEMPORARY_ABSENCE_RW,
+    role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)

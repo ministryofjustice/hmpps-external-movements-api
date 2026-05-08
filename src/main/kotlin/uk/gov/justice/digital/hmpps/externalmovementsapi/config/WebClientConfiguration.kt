@@ -18,16 +18,24 @@ class WebClientConfiguration(
   @Value($$"${integration.prisoner-search.url}") private val prisonerSearchBaseUri: String,
 ) {
   @Bean
-  fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = builder.authorisedWebClient(authorizedClientManager, DEFAULT_REGISTRATION_ID, manageUsersBaseUri, timeout)
+  fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = authorisedWebClient(builder, authorizedClientManager, manageUsersBaseUri)
 
   @Bean
-  fun nomisMigrationWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = builder.authorisedWebClient(authorizedClientManager, DEFAULT_REGISTRATION_ID, nomisMigrationBaseUri, ofSeconds(10))
+  fun nomisMigrationWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = authorisedWebClient(builder, authorizedClientManager, nomisMigrationBaseUri, ofSeconds(10))
 
   @Bean
-  fun prisonRegisterApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder): WebClient = builder.authorisedWebClient(authorizedClientManager, DEFAULT_REGISTRATION_ID, prisonRegisterBaseUri, timeout)
+  fun prisonRegisterApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder): WebClient = authorisedWebClient(builder, authorizedClientManager, prisonRegisterBaseUri)
 
   @Bean
-  fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = builder.authorisedWebClient(authorizedClientManager, DEFAULT_REGISTRATION_ID, prisonerSearchBaseUri, timeout)
+  fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = authorisedWebClient(builder, authorizedClientManager, prisonerSearchBaseUri)
+
+  fun authorisedWebClient(
+    builder: Builder,
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    url: String,
+    timeout: Duration = Companion.timeout,
+    registrationId: String = DEFAULT_REGISTRATION_ID,
+  ): WebClient = builder.authorisedWebClient(authorizedClientManager, registrationId, url, timeout)
 
   companion object {
     const val DEFAULT_REGISTRATION_ID = "default"

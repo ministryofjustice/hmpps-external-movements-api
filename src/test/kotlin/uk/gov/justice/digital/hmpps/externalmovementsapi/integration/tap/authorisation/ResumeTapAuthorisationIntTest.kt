@@ -9,10 +9,11 @@ import org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
@@ -54,7 +55,7 @@ class ResumeTapAuthorisationIntTest(
   }
 
   @ParameterizedTest
-  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, TEMPORARY_ABSENCE_RW, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_RW])
   fun `403 forbidden without correct role`(role: String) {
     resumeAuthorisation(
       newUuid(),
@@ -74,7 +75,7 @@ class ResumeTapAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
     val res = resumeAuthorisation(auth.id, resumeAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
-    assertThat(res.userMessage).isEqualTo(NOT_YET_APPROVED)
+    assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
 
   @Test
@@ -123,7 +124,7 @@ class ResumeTapAuthorisationIntTest(
   private fun resumeAuthorisation(
     id: UUID,
     request: ResumeAuthorisation,
-    role: String? = Roles.TEMPORARY_ABSENCE_RW,
+    role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)

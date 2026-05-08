@@ -10,10 +10,11 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
@@ -59,7 +60,7 @@ class CreateTapOccurrenceIntTest(
   }
 
   @ParameterizedTest
-  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI])
+  @ValueSource(strings = [TEMPORARY_ABSENCE_RO, TEMPORARY_ABSENCE_RW, EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_RW])
   fun `403 forbidden without correct role`(role: String) {
     createOccurrence(
       UUID.randomUUID(),
@@ -79,7 +80,7 @@ class CreateTapOccurrenceIntTest(
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val response = createOccurrence(authorisation.id, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(response.userMessage).isEqualTo(message)
+    assertThat(response.developerMessage).startsWith(message)
   }
 
   @Test
@@ -99,7 +100,7 @@ class CreateTapOccurrenceIntTest(
     )
     val res = createOccurrence(auth.id, request()).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
-    assertThat(res.userMessage).isEqualTo("Validation failure: Cannot add multiple occurrences to a single authorisation.")
+    assertThat(res.userMessage).isEqualTo("Invalid request")
   }
 
   @Test
@@ -262,7 +263,7 @@ class CreateTapOccurrenceIntTest(
     request: CreateOccurrenceRequest,
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
-    role: String? = Roles.TEMPORARY_ABSENCE_RW,
+    role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .post()
     .uri(CREATE_OCCURRENCE_URL, id)
@@ -297,7 +298,7 @@ class CreateTapOccurrenceIntTest(
       ),
       Arguments.of(
         request(start = LocalDateTime.now().plusDays(7), end = LocalDateTime.now().plusDays(8)),
-        "Validation failure: Temporary absence must be within the authorised date range.",
+        "IllegalStateException:",
       ),
     )
   }

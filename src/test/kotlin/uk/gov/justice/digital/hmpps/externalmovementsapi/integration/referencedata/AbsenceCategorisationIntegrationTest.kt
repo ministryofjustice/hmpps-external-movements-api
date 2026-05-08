@@ -7,8 +7,8 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.test.web.reactive.server.expectBody
-import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
@@ -41,13 +41,13 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI, "ROLE_ANY__OTHER_RW"])
+  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_RW, "ROLE_ANY__OTHER_RW"])
   fun `403 forbidden domain without correct role`(role: String) {
     getDomainSpec("any-domain", role).expectStatus().isForbidden
   }
 
   @ParameterizedTest
-  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_UI, "ROLE_ANY__OTHER_RW"])
+  @ValueSource(strings = [EXTERNAL_MOVEMENTS_RO, EXTERNAL_MOVEMENTS_RW, "ROLE_ANY__OTHER_RW"])
   fun `403 forbidden reference data without correct role`(role: String) {
     getLinksSpec("any-domain", "anycode", role).expectStatus().isForbidden
   }
@@ -117,7 +117,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
 
   private fun getDomainSpec(
     domain: String,
-    role: String? = listOf(Roles.TEMPORARY_ABSENCE_RO, Roles.TEMPORARY_ABSENCE_RW).random(),
+    role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()
     .uri(REFERENCE_DATA_URL, domain)
@@ -127,7 +127,7 @@ class AbsenceCategorisationIntegrationTest : IntegrationTest() {
   private fun getLinksSpec(
     domain: String,
     code: String,
-    role: String? = listOf(Roles.TEMPORARY_ABSENCE_RO, Roles.TEMPORARY_ABSENCE_RW).random(),
+    role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()
     .uri(LINKED_RD_URL, domain, code)

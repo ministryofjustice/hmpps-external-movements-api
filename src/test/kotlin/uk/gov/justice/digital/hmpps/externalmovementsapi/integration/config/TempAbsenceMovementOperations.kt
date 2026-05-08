@@ -35,7 +35,7 @@ interface TempAbsenceMovementOperations {
       accompaniedBy: String = AccompaniedBy.Code.NOT_PROVIDED.name,
       accompaniedByComments: String? = "Some comments about the accompanied by",
       comments: String? = "Some comments on the movement",
-      prisonCode: String = prisonCode(),
+      prisonCode: String = occurrence?.prisonCode ?: prisonCode(),
       location: Location = occurrence?.location ?: location(),
       legacyId: String? = null,
     ): ((KClass<out ReferenceData>, String) -> ReferenceData, personSupplier: (String) -> PersonSummary) -> TemporaryAbsenceMovement = { rdSupplier, personSupplier ->
