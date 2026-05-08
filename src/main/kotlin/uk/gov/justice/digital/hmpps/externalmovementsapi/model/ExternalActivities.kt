@@ -16,4 +16,5 @@ data class ExternalActivity(
   val end: LocalDateTime,
   val status: CodedDescription,
   val detail: ScheduledMovementDetail,
+  val isSensitive: Boolean,
 )

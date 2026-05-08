@@ -107,6 +107,7 @@ class SearchExternalActivitiesIntTest(
 
     val res = searchExternalActivities(prisonToFind).successResponse<ExternalActivities>()
     assertThat(res.content).hasSize(1)
+    assertThat(res.content.first().isSensitive).isFalse
     res.content.first().verifyAgainst(occ1)
   }
 
@@ -130,6 +131,7 @@ class SearchExternalActivitiesIntTest(
       personIdentifiers = linkedSetOf(auth1.person.identifier),
     ).successResponse<ExternalActivities>()
     assertThat(res.content).hasSize(1)
+    assertThat(res.content.first().isSensitive).isFalse
     res.content.first().verifyAgainst(toFind)
   }
 
@@ -178,8 +180,28 @@ class SearchExternalActivitiesIntTest(
   @Test
   fun `200 ok - no results`() {
     val prisonCode = prisonCode()
-    val res1 = searchExternalActivities(prisonCode).successResponse<ExternalActivities>()
-    assertThat(res1.content).isEmpty()
+    val res = searchExternalActivities(prisonCode).successResponse<ExternalActivities>()
+    assertThat(res.content).isEmpty()
+  }
+
+  @Test
+  fun `200 ok - can find sensitive`() {
+    val prisonCode = prisonCode()
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(prisonCode, repeat = true))
+    givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDate.now().plusDays(7).atTime(10, 0),
+        end = LocalDate.now().plusDays(7).atTime(17, 0),
+      ),
+    )
+    val res = searchExternalActivities(
+      prisonCode,
+      start = LocalDate.now().plusDays(7).atStartOfDay(),
+      end = LocalDate.now().plusDays(8).atStartOfDay(),
+    ).successResponse<ExternalActivities>()
+    assertThat(res.content).hasSize(1)
+    assertThat(res.content.first().isSensitive).isTrue
   }
 
   private fun ExternalActivity.verifyAgainst(tao: TemporaryAbsenceOccurrence) {
