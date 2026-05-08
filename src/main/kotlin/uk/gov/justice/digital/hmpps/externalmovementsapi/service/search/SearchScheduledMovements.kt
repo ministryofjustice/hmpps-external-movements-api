@@ -106,4 +106,5 @@ private fun TemporaryAbsenceOccurrence.externalActivity(uiBaseUrl: String): Exte
   end,
   status.asCodedDescription(),
   ScheduledMovementDetail(buildUiUrl(uiBaseUrl, id), setOf()),
+  !isNotSensitive(),
 )
