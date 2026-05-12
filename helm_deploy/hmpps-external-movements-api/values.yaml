@@ -50,6 +50,7 @@ generic-service:
     hmpps-external-movements-api:
       CLIENT_ID: "SYSTEM_CLIENT_ID"
       CLIENT_SECRET: "SYSTEM_CLIENT_SECRET"
+      SERVICE_VERSION_KEY: "VERSION_KEY"
     rds-postgresql-instance-output:
       DB_SERVER: "rds_instance_address"
       DB_NAME: "database_name"
