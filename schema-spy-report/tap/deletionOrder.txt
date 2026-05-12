@@ -4,6 +4,7 @@ movement
 occurrence_audit
 movement_audit
 authorisation_audit
+prison_tap_locations_audit
 occurrence
 occurrence_status
 authorisation_status
@@ -13,3 +14,4 @@ absence_sub_type
 absence_reason_category
 accompanied_by
 absence_reason
+prison_tap_locations

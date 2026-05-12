@@ -9,6 +9,7 @@
             <child catalog="movements" column="rev_id" foreignKey="authorisation_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="tap" table="authorisation_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="movement_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="tap" table="movement_audit"/>
             <child catalog="movements" column="rev_id" foreignKey="occurrence_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="tap" table="occurrence_audit"/>
+            <child catalog="movements" column="rev_id" foreignKey="prison_tap_locations_audit_rev_id_fkey" implied="false" onDeleteCascade="false" schema="tap" table="prison_tap_locations_audit"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="timestamp" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="username" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>

@@ -1,3 +1,4 @@
+prison_tap_locations
 absence_reason
 accompanied_by
 absence_reason_category
@@ -7,6 +8,7 @@ transport
 authorisation_status
 occurrence_status
 occurrence
+prison_tap_locations_audit
 authorisation_audit
 movement_audit
 occurrence_audit
