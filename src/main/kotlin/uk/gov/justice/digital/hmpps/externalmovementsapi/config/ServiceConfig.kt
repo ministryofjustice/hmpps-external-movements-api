@@ -25,7 +25,6 @@ data class ServiceConfig(
   val uiBaseUrl: String,
   val apiBaseUrl: String,
   val disablePrisonEvents: Set<String> = setOf(),
-  val autoCancelEnabled: Boolean = false,
 ) {
   data class DomainEventConfig(val pollInterval: Duration, val batchSize: Int)
   data class OccurrenceStatusConfig(val pollInterval: Duration)

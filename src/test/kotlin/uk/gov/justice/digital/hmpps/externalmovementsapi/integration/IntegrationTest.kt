@@ -31,9 +31,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventPublication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonTapLocations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonTapLocationsRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.Notification
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TestConfig
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer.setLocalStackProperties
@@ -46,6 +50,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Pr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension.Companion.prisonRegister
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.ExternalMovementRecordedEvent
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueue
@@ -57,6 +62,7 @@ import uk.gov.justice.hmpps.sqs.publish
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.Duration
 import java.time.Instant.now
+import java.util.SequencedSet
 import java.util.concurrent.TimeUnit
 
 @ExtendWith(
@@ -94,6 +100,9 @@ abstract class IntegrationTest {
 
   @Autowired
   protected lateinit var referenceDataRepository: ReferenceDataRepository
+
+  @Autowired
+  protected lateinit var prisonTapLocationsRepository: PrisonTapLocationsRepository
 
   protected val hmppsEventsTestQueue by lazy {
     hmppsQueueService.findByQueueId("hmppseventtestqueue")
@@ -238,6 +247,11 @@ abstract class IntegrationTest {
     prisonRegister.getPrison(prison)
     return prison
   }
+
+  protected final fun givenPrisonTapLocations(
+    prisonCode: String = prisonCode(),
+    locations: SequencedSet<Location> = linkedSetOf(location(), location(), location()),
+  ): PrisonTapLocations = prisonTapLocationsRepository.save(PrisonTapLocations(prisonCode, 0, locations))
 
   @BeforeEach
   fun clearContext() {
