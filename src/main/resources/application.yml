@@ -129,8 +129,6 @@ service:
     poll-interval: PT0s
   authorisation-expiration:
     cron: ""
-  auto-cancel-enabled: true
-  http-protocol: h2c, h2, http11
 
 springdoc:
   default-flat-param-object: false

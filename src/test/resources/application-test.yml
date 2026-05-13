@@ -64,8 +64,8 @@ service:
   ui-base-url: "https://local-ui"
   disable-prison-events:
     - LEI
-  auto-cancel-enabled: true
   api-base-url: "http://local-api"
+  version.key: version-key
 
 springdoc:
   api-docs:
