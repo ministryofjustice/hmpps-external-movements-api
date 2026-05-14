@@ -251,7 +251,7 @@ abstract class IntegrationTest {
   protected final fun givenPrisonTapLocations(
     prisonCode: String = prisonCode(),
     locations: SequencedSet<Location> = linkedSetOf(location(), location(), location()),
-  ): PrisonTapLocations = prisonTapLocationsRepository.save(PrisonTapLocations(prisonCode, 0, locations))
+  ): PrisonTapLocations = prisonTapLocationsRepository.save(PrisonTapLocations(prisonCode, 0, locations.toList()))
 
   @BeforeEach
   fun clearContext() {

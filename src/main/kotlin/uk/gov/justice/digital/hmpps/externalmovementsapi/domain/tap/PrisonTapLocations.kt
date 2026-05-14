@@ -10,7 +10,6 @@ import org.hibernate.envers.Audited
 import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import java.util.SequencedSet
 
 @Entity
 @Audited
@@ -22,7 +21,7 @@ final class PrisonTapLocations(
   @Version
   val version: Int = 0,
   @JdbcTypeCode(SqlTypes.JSON)
-  val locations: SequencedSet<Location>,
+  val locations: List<Location>,
 ) : PrisonRelated
 
 interface PrisonTapLocationsRepository : JpaRepository<PrisonTapLocations, String>

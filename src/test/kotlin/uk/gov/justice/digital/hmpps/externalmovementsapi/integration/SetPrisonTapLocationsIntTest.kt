@@ -80,7 +80,7 @@ class SetPrisonTapLocationsIntTest(
   fun `409 conflict - locations change by another user`() {
     val ptl = givenPrisonTapLocations()
     val version = versionSigner.generateToken(ptl.prisonCode, ptl.version)
-    prisonTapLocationsRepository.save(PrisonTapLocations(ptl.prisonCode, ptl.version, linkedSetOf(location())))
+    prisonTapLocationsRepository.save(PrisonTapLocations(ptl.prisonCode, ptl.version, listOf(location())))
 
     val res = setPrisonTapLocations(ptl.prisonCode, TapLocations(version, linkedSetOf(location())))
       .errorResponse(HttpStatus.CONFLICT)
@@ -107,7 +107,20 @@ class SetPrisonTapLocationsIntTest(
     val ptl = givenPrisonTapLocations()
     val version = versionSigner.generateToken(ptl.prisonCode, ptl.version)
 
-    val request = TapLocations(version, linkedSetOf(location(), ptl.locations.first))
+    val request = TapLocations(version, linkedSetOf(location(), ptl.locations.first()))
+    setPrisonTapLocations(ptl.prisonCode, request).expectStatus().isNoContent
+
+    val saved = requireNotNull(prisonTapLocationsRepository.findByIdOrNull(ptl.prisonCode))
+    assertThat(saved.locations).containsExactlyElementsOf(request.locations)
+    assertThat(saved.version).isEqualTo(request.version.number + 1)
+  }
+
+  @Test
+  fun `204 no content - update prison tap locations order without a change`() {
+    val ptl = givenPrisonTapLocations()
+    val version = versionSigner.generateToken(ptl.prisonCode, ptl.version)
+
+    val request = TapLocations(version, ptl.locations.reversed().mapTo(linkedSetOf()) { it })
     setPrisonTapLocations(ptl.prisonCode, request).expectStatus().isNoContent
 
     val saved = requireNotNull(prisonTapLocationsRepository.findByIdOrNull(ptl.prisonCode))
