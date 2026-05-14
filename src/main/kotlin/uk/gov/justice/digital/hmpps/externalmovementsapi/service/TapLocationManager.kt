@@ -16,8 +16,8 @@ class TapLocationManager(
 
   fun setForPrison(prisonCode: String, request: TapLocations) {
     require(versionSigner.verifyToken(request.version, prisonCode)) { "Invalid version token" }
-    tapLocations.save(PrisonTapLocations(prisonCode, request.version.number, request.locations))
+    tapLocations.save(PrisonTapLocations(prisonCode, request.version.number, request.locations.toList()))
   }
 
-  private fun PrisonTapLocations.versioned(): TapLocations = TapLocations(versionSigner.generateToken(prisonCode, version), locations)
+  private fun PrisonTapLocations.versioned(): TapLocations = TapLocations(versionSigner.generateToken(prisonCode, version), locations.mapTo(linkedSetOf()) { it })
 }

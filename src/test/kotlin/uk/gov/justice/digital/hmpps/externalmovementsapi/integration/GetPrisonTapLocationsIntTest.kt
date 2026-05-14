@@ -44,8 +44,8 @@ class GetPrisonTapLocationsIntTest(
     val ptl = givenPrisonTapLocations()
     val res = getPrisonTapLocations(ptl.prisonCode).successResponse<TapLocations>(HttpStatus.OK)
     assertThat(res.version).isEqualTo(versionSigner.generateToken(ptl.prisonCode, ptl.version))
-    assertThat(res.locations.first).isEqualTo(ptl.locations.first)
-    assertThat(res.locations.last).isEqualTo(ptl.locations.last)
+    assertThat(res.locations.first).isEqualTo(ptl.locations.first())
+    assertThat(res.locations.last).isEqualTo(ptl.locations.last())
   }
 
   private fun getPrisonTapLocations(
