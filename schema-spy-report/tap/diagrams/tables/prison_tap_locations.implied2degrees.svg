@@ -230,14 +230,14 @@
 <text text-anchor="start" x="177.5219" y="-1180.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
 <polygon fill="none" stroke="#000000" points="66,-1153.7 66,-1172.7 212,-1172.7 212,-1153.7 66,-1153.7"/>
 <text text-anchor="start" x="69" y="-1159.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">...</text>
-<polygon fill="#ffffff" stroke="transparent" points="66,-1134.7 66,-1153.7 128,-1153.7 128,-1134.7 66,-1134.7"/>
-<polygon fill="none" stroke="#000000" points="66,-1134.7 66,-1153.7 128,-1153.7 128,-1134.7 66,-1134.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="66,-1134.7 66,-1153.7 112,-1153.7 112,-1134.7 66,-1134.7"/>
+<polygon fill="none" stroke="#000000" points="66,-1134.7 66,-1153.7 112,-1153.7 112,-1134.7 66,-1134.7"/>
 <text text-anchor="start" x="69" y="-1140.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="128,-1134.7 128,-1153.7 165,-1153.7 165,-1134.7 128,-1134.7"/>
-<polygon fill="none" stroke="#000000" points="128,-1134.7 128,-1153.7 165,-1153.7 165,-1134.7 128,-1134.7"/>
-<text text-anchor="start" x="155.8862" y="-1140.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="165,-1134.7 165,-1153.7 212,-1153.7 212,-1134.7 165,-1134.7"/>
-<polygon fill="none" stroke="#000000" points="165,-1134.7 165,-1153.7 212,-1153.7 212,-1134.7 165,-1134.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="112,-1134.7 112,-1153.7 173,-1153.7 173,-1134.7 112,-1134.7"/>
+<polygon fill="none" stroke="#000000" points="112,-1134.7 112,-1153.7 173,-1153.7 173,-1134.7 112,-1134.7"/>
+<text text-anchor="start" x="131.4956" y="-1140.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">98 rows</text>
+<polygon fill="#ffffff" stroke="transparent" points="173,-1134.7 173,-1153.7 212,-1153.7 212,-1134.7 173,-1134.7"/>
+<polygon fill="none" stroke="#000000" points="173,-1134.7 173,-1153.7 212,-1153.7 212,-1134.7 173,-1134.7"/>
 <text text-anchor="start" x="193.4053" y="-1140.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">3 &gt;</text>
 </a>
 </g>
