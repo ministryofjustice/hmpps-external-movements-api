@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.authorisation.TemporaryAbsenceAuthorisation.Companion.START
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
@@ -543,6 +544,64 @@ class PersonTapSearchIntTest(
     )
   }
 
+  @Test
+  fun `can find by accompanied`() {
+    val prisonCode = givenPrison().code
+    val personIdentifier = personIdentifier()
+    val start = LocalDate.now().minusDays(2)
+    val end = LocalDate.now().plusDays(2)
+
+    val accompanied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        status = AuthorisationStatus.Code.PENDING,
+        accompaniedByCode = AccompaniedBy.Code.ACCOMPANIED.value,
+        start = start,
+        end = end,
+      ),
+    )
+    val ao = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        accompanied,
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
+      ),
+    )
+    val unaccompanied = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        prisonCode = prisonCode,
+        personIdentifier = personIdentifier,
+        status = AuthorisationStatus.Code.PENDING,
+        accompaniedByCode = AccompaniedBy.Code.UNACCOMPANIED.value,
+        start = start,
+        end = end,
+      ),
+    )
+    val uo = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        unaccompanied,
+        start = LocalDateTime.of(start, now()),
+        end = LocalDateTime.of(end, now()),
+      ),
+    )
+
+    val res = searchPersonTap(personIdentifier, isAccompanied = null).successResponse<PersonTapSearchResponse>()
+    assertThat(res.content.size).isEqualTo(2)
+    assertThat(res.metadata.totalElements).isEqualTo(2)
+    assertThat(res.content.map { it.id }).containsExactlyInAnyOrder(ao.id, uo.id)
+
+    val res2 = searchPersonTap(personIdentifier, isAccompanied = true).successResponse<PersonTapSearchResponse>()
+    assertThat(res2.content.size).isEqualTo(1)
+    assertThat(res2.metadata.totalElements).isEqualTo(1)
+    assertThat(res2.content.map { it.id }).containsExactlyInAnyOrder(ao.id)
+
+    val res3 = searchPersonTap(personIdentifier, isAccompanied = false).successResponse<PersonTapSearchResponse>()
+    assertThat(res3.content.size).isEqualTo(1)
+    assertThat(res3.metadata.totalElements).isEqualTo(1)
+    assertThat(res3.content.map { it.id }).containsExactlyInAnyOrder(uo.id)
+  }
+
   private fun searchPersonTap(
     personIdentifier: String,
     start: LocalDate? = null,
@@ -551,6 +610,7 @@ class PersonTapSearchIntTest(
     absenceCategorisation: AbsenceCategorisationFilter? = null,
     sort: String? = null,
     role: String? = Roles.EXTERNAL_MOVEMENTS_UI,
+    isAccompanied: Boolean? = null,
   ) = webTestClient
     .post()
     .uri(PERSON_SEARCH_TAP_URL, personIdentifier)
@@ -561,6 +621,7 @@ class PersonTapSearchIntTest(
         statuses?.toSet() ?: emptySet(),
         absenceCategorisation,
         sort = sort ?: START,
+        isAccompanied = isAccompanied,
       ),
     )
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
