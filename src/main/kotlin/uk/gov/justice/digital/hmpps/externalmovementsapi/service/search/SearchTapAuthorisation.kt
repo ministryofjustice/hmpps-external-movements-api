@@ -64,6 +64,7 @@ class SearchTapAuthorisation(
     absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
       ?.asCodedDescription(),
     absenceReason = absenceReason.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
+    accompaniedBy = accompaniedBy.asCodedDescription(),
     repeat = repeat,
     start = start,
     end = end,
