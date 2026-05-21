@@ -67,6 +67,7 @@ class SearchTapOccurrence(
   private fun PersonTapSearchRequest.specificationFor(personIdentifier: String): Specification<TemporaryAbsenceOccurrence> = listOfNotNull(
     occurrenceMatchesPersonIdentifier(personIdentifier, null),
     occurrenceOverlapsDateRange(start, end),
+    isAccompanied?.let { occurrenceIsAccompanied(it) },
     status.takeIf { it.isNotEmpty() }?.let { occurrenceStatusCodeIn(it) },
     absenceCategorisation?.matchesOccurrence(),
   ).reduce(Specification<TemporaryAbsenceOccurrence>::and)

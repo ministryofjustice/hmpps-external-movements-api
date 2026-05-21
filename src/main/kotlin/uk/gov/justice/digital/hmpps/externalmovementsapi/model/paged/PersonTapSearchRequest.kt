@@ -12,6 +12,7 @@ data class PersonTapSearchRequest(
   override val end: LocalDate? = null,
   val status: Set<OccurrenceStatus.Code> = emptySet(),
   val absenceCategorisation: AbsenceCategorisationFilter? = null,
+  val isAccompanied: Boolean? = null,
   override val page: Int = 1,
   override val size: Int = 10,
   override val sort: String = START,
