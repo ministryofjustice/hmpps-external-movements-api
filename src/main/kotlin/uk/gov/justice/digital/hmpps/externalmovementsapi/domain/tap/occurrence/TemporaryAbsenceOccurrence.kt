@@ -344,12 +344,12 @@ final class TemporaryAbsenceOccurrence(
 
   fun calculateStatus(statusProvider: (String) -> OccurrenceStatus) = apply {
     status = statusProvider(
-      listOfNotNull(
-        movementStatus(),
-        expiredStatus(),
-        isCancelledStatus(),
-        authorisationStatus(),
-      ).first().name,
+      sequenceOf(
+        ::movementStatus,
+        ::expiredStatus,
+        ::isCancelledStatus,
+        ::authorisationStatus,
+      ).firstNotNullOf { it() }.name,
     )
     if (dpsOnly && status.code in listOf(SCHEDULED.name, IN_PROGRESS.name, OVERDUE.name, COMPLETED.name)) {
       dpsOnly = false
