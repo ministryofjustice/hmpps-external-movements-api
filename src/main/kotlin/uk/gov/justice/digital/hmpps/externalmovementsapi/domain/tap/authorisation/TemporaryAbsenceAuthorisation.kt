@@ -269,7 +269,7 @@ final class TemporaryAbsenceAuthorisation(
       start = action.start
       end = action.end
       appliedActions += action
-      if (end.isBefore(now())) {
+      if (end.isBefore(now()) && status.code == PENDING.name) {
         expire(ExpireAuthorisation(), rdSupplier)
       }
     }
