@@ -18,9 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.getOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.actions.movement.ChangeMovementComments
@@ -41,7 +39,6 @@ import kotlin.reflect.KClass
 class SyncTapMovement(
   private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
-  private val occurrenceStatusRepository: OccurrenceStatusRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
@@ -73,12 +70,11 @@ class SyncTapMovement(
     return SyncResponse(movement.id)
   }
 
-  fun deleteById(id: UUID) {
+  fun deleteById(id: UUID): SyncRequestStatus {
     ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
-    movementRepository.findByIdOrNull(id)?.also {
-      it.occurrence?.removeMovement(it) { statusCode -> occurrenceStatusRepository.getByCode(statusCode) }
-      movementRepository.delete(it)
-    }
+    return movementRepository.findByIdOrNull(id)?.let {
+      SyncRequestStatus.Actionable(ActionType.DELETE, EntityType.MOVEMENT)
+    } ?: SyncRequestStatus.NotFound(ActionType.DELETE, EntityType.MOVEMENT)
   }
 
   private fun TapMovement.asEntity(
