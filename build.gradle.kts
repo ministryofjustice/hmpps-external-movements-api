@@ -16,9 +16,9 @@ configurations {
 }
 
 val ehcacheVersion = "3.12.0"
-val hibernateJcacheVersion = "7.3.6.Final"
+val hibernateJcacheVersion = "7.4.0.Final"
 val hmppsKotlinVersion = "2.5.0"
-val sentryVersion = "8.42.0"
+val sentryVersion = "8.43.0"
 val springDocVersion = "3.0.3"
 val sqsStarterVersion = "7.3.2"
 val testContainersVersion = "1.21.4"

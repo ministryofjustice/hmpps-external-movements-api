@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write
 
+import com.microsoft.applicationinsights.TelemetryClient
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.SyncTapOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.internal.response
 import java.util.UUID
 
 @Tag(name = OpenApiTags.SYNC)
@@ -23,16 +25,17 @@ class SyncDeleteController(
   private val authorisation: SyncTapAuthorisation,
   private val occurrence: SyncTapOccurrence,
   private val movement: SyncTapMovement,
+  private val telemetryClient: TelemetryClient,
 ) {
-  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseStatus(HttpStatus.ACCEPTED)
   @DeleteMapping("/temporary-absence-authorisations/{id}")
-  fun deleteTapAuthorisationById(@PathVariable id: UUID) = authorisation.deleteById(id)
+  fun deleteTapAuthorisationById(@PathVariable id: UUID) = authorisation.deleteById(id).response(telemetryClient)
 
-  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseStatus(HttpStatus.ACCEPTED)
   @DeleteMapping("/temporary-absence-occurrences/{id}")
-  fun deleteTapOccurrenceById(@PathVariable id: UUID) = occurrence.deleteById(id)
+  fun deleteTapOccurrenceById(@PathVariable id: UUID) = occurrence.deleteById(id).response(telemetryClient)
 
-  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseStatus(HttpStatus.ACCEPTED)
   @DeleteMapping("/temporary-absence-movements/{id}")
-  fun deleteTapMovementById(@PathVariable id: UUID) = movement.deleteById(id)
+  fun deleteTapMovementById(@PathVariable id: UUID) = movement.deleteById(id).response(telemetryClient)
 }
