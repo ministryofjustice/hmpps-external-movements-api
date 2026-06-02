@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.readValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.ExternalMovementHandler
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.ExternalMovementRecordedEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.em.service.ExternalMovementHandler
+import uk.gov.justice.digital.hmpps.externalmovementsapi.em.service.ExternalMovementRecordedEvent
 
 @Component
 class OffenderEventsListener(

@@ -6,9 +6,9 @@ import org.springframework.stereotype.Component
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.readValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.PrisonerMergedHandler
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonUpdatedHandler
-import uk.gov.justice.digital.hmpps.externalmovementsapi.sync.write.AuthorisationApprovedHandler
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PrisonerMergedHandler
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.write.AuthorisationApprovedHandler
 
 @Component
 class DomainEventListener(

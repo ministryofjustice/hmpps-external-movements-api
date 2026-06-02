@@ -10,13 +10,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonTapLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.VersionToken
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.VersionSigner
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.PrisonTapLocations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.TapLocations
 import java.util.SequencedSet
 
 class SetPrisonTapLocationsIntTest(

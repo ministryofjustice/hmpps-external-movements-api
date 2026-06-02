@@ -1,0 +1,80 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service
+
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.PrisonRegisterClient
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.mapping.asPerson
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.getOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.TapOccurrence
+import java.util.UUID
+
+@Service
+@Transactional(readOnly = true)
+class GetTapOccurrence(
+  private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val prisonRegister: PrisonRegisterClient,
+) {
+  fun byId(id: UUID): TapOccurrence {
+    val occurrence = occurrenceRepository.getOccurrence(id)
+    val pac = occurrenceRepository.getPosition(occurrence.authorisation.id, occurrence.id)
+    return occurrence.toModel(prisonRegister.getPrisonOrDefault(occurrence.prisonCode), pac.position, pac.total)
+  }
+}
+
+private fun TemporaryAbsenceAuthorisation.forOccurrence() = TapOccurrence.Authorisation(
+  id = id,
+  person = person.asPerson(),
+  status = status.asCodedDescription(),
+  start = start,
+  end = end,
+  absenceType = absenceType?.takeIf { reasonPath.has(ABSENCE_TYPE) }?.asCodedDescription(),
+  absenceSubType = absenceSubType?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }?.asCodedDescription(),
+  absenceReasonCategory = absenceReasonCategory?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
+    ?.asCodedDescription(),
+  absenceReason = absenceReason.takeIf { reasonPath.has(ABSENCE_REASON) }?.asCodedDescription(),
+  accompaniedBy = accompaniedBy.asCodedDescription(),
+  repeat = repeat,
+  comments = comments,
+  schedule = schedule,
+)
+
+private fun TemporaryAbsenceOccurrence.toModel(prison: Prison, position: Int, total: Int) = TapOccurrence(
+  id = id,
+  prison = prison,
+  status = status.asCodedDescription(),
+  authorisation = authorisation.forOccurrence(),
+  absenceType = absenceType
+    ?.takeIf { reasonPath.has(ABSENCE_TYPE) }
+    ?.asCodedDescription(),
+  absenceSubType = absenceSubType
+    ?.takeIf { reasonPath.has(ABSENCE_SUB_TYPE) }
+    ?.asCodedDescription(),
+  absenceReasonCategory = absenceReasonCategory
+    ?.takeIf { reasonPath.has(ABSENCE_REASON_CATEGORY) }
+    ?.asCodedDescription(),
+  absenceReason = absenceReason
+    .takeIf { reasonPath.has(ABSENCE_REASON) }
+    ?.asCodedDescription(),
+  start = start,
+  end = end,
+  location = location,
+  accompaniedBy = accompaniedBy.asCodedDescription(),
+  transport = transport.asCodedDescription(),
+  contactInformation = contactInformation,
+  comments = comments,
+  occurrencePosition = position,
+  totalOccurrences = total,
+  movements = movements().map(TemporaryAbsenceMovement::toModel),
+)
+
+private fun TemporaryAbsenceMovement.toModel() = TapOccurrence.Movement(id, occurredAt, direction, location)

@@ -28,11 +28,10 @@ import tools.jackson.module.kotlin.readValue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.audit.AuditRevision
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.Identifiable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventPublication
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.publication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.DomainEventPublication
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonTapLocations
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonTapLocationsRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.em.service.ExternalMovementRecordedEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.Notification
@@ -51,7 +50,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Pr
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerRegisterExtension.Companion.prisonRegister
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.PrisonerSearchExtension
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
-import uk.gov.justice.digital.hmpps.externalmovementsapi.service.ExternalMovementRecordedEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.PrisonTapLocations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.PrisonTapLocationsRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService

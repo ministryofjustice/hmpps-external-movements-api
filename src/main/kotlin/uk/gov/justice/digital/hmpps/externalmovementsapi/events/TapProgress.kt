@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.events
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.integration.IntegrationUrlBuilder.movementUrl
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.integration.IntegrationUrlBuilder.movementUrl
 import java.util.UUID
 
 data class TapProgressInformation(

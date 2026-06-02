@@ -1,0 +1,31 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.paged
+
+import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.validation.Valid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.PersonIdentifierDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ValidPersonIdentifierOrDateRange
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ValidStartAndEnd
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.removeNullChar
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence.Companion.START
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
+import java.time.LocalDate
+
+@ValidStartAndEnd
+@ValidPersonIdentifierOrDateRange
+data class TapOccurrenceSearchRequest(
+  val prisonCode: String,
+  override val start: LocalDate? = null,
+  override val end: LocalDate? = null,
+  val status: Set<OccurrenceStatus.Code> = emptySet(),
+  @Valid
+  val absenceCategorisation: AbsenceCategorisationFilter? = null,
+  val isAccompanied: Boolean? = null,
+  override val query: String? = null,
+  override val page: Int = 1,
+  override val size: Int = 10,
+  override val sort: String = START,
+) : OccurrenceSearchRequest,
+  PersonIdentifierDateRange<LocalDate> {
+  @JsonIgnore
+  val queryString: String? = query?.removeNullChar()?.takeIf { it.isNotBlank() }
+}
