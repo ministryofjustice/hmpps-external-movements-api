@@ -5,7 +5,7 @@ import org.springframework.boot.actuate.info.Info
 import org.springframework.boot.actuate.info.InfoContributor
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.integration.IntegrationUrlBuilder
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.integration.IntegrationUrlBuilder
 import java.time.Duration
 
 @Component

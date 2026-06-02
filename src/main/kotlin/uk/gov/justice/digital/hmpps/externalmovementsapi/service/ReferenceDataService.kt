@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.getDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.ReferenceDataResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.asCodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.asCodedDescription
 
 @Service
 class ReferenceDataService(

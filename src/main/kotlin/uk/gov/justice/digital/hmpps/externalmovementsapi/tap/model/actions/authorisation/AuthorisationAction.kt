@@ -1,0 +1,28 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation
+
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.action.Action
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes(
+  value = [
+    Type(value = ApproveAuthorisation::class, name = "ApproveAuthorisation"),
+    Type(value = PauseAuthorisation::class, name = "PauseAuthorisation"),
+    Type(value = ResumeAuthorisation::class, name = "ResumeAuthorisation"),
+    Type(value = DenyAuthorisation::class, name = "DenyAuthorisation"),
+    Type(value = CancelAuthorisation::class, name = "CancelAuthorisation"),
+    Type(value = ClearAuthorisationSchedule::class, name = "ClearAuthorisationSchedule"),
+    Type(value = ChangeAuthorisationAccompaniment::class, name = "ChangeAuthorisationAccompaniment"),
+    Type(value = ChangeAuthorisationComments::class, name = "ChangeAuthorisationComments"),
+    Type(value = ChangeAuthorisationDateRange::class, name = "ChangeAuthorisationDateRange"),
+    Type(value = RecategoriseAuthorisation::class, name = "RecategoriseAuthorisation"),
+    Type(value = ChangeAuthorisationLocation::class, name = "ChangeAuthorisationLocation"),
+  ],
+)
+sealed interface AuthorisationAction : Action {
+  fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*>? = null
+}

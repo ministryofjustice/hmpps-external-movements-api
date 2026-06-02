@@ -7,8 +7,8 @@ import jakarta.persistence.MappedSuperclass
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.cache.cacheable
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.ReferenceDataPaths
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.absencereason.AbsenceCategorisationLinkRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.ReferenceDataPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceCategorisationLinkRepository
 import java.util.UUID
 import kotlin.reflect.KClass
 

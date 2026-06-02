@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.ServiceConfig
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.event.producer.DomainEventProducer
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.PrisonRelated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.PrisonRelated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import java.util.UUID
 

@@ -1,0 +1,24 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence
+
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.action.Action
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes(
+  value = [
+    Type(value = CancelOccurrence::class, name = "CancelOccurrence"),
+    Type(value = ChangeOccurrenceAccompaniment::class, name = "ChangeOccurrenceAccompaniment"),
+    Type(value = ChangeOccurrenceComments::class, name = "ChangeOccurrenceComments"),
+    Type(value = ChangeOccurrenceLocation::class, name = "ChangeOccurrenceLocation"),
+    Type(value = ChangeOccurrenceTransport::class, name = "ChangeOccurrenceTransport"),
+    Type(value = RecategoriseOccurrence::class, name = "RecategoriseOccurrence"),
+    Type(value = RescheduleOccurrence::class, name = "RescheduleOccurrence"),
+  ],
+)
+sealed interface OccurrenceAction : Action {
+  fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*>? = null
+}

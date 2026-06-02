@@ -9,8 +9,8 @@ import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.TapLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.VersionSigner
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.TapLocations
 
 class GetPrisonTapLocationsIntTest(
   @Autowired private val versionSigner: VersionSigner,

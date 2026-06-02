@@ -1,0 +1,473 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.internal
+
+import com.microsoft.applicationinsights.TelemetryClient
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAudit
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.migration.MigrationSystemAuditRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.person.PersonSummary
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.isNullOrEmpty
+import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.ReferenceDataPaths
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.SingleSchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement.Direction.valueOf
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovementRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrenceRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.Transport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceCategorisationLinkRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceReasonCategory
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationComments
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationLocations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangePrisonPerson
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementComments
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementDirection
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementOccurredAt
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.CancelOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceComments
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceTransport
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.RecategoriseOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.RescheduleOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.AtAndBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.migrate.MigrateTapRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.migrate.MigrateTapResponse
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.migrate.MigratedAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.migrate.MigratedMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.migrate.MigratedOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.migrate.TapAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.migrate.TapMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.migrate.TapOccurrence
+import java.time.LocalDate
+import java.time.LocalDateTime.of
+import java.util.UUID
+import kotlin.reflect.KClass
+
+@Transactional
+@Service
+class ResyncTapHierarchy(
+  private val referenceDataRepository: ReferenceDataRepository,
+  private val linkRepository: AbsenceCategorisationLinkRepository,
+  private val movementRepository: TemporaryAbsenceMovementRepository,
+  private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
+  private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
+  private val personSummaryService: PersonSummaryService,
+  private val migrationSystemAuditRepository: MigrationSystemAuditRepository,
+  private val telemetryClient: TelemetryClient,
+) {
+  fun resync(personIdentifier: String, request: MigrateTapRequest): MigrateTapResponse {
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS, migratingData = true)
+      .set()
+    val person = personSummaryService.getWithSave(personIdentifier)
+    val allRd = referenceDataRepository.findAll()
+    val rdLinks =
+      linkRepository.findAll().groupBy({ it.id2 to it.domain1 }, { link -> allRd.first { it.id == link.id1 } })
+    val findLinkedFrom: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData> =
+      { id: UUID, domainCode: ReferenceDataDomain.Code -> rdLinks[id to domainCode] ?: emptyList() }
+
+    val authorisations = findAllAuthorisations(
+      personIdentifier,
+      request.temporaryAbsences.mapNotNull { it.id }.toSet(),
+      request.temporaryAbsences.map { it.legacyId }.toSet(),
+    )
+
+    val authorisationProvider = { id: UUID?, legacyId: Long ->
+      authorisations.firstOrNull { it.id == id || it.legacyId == legacyId }
+    }
+    val occRequests = request.temporaryAbsences.flatMap { it.occurrences }
+    val occurrences = findAllOccurrences(
+      personIdentifier,
+      occRequests.mapNotNull { it.id }.toSet(),
+      occRequests.map { it.legacyId }.toSet(),
+    )
+    val occurrenceProvider = { id: UUID?, legacyId: Long ->
+      occurrences.firstOrNull { it.id == id || it.legacyId == legacyId }
+    }
+    val movRequests = occRequests.flatMap { it.movements } + request.unscheduledMovements
+    val movements: List<TemporaryAbsenceMovement> = findAllMovements(
+      personIdentifier,
+      movRequests.mapNotNull { it.id }.toSet(),
+      movRequests.map { it.legacyId }.toSet(),
+    )
+    val movementProvider = { id: UUID?, legacyId: String ->
+      movements.firstOrNull { it.id == id || it.legacyId == legacyId }
+    }
+
+    val tap = request.temporaryAbsences.map {
+      it.resync(person, allRd, findLinkedFrom, authorisationProvider, occurrenceProvider, movementProvider)
+    }
+    val unscheduled = request.unscheduledMovements.map { it.resync(person, null, allRd, movementProvider) }
+    val (auth, occ) = removeNotInResync(tap, unscheduled, authorisations, occurrences, movements)
+    createMissingOccurrences(auth, occ) { clazz, code -> allRd.first { clazz.isInstance(it) && it.code == code } }
+    if (request.isEmpty() && auth.isEmpty() && occ.isEmpty()) {
+      personSummaryService.remove(person)
+    }
+    return MigrateTapResponse(tap, unscheduled)
+  }
+
+  private fun findAllAuthorisations(
+    personIdentifier: String,
+    ids: Set<UUID>,
+    legacyIds: Set<Long>,
+  ): List<TemporaryAbsenceAuthorisation> {
+    val forLegacyIds = authorisationRepository.findIdsByLegacyId(legacyIds)
+    val forPersonIds = authorisationRepository.findIdsByPersonIdentifier(personIdentifier)
+    return authorisationRepository.findAllById((ids + forLegacyIds + forPersonIds).toSet())
+  }
+
+  private fun findAllOccurrences(
+    personIdentifier: String,
+    ids: Set<UUID>,
+    legacyIds: Set<Long>,
+  ): List<TemporaryAbsenceOccurrence> {
+    val forLegacyIds = occurrenceRepository.findIdsByLegacyId(legacyIds)
+    val forPersonIds = occurrenceRepository.findIdsByPersonIdentifier(personIdentifier)
+    return occurrenceRepository.findAllById((ids + forLegacyIds + forPersonIds).toSet())
+  }
+
+  private fun findAllMovements(
+    personIdentifier: String,
+    ids: Set<UUID>,
+    legacyIds: Set<String>,
+  ): List<TemporaryAbsenceMovement> {
+    val forLegacyIds = movementRepository.findIdsByLegacyId(legacyIds)
+    val forPersonIds = movementRepository.findIdsByPersonIdentifier(personIdentifier)
+    return movementRepository.findAllById((ids + forLegacyIds + forPersonIds).toSet())
+  }
+
+  private fun TapAuthorisation.resync(
+    person: PersonSummary,
+    rd: List<ReferenceData>,
+    findLinked: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData>,
+    authorisationProvider: (UUID?, Long) -> TemporaryAbsenceAuthorisation?,
+    occurrenceProvider: (UUID?, Long) -> TemporaryAbsenceOccurrence?,
+    movementProvider: (UUID?, String) -> TemporaryAbsenceMovement?,
+  ): MigratedAuthorisation {
+    val rdPaths = rdPaths(rd, findLinked)
+    val auth = authorisationProvider(id, legacyId)
+      ?.update(person, this, rdPaths)
+      ?: authorisationRepository.save(asEntity(person, rdPaths))
+    val occurrences = occurrences.map {
+      it.resync(person, auth, rd, findLinked, occurrenceProvider, movementProvider)
+    }
+    mergeMigrationAudit(auth.id, created, updated)
+    return MigratedAuthorisation(legacyId, auth.id, occurrences)
+  }
+
+  private fun TapOccurrence.resync(
+    person: PersonSummary,
+    authorisation: TemporaryAbsenceAuthorisation,
+    rd: List<ReferenceData>,
+    findLinked: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData>,
+    occurrenceProvider: (UUID?, Long) -> TemporaryAbsenceOccurrence?,
+    movementProvider: (UUID?, String) -> TemporaryAbsenceMovement?,
+  ): MigratedOccurrence {
+    val rdPaths = rdPaths(rd, findLinked)
+    val occ = occurrenceProvider(id, legacyId)
+      ?.update(authorisation, this, rdPaths)
+      ?: asEntity(authorisation, rdPaths)
+    val movements = movements.map { it.resync(person, occ, rd, movementProvider) }
+    if (movements.map { it.id }.sorted() != occ.movements().map { it.id }.sorted()) {
+      val toRemove = occ.movements().filter { m -> m.id !in movements.map { it.id } }
+      toRemove.forEach { mov ->
+        occ.removeMovement(mov) { rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus }
+      }
+    }
+    val occurrence = occurrenceRepository.save(
+      occ.calculateStatus {
+        rdPaths.getReferenceData(OccurrenceStatus::class, it) as OccurrenceStatus
+      },
+    )
+    mergeMigrationAudit(occurrence.id, created, updated)
+    return MigratedOccurrence(legacyId, occurrence.id, movements)
+  }
+
+  private fun TapMovement.resync(
+    person: PersonSummary,
+    occurrence: TemporaryAbsenceOccurrence?,
+    rd: List<ReferenceData>,
+    movementProvider: (UUID?, String) -> TemporaryAbsenceMovement?,
+  ): MigratedMovement {
+    val rdSupplier =
+      { domain: KClass<out ReferenceData>, code: String -> rd.first { domain.isInstance(it) && it.code == code } }
+    val movement = movementProvider(id, legacyId)
+      ?.update(person, occurrence, this, rdSupplier)
+      ?: asEntity(person, rdSupplier)
+    occurrence?.also { occ ->
+      if (occurrence.movements().none { it.id == id }) {
+        occ.addMovement(movement) {
+          ExternalMovementContext.get().copy(reason = null).set()
+          rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus
+        }
+      }
+    } ?: movementRepository.save(movement)
+    mergeMigrationAudit(movement.id, created, updated)
+    return MigratedMovement(legacyId, movement.id)
+  }
+
+  private fun removeNotInResync(
+    tap: List<MigratedAuthorisation>,
+    unscheduled: List<MigratedMovement>,
+    authorisations: List<TemporaryAbsenceAuthorisation>,
+    occurrences: List<TemporaryAbsenceOccurrence>,
+    movements: List<TemporaryAbsenceMovement>,
+  ): Pair<List<TemporaryAbsenceAuthorisation>, List<TemporaryAbsenceOccurrence>> {
+    val movementIds =
+      tap.flatMap { a -> a.occurrences.flatMap { o -> o.movements.map { m -> m.id } } } + unscheduled.map { it.id }
+    val occurrenceIds = tap.flatMap { a -> a.occurrences.map { o -> o.id } }
+    val authorisationIds = tap.map { a -> a.id }.toSet()
+    movements.filter { it.id !in movementIds }.also(movementRepository::deleteAll)
+    val (authToDelete, authToKeep) = authorisations.partition { it.id !in authorisationIds }
+    val (occToDelete, occToKeep) = occurrences.partition {
+      it.id !in occurrenceIds &&
+        (it.authorisation.id in authToDelete.map { atd -> atd.id } || !it.dpsOnly)
+    }
+    occToDelete.also(occurrenceRepository::deleteAll)
+    authToDelete.also(authorisationRepository::deleteAll)
+    return authToKeep to occToKeep
+  }
+
+  private fun createMissingOccurrences(
+    authorisations: List<TemporaryAbsenceAuthorisation>,
+    occurrences: List<TemporaryAbsenceOccurrence>,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+  ) {
+    val occurrencesByAuthId = occurrences.groupBy { it.authorisation.id }
+    authorisations.filter { auth -> !auth.repeat && auth.status.code != AuthorisationStatus.Code.APPROVED.name }
+      .forEach { auth ->
+        val authOccurrences = occurrencesByAuthId[auth.id] ?: emptyList()
+        if (authOccurrences.isEmpty()) {
+          auth.occurrence()
+            ?.calculateStatus { code -> rdSupplier(OccurrenceStatus::class, code) as OccurrenceStatus }
+            ?.also(occurrenceRepository::save)
+        } else {
+          // if legacyId is not null this has likely been updated from nomis
+          authOccurrences.singleOrNull { it.dpsOnly }
+            ?.updateFrom(auth, rdSupplier, auth.schedule.takeIf { it is SingleSchedule } as? SingleSchedule)
+        }
+      }
+  }
+
+  private fun TapAuthorisation.asEntity(
+    person: PersonSummary,
+    rdPaths: ReferenceDataPaths,
+  ): TemporaryAbsenceAuthorisation {
+    val reasonPath = rdPaths.reasonPath()
+    val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
+      rdPaths.findReferenceData(it.domain.clazz, it.code) as? AbsenceReasonCategory
+    }
+    val status = rdPaths.getReferenceData(AuthorisationStatus::class, statusCode) as AuthorisationStatus
+    return TemporaryAbsenceAuthorisation(
+      person = person,
+      prisonCode = prisonCode,
+      absenceType = absenceTypeCode?.let { rdPaths.findReferenceData(AbsenceType::class, it) as? AbsenceType },
+      absenceSubType = absenceSubTypeCode?.takeIf { it != AbsenceSubType.Code.SECURITY_ESCORT.value }?.let {
+        rdPaths.findReferenceData(AbsenceSubType::class, it) as? AbsenceSubType
+      },
+      absenceReasonCategory = category,
+      absenceReason = rdPaths.getReferenceData(AbsenceReason::class, absenceReasonCode) as AbsenceReason,
+      accompaniedBy = rdPaths.getReferenceData(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
+      transport = rdPaths.getReferenceData(Transport::class, transportCode) as Transport,
+      repeat = repeat,
+      status = if (status.code == AuthorisationStatus.Code.PENDING.name && end.isBefore(LocalDate.now())) {
+        rdPaths.getReferenceData(
+          AuthorisationStatus::class,
+          AuthorisationStatus.Code.EXPIRED.name,
+        ) as AuthorisationStatus
+      } else {
+        status
+      },
+      comments = comments,
+      start = start,
+      end = end,
+      schedule = schedule(),
+      reasonPath = reasonPath,
+      locations = occurrences.mapTo(linkedSetOf()) { it.location }.takeIf { it.isNotEmpty() }
+        ?: location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) } ?: linkedSetOf(),
+      legacyId = legacyId,
+    )
+  }
+
+  private fun TemporaryAbsenceAuthorisation.update(
+    person: PersonSummary,
+    request: TapAuthorisation,
+    rdPaths: ReferenceDataPaths,
+  ) = apply {
+    applyPrisonPerson(ChangePrisonPerson(person.identifier, request.prisonCode)) { person }
+    applyAbsenceCategorisation(request, rdPaths)
+    checkStatus(request, rdPaths)
+    checkSchedule(request, rdPaths)
+    applyLogistics(request, rdPaths)
+    applyComments(ChangeAuthorisationComments(request.comments))
+    applyLegacyId(request.legacyId)
+    request.schedule()?.also { applySchedule(it) }
+    (
+      request.occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
+        .takeIf { it.isNotEmpty() }
+        ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
+      )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
+  }
+
+  private fun TapOccurrence.asEntity(
+    authorisation: TemporaryAbsenceAuthorisation,
+    rdPaths: ReferenceDataPaths,
+  ): TemporaryAbsenceOccurrence {
+    val reasonPath = rdPaths.reasonPath()
+    val category = reasonPath.path.singleOrNull { it.domain == ABSENCE_REASON_CATEGORY }?.let {
+      rdPaths.findReferenceData(it.domain.clazz, it.code) as? AbsenceReasonCategory
+    }
+    return TemporaryAbsenceOccurrence(
+      authorisation = authorisation,
+      absenceType = absenceTypeCode?.let {
+        rdPaths.findReferenceData(AbsenceType::class, it) as? AbsenceType
+      },
+      absenceSubType = absenceSubTypeCode?.takeIf { it != AbsenceSubType.Code.SECURITY_ESCORT.value }?.let {
+        rdPaths.findReferenceData(AbsenceSubType::class, it) as? AbsenceSubType
+      },
+      absenceReasonCategory = category,
+      absenceReason = rdPaths.getReferenceData(AbsenceReason::class, absenceReasonCode) as AbsenceReason,
+      start = start,
+      end = end,
+      contactInformation = contactInformation,
+      accompaniedBy = rdPaths.getReferenceData(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
+      transport = rdPaths.getReferenceData(Transport::class, transportCode) as Transport,
+      location = location,
+      comments = comments,
+      legacyId = legacyId,
+      reasonPath = reasonPath,
+      dpsOnly = false,
+    ).apply {
+      if (isCancelled) {
+        cancel(CancelOccurrence(), rdPaths::getReferenceData)
+      }
+    }
+  }
+
+  private fun TemporaryAbsenceOccurrence.update(
+    authorisation: TemporaryAbsenceAuthorisation,
+    request: TapOccurrence,
+    rdPaths: ReferenceDataPaths,
+  ) = apply {
+    if (this.authorisation.id != authorisation.id) {
+      telemetryClient.trackEvent(
+        "OccurrenceAuthorisationSwitch",
+        mapOf(
+          "occurrence" to id.toString(),
+          "fromAuth" to this.authorisation.id.toString(),
+          "toAuth" to authorisation.id.toString(),
+          "legacyId" to legacyId.toString(),
+        ),
+        mapOf(),
+      )
+    }
+    authorisationPersonAndPrison(authorisation)
+    applyAbsenceCategorisation(request, rdPaths)
+    applySchedule(request)
+    applyLogistics(request, rdPaths)
+    checkCancellation(request, rdPaths)
+    applyComments(ChangeOccurrenceComments(request.comments))
+    applyLegacyId(request.legacyId)
+    if (request.isCancelled && request.movements.isEmpty()) {
+      cancel(CancelOccurrence(), rdPaths::getReferenceData)
+    }
+  }
+
+  private fun TemporaryAbsenceOccurrence.updateFrom(
+    authorisation: TemporaryAbsenceAuthorisation,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+    schedule: SingleSchedule?,
+  ) = apply {
+    authorisationPersonAndPrison(authorisation)
+    applyAbsenceCategorisation(
+      RecategoriseOccurrence(absenceType?.code, absenceSubType?.code, absenceReasonCategory?.code, absenceReason.code),
+      rdSupplier,
+    )
+    schedule?.also {
+      reschedule(RescheduleOccurrence(of(authorisation.start, it.startTime), of(authorisation.end, it.returnTime)))
+    }
+    applyLocation(ChangeOccurrenceLocation(authorisation.locations.firstOrNull() ?: Location.empty()))
+    applyAccompaniment(ChangeOccurrenceAccompaniment(authorisation.accompaniedBy.code), rdSupplier)
+    applyTransport(ChangeOccurrenceTransport(authorisation.transport.code), rdSupplier)
+    applyComments(ChangeOccurrenceComments(authorisation.comments))
+    makeDpsOnly()
+    calculateStatus { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
+  }
+
+  private fun TapMovement.asEntity(
+    person: PersonSummary,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+  ) = TemporaryAbsenceMovement(
+    person = person,
+    occurrence = null,
+    occurredAt = occurredAt,
+    direction = valueOf(direction.name),
+    absenceReason = rdSupplier(AbsenceReason::class, absenceReasonCode) as AbsenceReason,
+    accompaniedBy = rdSupplier(AccompaniedBy::class, accompaniedByCode) as AccompaniedBy,
+    accompaniedByComments = accompaniedByComments,
+    comments = comments,
+    prisonCode = prisonCode,
+    location = location,
+    legacyId = legacyId,
+  )
+
+  private fun TemporaryAbsenceMovement.update(
+    person: PersonSummary,
+    occurrence: TemporaryAbsenceOccurrence?,
+    request: TapMovement,
+    rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
+  ) = apply {
+    moveTo(person)
+    switchSchedule(ChangeMovementOccurrence(occurrence?.id), rdProvider) { _ -> checkNotNull(occurrence) }
+    applyDirection(ChangeMovementDirection(request.direction))
+    applyOccurredAt(ChangeMovementOccurredAt(request.occurredAt))
+    applyComments(ChangeMovementComments(request.comments))
+    applyLegacyId(request.legacyId)
+    applyAccompaniedBy(
+      ChangeMovementAccompaniment(
+        request.accompaniedByCode,
+        request.accompaniedByComments,
+      ),
+      rdProvider,
+    )
+    applyReason(ChangeMovementReason(request.absenceReasonCode), rdProvider)
+    applyLocation(ChangeMovementLocation(request.location))
+  }
+
+  private fun ReferenceDataRequired.rdPaths(
+    rd: List<ReferenceData>,
+    findLinked: (UUID, ReferenceDataDomain.Code) -> List<ReferenceData>,
+  ): ReferenceDataPaths = ReferenceDataPaths(
+    rd.filter { rd -> rd::class to rd.code in requiredReferenceData().map { it.domain.clazz to it.code } },
+    findLinked,
+  )
+
+  private fun mergeMigrationAudit(id: UUID, created: AtAndBy, updated: AtAndBy?) {
+    migrationSystemAuditRepository.save(
+      MigrationSystemAudit(id, created.at, created.by, updated?.at, updated?.by),
+    )
+  }
+}

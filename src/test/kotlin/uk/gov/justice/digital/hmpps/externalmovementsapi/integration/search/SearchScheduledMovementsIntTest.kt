@@ -12,20 +12,20 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.TEMPORARY_ABSENCE_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.occurrence.TemporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.tap.referencedata.AccompaniedBy
+import uk.gov.justice.digital.hmpps.externalmovementsapi.em.model.ScheduledMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.em.model.ScheduledMovementDomain
+import uk.gov.justice.digital.hmpps.externalmovementsapi.em.model.ScheduledMovementType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.em.model.ScheduledMovements
+import uk.gov.justice.digital.hmpps.externalmovementsapi.em.model.SearchScheduledMovementsRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovement
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementDomain
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovementType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ScheduledMovements
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.SearchScheduledMovementsRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AccompaniedBy
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.SequencedSet
@@ -222,7 +222,16 @@ class SearchScheduledMovementsIntTest(
   ) = webTestClient
     .post()
     .uri(SEARCH_EM_URL, prisonCode)
-    .bodyValue(SearchScheduledMovementsRequest(movementTypes, personIdentifiers, start, end, includeSensitive, includeLocation))
+    .bodyValue(
+      SearchScheduledMovementsRequest(
+        movementTypes,
+        personIdentifiers,
+        start,
+        end,
+        includeSensitive,
+        includeLocation,
+      ),
+    )
     .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

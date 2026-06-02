@@ -15,9 +15,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.AbsenceCategorisations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.referencedata.CodedDescription
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.referencedata.AbsenceCategorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.referencedata.AbsenceCategorisations
 
 class AbsenceCategorisationIntegrationTest : IntegrationTest() {
   @Test
