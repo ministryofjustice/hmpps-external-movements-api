@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundExcep
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceIds
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
@@ -33,6 +34,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrencesRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationLocations
 import java.time.LocalDateTime.now
@@ -73,28 +75,32 @@ class CreateScheduledAbsence(
     return ReferenceId(authorisation.id)
   }
 
-  fun tapOccurrence(authorisationId: UUID, request: CreateOccurrenceRequest): ReferenceId {
+  fun tapOccurrence(authorisationId: UUID, request: CreateOccurrencesRequest): ReferenceIds {
     val authorisation = tapAuthRepository.getAuthorisation(authorisationId)
     if (!authorisation.permitsOccurrences()) {
       throw ConflictException("Cannot add a new occurrence to a non active authorisation")
     }
-    check(
-      !request.start.toLocalDate().isBefore(authorisation.start) &&
-        !request.end.toLocalDate().isAfter(authorisation.end),
-    ) {
-      "Temporary absence must be within the authorised date range."
-    }
-    if (!authorisation.repeat) {
-      check(tapOccurrenceRepository.countByAuthorisationId(authorisationId) == 0) {
-        "Cannot add multiple occurrences to a single authorisation."
+    val new = request.occurrences.takeIf { it.isNotEmpty() } ?: listOf(request.singleRequest())
+    val occurrences = new.map { occ ->
+      check(
+        !occ.start.toLocalDate().isBefore(authorisation.start) &&
+          !occ.end.toLocalDate().isAfter(authorisation.end),
+      ) {
+        "Temporary absence must be within the authorised date range."
       }
+
+      if (!authorisation.repeat) {
+        check(new.size == 1 && tapOccurrenceRepository.countByAuthorisationId(authorisationId) == 0) {
+          "Cannot add multiple occurrences to a single authorisation."
+        }
+      }
+
+      occ.asOccurrence(authorisation).calculateStatus { occurrenceStatusRepository.getByCode(it) }
     }
 
-    val occurrence = request.asOccurrence(authorisation).calculateStatus { occurrenceStatusRepository.getByCode(it) }
-    val locations = (authorisation.locations + occurrence.location).mapTo(linkedSetOf()) { it }
+    val locations = (authorisation.locations + occurrences.map { it.location }).mapTo(linkedSetOf()) { it }
     authorisation.applyLocations(ChangeAuthorisationLocations(locations))
-
-    return ReferenceId(tapOccurrenceRepository.save(occurrence).id)
+    return ReferenceIds(tapOccurrenceRepository.saveAll(occurrences).map { ReferenceId(it.id) })
   }
 
   private fun CreateTapAuthorisationRequest.asAuthorisation(
