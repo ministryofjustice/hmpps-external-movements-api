@@ -31,12 +31,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceIds
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrenceRequest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrencesRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -64,19 +66,19 @@ class CreateTapOccurrenceIntTest(
   fun `403 forbidden without correct role`(role: String) {
     createOccurrence(
       UUID.randomUUID(),
-      request(),
+      createOccurrencesRequest(),
       role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    createOccurrence(newUuid(), request()).expectStatus().isNotFound
+    createOccurrence(newUuid(), createOccurrencesRequest()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @MethodSource("validationRequests")
-  fun `400 bad request - validation exceptions`(request: CreateOccurrenceRequest, message: String) {
+  fun `400 bad request - validation exceptions`(request: CreateOccurrencesRequest, message: String) {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val response = createOccurrence(authorisation.id, request).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(response.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
@@ -98,7 +100,23 @@ class CreateTapOccurrenceIntTest(
         end = LocalDateTime.now().plusDays(2),
       ),
     )
-    val res = createOccurrence(auth.id, request()).errorResponse(HttpStatus.BAD_REQUEST)
+    val res = createOccurrence(auth.id, createOccurrencesRequest()).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+    assertThat(res.userMessage).isEqualTo("Invalid request")
+  }
+
+  @Test
+  fun `400 bad request - cannot add multiple occurrences to a single authorisation sending multiples`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        start = LocalDate.now(),
+        end = LocalDate.now().plusDays(3),
+      ),
+    )
+    val res = createOccurrence(
+      auth.id,
+      createOccurrencesRequest(occurrences = listOf(createOccurrenceRequest(), createOccurrenceRequest())),
+    ).errorResponse(HttpStatus.BAD_REQUEST)
     assertThat(res.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
     assertThat(res.userMessage).isEqualTo("Invalid request")
   }
@@ -106,7 +124,7 @@ class CreateTapOccurrenceIntTest(
   @Test
   fun `200 ok - an occurrence is added to an authorisation with independent comments`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val request = request()
+    val request = createOccurrencesRequest()
     val username = username()
     val caseloadId = word(6)
     val response = createOccurrence(authorisation.id, request, username, caseloadId)
@@ -131,7 +149,9 @@ class CreateTapOccurrenceIntTest(
       occurrence,
       setOf(
         TemporaryAbsenceScheduled(occurrence.person.identifier, occurrence.id).publication(occurrence.id),
-        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id).publication(authorisation.id),
+        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id).publication(
+          authorisation.id,
+        ),
       ),
     )
   }
@@ -139,7 +159,7 @@ class CreateTapOccurrenceIntTest(
   @Test
   fun `200 ok - an occurrence is added to an authorisation without comments`() {
     val authorisation = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
-    val request = request(comments = null)
+    val request = createOccurrencesRequest(comments = null)
     val username = username()
     val caseloadId = word(6)
     val response = createOccurrence(authorisation.id, request, username, caseloadId).successResponse<ReferenceId>()
@@ -164,7 +184,50 @@ class CreateTapOccurrenceIntTest(
       occurrence,
       setOf(
         TemporaryAbsenceScheduled(occurrence.person.identifier, occurrence.id).publication(occurrence.id),
-        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id).publication(authorisation.id),
+        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id).publication(
+          authorisation.id,
+        ),
+      ),
+    )
+  }
+
+  @Test
+  fun `200 ok - an occurrence is added to an authorisation with new location with outer request`() {
+    val authorisation = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(repeat = true, locations = linkedSetOf(location())),
+    )
+    val occ1 = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(authorisation, location = authorisation.locations.single()),
+    )
+
+    val request = createOccurrencesRequest()
+    val username = username()
+    val caseloadId = word(6)
+    val response = createOccurrence(authorisation.id, request, username, caseloadId).successResponse<ReferenceId>()
+
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
+    occurrence.verifyAgainst(request)
+    occurrence.verifyAgainst(authorisation)
+    assertThat(occurrence.authorisation.locations).containsExactly(occ1.location, occurrence.location)
+
+    verifyAudit(
+      occurrence,
+      RevisionType.ADD,
+      setOf(
+        HmppsDomainEvent::class.simpleName!!,
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = username, caseloadId = caseloadId),
+    )
+
+    verifyEventPublications(
+      authorisation,
+      setOf(
+        TemporaryAbsenceScheduled(occurrence.person.identifier, occurrence.id).publication(occurrence.id),
+        TemporaryAbsenceAuthorisationRelocated(authorisation.person.identifier, authorisation.id).publication(
+          authorisation.id,
+        ),
       ),
     )
   }
@@ -178,12 +241,17 @@ class CreateTapOccurrenceIntTest(
       temporaryAbsenceOccurrence(authorisation, location = authorisation.locations.single()),
     )
 
-    val request = request()
+    val request = createOccurrenceRequest()
     val username = username()
     val caseloadId = word(6)
-    val response = createOccurrence(authorisation.id, request, username, caseloadId).successResponse<ReferenceId>()
+    val response = createOccurrence(
+      authorisation.id,
+      createOccurrencesRequest(occurrences = listOf(request)),
+      username,
+      caseloadId,
+    ).successResponse<ReferenceIds>()
 
-    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.ids.single().id))
     occurrence.verifyAgainst(request)
     occurrence.verifyAgainst(authorisation)
     assertThat(occurrence.authorisation.locations).containsExactly(occ1.location, occurrence.location)
@@ -225,7 +293,7 @@ class CreateTapOccurrenceIntTest(
     )
     assertThat(occ1.status.code).isEqualTo(OccurrenceStatus.Code.PAUSED.name)
 
-    val request = request(location = occ1.location)
+    val request = createOccurrencesRequest(location = occ1.location)
     val response = createOccurrence(authorisation.id, request).successResponse<ReferenceId>()
 
     val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(response.id))
@@ -240,6 +308,13 @@ class CreateTapOccurrenceIntTest(
     )
 
     verifyEvents(occurrence, setOf())
+  }
+
+  private fun TemporaryAbsenceOccurrence.verifyAgainst(request: CreateOccurrencesRequest) {
+    assertThat(start).isCloseTo(request.start, within(1, ChronoUnit.SECONDS))
+    assertThat(end).isCloseTo(request.end, within(1, ChronoUnit.SECONDS))
+    assertThat(location).isEqualTo(request.location)
+    assertThat(comments).isEqualTo(request.comments ?: authorisation.comments)
   }
 
   private fun TemporaryAbsenceOccurrence.verifyAgainst(request: CreateOccurrenceRequest) {
@@ -260,7 +335,7 @@ class CreateTapOccurrenceIntTest(
 
   private fun createOccurrence(
     id: UUID,
-    request: CreateOccurrenceRequest,
+    request: CreateOccurrencesRequest,
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,
@@ -275,7 +350,15 @@ class CreateTapOccurrenceIntTest(
   companion object {
     const val CREATE_OCCURRENCE_URL = "/temporary-absence-authorisations/{id}/occurrences"
 
-    private fun request(
+    private fun createOccurrencesRequest(
+      start: LocalDateTime = LocalDateTime.now().plusDays(1),
+      end: LocalDateTime = LocalDateTime.now().plusDays(2),
+      location: Location = location(),
+      comments: String? = word(20),
+      occurrences: List<CreateOccurrenceRequest> = emptyList(),
+    ) = CreateOccurrencesRequest(start, end, location, comments, occurrences)
+
+    private fun createOccurrenceRequest(
       start: LocalDateTime = LocalDateTime.now().plusDays(1),
       end: LocalDateTime = LocalDateTime.now().plusDays(2),
       location: Location = location(),
@@ -285,19 +368,19 @@ class CreateTapOccurrenceIntTest(
     @JvmStatic
     fun validationRequests() = listOf(
       Arguments.of(
-        request(start = LocalDateTime.now().minusDays(5), end = LocalDateTime.now().minusDays(4)),
+        createOccurrencesRequest(start = LocalDateTime.now().minusDays(5), end = LocalDateTime.now().minusDays(4)),
         "Validation failure: Absence cannot be scheduled in the past.",
       ),
       Arguments.of(
-        request(start = LocalDateTime.now().plusDays(5), end = LocalDateTime.now().plusDays(4)),
+        createOccurrencesRequest(start = LocalDateTime.now().plusDays(5), end = LocalDateTime.now().plusDays(4)),
         "Validation failure: End must be after start.",
       ),
       Arguments.of(
-        request(location = location(description = null, address = null, postcode = null)),
+        createOccurrencesRequest(location = location(description = null, address = null, postcode = null)),
         "Validation failure: Either a description or partial address must be specified.",
       ),
       Arguments.of(
-        request(start = LocalDateTime.now().plusDays(7), end = LocalDateTime.now().plusDays(8)),
+        createOccurrencesRequest(start = LocalDateTime.now().plusDays(7), end = LocalDateTime.now().plusDays(8)),
         "IllegalStateException:",
       ),
     )
