@@ -124,16 +124,9 @@ class SyncTapMovementIntTest(
       setOf(
         TemporaryAbsenceStarted(
           authorisation.person.identifier,
-          saved.id,
           occurrence.id,
           DataSource.NOMIS,
-        ).publication(saved.id),
-        TemporaryAbsenceStarted(
-          authorisation.person.identifier,
-          saved.id,
-          occurrence.id,
-          DataSource.NOMIS,
-        ).publication(occurrence.id) { false },
+        ).publication(occurrence.id),
       ),
     )
   }
@@ -185,16 +178,9 @@ class SyncTapMovementIntTest(
       setOf(
         TemporaryAbsenceCompleted(
           authorisation.person.identifier,
-          saved.id,
           occurrence.id,
           DataSource.NOMIS,
-        ).publication(saved.id),
-        TemporaryAbsenceCompleted(
-          authorisation.person.identifier,
-          saved.id,
-          occurrence.id,
-          DataSource.NOMIS,
-        ).publication(occurrence.id) { false },
+        ).publication(occurrence.id),
       ),
     )
   }
@@ -265,10 +251,10 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
+      setOf(TemporaryAbsenceMovement::class.simpleName!!),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf(TemporaryAbsenceCompleted(saved.person.identifier, saved.id, null, DataSource.NOMIS)))
+    verifyEvents(saved, setOf())
   }
 
   @Test
@@ -347,10 +333,9 @@ class SyncTapMovementIntTest(
         ).publication(movement.id) { false },
         TemporaryAbsenceStarted(
           movement.person.identifier,
-          movement.id,
           occ2.id,
           DataSource.NOMIS,
-        ).publication(occ2.id) { false },
+        ).publication(occ2.id),
       ),
     )
   }

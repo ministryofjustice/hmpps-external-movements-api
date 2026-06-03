@@ -30,11 +30,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.DomainE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.DomainEventPublication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceDenied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsencePaused
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceScheduled
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnscheduled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.CategorisedAbsenceReason
@@ -216,8 +214,6 @@ final class TemporaryAbsenceOccurrence(
   @OneToMany(mappedBy = "occurrence", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
   private val movements: MutableList<TemporaryAbsenceMovement> = mutableListOf()
   fun movements(): List<TemporaryAbsenceMovement> = unmodifiableList(movements)
-
-  fun latestMovement(direction: TemporaryAbsenceMovement.Direction): TemporaryAbsenceMovement = movements.sortedByDescending { it.occurredAt }.first { it.direction == direction }
 
   fun addMovement(movement: TemporaryAbsenceMovement, statusProvider: (String) -> OccurrenceStatus) = apply {
     movements.add(movement)
@@ -429,8 +425,6 @@ final class TemporaryAbsenceOccurrence(
 
   companion object {
     val EXCLUDE_FROM_PUBLISH: Set<String> = setOf(
-      TemporaryAbsenceStarted.EVENT_TYPE,
-      TemporaryAbsenceCompleted.EVENT_TYPE,
       TemporaryAbsenceDenied.EVENT_TYPE,
     )
 
