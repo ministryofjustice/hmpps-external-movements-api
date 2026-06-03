@@ -2,15 +2,10 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occu
 
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 
 data class CommenceOccurrence(
   override val reason: String? = null,
 ) : OccurrenceAction {
-  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceStarted(
-    tao.person.identifier,
-    tao.latestMovement(TemporaryAbsenceMovement.Direction.OUT).id,
-    tao.id,
-  )
+  override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceStarted(tao.person.identifier, tao.id)
 }

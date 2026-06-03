@@ -34,8 +34,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.DomainE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
@@ -149,12 +147,7 @@ final class TemporaryAbsenceMovement(
     appliedActions = listOf()
   }
 
-  override fun initialEvents(): Set<DomainEventPublication> = setOf(
-    when (direction) {
-      Direction.OUT -> TemporaryAbsenceStarted(person.identifier, id, occurrence?.id)
-      Direction.IN -> TemporaryAbsenceCompleted(person.identifier, id, occurrence?.id)
-    }.publication(id),
-  )
+  override fun initialEvents(): Set<DomainEventPublication> = setOf()
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
     action.domainEvent(this)?.publication(id) { it.eventType !in EXCLUDE_FROM_PUBLISH }
@@ -245,9 +238,7 @@ final class TemporaryAbsenceMovement(
   }
 
   companion object {
-    val EXCLUDE_FROM_PUBLISH: Set<String> = setOf(
-      TapMovementOccurrenceChanged.EVENT_TYPE,
-    )
+    val EXCLUDE_FROM_PUBLISH: Set<String> = setOf(TapMovementOccurrenceChanged.EVENT_TYPE)
 
     val formattedReason: (TemporaryAbsenceMovement) -> String = {
       val date = DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy")

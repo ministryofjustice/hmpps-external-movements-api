@@ -318,3 +318,47 @@ data class TemporaryAbsenceRelocated(
     )
   }
 }
+
+data class TemporaryAbsenceStarted(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.started"
+    const val DESCRIPTION: String = "A temporary absence has started."
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceStarted(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
+data class TemporaryAbsenceCompleted(
+  override val additionalInformation: TemporaryAbsenceInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TemporaryAbsenceInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = occurrenceUrl(additionalInformation.id)
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence.completed"
+    const val DESCRIPTION: String = "A temporary absence has completed."
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TemporaryAbsenceCompleted(
+      TemporaryAbsenceInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}

@@ -75,9 +75,9 @@ components:
     person.temporary-absence.transport-changed:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-transport-changed.yaml
     person.temporary-absence.started:
-      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-started.yaml
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-started.yaml
     person.temporary-absence.completed:
-      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-completed.yaml
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-occurrence/temporary-absence-completed.yaml
     person.temporary-absence-movement.reversed:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-reversed.yaml
     person.temporary-absence-movement.accompaniment-changed:
