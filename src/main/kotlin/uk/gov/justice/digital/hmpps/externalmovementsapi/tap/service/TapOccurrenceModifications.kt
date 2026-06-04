@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occur
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.RecategoriseOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.RescheduleOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.history.OccurrenceHistory
@@ -45,72 +46,92 @@ class TapOccurrenceModifications(
     ExternalMovementContext.get().copy(reason = action.reason).set()
     val (readVersion, writeVersion) = transactionTemplate.execute {
       val occurrence = taoRepository.getOccurrence(id)
-      val single = occurrence.authorisation.takeIf { !it.repeat }
       val readVersion = occurrence.version
       val rdSupplier = referenceDataRepository.rdProvider()
-      when (action) {
-        is RescheduleOccurrence -> {
-          single?.also {
-            val cadr = ChangeAuthorisationDateRange(
-              action.start?.toLocalDate() ?: it.start,
-              action.end?.toLocalDate() ?: it.end,
-              action.reason,
-            )
-            it.applyDateRange(cadr, rdSupplier)
-          } ?: occurrence.validateDateRange(action)
-          occurrence.reschedule(action)
-          occurrence.calculateStatus { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
-        }
+      occurrence.applyAction(action, rdSupplier)
+      taoRepository.flush()
+      readVersion!! to occurrence.version!!
+    }
+    return AuditHistory(listOfNotNull(occurrenceHistory.currentAction(id, readVersion, writeVersion)))
+  }
 
-        is CancelOccurrence -> {
-          if (occurrence.status.code !in listOf(SCHEDULED.name, CANCELLED.name)) {
-            throw ConflictException("Temporary absence not currently scheduled")
-          } else {
-            single?.cancel(CancelAuthorisation(action.reason), rdSupplier)?.also {
-              occurrence.makeDpsOnly()
-            }
-            occurrence.cancel(action, rdSupplier)
-          }
-        }
-
-        is ChangeOccurrenceComments -> {
-          single?.applyComments(ChangeAuthorisationComments(action.comments, action.reason))
-          occurrence.applyComments(action)
-        }
-
-        is ChangeOccurrenceAccompaniment -> {
-          single?.applyAccompaniment(
-            ChangeAuthorisationAccompaniment(action.accompaniedByCode, action.reason),
-            rdSupplier,
+  private fun TemporaryAbsenceOccurrence.applyAction(
+    action: OccurrenceAction,
+    rdSupplier: (KClass<out ReferenceData>, String) -> ReferenceData,
+  ) {
+    val single = authorisation.takeIf { !it.repeat }
+    when (action) {
+      is RescheduleOccurrence -> {
+        single?.also {
+          val cadr = ChangeAuthorisationDateRange(
+            action.start?.toLocalDate() ?: it.start,
+            action.end?.toLocalDate() ?: it.end,
+            action.reason,
           )
-          occurrence.applyAccompaniment(action, rdSupplier)
-        }
-
-        is ChangeOccurrenceTransport -> {
-          single?.applyTransport(ChangeAuthorisationTransport(action.transportCode, action.reason), rdSupplier)
-          occurrence.applyTransport(action, rdSupplier)
-        }
-
-        is RecategoriseOccurrence -> {
-          val (action, rdSupplier) = action.recalculateCategorisation()
-          single?.applyAbsenceCategorisation(RecategoriseAuthorisation(action), rdSupplier)
-          occurrence.applyAbsenceCategorisation(action, rdSupplier)
-        }
-
-        is ChangeOccurrenceLocation -> {
-          occurrence.applyLocation(action)
-          with(occurrence.authorisation) {
-            val newLocations = if (repeat) {
-              (locations + occurrence.location).mapTo(linkedSetOf()) { it }
-            } else {
-              linkedSetOf(occurrence.location)
-            }
-            applyLocations(ChangeAuthorisationLocations(newLocations, action.reason))
-          }
-        }
-
-        else -> throw IllegalArgumentException("Action not supported")
+          it.applyDateRange(cadr, rdSupplier)
+        } ?: validateDateRange(action)
+        reschedule(action)
+        calculateStatus { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }
       }
+
+      is CancelOccurrence -> {
+        if (status.code !in listOf(SCHEDULED.name, CANCELLED.name)) {
+          throw ConflictException("Temporary absence not currently scheduled")
+        } else {
+          single?.cancel(CancelAuthorisation(action.reason), rdSupplier)?.also {
+            makeDpsOnly()
+          }
+          cancel(action, rdSupplier)
+        }
+      }
+
+      is ChangeOccurrenceComments -> {
+        single?.applyComments(ChangeAuthorisationComments(action.comments, action.reason))
+        applyComments(action)
+      }
+
+      is ChangeOccurrenceAccompaniment -> {
+        single?.applyAccompaniment(
+          ChangeAuthorisationAccompaniment(action.accompaniedByCode, action.reason),
+          rdSupplier,
+        )
+        applyAccompaniment(action, rdSupplier)
+      }
+
+      is ChangeOccurrenceTransport -> {
+        single?.applyTransport(ChangeAuthorisationTransport(action.transportCode, action.reason), rdSupplier)
+        applyTransport(action, rdSupplier)
+      }
+
+      is RecategoriseOccurrence -> {
+        val (action, rdSupplier) = action.recalculateCategorisation()
+        single?.applyAbsenceCategorisation(RecategoriseAuthorisation(action), rdSupplier)
+        applyAbsenceCategorisation(action, rdSupplier)
+      }
+
+      is ChangeOccurrenceLocation -> {
+        applyLocation(action)
+        with(authorisation) {
+          val newLocations = if (repeat) {
+            (locations + location).mapTo(linkedSetOf()) { it }
+          } else {
+            linkedSetOf(location)
+          }
+          applyLocations(ChangeAuthorisationLocations(newLocations, action.reason))
+        }
+      }
+
+      else -> throw IllegalArgumentException("Action not supported")
+    }
+  }
+
+  fun apply(id: UUID, actions: OccurrenceActions): AuditHistory {
+    ExternalMovementContext.get().copy(reason = actions.reason).set()
+    val (readVersion, writeVersion) = transactionTemplate.execute {
+      val occurrence = taoRepository.getOccurrence(id)
+      val readVersion = occurrence.version
+      val rdSupplier = referenceDataRepository.rdProvider()
+      actions.actions.forEach { occurrence.applyAction(it, rdSupplier) }
       taoRepository.flush()
       readVersion!! to occurrence.version!!
     }
