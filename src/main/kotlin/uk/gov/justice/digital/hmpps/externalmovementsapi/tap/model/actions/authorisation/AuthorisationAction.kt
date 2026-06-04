@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisatio
     Type(value = ChangeAuthorisationDateRange::class, name = "ChangeAuthorisationDateRange"),
     Type(value = RecategoriseAuthorisation::class, name = "RecategoriseAuthorisation"),
     Type(value = ChangeAuthorisationLocation::class, name = "ChangeAuthorisationLocation"),
+    Type(value = CreateOccurrences::class, name = "CreateOccurrences"),
   ],
 )
 sealed interface AuthorisationAction : Action {

@@ -32,10 +32,10 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.exception.AbsenceCategorisationException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrencesRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationLocations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.asOccurrence
 import java.time.LocalDateTime.now
 import java.util.UUID
 import kotlin.reflect.KClass
@@ -169,30 +169,4 @@ class CreateScheduledAbsence(
     legacyId = null,
     dpsOnly = authorisation.status.code != AuthorisationStatus.Code.APPROVED.name || end.isBefore(now()),
   ).calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus }
-
-  private fun CreateOccurrenceRequest.asOccurrence(
-    authorisation: TemporaryAbsenceAuthorisation,
-  ): TemporaryAbsenceOccurrence = TemporaryAbsenceOccurrence(
-    authorisation,
-    absenceType = authorisation.absenceType,
-    absenceSubType = authorisation.absenceSubType,
-    absenceReasonCategory = authorisation.absenceReasonCategory,
-    absenceReason = authorisation.absenceReason,
-    start = start,
-    end = end,
-    accompaniedBy = authorisation.accompaniedBy,
-    transport = authorisation.transport,
-    location = location.let {
-      if (it.address?.isEmpty() == true) {
-        it.copy(address = null)
-      } else {
-        it
-      }
-    },
-    contactInformation = null,
-    comments = comments ?: authorisation.comments,
-    reasonPath = authorisation.reasonPath,
-    legacyId = null,
-    dpsOnly = authorisation.status.code != AuthorisationStatus.Code.APPROVED.name,
-  )
 }

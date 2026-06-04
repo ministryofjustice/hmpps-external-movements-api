@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.autho
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ClearAuthorisationSchedule
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.CreateOccurrences
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.PauseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.RecategoriseAuthorisation
@@ -43,6 +44,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occur
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceTransport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.RecategoriseOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.asOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.history.AuthorisationHistory
 import java.time.LocalDateTime
 import java.util.UUID
@@ -174,6 +176,30 @@ class TapAuthorisationModifications(
         }
         val allLocations = occurrences.mapTo(linkedSetOf()) { it.location }
         applyLocations(ChangeAuthorisationLocations(allLocations))
+      }
+
+      is CreateOccurrences -> {
+        if (!permitsOccurrences()) {
+          throw ConflictException("Cannot add a new occurrence to a non active authorisation")
+        }
+        val occurrenceStatuses = occurrenceStatusRepository.findAll().associateBy { it.code }
+        val occurrences = action.occurrences.map { occ ->
+          check(!occ.start.toLocalDate().isBefore(start) && !occ.end.toLocalDate().isAfter(end)) {
+            "Temporary absence must be within the authorised date range."
+          }
+
+          if (!repeat) {
+            check(action.occurrences.size == 1 && taoRepository.countByAuthorisationId(id) == 0) {
+              "Cannot add multiple occurrences to a single authorisation."
+            }
+          }
+
+          occ.asOccurrence(this).calculateStatus { requireNotNull(occurrenceStatuses[it]) }
+        }
+
+        val locations = (locations + occurrences.map { it.location }).mapTo(linkedSetOf()) { it }
+        applyLocations(ChangeAuthorisationLocations(locations))
+        taoRepository.saveAll(occurrences)
       }
 
       else -> throw IllegalArgumentException("Action not supported")
