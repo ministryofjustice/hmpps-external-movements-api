@@ -31,7 +31,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceReasonCategory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceType
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrenceRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrencesRequest
@@ -81,6 +80,7 @@ class CreateScheduledAbsence(
       throw ConflictException("Cannot add a new occurrence to a non active authorisation")
     }
     val new = request.occurrences.takeIf { it.isNotEmpty() } ?: listOf(request.singleRequest())
+    val occurrenceStatuses = occurrenceStatusRepository.findAll().associateBy { it.code }
     val occurrences = new.map { occ ->
       check(
         !occ.start.toLocalDate().isBefore(authorisation.start) &&
@@ -95,7 +95,7 @@ class CreateScheduledAbsence(
         }
       }
 
-      occ.asOccurrence(authorisation).calculateStatus { occurrenceStatusRepository.getByCode(it) }
+      occ.asOccurrence(authorisation).calculateStatus { requireNotNull(occurrenceStatuses[it]) }
     }
 
     val locations = (authorisation.locations + occurrences.map { it.location }).mapTo(linkedSetOf()) { it }
