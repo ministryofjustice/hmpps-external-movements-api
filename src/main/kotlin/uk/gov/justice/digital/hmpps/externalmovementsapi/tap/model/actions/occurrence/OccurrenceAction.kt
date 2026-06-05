@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.action.Action
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.action.Actions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -22,3 +23,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.T
 sealed interface OccurrenceAction : Action {
   fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*>? = null
 }
+
+data class OccurrenceActions(
+  override val actions: List<OccurrenceAction>,
+  override val reason: String?,
+) : Actions<OccurrenceAction>

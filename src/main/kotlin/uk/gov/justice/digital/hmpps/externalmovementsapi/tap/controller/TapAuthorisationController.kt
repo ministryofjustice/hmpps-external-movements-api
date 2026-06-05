@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurre
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.TapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.CreateScheduledAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.GetTapAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.TapAuthorisationModifications
@@ -59,7 +60,11 @@ class TapAuthorisationController(
 
   @CaseloadIdHeader
   @PutMapping("/{id}")
-  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) = modify.apply(id, action)
+  fun applyAction(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) = modify.apply(id, action)
+
+  @CaseloadIdHeader
+  @PutMapping("/{id}/actions")
+  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody actions: AuthorisationActions) = modify.apply(id, actions)
 
   @CaseloadIdHeader
   @PostMapping("/{id}/occurrences")

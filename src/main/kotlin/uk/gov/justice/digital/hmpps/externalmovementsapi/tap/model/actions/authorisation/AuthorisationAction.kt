@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.action.Action
+import uk.gov.justice.digital.hmpps.externalmovementsapi.model.action.Actions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -21,8 +22,14 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisatio
     Type(value = ChangeAuthorisationDateRange::class, name = "ChangeAuthorisationDateRange"),
     Type(value = RecategoriseAuthorisation::class, name = "RecategoriseAuthorisation"),
     Type(value = ChangeAuthorisationLocation::class, name = "ChangeAuthorisationLocation"),
+    Type(value = CreateOccurrences::class, name = "CreateOccurrences"),
   ],
 )
 sealed interface AuthorisationAction : Action {
   fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*>? = null
 }
+
+data class AuthorisationActions(
+  override val actions: List<AuthorisationAction>,
+  override val reason: String?,
+) : Actions<AuthorisationAction>

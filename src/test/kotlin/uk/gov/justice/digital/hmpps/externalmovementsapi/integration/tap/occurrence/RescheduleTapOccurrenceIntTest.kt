@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.RescheduleOccurrence
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -171,11 +172,11 @@ class RescheduleTapOccurrenceIntTest(
   ) = webTestClient
     .put()
     .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(OccurrenceActions(listOf(request), request.reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
-    const val TAP_OCCURRENCE_MODIFICATION_URL = "/temporary-absence-occurrences/{id}"
+    const val TAP_OCCURRENCE_MODIFICATION_URL = "/temporary-absence-occurrences/{id}/actions"
   }
 }
