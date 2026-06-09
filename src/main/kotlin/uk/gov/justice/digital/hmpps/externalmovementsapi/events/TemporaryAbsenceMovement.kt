@@ -164,3 +164,25 @@ data class TapMovementOccurrenceChanged(
     )
   }
 }
+
+data class TapMovementDeleted(
+  override val additionalInformation: TapMovementInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TapMovementInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.deleted"
+    const val DESCRIPTION: String = "A temporary absence movement has been deleted."
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TapMovementDeleted(
+      TapMovementInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}

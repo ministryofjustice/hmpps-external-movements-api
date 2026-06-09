@@ -206,13 +206,13 @@ class TapAuthorisationModifications(
     }
   }
 
-  fun apply(id: UUID, actions: AuthorisationActions): AuditHistory? {
-    ExternalMovementContext.get().copy(reason = actions.reason).set()
+  fun apply(id: UUID, request: AuthorisationActions): AuditHistory? {
+    ExternalMovementContext.get().copy(reason = request.reason).set()
     val (readVersion, writeVersion) = transactionTemplate.execute {
       val authorisation = taaRepository.getAuthorisation(id)
       val readVersion = authorisation.version
       val rdSupplier = referenceDataRepository.rdProvider()
-      actions.actions.forEach { authorisation.applyAction(it, rdSupplier) }
+      request.actions.forEach { authorisation.applyAction(it, rdSupplier) }
       taaRepository.flush()
       readVersion!! to authorisation.version!!
     }
