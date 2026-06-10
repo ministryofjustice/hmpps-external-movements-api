@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.PrisonRegisterClient
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
@@ -34,16 +35,21 @@ class ExternalMovementHandler(
       .set()
     val authCancelledStatus = authStatusRepository.getByCode(AuthorisationStatus.Code.CANCELLED.name)
     val authsToCancel = authRepository.findAutoCancelAuthorisations(pme.offenderIdDisplay, pme.toAgencyLocationId)
-    authsToCancel.forEach {
-      it.cancel(CancelAuthorisation()) { _: KClass<out ReferenceData>, _: String -> authCancelledStatus }
-    }
     val occCancelledStatus = occStatusRepository.getByCode(OccurrenceStatus.Code.CANCELLED.name)
-    occRepository.findClearableOccurrences(authsToCancel.map { it.id }.toSet()).forEach {
-      if (it.authorisation.repeat) {
-        occRepository.delete(it)
-      } else {
-        it.makeDpsOnly()
-        it.cancel(CancelOccurrence()) { _: KClass<out ReferenceData>, _: String -> occCancelledStatus }
+    val occurrences = occRepository.findClearableOccurrences(authsToCancel.map { it.id }.toSet())
+      .groupBy { it.authorisation.id }
+    val hasCancellable = { auth: TemporaryAbsenceAuthorisation -> occurrences[auth.id]?.isNotEmpty() ?: false }
+    authsToCancel.forEach { auth ->
+      if (auth.repeat || hasCancellable(auth)) {
+        auth.cancel(CancelAuthorisation()) { _: KClass<out ReferenceData>, _: String -> authCancelledStatus }
+        occurrences[auth.id]?.forEach { occ ->
+          if (auth.repeat) {
+            occRepository.delete(occ)
+          } else {
+            occ.makeDpsOnly()
+            occ.cancel(CancelOccurrence()) { _: KClass<out ReferenceData>, _: String -> occCancelledStatus }
+          }
+        }
       }
     }
   }
