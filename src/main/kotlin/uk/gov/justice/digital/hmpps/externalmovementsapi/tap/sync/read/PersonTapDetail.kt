@@ -33,5 +33,14 @@ data class PersonTapDetail(
   )
 
   @Schema(name = "ReconciliationMovement")
-  data class Movement(val id: UUID, val direction: TemporaryAbsenceMovement.Direction, val directionPrisonCode: String)
+  data class Movement(
+    val id: UUID,
+    val direction: TemporaryAbsenceMovement.Direction,
+    val directionPrisonCode: String,
+    val occurredAt: LocalDateTime,
+    val absenceReasonCode: String,
+    val accompaniedByCode: String,
+    val location: Location,
+    val comments: String?,
+  )
 }

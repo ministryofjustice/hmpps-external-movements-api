@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.internal
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisationRepository
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovementRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
@@ -55,15 +56,26 @@ class GetPersonTemporaryAbsences(
             occ.start,
             occ.end,
             occ.location.takeUnless { it.isEmpty() },
-            movements[occ.id]?.map { m -> PersonTapDetail.Movement(m.id, m.direction, m.prisonCode) } ?: emptyList(),
+            movements[occ.id]?.map { m -> m.detail() } ?: emptyList(),
           )
         } ?: emptyList(),
       )
     }
-    val unscheduled = movements[unscheduledKey]?.map { PersonTapDetail.Movement(it.id, it.direction, it.prisonCode) } ?: emptyList()
+    val unscheduled = movements[unscheduledKey]?.map { it.detail() } ?: emptyList()
     return PersonTapDetail(
       authDetail,
       unscheduled,
     )
   }
 }
+
+private fun TemporaryAbsenceMovement.detail() = PersonTapDetail.Movement(
+  id,
+  direction,
+  prisonCode,
+  occurredAt,
+  absenceReason.code,
+  accompaniedBy.code,
+  location,
+  comments,
+)

@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.Temp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement.Direction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
@@ -26,6 +27,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.read.PersonTapDetail
+import java.time.temporal.ChronoUnit.SECONDS
 
 class TapReconciliationDetailIntTest(
   @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
@@ -62,7 +64,12 @@ class TapReconciliationDetailIntTest(
   @Test
   fun `200 ok - tap detail returned for person`() {
     val personIdentifier = personIdentifier()
-    val auth1 = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(personIdentifier = personIdentifier, repeat = true))
+    val auth1 = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        personIdentifier = personIdentifier,
+        repeat = true,
+      ),
+    )
     val auth2 = givenTemporaryAbsenceAuthorisation(
       temporaryAbsenceAuthorisation(
         personIdentifier = personIdentifier,
@@ -114,12 +121,19 @@ class TapReconciliationDetailIntTest(
       occurrences.map { it.id to OccurrenceStatus.Code.valueOf(it.status.code) },
     )
     val scheduled = schedules.flatMap { it.movements }
-    assertThat(scheduled.map { it.id to it.direction }).containsExactlyInAnyOrderElementsOf(
-      movements.filter { it.occurrence != null }.map { it.id to it.direction },
-    )
-    assertThat(res.unscheduledMovements.map { it.id to it.direction }).containsExactlyInAnyOrderElementsOf(
-      movements.filter { it.occurrence == null }.map { it.id to it.direction },
-    )
+    scheduled.forEach { sm -> sm verifyAgainst movements.first { it.id == sm.id } }
+
+    res.unscheduledMovements.forEach { um -> um verifyAgainst movements.first { it.id == um.id } }
+  }
+
+  private infix fun PersonTapDetail.Movement.verifyAgainst(movement: TemporaryAbsenceMovement) {
+    assertThat(direction).isEqualTo(movement.direction)
+    assertThat(directionPrisonCode).isEqualTo(movement.prisonCode)
+    assertThat(occurredAt.truncatedTo(SECONDS)).isEqualTo(movement.occurredAt.truncatedTo(SECONDS))
+    assertThat(absenceReasonCode).isEqualTo(movement.absenceReason.code)
+    assertThat(accompaniedByCode).isEqualTo(movement.accompaniedBy.code)
+    assertThat(location).isEqualTo(movement.location)
+    assertThat(comments).isEqualTo(movement.comments)
   }
 
   private fun getTapDetail(
