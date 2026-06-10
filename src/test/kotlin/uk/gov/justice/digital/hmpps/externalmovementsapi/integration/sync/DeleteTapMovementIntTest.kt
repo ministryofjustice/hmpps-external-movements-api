@@ -1,0 +1,101 @@
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration.sync
+
+import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.envers.RevisionType
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.DataSource
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
+import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
+import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementDeleted
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceMovementOperations.Companion.temporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations.Companion.temporaryAbsenceOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
+import java.util.UUID
+
+class DeleteTapMovementIntTest(
+  @Autowired private val taaOperations: TempAbsenceAuthorisationOperations,
+  @Autowired private val taoOperations: TempAbsenceOccurrenceOperations,
+  @Autowired private val tamOperations: TempAbsenceMovementOperations,
+) : IntegrationTest(),
+  TempAbsenceAuthorisationOperations by taaOperations,
+  TempAbsenceOccurrenceOperations by taoOperations,
+  TempAbsenceMovementOperations by tamOperations {
+
+  @Test
+  fun `401 unauthorised without a valid token`() {
+    webTestClient
+      .delete()
+      .uri(DELETE_TAP_MOVEMENT_URL, newUuid())
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+  }
+
+  @Test
+  fun `403 forbidden without correct role`() {
+    deleteTapMovement(newUuid(), "ROLE_ANY__OTHER_RW").expectStatus().isForbidden
+  }
+
+  @Test
+  fun `204 no content when id invalid or already deleted`() {
+    deleteTapMovement(newUuid()).expectStatus().isNoContent
+  }
+
+  @Test
+  fun `204 can delete tap movement`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occurrence = requireNotNull(
+      findTemporaryAbsenceOccurrence(givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth)).id),
+    )
+    val movement = givenTemporaryAbsenceMovement(
+      temporaryAbsenceMovement(
+        direction = TemporaryAbsenceMovement.Direction.OUT,
+        personIdentifier = occurrence.authorisation.person.identifier,
+        occurrence = occurrence,
+      ),
+    )
+
+    deleteTapMovement(movement.id).expectStatus().isNoContent
+    val saved = findTemporaryAbsenceMovement(movement.id)
+    assertThat(saved).isNull()
+
+    verifyAudit(
+      movement,
+      RevisionType.DEL,
+      setOf(HmppsDomainEvent::class.simpleName!!, TemporaryAbsenceMovement::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyAudit(
+      occurrence,
+      RevisionType.MOD,
+      setOf(HmppsDomainEvent::class.simpleName!!, TemporaryAbsenceMovement::class.simpleName!!, TemporaryAbsenceOccurrence::class.simpleName!!),
+      ExternalMovementContext.get().copy(username = SYSTEM_USERNAME, source = DataSource.NOMIS),
+    )
+
+    verifyEvents(movement, setOf(TapMovementDeleted(movement.person.identifier, movement.id, DataSource.NOMIS)))
+  }
+
+  private fun deleteTapMovement(
+    id: UUID,
+    role: String? = Roles.NOMIS_SYNC,
+  ) = webTestClient
+    .delete()
+    .uri(DELETE_TAP_MOVEMENT_URL, id)
+    .headers(setAuthorisation(username = SYSTEM_USERNAME, roles = listOfNotNull(role)))
+    .exchange()
+
+  companion object {
+    const val DELETE_TAP_MOVEMENT_URL = "/sync/temporary-absence-movements/{id}"
+  }
+}

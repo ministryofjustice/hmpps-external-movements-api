@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publica
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementDeleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDeferred
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationExpired
@@ -868,6 +869,7 @@ class ResyncTapHierarchyIntTest(
         ),
       ),
     )
+    val mov = occ.movements().single()
 
     val request = resyncTapRequest(
       temporaryAbsences = listOf(),
@@ -892,7 +894,10 @@ class ResyncTapHierarchyIntTest(
 
     verifyEventPublications(
       auth,
-      setOf(TemporaryAbsenceUnscheduled(occ.person.identifier, occ.id, DataSource.NOMIS).publication(occ.id) { false }),
+      setOf(
+        TemporaryAbsenceUnscheduled(occ.person.identifier, occ.id, DataSource.NOMIS).publication(occ.id) { false },
+        TapMovementDeleted(mov.person.identifier, mov.id, DataSource.NOMIS).publication(mov.id) { false },
+      ),
     )
   }
 

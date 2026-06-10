@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.DomainE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.DomainEventPublication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publication
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementDeleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -152,6 +153,10 @@ final class TemporaryAbsenceMovement(
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
     action.domainEvent(this)?.publication(id) { it.eventType !in EXCLUDE_FROM_PUBLISH }
   }.toSet()
+
+  override fun deletionEvents(): Set<DomainEventPublication> = setOf(
+    TapMovementDeleted(person.identifier, id).publication(id),
+  )
 
   enum class Direction {
     IN,

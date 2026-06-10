@@ -19,7 +19,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.getOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceReason
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementComments
@@ -39,6 +41,7 @@ import kotlin.reflect.KClass
 class SyncTapMovement(
   private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
+  private val occurrenceStatusRepository: OccurrenceStatusRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
@@ -73,6 +76,8 @@ class SyncTapMovement(
   fun deleteById(id: UUID): SyncRequestStatus {
     ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
     return movementRepository.findByIdOrNull(id)?.let {
+      it.occurrence?.removeMovement(it) { statusCode -> occurrenceStatusRepository.getByCode(statusCode) }
+      movementRepository.delete(it)
       SyncRequestStatus.Actionable(ActionType.DELETE, EntityType.MOVEMENT)
     } ?: SyncRequestStatus.NotFound(ActionType.DELETE, EntityType.MOVEMENT)
   }

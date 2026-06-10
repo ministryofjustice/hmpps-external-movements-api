@@ -50,6 +50,7 @@ import java.util.UUID
     Type(value = TapMovementRelocated::class, name = TapMovementRelocated.EVENT_TYPE),
     Type(value = TapMovementOccurredAtChanged::class, name = TapMovementOccurredAtChanged.EVENT_TYPE),
     Type(value = TapMovementOccurrenceChanged::class, name = TapMovementOccurrenceChanged.EVENT_TYPE),
+    Type(value = TapMovementDeleted::class, name = TapMovementDeleted.EVENT_TYPE),
 
     Type(value = PrisonerUpdated::class, name = PrisonerUpdated.EVENT_TYPE),
     Type(value = PrisonerMerged::class, name = PrisonerMerged.EVENT_TYPE),

@@ -35,7 +35,7 @@ class SyncDeleteController(
   @DeleteMapping("/temporary-absence-occurrences/{id}")
   fun deleteTapOccurrenceById(@PathVariable id: UUID) = occurrence.deleteById(id).response(telemetryClient)
 
-  @ResponseStatus(HttpStatus.ACCEPTED)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
   @DeleteMapping("/temporary-absence-movements/{id}")
   fun deleteTapMovementById(@PathVariable id: UUID) = movement.deleteById(id).response(telemetryClient)
 }
