@@ -40,9 +40,10 @@ import java.util.UUID
     Type(value = TemporaryAbsenceCommentsChanged::class, name = TemporaryAbsenceCommentsChanged.EVENT_TYPE),
     Type(value = TemporaryAbsenceRecategorised::class, name = TemporaryAbsenceRecategorised.EVENT_TYPE),
     Type(value = TemporaryAbsenceRelocated::class, name = TemporaryAbsenceRelocated.EVENT_TYPE),
-
     Type(value = TemporaryAbsenceStarted::class, name = TemporaryAbsenceStarted.EVENT_TYPE),
     Type(value = TemporaryAbsenceCompleted::class, name = TemporaryAbsenceCompleted.EVENT_TYPE),
+
+    Type(value = TapMovementRecorded::class, name = TapMovementRecorded.EVENT_TYPE),
     Type(value = TapMovementReversed::class, name = TapMovementReversed.EVENT_TYPE),
     Type(value = TapMovementAccompanimentChanged::class, name = TapMovementAccompanimentChanged.EVENT_TYPE),
     Type(value = TapMovementCommentsChanged::class, name = TapMovementCommentsChanged.EVENT_TYPE),
@@ -57,7 +58,7 @@ import java.util.UUID
 
     Type(value = TemporaryAbsenceAuthorisationMigrated::class, name = TemporaryAbsenceAuthorisationMigrated.EVENT_TYPE),
     Type(value = TemporaryAbsenceMigrated::class, name = TemporaryAbsenceMigrated.EVENT_TYPE),
-    Type(value = ExternalMovementMigrated::class, name = ExternalMovementMigrated.EVENT_TYPE),
+    Type(value = TapMovementMigrated::class, name = TapMovementMigrated.EVENT_TYPE),
   ],
 )
 sealed interface DomainEvent<T : AdditionalInformation> {

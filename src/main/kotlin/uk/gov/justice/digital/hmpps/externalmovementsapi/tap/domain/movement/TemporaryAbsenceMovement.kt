@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publica
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceData
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementDeleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRecorded
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
@@ -148,7 +149,9 @@ final class TemporaryAbsenceMovement(
     appliedActions = listOf()
   }
 
-  override fun initialEvents(): Set<DomainEventPublication> = setOf()
+  override fun initialEvents(): Set<DomainEventPublication> = setOf(
+    TapMovementRecorded(person.identifier, id).publication(id),
+  )
 
   override fun domainEvents(): Set<DomainEventPublication> = appliedActions.mapNotNull { action ->
     action.domainEvent(this)?.publication(id) { it.eventType !in EXCLUDE_FROM_PUBLISH }

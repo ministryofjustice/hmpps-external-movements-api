@@ -24,7 +24,6 @@ data class ServiceConfig(
   val occurrenceStatus: OccurrenceStatusConfig,
   val uiBaseUrl: String,
   val apiBaseUrl: String,
-  val disablePrisonEvents: Set<String> = setOf(),
 ) {
   data class DomainEventConfig(val pollInterval: Duration, val batchSize: Int)
   data class OccurrenceStatusConfig(val pollInterval: Duration)

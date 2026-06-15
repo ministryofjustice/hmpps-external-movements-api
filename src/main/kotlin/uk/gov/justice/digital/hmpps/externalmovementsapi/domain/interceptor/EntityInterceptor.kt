@@ -7,9 +7,7 @@ import org.hibernate.type.Type
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.externalmovementsapi.config.ServiceConfig
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext
-import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.PrisonRelated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.DomainEventProducer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import java.util.UUID
@@ -17,17 +15,11 @@ import java.util.UUID
 @Component
 class EntityInterceptor : Interceptor {
   private lateinit var em: EntityManager
-  private lateinit var sc: ServiceConfig
   private val publishedEventKeys = ThreadLocal.withInitial { mutableSetOf<Pair<UUID, String>>() }
 
   @Autowired
   fun setDomainEventRepository(@Lazy entityManager: EntityManager) {
     em = entityManager
-  }
-
-  @Autowired
-  fun setServiceConfig(serviceConfig: ServiceConfig) {
-    sc = serviceConfig
   }
 
   override fun onFlushDirty(
@@ -40,12 +32,11 @@ class EntityInterceptor : Interceptor {
   ): Boolean {
     if (entity is DomainEventProducer) {
       val migrating = ExternalMovementContext.get().migratingData
-      val prisonEventsDisabled = entity is PrisonRelated && entity.prisonCode in sc.disablePrisonEvents
       entity.domainEvents().forEach {
         if (registerDomainEvent(it.entityId, it.event.eventType)) {
           em.persist(
             HmppsDomainEvent(it.event, it.entityId).apply {
-              published = migrating || prisonEventsDisabled || !it.publish
+              published = migrating || !it.publish
             },
           )
         }
@@ -63,12 +54,11 @@ class EntityInterceptor : Interceptor {
   ): Boolean {
     if (entity is DomainEventProducer) {
       val migrating = ExternalMovementContext.get().migratingData
-      val prisonEventsDisabled = entity is PrisonRelated && entity.prisonCode in sc.disablePrisonEvents
       entity.initialEvents().forEach {
         if (registerDomainEvent(it.entityId, it.event.eventType)) {
           em.persist(
             HmppsDomainEvent(it.event, it.entityId).apply {
-              published = migrating || prisonEventsDisabled || !it.publish
+              published = migrating || !it.publish
             },
           )
         }
@@ -93,12 +83,11 @@ class EntityInterceptor : Interceptor {
   ) {
     if (entity is DomainEventProducer) {
       val migrating = ExternalMovementContext.get().migratingData
-      val prisonEventsDisabled = entity is PrisonRelated && entity.prisonCode in sc.disablePrisonEvents
       entity.deletionEvents().forEach {
         if (registerDomainEvent(it.entityId, it.event.eventType)) {
           em.persist(
             HmppsDomainEvent(it.event, it.entityId).apply {
-              published = migrating || prisonEventsDisabled || !it.publish
+              published = migrating || !it.publish
             },
           )
         }
