@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRecorded
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
@@ -108,7 +109,7 @@ class GetTapMovementHistoryIntTest(
     assertThat(history.content).hasSize(3)
     with(history.content.first()) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).containsExactly(TapMovementRecorded.EVENT_TYPE)
       assertThat(reason).startsWith("Recorded as having gone out of the prison on")
     }
     with(history.content[1]) {
@@ -173,14 +174,14 @@ class GetTapMovementHistoryIntTest(
     val h1 = getTapMovementHistory(m1.id).successResponse<AuditHistory>()
     with(h1.content.first()) {
       assertThat(user).isEqualTo(AuditedAction.User(SYSTEM_USERNAME, "User $SYSTEM_USERNAME"))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).containsExactly(TapMovementRecorded.EVENT_TYPE)
       assertThat(reason).startsWith("Recorded as having gone out of the prison on")
     }
 
     val h2 = getTapMovementHistory(m2.id).successResponse<AuditHistory>()
     with(h2.content.first()) {
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
-      assertThat(domainEvents).isEmpty()
+      assertThat(domainEvents).containsExactly(TapMovementRecorded.EVENT_TYPE)
       assertThat(reason).startsWith("Recorded as having returned in to the prison on")
     }
   }

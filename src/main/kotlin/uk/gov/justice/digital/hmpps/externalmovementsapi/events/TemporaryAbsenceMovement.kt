@@ -11,6 +11,28 @@ data class TapMovementInformation(
 ) : AdditionalInformation,
   IdInformation
 
+data class TapMovementRecorded(
+  override val additionalInformation: TapMovementInformation,
+  override val personReference: PersonReference,
+) : DomainEvent<TapMovementInformation> {
+  override val eventType: String = EVENT_TYPE
+  override val description: String = DESCRIPTION
+  override val detailUrl: String = movementUrl(additionalInformation.id)
+
+  companion object {
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.recorded"
+    const val DESCRIPTION: String = "A temporary absence movement has been recorded."
+    operator fun invoke(
+      personIdentifier: String,
+      id: UUID,
+      dataSource: DataSource = ExternalMovementContext.get().source,
+    ) = TapMovementRecorded(
+      TapMovementInformation(id, dataSource),
+      PersonReference.withIdentifier(personIdentifier),
+    )
+  }
+}
+
 data class TapMovementReversed(
   override val additionalInformation: TapMovementInformation,
   override val personReference: PersonReference,

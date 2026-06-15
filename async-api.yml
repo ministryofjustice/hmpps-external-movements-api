@@ -92,6 +92,8 @@ components:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-occurred-at-changed.yaml
     person.temporary-absence-movement.deleted:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-deleted.yaml
+    person.temporary-absence-movement.recorded:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/external-movements/tap-movement/temporary-absence-movement-recorded.yaml
 
 channels:
   hmpps-domain-events:
@@ -172,6 +174,8 @@ channels:
         $ref: '#/components/messages/person.temporary-absence-movement.occurred-at-changed'
       person.temporary-absence-movement.deleted:
         $ref: '#/components/messages/person.temporary-absence-movement.deleted'
+      person.temporary-absence-movement.recorded:
+        $ref: '#/components/messages/person.temporary-absence-movement.recorded'
 
 operations:
   publish-event:
@@ -215,3 +219,4 @@ operations:
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.relocated'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.occurred-at-changed'
       - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.deleted'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.temporary-absence-movement.recorded'

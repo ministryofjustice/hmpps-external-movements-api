@@ -52,7 +52,7 @@ data class TemporaryAbsenceMigrated(
   }
 }
 
-data class ExternalMovementMigrated(
+data class TapMovementMigrated(
   override val additionalInformation: TapMovementInformation,
   override val personReference: PersonReference,
 ) : DomainEvent<TapMovementInformation> {
@@ -61,13 +61,13 @@ data class ExternalMovementMigrated(
   override val detailUrl: String = movementUrl(additionalInformation.id)
 
   companion object {
-    const val EVENT_TYPE: String = "person.external-movement.migrated"
-    const val DESCRIPTION: String = "An external movement has been migrated."
+    const val EVENT_TYPE: String = "person.temporary-absence-movement.migrated"
+    const val DESCRIPTION: String = "A temporary absence movement has been migrated."
     operator fun invoke(
       personIdentifier: String,
       id: UUID,
       dataSource: DataSource = ExternalMovementContext.get().source,
-    ) = ExternalMovementMigrated(
+    ) = TapMovementMigrated(
       TapMovementInformation(id, dataSource),
       PersonReference.withIdentifier(personIdentifier),
     )

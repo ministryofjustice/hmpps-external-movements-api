@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.TRANSPORT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRequired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.of
-import uk.gov.justice.digital.hmpps.externalmovementsapi.events.ExternalMovementMigrated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementMigrated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationMigrated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceMigrated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
@@ -59,7 +59,7 @@ data class MigratedMovement(
   val legacyId: String,
   val id: UUID,
 ) {
-  fun domainEvent(personIdentifier: String) = ExternalMovementMigrated(personIdentifier, id)
+  fun domainEvent(personIdentifier: String) = TapMovementMigrated(personIdentifier, id)
 }
 
 @Schema(name = "MigrateTapAuthorisation")

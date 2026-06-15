@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccom
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementCommentsChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurredAtChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRecorded
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCompleted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceStarted
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.newId
@@ -122,6 +123,11 @@ class SyncTapMovementIntTest(
     verifyEventPublications(
       saved,
       setOf(
+        TapMovementRecorded(
+          saved.person.identifier,
+          saved.id,
+          DataSource.NOMIS,
+        ).publication(saved.id),
         TemporaryAbsenceStarted(
           authorisation.person.identifier,
           occurrence.id,
@@ -181,6 +187,11 @@ class SyncTapMovementIntTest(
           occurrence.id,
           DataSource.NOMIS,
         ).publication(occurrence.id),
+        TapMovementRecorded(
+          saved.person.identifier,
+          saved.id,
+          DataSource.NOMIS,
+        ).publication(saved.id),
       ),
     )
   }
@@ -251,10 +262,19 @@ class SyncTapMovementIntTest(
     verifyAudit(
       saved,
       RevisionType.ADD,
-      setOf(TemporaryAbsenceMovement::class.simpleName!!),
+      setOf(TemporaryAbsenceMovement::class.simpleName!!, HmppsDomainEvent::class.simpleName!!),
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, source = DataSource.NOMIS),
     )
-    verifyEvents(saved, setOf())
+    verifyEventPublications(
+      saved,
+      setOf(
+        TapMovementRecorded(
+          saved.person.identifier,
+          saved.id,
+          DataSource.NOMIS,
+        ).publication(saved.id),
+      ),
+    )
   }
 
   @Test
