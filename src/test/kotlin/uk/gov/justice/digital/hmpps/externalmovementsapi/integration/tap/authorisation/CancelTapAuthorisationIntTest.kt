@@ -62,21 +62,21 @@ class CancelTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     cancelAuthorisation(
       newUuid(),
-      cancelAuthorisationRequest(),
-      role,
+      CancelAuthorisation(),
+      role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    cancelAuthorisation(newUuid(), cancelAuthorisationRequest()).expectStatus().isNotFound
+    cancelAuthorisation(newUuid(), CancelAuthorisation()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "PAUSED", "CANCELLED"])
   fun `409 - authorisation not approved cannot be cancelled`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = cancelAuthorisation(auth.id, cancelAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = cancelAuthorisation(auth.id, CancelAuthorisation()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
@@ -92,11 +92,12 @@ class CancelTapAuthorisationIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = cancelAuthorisationRequest()
+    val request = CancelAuthorisation()
+    val reason = word(26)
 
-    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = cancelAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Approved", "Cancelled"),
     )
@@ -118,7 +119,7 @@ class CancelTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -146,11 +147,12 @@ class CancelTapAuthorisationIntTest(
         end = LocalDateTime.now().plusDays(1),
       ),
     )
-    val request = cancelAuthorisationRequest(reason = "Occurrence is deleted by nomis")
+    val request = CancelAuthorisation()
+    val reason = word(25)
 
-    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = cancelAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Approved", "Cancelled"),
     )
@@ -169,7 +171,7 @@ class CancelTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -192,11 +194,12 @@ class CancelTapAuthorisationIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
-    val request = cancelAuthorisationRequest()
+    val request = CancelAuthorisation()
+    val reason = word(25)
 
-    val res = cancelAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = cancelAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Paused", "Cancelled"),
     )
@@ -218,7 +221,7 @@ class CancelTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -230,18 +233,15 @@ class CancelTapAuthorisationIntTest(
     )
   }
 
-  private fun cancelAuthorisationRequest(
-    reason: String? = word(20),
-  ) = CancelAuthorisation(reason)
-
   private fun cancelAuthorisation(
     id: UUID,
     request: CancelAuthorisation,
+    reason: String? = word(20),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

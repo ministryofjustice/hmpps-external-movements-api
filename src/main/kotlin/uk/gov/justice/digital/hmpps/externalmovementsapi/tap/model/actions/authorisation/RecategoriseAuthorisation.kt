@@ -19,7 +19,6 @@ data class RecategoriseAuthorisation(
     absenceReasonCategoryCode,
     absenceReasonCode,
   ),
-  override val reason: String? = null,
 ) : AuthorisationAction,
   AbsenceCategorisationAction {
   constructor(aca: AbsenceCategorisationAction) : this(
@@ -28,7 +27,6 @@ data class RecategoriseAuthorisation(
     aca.absenceReasonCategoryCode,
     aca.absenceReasonCode,
     aca.reasonPath,
-    aca.reason,
   )
 
   override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationRecategorised(taa.person.identifier, taa.id)

@@ -8,5 +8,4 @@ data class CreateOccurrences(
   @Valid
   @NotEmpty
   val occurrences: List<CreateOccurrenceRequest>,
-  override val reason: String? = null,
 ) : AuthorisationAction

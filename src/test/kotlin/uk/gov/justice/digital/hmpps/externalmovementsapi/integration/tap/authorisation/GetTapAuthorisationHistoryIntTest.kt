@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationPending
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRelocated
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
@@ -86,23 +87,24 @@ class GetTapAuthorisationHistoryIntTest(
           absenceSubTypeCode = "PP",
           absenceReasonCategoryCode = null,
           absenceReasonCode = "PC",
-          reason = "A reason for changing the categorisation",
           reasonPath = ReasonPath(listOf(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")),
         ),
       ) { domain, code ->
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
-    val approveAction = ApproveAuthorisation(reason = "A reason for approving")
+    val approveAction = ApproveAuthorisation()
+    val appReason = word(26)
     transactionTemplate.executeWithoutResult {
-      ExternalMovementContext.get().copy(username = approvingUser.username, reason = approveAction.reason).set()
+      ExternalMovementContext.get().copy(username = approvingUser.username, reason = appReason).set()
       findTemporaryAbsenceAuthorisation(auth.id)?.approve(approveAction) { domain, code ->
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
-    val cancelAction = CancelAuthorisation(reason = "A reason for cancelling")
+    val cancelAction = CancelAuthorisation()
+    val canReason = word(26)
     transactionTemplate.executeWithoutResult {
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = cancelAction.reason).set()
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = canReason).set()
       findTemporaryAbsenceAuthorisation(auth.id)?.cancel(cancelAction) { domain, code ->
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
@@ -137,13 +139,13 @@ class GetTapAuthorisationHistoryIntTest(
     with(history.content[3]) {
       assertThat(user).isEqualTo(AuditedAction.User(approvingUser.username, approvingUser.name))
       assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
-      assertThat(reason).isEqualTo(approveAction.reason)
+      assertThat(reason).isEqualTo(appReason)
       assertThat(changes).containsExactly(AuditedAction.Change("status", "To be reviewed", "Approved"))
     }
     with(history.content.last()) {
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
       assertThat(domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-      assertThat(reason).isEqualTo(cancelAction.reason)
+      assertThat(reason).isEqualTo(canReason)
       assertThat(changes).containsExactly(AuditedAction.Change("status", "Approved", "Cancelled"))
     }
   }

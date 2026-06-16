@@ -8,7 +8,6 @@ import java.util.SequencedSet
 
 data class ChangeAuthorisationLocations(
   val locations: SequencedSet<Location>,
-  override val reason: String? = null,
 ) : AuthorisationAction {
   override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationRelocated(taa.person.identifier, taa.id)
 }

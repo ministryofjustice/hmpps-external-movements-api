@@ -57,6 +57,7 @@ class ChangeAuthorisationLocationIntTest(
     applyLocation(
       UUID.randomUUID(),
       action(),
+      null,
       role,
     ).expectStatus().isForbidden
   }
@@ -95,9 +96,10 @@ class ChangeAuthorisationLocationIntTest(
     )
 
     val request = action()
-    val res = applyLocation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(25)
+    val res = applyLocation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRelocated.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(
         "locations",
@@ -126,7 +128,7 @@ class ChangeAuthorisationLocationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -141,17 +143,17 @@ class ChangeAuthorisationLocationIntTest(
 
   private fun action(
     location: Location = location(),
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeAuthorisationLocation(location, reason)
+  ) = ChangeAuthorisationLocation(location)
 
   private fun applyLocation(
     id: UUID,
     request: ChangeAuthorisationLocation,
+    reason: String? = word(25),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

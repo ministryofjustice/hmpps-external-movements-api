@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -55,6 +56,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
     changeDateRange(
       newUuid(),
       changeDateRange(),
+      null,
       role,
     ).expectStatus().isForbidden
   }
@@ -98,9 +100,10 @@ class ChangeTapAuthorisationDateRangeIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = changeDateRange(occ.start.toLocalDate(), occ.end.toLocalDate())
-    val res = changeDateRange(auth.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(26)
+    val res = changeDateRange(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDateRangeChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("start", ISO_DATE.format(auth.start), ISO_DATE.format(request.start)),
       AuditedAction.Change("end", ISO_DATE.format(auth.end), ISO_DATE.format(request.end)),
@@ -115,7 +118,7 @@ class ChangeTapAuthorisationDateRangeIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEvents(
@@ -146,21 +149,21 @@ class ChangeTapAuthorisationDateRangeIntTest(
   private fun changeDateRange(
     from: LocalDate = LocalDate.now().plusDays(1),
     to: LocalDate = LocalDate.now().plusDays(2),
-    reason: String? = "Reason for changing the date range",
-  ) = ChangeAuthorisationDateRange(from, to, reason)
+  ) = ChangeAuthorisationDateRange(from, to)
 
   private fun changeDateRange(
     id: UUID,
     request: ChangeAuthorisationDateRange,
+    reason: String? = word(25),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
   companion object {
-    const val TAP_AUTHORISATION_MODIFICATION_URL = "/temporary-absence-authorisations/{id}/actions"
+    const val TAP_AUTHORISATION_MODIFICATION_URL = "/temporary-absence-authorisations/{id}"
   }
 }

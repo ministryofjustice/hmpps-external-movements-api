@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceCancelled
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceUnscheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -62,21 +63,21 @@ class ClearTapAuthorisationScheduleIntTest(
   fun `403 forbidden without correct role`(role: String) {
     clearSchedule(
       newUuid(),
-      clearScheduleRequest(),
-      role,
+      ClearAuthorisationSchedule(),
+      role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    clearSchedule(newUuid(), clearScheduleRequest()).expectStatus().isNotFound
+    clearSchedule(newUuid(), ClearAuthorisationSchedule()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "PAUSED", "CANCELLED"])
   fun `409 - authorisation not approved cannot be cleared`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = clearSchedule(auth.id, clearScheduleRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = clearSchedule(auth.id, ClearAuthorisationSchedule()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
@@ -92,11 +93,12 @@ class ClearTapAuthorisationScheduleIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = clearScheduleRequest()
+    val request = ClearAuthorisationSchedule()
+    val reason = word(25)
 
-    val res = clearSchedule(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = clearSchedule(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Approved", "Cancelled"),
     )
@@ -117,7 +119,7 @@ class ClearTapAuthorisationScheduleIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -145,11 +147,12 @@ class ClearTapAuthorisationScheduleIntTest(
         end = LocalDateTime.now().plusDays(1),
       ),
     )
-    val request = clearScheduleRequest(reason = "Occurrence is deleted by nomis")
+    val request = ClearAuthorisationSchedule()
+    val reason = word(25)
 
-    val res = clearSchedule(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = clearSchedule(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Approved", "Cancelled"),
     )
@@ -168,7 +171,7 @@ class ClearTapAuthorisationScheduleIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -191,11 +194,12 @@ class ClearTapAuthorisationScheduleIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
-    val request = clearScheduleRequest()
+    val request = ClearAuthorisationSchedule()
+    val reason = word(26)
 
-    val res = clearSchedule(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = clearSchedule(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Paused", "Cancelled"),
     )
@@ -216,7 +220,7 @@ class ClearTapAuthorisationScheduleIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -227,18 +231,15 @@ class ClearTapAuthorisationScheduleIntTest(
     )
   }
 
-  private fun clearScheduleRequest(
-    reason: String? = "Evidence justifying the clearing of the schedule",
-  ) = ClearAuthorisationSchedule(reason)
-
   private fun clearSchedule(
     id: UUID,
     request: ClearAuthorisationSchedule,
+    reason: String? = word(26),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

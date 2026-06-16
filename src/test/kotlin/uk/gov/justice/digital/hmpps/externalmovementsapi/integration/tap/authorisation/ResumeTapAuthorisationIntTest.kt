@@ -60,21 +60,22 @@ class ResumeTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     resumeAuthorisation(
       newUuid(),
-      resumeAuthorisationRequest(),
+      ResumeAuthorisation(),
+      null,
       role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    resumeAuthorisation(newUuid(), resumeAuthorisationRequest()).expectStatus().isNotFound
+    resumeAuthorisation(newUuid(), ResumeAuthorisation()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PAUSED", "APPROVED"])
   fun `409 - authorisation not paused cannot be resumed`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = resumeAuthorisation(auth.id, resumeAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = resumeAuthorisation(auth.id, ResumeAuthorisation()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
@@ -83,11 +84,12 @@ class ResumeTapAuthorisationIntTest(
   fun `200 ok - authorisation resumed`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PAUSED))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
-    val request = resumeAuthorisationRequest()
+    val request = ResumeAuthorisation()
+    val reason = word(26)
 
-    val res = resumeAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val res = resumeAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationResumed.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Paused", "Approved"),
     )
@@ -106,7 +108,7 @@ class ResumeTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -118,18 +120,15 @@ class ResumeTapAuthorisationIntTest(
     )
   }
 
-  private fun resumeAuthorisationRequest(
-    reason: String? = word(20),
-  ) = ResumeAuthorisation(reason)
-
   private fun resumeAuthorisation(
     id: UUID,
     request: ResumeAuthorisation,
+    reason: String? = word(20),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

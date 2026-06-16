@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisatio
 
 data class ChangeAuthorisationAccompaniment(
   val accompaniedByCode: String,
-  override val reason: String? = null,
 ) : AuthorisationAction {
   override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationAccompanimentChanged(taa.person.identifier, taa.id)
 }

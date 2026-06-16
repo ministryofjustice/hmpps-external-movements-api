@@ -15,6 +15,7 @@ class NomisMigrationServer : WireMockServer(9990) {
   fun requestRepair(status: HttpStatus = HttpStatus.OK) {
     stubFor(
       put(urlMatching("/migrate/taps/repair/${Prisoner.PATTERN}"))
+        .withBearerToken()
         .willReturn(aResponse().withStatus(status.value())),
     )
   }

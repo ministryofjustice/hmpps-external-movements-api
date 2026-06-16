@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.T
   ],
 )
 sealed interface OccurrenceAction : Action {
+  val reason: String?
   fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*>? = null
 }
 

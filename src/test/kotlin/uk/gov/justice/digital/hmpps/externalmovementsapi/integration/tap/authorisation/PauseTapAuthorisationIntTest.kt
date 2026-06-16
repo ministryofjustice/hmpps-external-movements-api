@@ -63,21 +63,21 @@ class PauseTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     pauseAuthorisation(
       newUuid(),
-      pauseAuthorisationRequest(),
+      PauseAuthorisation(),
       role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    pauseAuthorisation(newUuid(), pauseAuthorisationRequest()).expectStatus().isNotFound
+    pauseAuthorisation(newUuid(), PauseAuthorisation()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "PAUSED"])
   fun `409 - authorisation not approved cannot be paused`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = pauseAuthorisation(auth.id, pauseAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = pauseAuthorisation(auth.id, PauseAuthorisation()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
@@ -95,11 +95,12 @@ class PauseTapAuthorisationIntTest(
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val username = username()
     val caseloadId = word(5)
-    val request = pauseAuthorisationRequest()
+    val request = PauseAuthorisation()
+    val reason = word(26)
 
-    val res = pauseAuthorisation(auth.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
+    val res = pauseAuthorisation(auth.id, request, reason, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationPaused.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Approved", "Paused"),
     )
@@ -121,7 +122,7 @@ class PauseTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
+      ExternalMovementContext.get().copy(username = username, reason = reason, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -149,12 +150,12 @@ class PauseTapAuthorisationIntTest(
         end = LocalDateTime.now().plusDays(1),
       ),
     )
-    val request = pauseAuthorisationRequest()
+    val request = PauseAuthorisation()
     val username = username()
     val caseloadId = word(4)
-    val res = pauseAuthorisation(auth.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
+    val res = pauseAuthorisation(auth.id, request, null, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationPaused.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isNull()
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "Approved", "Paused"),
     )
@@ -173,7 +174,7 @@ class PauseTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
+      ExternalMovementContext.get().copy(username = username, reason = null, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -185,20 +186,17 @@ class PauseTapAuthorisationIntTest(
     )
   }
 
-  private fun pauseAuthorisationRequest(
-    reason: String? = word(20),
-  ) = PauseAuthorisation(reason)
-
   private fun pauseAuthorisation(
     id: UUID,
     request: PauseAuthorisation,
+    reason: String? = word(20),
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
     .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()

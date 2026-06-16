@@ -28,7 +28,6 @@ data class RecategoriseOccurrence(
     aca.absenceReasonCategoryCode,
     aca.absenceReasonCode,
     aca.reasonPath,
-    aca.reason,
   )
 
   override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceRecategorised(tao.person.identifier, tao.id)
