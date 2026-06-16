@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ApproveAuthorisation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.TapAuthorisationModifications.Companion.NOT_AWAITING_APPROVAL
 import java.util.UUID
 
@@ -132,7 +133,7 @@ class ApproveTapAuthorisationIntTest(
   ) = webTestClient
     .put()
     .uri(PauseTapAuthorisationIntTest.TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(AuthorisationActions(listOf(request), request.reason))
     .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
     .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()
