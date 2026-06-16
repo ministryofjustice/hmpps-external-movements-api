@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.PauseAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.TapAuthorisationModifications.Companion.NOT_YET_APPROVED
 import java.time.LocalDate
@@ -197,7 +198,7 @@ class PauseTapAuthorisationIntTest(
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(AuthorisationActions(listOf(request), request.reason))
     .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
     .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()

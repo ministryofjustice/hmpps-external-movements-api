@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.CancelAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.TapAuthorisationModifications.Companion.NOT_YET_APPROVED
 import java.time.LocalDate
@@ -240,7 +241,7 @@ class CancelTapAuthorisationIntTest(
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(AuthorisationActions(listOf(request), request.reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

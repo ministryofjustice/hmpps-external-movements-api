@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.DenyAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.TapAuthorisationModifications.Companion.NOT_AWAITING_APPROVAL
 import java.util.UUID
@@ -133,7 +134,7 @@ class DenyTapAuthorisationIntTest(
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(AuthorisationActions(listOf(request), request.reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

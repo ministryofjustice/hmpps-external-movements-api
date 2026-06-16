@@ -8,23 +8,19 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.Re
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceId
-import uk.gov.justice.digital.hmpps.externalmovementsapi.model.ReferenceIds
 import uk.gov.justice.digital.hmpps.externalmovementsapi.service.person.PersonSummaryService
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.ReasonPath
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisationRepository
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.getAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrenceRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.Transport
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceCategorisationLinkRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceReason
@@ -32,12 +28,9 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceSubType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.exception.AbsenceCategorisationException
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrencesRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateTapAuthorisationRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.asOccurrence
 import java.time.LocalDateTime.now
-import java.util.UUID
 import kotlin.reflect.KClass
 
 @Transactional
@@ -47,7 +40,6 @@ class CreateScheduledAbsence(
   private val personSummaryService: PersonSummaryService,
   private val referenceDataRepository: ReferenceDataRepository,
   private val absenceCategorisationLinkRepository: AbsenceCategorisationLinkRepository,
-  private val occurrenceStatusRepository: OccurrenceStatusRepository,
   private val tapAuthRepository: TemporaryAbsenceAuthorisationRepository,
   private val tapOccurrenceRepository: TemporaryAbsenceOccurrenceRepository,
 ) {
@@ -72,35 +64,6 @@ class CreateScheduledAbsence(
       request.occurrences.map { it.asOccurrence(authorisation, rdProvider, request) },
     )
     return ReferenceId(authorisation.id)
-  }
-
-  fun tapOccurrence(authorisationId: UUID, request: CreateOccurrencesRequest): ReferenceIds {
-    val authorisation = tapAuthRepository.getAuthorisation(authorisationId)
-    if (!authorisation.permitsOccurrences()) {
-      throw ConflictException("Cannot add a new occurrence to a non active authorisation")
-    }
-    val new = request.occurrences.takeIf { it.isNotEmpty() } ?: listOf(request.singleRequest())
-    val occurrenceStatuses = occurrenceStatusRepository.findAll().associateBy { it.code }
-    val occurrences = new.map { occ ->
-      check(
-        !occ.start.toLocalDate().isBefore(authorisation.start) &&
-          !occ.end.toLocalDate().isAfter(authorisation.end),
-      ) {
-        "Temporary absence must be within the authorised date range."
-      }
-
-      if (!authorisation.repeat) {
-        check(new.size == 1 && tapOccurrenceRepository.countByAuthorisationId(authorisationId) == 0) {
-          "Cannot add multiple occurrences to a single authorisation."
-        }
-      }
-
-      occ.asOccurrence(authorisation).calculateStatus { requireNotNull(occurrenceStatuses[it]) }
-    }
-
-    val locations = (authorisation.locations + occurrences.map { it.location }).mapTo(linkedSetOf()) { it }
-    authorisation.applyLocations(ChangeAuthorisationLocations(locations))
-    return ReferenceIds(tapOccurrenceRepository.saveAll(occurrences).map { ReferenceId(it.id) })
   }
 
   private fun CreateTapAuthorisationRequest.asAuthorisation(

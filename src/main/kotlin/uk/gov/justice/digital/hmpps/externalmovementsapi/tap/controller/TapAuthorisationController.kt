@@ -17,10 +17,8 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags.UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateOccurrencesRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateTapAuthorisationRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.TapAuthorisation
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.CreateScheduledAbsence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.GetTapAuthorisation
@@ -59,17 +57,6 @@ class TapAuthorisationController(
   fun getTapAuthorisationHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
   @CaseloadIdHeader
-  @PutMapping("/{id}")
-  fun applyAction(@PathVariable id: UUID, @Valid @RequestBody action: AuthorisationAction) = modify.apply(id, action)
-
-  @CaseloadIdHeader
-  @PutMapping("/{id}/actions")
+  @PutMapping(value = ["/{id}", "/{id}/actions"])
   fun applyActions(@PathVariable id: UUID, @Valid @RequestBody actions: AuthorisationActions) = modify.apply(id, actions)
-
-  @CaseloadIdHeader
-  @PostMapping("/{id}/occurrences")
-  fun createOccurrences(
-    @PathVariable id: UUID,
-    @Valid @RequestBody request: CreateOccurrencesRequest,
-  ) = create.tapOccurrence(id, request)
 }

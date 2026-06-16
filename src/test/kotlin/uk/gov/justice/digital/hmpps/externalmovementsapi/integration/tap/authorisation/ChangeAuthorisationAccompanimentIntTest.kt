@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus.Code.PENDING
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.AuthorisationActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationAccompaniment
 import java.time.LocalDateTime
 import java.util.UUID
@@ -143,7 +144,7 @@ class ChangeAuthorisationAccompanimentIntTest(
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(AuthorisationActions(listOf(request), request.reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
