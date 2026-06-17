@@ -14,7 +14,6 @@ import java.time.LocalDate
 data class ChangeAuthorisationDateRange(
   override val start: LocalDate,
   override val end: LocalDate,
-  override val reason: String? = null,
 ) : AuthorisationAction,
   DateRange,
   StartAndEnd<LocalDate> {

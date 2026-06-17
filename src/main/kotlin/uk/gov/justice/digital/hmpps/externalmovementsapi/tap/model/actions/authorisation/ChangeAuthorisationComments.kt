@@ -7,7 +7,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisatio
 
 data class ChangeAuthorisationComments(
   override val comments: String?,
-  override val reason: String? = null,
 ) : AuthorisationAction,
   CommentsAction {
   override fun domainEvent(taa: TemporaryAbsenceAuthorisation): DomainEvent<*> = TemporaryAbsenceAuthorisationCommentsChanged(taa.person.identifier, taa.id)

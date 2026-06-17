@@ -19,7 +19,6 @@ data class RecategoriseOccurrence(
     absenceReasonCategoryCode,
     absenceReasonCode,
   ),
-  override val reason: String? = null,
 ) : OccurrenceAction,
   AbsenceCategorisationAction {
   constructor(aca: AbsenceCategorisationAction) : this(
@@ -28,7 +27,6 @@ data class RecategoriseOccurrence(
     aca.absenceReasonCategoryCode,
     aca.absenceReasonCode,
     aca.reasonPath,
-    aca.reason,
   )
 
   override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceRecategorised(tao.person.identifier, tao.id)

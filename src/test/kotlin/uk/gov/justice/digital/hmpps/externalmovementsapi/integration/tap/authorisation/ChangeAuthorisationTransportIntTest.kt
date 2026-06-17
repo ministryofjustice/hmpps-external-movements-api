@@ -56,7 +56,7 @@ class ChangeAuthorisationTransportIntTest(
     applyTransport(
       UUID.randomUUID(),
       action(),
-      role,
+      role = role,
     ).expectStatus().isForbidden
   }
 
@@ -77,9 +77,10 @@ class ChangeAuthorisationTransportIntTest(
     )
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyTransport(auth.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(26)
+    val res = applyTransport(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationTransportChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("transport", "Prisoner driver", "Other"),
     )
@@ -101,7 +102,7 @@ class ChangeAuthorisationTransportIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -134,17 +135,17 @@ class ChangeAuthorisationTransportIntTest(
 
   private fun action(
     transportCode: String = "TNR",
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeAuthorisationTransport(transportCode, reason)
+  ) = ChangeAuthorisationTransport(transportCode)
 
   private fun applyTransport(
     id: UUID,
     request: ChangeAuthorisationTransport,
+    reason: String? = word(25),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

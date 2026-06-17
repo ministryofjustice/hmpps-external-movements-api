@@ -60,12 +60,14 @@ class TapAuthorisationModifications(
   private val acr: AbsenceCategorisationRetriever,
   private val authorisationHistory: AuthorisationHistory,
 ) {
-  fun apply(id: UUID, action: AuthorisationAction): AuditHistory? {
-    ExternalMovementContext.get().copy(reason = action.reason).set()
+
+  fun apply(id: UUID, request: AuthorisationActions): AuditHistory? {
+    ExternalMovementContext.get().copy(reason = request.reason).set()
     val (readVersion, writeVersion) = transactionTemplate.execute {
       val authorisation = taaRepository.getAuthorisation(id)
       val readVersion = authorisation.version
-      authorisation.applyAction(action, referenceDataRepository.rdProvider())
+      val rdSupplier = referenceDataRepository.rdProvider()
+      request.actions.forEach { authorisation.applyAction(it, rdSupplier) }
       taaRepository.flush()
       readVersion!! to authorisation.version!!
     }
@@ -138,19 +140,19 @@ class TapAuthorisationModifications(
 
       is ChangeAuthorisationAccompaniment -> {
         applyAccompaniment(action, rdSupplier)
-        val coa = ChangeOccurrenceAccompaniment(action.accompaniedByCode, action.reason)
+        val coa = ChangeOccurrenceAccompaniment(action.accompaniedByCode)
         affectedOccurrences().forEach { it.applyAccompaniment(coa, rdSupplier) }
       }
 
       is ChangeAuthorisationTransport -> {
         applyTransport(action, rdSupplier)
-        val coa = ChangeOccurrenceTransport(action.transportCode, action.reason)
+        val coa = ChangeOccurrenceTransport(action.transportCode)
         affectedOccurrences().forEach { it.applyTransport(coa, rdSupplier) }
       }
 
       is ChangeAuthorisationComments -> {
         applyComments(action)
-        val aoc = ChangeOccurrenceComments(action.comments, action.reason)
+        val aoc = ChangeOccurrenceComments(action.comments)
         affectedOccurrences().forEach { it.applyComments(aoc) }
       }
 
@@ -204,19 +206,6 @@ class TapAuthorisationModifications(
 
       else -> throw IllegalArgumentException("Action not supported")
     }
-  }
-
-  fun apply(id: UUID, request: AuthorisationActions): AuditHistory? {
-    ExternalMovementContext.get().copy(reason = request.reason).set()
-    val (readVersion, writeVersion) = transactionTemplate.execute {
-      val authorisation = taaRepository.getAuthorisation(id)
-      val readVersion = authorisation.version
-      val rdSupplier = referenceDataRepository.rdProvider()
-      request.actions.forEach { authorisation.applyAction(it, rdSupplier) }
-      taaRepository.flush()
-      readVersion!! to authorisation.version!!
-    }
-    return AuditHistory(listOfNotNull(authorisationHistory.currentAction(id, readVersion, writeVersion)))
   }
 
   private fun TemporaryAbsenceAuthorisation.affectedOccurrences() = taoRepository.findAll(

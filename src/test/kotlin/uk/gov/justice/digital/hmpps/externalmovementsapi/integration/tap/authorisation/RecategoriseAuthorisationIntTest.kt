@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publica
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationRecategorised
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRecategorised
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -54,6 +55,7 @@ class RecategoriseAuthorisationIntTest(
     recategoriseAuthorisation(
       UUID.randomUUID(),
       action(),
+      null,
       role,
     ).expectStatus().isForbidden
   }
@@ -68,9 +70,10 @@ class RecategoriseAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action("PP", null, null, "PC")
-    val res = recategoriseAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(26)
+    val res = recategoriseAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("absenceType", "Standard ROTL (release on temporary licence)", "Police production"),
       AuditedAction.Change("absenceSubType", "RDR (resettlement day release)", "Police production"),
@@ -93,7 +96,7 @@ class RecategoriseAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -110,9 +113,10 @@ class RecategoriseAuthorisationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action("SE", null, null, "C6")
-    val res = recategoriseAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(26)
+    val res = recategoriseAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationRecategorised.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("absenceType", "Standard ROTL (release on temporary licence)", "Security escort"),
       AuditedAction.Change("absenceSubType", "RDR (resettlement day release)", null),
@@ -135,7 +139,7 @@ class RecategoriseAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -171,23 +175,22 @@ class RecategoriseAuthorisationIntTest(
     absenceSubTypeCode: String? = "RDR",
     absenceReasonCategoryCode: String? = "PW",
     absenceReasonCode: String? = "R15",
-    reason: String? = "Reason for changing the categorisation",
   ) = RecategoriseAuthorisation(
     absenceTypeCode,
     absenceSubTypeCode,
     absenceReasonCategoryCode,
     absenceReasonCode,
-    reason = reason,
   )
 
   private fun recategoriseAuthorisation(
     id: UUID,
     request: RecategoriseAuthorisation,
+    reason: String? = word(20),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

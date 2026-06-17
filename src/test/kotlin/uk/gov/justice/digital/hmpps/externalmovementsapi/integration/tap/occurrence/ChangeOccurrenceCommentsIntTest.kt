@@ -72,11 +72,12 @@ class ChangeOccurrenceCommentsIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
+    val reason = word(26)
     val username = username()
     val caseloadId = word(3)
-    val res = applyOccurrenceComments(occurrence.id, request, request.reason, username, caseloadId).successResponse<AuditHistory>().content.single()
+    val res = applyOccurrenceComments(occurrence.id, request, reason, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
@@ -91,7 +92,7 @@ class ChangeOccurrenceCommentsIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
+      ExternalMovementContext.get().copy(username = username, reason = reason, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -113,9 +114,10 @@ class ChangeOccurrenceCommentsIntTest(
     assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.PENDING.name)
 
     val request = action()
-    val res = applyOccurrenceComments(occurrence.id, request, caseloadId = auth.prisonCode).successResponse<AuditHistory>().content.single()
+    val reason = word(26)
+    val res = applyOccurrenceComments(occurrence.id, request, reason, caseloadId = auth.prisonCode).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
@@ -130,7 +132,7 @@ class ChangeOccurrenceCommentsIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason, caseloadId = auth.prisonCode),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason, caseloadId = auth.prisonCode),
     )
 
     verifyEventPublications(
@@ -147,9 +149,10 @@ class ChangeOccurrenceCommentsIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyOccurrenceComments(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(26)
+    val res = applyOccurrenceComments(occurrence.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
@@ -163,7 +166,7 @@ class ChangeOccurrenceCommentsIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEvents(
@@ -176,13 +179,12 @@ class ChangeOccurrenceCommentsIntTest(
 
   private fun action(
     comments: String = (0..10).joinToString(separator = " ") { word(6) },
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeOccurrenceComments(comments, reason)
+  ) = ChangeOccurrenceComments(comments)
 
   private fun applyOccurrenceComments(
     id: UUID,
     request: ChangeOccurrenceComments,
-    reason: String? = request.reason,
+    reason: String? = word(25),
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,

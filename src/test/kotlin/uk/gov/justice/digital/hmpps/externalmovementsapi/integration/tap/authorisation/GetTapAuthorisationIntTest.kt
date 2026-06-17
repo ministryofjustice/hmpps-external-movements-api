@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
@@ -47,8 +48,14 @@ class GetTapAuthorisationIntTest(
   }
 
   @Test
-  fun `404 not found when id invalid`() {
+  fun `404 not found when id does not exist`() {
     getTapAuthorisation(newUuid()).expectStatus().isNotFound
+  }
+
+  @Test
+  fun `400 bad request when id is not a valid uuid`() {
+    val res = getTapAuthorisation("invalid-uuid").errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.userMessage).isEqualTo("Method argument type mismatch, expecting class java.util.UUID")
   }
 
   @Test
@@ -150,6 +157,13 @@ class GetTapAuthorisationIntTest(
 
   private fun getTapAuthorisation(
     id: UUID,
+    start: LocalDate? = null,
+    end: LocalDate? = null,
+    role: String? = EXTERNAL_MOVEMENTS_UI,
+  ) = getTapAuthorisation(id.toString(), start, end, role)
+
+  private fun getTapAuthorisation(
+    id: String,
     start: LocalDate? = null,
     end: LocalDate? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,

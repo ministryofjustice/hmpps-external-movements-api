@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RO
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_RW
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles.EXTERNAL_MOVEMENTS_UI
@@ -54,8 +55,14 @@ class GetTapOccurrenceIntTest(
   }
 
   @Test
-  fun `404 not found when id invalid`() {
+  fun `404 not found when id does not exist`() {
     getTapOccurrence(newUuid()).expectStatus().isNotFound
+  }
+
+  @Test
+  fun `400 bad request when id invalid`() {
+    val res = getTapOccurrence("invalid-uuid").errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.userMessage).isEqualTo("Method argument type mismatch, expecting class java.util.UUID")
   }
 
   @Test
@@ -274,6 +281,11 @@ class GetTapOccurrenceIntTest(
 
   private fun getTapOccurrence(
     id: UUID,
+    role: String? = EXTERNAL_MOVEMENTS_UI,
+  ) = getTapOccurrence(id.toString(), role)
+
+  private fun getTapOccurrence(
+    id: String,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()

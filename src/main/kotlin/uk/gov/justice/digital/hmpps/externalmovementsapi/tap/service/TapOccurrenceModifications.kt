@@ -66,7 +66,6 @@ class TapOccurrenceModifications(
           val cadr = ChangeAuthorisationDateRange(
             action.start?.toLocalDate() ?: it.start,
             action.end?.toLocalDate() ?: it.end,
-            action.reason,
           )
           it.applyDateRange(cadr, rdSupplier)
         } ?: validateDateRange(action)
@@ -78,7 +77,7 @@ class TapOccurrenceModifications(
         if (status.code !in listOf(SCHEDULED.name, CANCELLED.name)) {
           throw ConflictException("Temporary absence not currently scheduled")
         } else {
-          single?.cancel(CancelAuthorisation(action.reason), rdSupplier)?.also {
+          single?.cancel(CancelAuthorisation(), rdSupplier)?.also {
             makeDpsOnly()
           }
           cancel(action, rdSupplier)
@@ -86,20 +85,20 @@ class TapOccurrenceModifications(
       }
 
       is ChangeOccurrenceComments -> {
-        single?.applyComments(ChangeAuthorisationComments(action.comments, action.reason))
+        single?.applyComments(ChangeAuthorisationComments(action.comments))
         applyComments(action)
       }
 
       is ChangeOccurrenceAccompaniment -> {
         single?.applyAccompaniment(
-          ChangeAuthorisationAccompaniment(action.accompaniedByCode, action.reason),
+          ChangeAuthorisationAccompaniment(action.accompaniedByCode),
           rdSupplier,
         )
         applyAccompaniment(action, rdSupplier)
       }
 
       is ChangeOccurrenceTransport -> {
-        single?.applyTransport(ChangeAuthorisationTransport(action.transportCode, action.reason), rdSupplier)
+        single?.applyTransport(ChangeAuthorisationTransport(action.transportCode), rdSupplier)
         applyTransport(action, rdSupplier)
       }
 
@@ -117,7 +116,7 @@ class TapOccurrenceModifications(
           } else {
             linkedSetOf(location)
           }
-          applyLocations(ChangeAuthorisationLocations(newLocations, action.reason))
+          applyLocations(ChangeAuthorisationLocations(newLocations))
         }
       }
 

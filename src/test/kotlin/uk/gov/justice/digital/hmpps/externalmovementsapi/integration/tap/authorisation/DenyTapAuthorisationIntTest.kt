@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publica
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDenied
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceDenied
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -55,14 +56,14 @@ class DenyTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     denyAuthorisation(
       IdGenerator.newUuid(),
-      denyAuthorisationRequest(),
-      role,
+      DenyAuthorisation(),
+      role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    denyAuthorisation(IdGenerator.newUuid(), denyAuthorisationRequest()).expectStatus().isNotFound
+    denyAuthorisation(IdGenerator.newUuid(), DenyAuthorisation()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
@@ -73,7 +74,7 @@ class DenyTapAuthorisationIntTest(
         status = status,
       ),
     )
-    val res = denyAuthorisation(auth.id, denyAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = denyAuthorisation(auth.id, DenyAuthorisation()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_AWAITING_APPROVAL)
   }
@@ -90,10 +91,11 @@ class DenyTapAuthorisationIntTest(
         auth,
       ),
     )
-    val request = denyAuthorisationRequest()
-    val res = denyAuthorisation(auth.id, request).successResponse<AuditHistory>().content.single()
+    val request = DenyAuthorisation()
+    val reason = word(26)
+    val res = denyAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDenied.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "To be reviewed", "Denied"),
     )
@@ -111,7 +113,7 @@ class DenyTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -123,18 +125,15 @@ class DenyTapAuthorisationIntTest(
     )
   }
 
-  private fun denyAuthorisationRequest(
-    reason: String? = "Evidence justifying the denial",
-  ) = DenyAuthorisation(reason)
-
   private fun denyAuthorisation(
     id: UUID,
     request: DenyAuthorisation,
+    reason: String? = word(20),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

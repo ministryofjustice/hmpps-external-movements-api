@@ -332,7 +332,7 @@ class CreateTapOccurrenceIntTest(
     .exchange()
 
   companion object {
-    const val CREATE_OCCURRENCE_URL = "/temporary-absence-authorisations/{id}/actions"
+    const val CREATE_OCCURRENCE_URL = "/temporary-absence-authorisations/{id}"
 
     private fun createOccurrenceRequest(
       start: LocalDateTime = LocalDateTime.now().plusDays(1),

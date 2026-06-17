@@ -62,21 +62,21 @@ class ApproveTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     approveAuthorisation(
       newUuid(),
-      approveAuthorisationRequest(),
+      ApproveAuthorisation(),
       role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    approveAuthorisation(newUuid(), approveAuthorisationRequest()).expectStatus().isNotFound
+    approveAuthorisation(newUuid(), ApproveAuthorisation()).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "APPROVED"])
   fun `409 - authorisation not awaiting approval cannot be approved`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = approveAuthorisation(auth.id, approveAuthorisationRequest()).errorResponse(HttpStatus.CONFLICT)
+    val res = approveAuthorisation(auth.id, ApproveAuthorisation()).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_AWAITING_APPROVAL)
   }
@@ -85,12 +85,13 @@ class ApproveTapAuthorisationIntTest(
   fun `200 ok - authorisation approved`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = approveAuthorisationRequest()
+    val request = ApproveAuthorisation()
+    val reason = word(20)
     val username = username()
     val caseloadId = word(3)
-    val res = approveAuthorisation(auth.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
+    val res = approveAuthorisation(auth.id, request, reason, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationApproved.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("status", "To be reviewed", "Approved"),
     )
@@ -108,7 +109,7 @@ class ApproveTapAuthorisationIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
+      ExternalMovementContext.get().copy(username = username, reason = reason, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -120,20 +121,17 @@ class ApproveTapAuthorisationIntTest(
     )
   }
 
-  private fun approveAuthorisationRequest(
-    reason: String? = word(25),
-  ) = ApproveAuthorisation(reason)
-
   private fun approveAuthorisation(
     id: UUID,
     request: ApproveAuthorisation,
+    reason: String? = null,
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(PauseTapAuthorisationIntTest.TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
     .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()

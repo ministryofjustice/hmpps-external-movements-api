@@ -18,7 +18,11 @@ class ManageUsersServer : WireMockServer(8095) {
     if (status == HttpStatus.OK) {
       response.withBody(Json.mapper.writeValueAsString(userDetails))
     }
-    stubFor(get("/users/$username").willReturn(response.withStatus(status.value())))
+    stubFor(
+      get("/users/$username")
+        .withBearerToken()
+        .willReturn(response.withStatus(status.value())),
+    )
   }
 
   companion object {

@@ -57,6 +57,6 @@ class TapAuthorisationController(
   fun getTapAuthorisationHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
   @CaseloadIdHeader
-  @PutMapping(value = ["/{id}", "/{id}/actions"])
+  @PutMapping("/{id}")
   fun applyActions(@PathVariable id: UUID, @Valid @RequestBody actions: AuthorisationActions) = modify.apply(id, actions)
 }

@@ -28,6 +28,7 @@ class PrisonRegisterMockServer : WireMockServer(9005) {
     val request = PrisonsByIdsRequest((prisonCodes.takeIf { it.isNotEmpty() } ?: prisons.map { it.code }.toSet()))
     stubFor(
       post(urlPathEqualTo("/prisons/prisonsByIds"))
+        .withBearerToken()
         .withRequestBody(
           equalToJson(
             Json.mapper.writeValueAsString(request),

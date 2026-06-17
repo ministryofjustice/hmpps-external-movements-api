@@ -68,9 +68,10 @@ class ChangeTapOccurrenceAccompanimentIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyAccompaniment(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(25)
+    val res = applyAccompaniment(occurrence.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAccompanimentChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(
         "accompaniedBy",
@@ -91,7 +92,7 @@ class ChangeTapOccurrenceAccompanimentIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -108,9 +109,10 @@ class ChangeTapOccurrenceAccompanimentIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyAccompaniment(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(25)
+    val res = applyAccompaniment(occurrence.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAccompanimentChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(
         "accompaniedBy",
@@ -130,7 +132,7 @@ class ChangeTapOccurrenceAccompanimentIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEvents(
@@ -143,13 +145,12 @@ class ChangeTapOccurrenceAccompanimentIntTest(
 
   private fun action(
     accompaniedByCode: String = "U",
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeOccurrenceAccompaniment(accompaniedByCode, reason)
+  ) = ChangeOccurrenceAccompaniment(accompaniedByCode)
 
   private fun applyAccompaniment(
     id: UUID,
     request: ChangeOccurrenceAccompaniment,
-    reason: String? = request.reason,
+    reason: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

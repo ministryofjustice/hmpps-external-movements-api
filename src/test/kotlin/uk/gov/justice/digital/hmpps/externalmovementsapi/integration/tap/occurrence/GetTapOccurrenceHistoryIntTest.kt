@@ -90,7 +90,6 @@ class GetTapOccurrenceHistoryIntTest(
           absenceSubTypeCode = "PP",
           absenceReasonCategoryCode = null,
           absenceReasonCode = "PC",
-          reason = "A reason for changing the categorisation",
           reasonPath = ReasonPath(listOf(ReferenceDataDomain.Code.ABSENCE_TYPE of "PP")),
         ),
       ) { domain, code ->
@@ -98,14 +97,14 @@ class GetTapOccurrenceHistoryIntTest(
       }
     }
     val originalLocation = occurrence.location
-    val changeLocation = ChangeOccurrenceLocation(location = location(), reason = "A reason for changing the location")
+    val changeLocation = ChangeOccurrenceLocation(location = location())
     transactionTemplate.executeWithoutResult {
-      ExternalMovementContext.get().copy(username = locationUser.username, reason = changeLocation.reason).set()
+      ExternalMovementContext.get().copy(username = locationUser.username, reason = "A reason for changing the location").set()
       findTemporaryAbsenceOccurrence(occurrence.id)?.applyLocation(changeLocation)
     }
     transactionTemplate.executeWithoutResult {
-      val cancelAction = CancelOccurrence(reason = "A reason for cancelling")
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = cancelAction.reason).set()
+      val cancelAction = CancelOccurrence()
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = "A reason for cancelling").set()
       findTemporaryAbsenceOccurrence(occurrence.id)?.cancel(cancelAction) { domain, code ->
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }

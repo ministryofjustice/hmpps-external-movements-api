@@ -80,11 +80,12 @@ class ChangeAuthorisationCommentsIntTest(
     )
     val occ = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
+    val reason = word(26)
     val username = username()
     val caseloadId = word(3)
-    val res = applyComments(auth.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
+    val res = applyComments(auth.id, request, reason, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCommentsChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change("comments", auth.comments, request.comments),
     )
@@ -107,7 +108,7 @@ class ChangeAuthorisationCommentsIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
+      ExternalMovementContext.get().copy(username = username, reason = reason, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -140,19 +141,19 @@ class ChangeAuthorisationCommentsIntTest(
 
   private fun action(
     comments: String = (0..10).joinToString(separator = " ") { word(6) },
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeAuthorisationComments(comments, reason)
+  ) = ChangeAuthorisationComments(comments)
 
   private fun applyComments(
     id: UUID,
     request: ChangeAuthorisationComments,
+    reason: String? = word(25),
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(PauseTapAuthorisationIntTest.TAP_AUTHORISATION_MODIFICATION_URL, id)
-    .bodyValue(AuthorisationActions(listOf(request), request.reason))
+    .bodyValue(AuthorisationActions(listOf(request), reason))
     .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
     .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()
