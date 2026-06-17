@@ -489,78 +489,10 @@
 </a>
 </g>
 </g>
-<!-- movement_audit -->
-<g id="node11" class="node">
-<title>movement_audit</title>
-<g id="a_node11"><a xlink:href="../../tables/movement_audit.html" xlink:title="movement_audit" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="274,-2960.2 274,-3332.2 482,-3332.2 482,-2960.2 274,-2960.2"/>
-<polygon fill="#f5f5f5" stroke="transparent" points="274,-3309.2 274,-3332.2 482,-3332.2 482,-3309.2 274,-3309.2"/>
-<polygon fill="none" stroke="#000000" points="274,-3309.2 274,-3332.2 482,-3332.2 482,-3309.2 274,-3309.2"/>
-<text text-anchor="start" x="279" y="-3317.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">movement_audit</text>
-<text text-anchor="start" x="447.0437" y="-3317.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
-<polygon fill="none" stroke="#000000" points="274,-3287.2 274,-3309.2 482,-3309.2 482,-3287.2 274,-3287.2"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="279" y="-3304.2"/>
-<text text-anchor="start" x="294" y="-3294.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_id</text>
-<polygon fill="none" stroke="#000000" points="274,-3265.2 274,-3287.2 482,-3287.2 482,-3265.2 274,-3265.2"/>
-<text text-anchor="start" x="294" y="-3272.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_type</text>
-<polygon fill="none" stroke="#000000" points="274,-3243.2 274,-3265.2 482,-3265.2 482,-3243.2 274,-3243.2"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="279" y="-3260.2"/>
-<text text-anchor="start" x="294" y="-3250.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">id</text>
-<polygon fill="none" stroke="#000000" points="274,-3221.2 274,-3243.2 482,-3243.2 482,-3221.2 274,-3221.2"/>
-<text text-anchor="start" x="294" y="-3228.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">version</text>
-<polygon fill="none" stroke="#000000" points="274,-3199.2 274,-3221.2 482,-3221.2 482,-3199.2 274,-3199.2"/>
-<text text-anchor="start" x="294" y="-3206.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">person_identifier</text>
-<polygon fill="none" stroke="#000000" points="274,-3177.2 274,-3199.2 482,-3199.2 482,-3177.2 274,-3177.2"/>
-<text text-anchor="start" x="294" y="-3184.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">occurrence_id</text>
-<polygon fill="none" stroke="#000000" points="274,-3155.2 274,-3177.2 482,-3177.2 482,-3155.2 274,-3155.2"/>
-<text text-anchor="start" x="294" y="-3162.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">occurred_at</text>
-<polygon fill="none" stroke="#000000" points="274,-3133.2 274,-3155.2 482,-3155.2 482,-3133.2 274,-3133.2"/>
-<text text-anchor="start" x="294" y="-3140.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">direction</text>
-<polygon fill="none" stroke="#000000" points="274,-3111.2 274,-3133.2 482,-3133.2 482,-3111.2 274,-3111.2"/>
-<text text-anchor="start" x="294" y="-3118.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">absence_reason_id</text>
-<polygon fill="none" stroke="#000000" points="274,-3089.2 274,-3111.2 482,-3111.2 482,-3089.2 274,-3089.2"/>
-<text text-anchor="start" x="294" y="-3096.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">accompanied_by_id</text>
-<polygon fill="none" stroke="#000000" points="274,-3067.2 274,-3089.2 482,-3089.2 482,-3067.2 274,-3067.2"/>
-<text text-anchor="start" x="294" y="-3074.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">accompanied_by_comments</text>
-<polygon fill="none" stroke="#000000" points="274,-3045.2 274,-3067.2 482,-3067.2 482,-3045.2 274,-3045.2"/>
-<text text-anchor="start" x="294" y="-3052.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">location</text>
-<polygon fill="none" stroke="#000000" points="274,-3023.2 274,-3045.2 482,-3045.2 482,-3023.2 274,-3023.2"/>
-<text text-anchor="start" x="294" y="-3030.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">comments</text>
-<polygon fill="none" stroke="#000000" points="274,-3001.2 274,-3023.2 482,-3023.2 482,-3001.2 274,-3001.2"/>
-<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="279" y="-3018.2"/>
-<text text-anchor="start" x="294" y="-3008.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">prison_code</text>
-<polygon fill="none" stroke="#000000" points="274,-2979.2 274,-3001.2 482,-3001.2 482,-2979.2 274,-2979.2"/>
-<text text-anchor="start" x="294" y="-2986.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">legacy_id</text>
-<polygon fill="#ffffff" stroke="transparent" points="274,-2960.2 274,-2979.2 376,-2979.2 376,-2960.2 274,-2960.2"/>
-<polygon fill="none" stroke="#000000" points="274,-2960.2 274,-2979.2 376,-2979.2 376,-2960.2 274,-2960.2"/>
-<text text-anchor="start" x="277" y="-2966.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
-<polygon fill="#ffffff" stroke="transparent" points="376,-2960.2 376,-2979.2 429,-2979.2 429,-2960.2 376,-2960.2"/>
-<polygon fill="none" stroke="#000000" points="376,-2960.2 376,-2979.2 429,-2979.2 429,-2960.2 376,-2960.2"/>
-<text text-anchor="start" x="419.8862" y="-2966.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="429,-2960.2 429,-2979.2 482,-2979.2 482,-2960.2 429,-2960.2"/>
-<polygon fill="none" stroke="#000000" points="429,-2960.2 429,-2979.2 482,-2979.2 482,-2960.2 429,-2960.2"/>
-<text text-anchor="start" x="472.8862" y="-2966.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-</a>
-</g>
-</g>
-<!-- movement_audit&#45;&gt;prison_tap_locations -->
-<g id="edge20" class="edge">
-<title>movement_audit:w&#45;&gt;prison_tap_locations:e</title>
-<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M259.6328,-3009.9927C128.1723,-2966.2878 359.4509,-2288.2 203,-2288.2"/>
-<polygon fill="#000000" stroke="#000000" points="266.0928,-3010.9851 273.4533,-3015.7583 270.0464,-3011.5926 274,-3012.2 274,-3012.2 274,-3012.2 270.0464,-3011.5926 274.5467,-3008.6417 266.0928,-3010.9851 266.0928,-3010.9851"/>
-<ellipse fill="none" stroke="#000000" cx="262.9299" cy="-3010.4992" rx="3.2" ry="3.2"/>
-</g>
-<!-- movement_audit&#45;&gt;public.audit_revision -->
-<g id="edge21" class="edge">
-<title>movement_audit:w&#45;&gt;public.audit_revision:e</title>
-<path fill="none" stroke="#000000" d="M260.9323,-3305.1939C195.2555,-3384.2649 289.2906,-4107.2 204,-4107.2"/>
-<polygon fill="#000000" stroke="#000000" points="266.9467,-3301.975 275.6987,-3301.374 270.4733,-3300.0875 274,-3298.2 274,-3298.2 274,-3298.2 270.4733,-3300.0875 272.3013,-3295.026 266.9467,-3301.975 266.9467,-3301.975"/>
-<ellipse fill="none" stroke="#000000" cx="264.1253" cy="-3303.485" rx="3.2" ry="3.2"/>
-</g>
 <!-- occurrence -->
-<g id="node12" class="node">
+<g id="node11" class="node">
 <title>occurrence</title>
-<g id="a_node12"><a xlink:href="../../tables/occurrence.html" xlink:title="occurrence" target="_top">
+<g id="a_node11"><a xlink:href="../../tables/occurrence.html" xlink:title="occurrence" target="_top">
 <polygon fill="#ffffff" stroke="transparent" points="271.5,-818.2 271.5,-1300.2 484.5,-1300.2 484.5,-818.2 271.5,-818.2"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="272,-1277.2 272,-1300.2 485,-1300.2 485,-1277.2 272,-1277.2"/>
 <polygon fill="none" stroke="#000000" points="272,-1277.2 272,-1300.2 485,-1300.2 485,-1277.2 272,-1277.2"/>
@@ -799,6 +731,74 @@
 <path fill="none" stroke="#000000" d="M258.0168,-1225.8222C185.644,-1268.4095 309.5101,-1672.2 214,-1672.2"/>
 <polygon fill="#000000" stroke="#000000" points="264.2556,-1224.2062 272.9028,-1225.685 268.1278,-1223.2031 272,-1222.2 272,-1222.2 272,-1222.2 268.1278,-1223.2031 271.0972,-1218.715 264.2556,-1224.2062 264.2556,-1224.2062"/>
 <ellipse fill="none" stroke="#000000" cx="261.1579" cy="-1225.0086" rx="3.2" ry="3.2"/>
+</g>
+<!-- movement_audit -->
+<g id="node12" class="node">
+<title>movement_audit</title>
+<g id="a_node12"><a xlink:href="../../tables/movement_audit.html" xlink:title="movement_audit" target="_top">
+<polygon fill="#ffffff" stroke="transparent" points="274,-2960.2 274,-3332.2 482,-3332.2 482,-2960.2 274,-2960.2"/>
+<polygon fill="#f5f5f5" stroke="transparent" points="274,-3309.2 274,-3332.2 482,-3332.2 482,-3309.2 274,-3309.2"/>
+<polygon fill="none" stroke="#000000" points="274,-3309.2 274,-3332.2 482,-3332.2 482,-3309.2 274,-3309.2"/>
+<text text-anchor="start" x="279" y="-3317.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">movement_audit</text>
+<text text-anchor="start" x="447.0437" y="-3317.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
+<polygon fill="none" stroke="#000000" points="274,-3287.2 274,-3309.2 482,-3309.2 482,-3287.2 274,-3287.2"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="279" y="-3304.2"/>
+<text text-anchor="start" x="294" y="-3294.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_id</text>
+<polygon fill="none" stroke="#000000" points="274,-3265.2 274,-3287.2 482,-3287.2 482,-3265.2 274,-3265.2"/>
+<text text-anchor="start" x="294" y="-3272.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_type</text>
+<polygon fill="none" stroke="#000000" points="274,-3243.2 274,-3265.2 482,-3265.2 482,-3243.2 274,-3243.2"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="279" y="-3260.2"/>
+<text text-anchor="start" x="294" y="-3250.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="274,-3221.2 274,-3243.2 482,-3243.2 482,-3221.2 274,-3221.2"/>
+<text text-anchor="start" x="294" y="-3228.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">version</text>
+<polygon fill="none" stroke="#000000" points="274,-3199.2 274,-3221.2 482,-3221.2 482,-3199.2 274,-3199.2"/>
+<text text-anchor="start" x="294" y="-3206.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">person_identifier</text>
+<polygon fill="none" stroke="#000000" points="274,-3177.2 274,-3199.2 482,-3199.2 482,-3177.2 274,-3177.2"/>
+<text text-anchor="start" x="294" y="-3184.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">occurrence_id</text>
+<polygon fill="none" stroke="#000000" points="274,-3155.2 274,-3177.2 482,-3177.2 482,-3155.2 274,-3155.2"/>
+<text text-anchor="start" x="294" y="-3162.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">occurred_at</text>
+<polygon fill="none" stroke="#000000" points="274,-3133.2 274,-3155.2 482,-3155.2 482,-3133.2 274,-3133.2"/>
+<text text-anchor="start" x="294" y="-3140.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">direction</text>
+<polygon fill="none" stroke="#000000" points="274,-3111.2 274,-3133.2 482,-3133.2 482,-3111.2 274,-3111.2"/>
+<text text-anchor="start" x="294" y="-3118.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">absence_reason_id</text>
+<polygon fill="none" stroke="#000000" points="274,-3089.2 274,-3111.2 482,-3111.2 482,-3089.2 274,-3089.2"/>
+<text text-anchor="start" x="294" y="-3096.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">accompanied_by_id</text>
+<polygon fill="none" stroke="#000000" points="274,-3067.2 274,-3089.2 482,-3089.2 482,-3067.2 274,-3067.2"/>
+<text text-anchor="start" x="294" y="-3074.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">accompanied_by_comments</text>
+<polygon fill="none" stroke="#000000" points="274,-3045.2 274,-3067.2 482,-3067.2 482,-3045.2 274,-3045.2"/>
+<text text-anchor="start" x="294" y="-3052.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">location</text>
+<polygon fill="none" stroke="#000000" points="274,-3023.2 274,-3045.2 482,-3045.2 482,-3023.2 274,-3023.2"/>
+<text text-anchor="start" x="294" y="-3030.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">comments</text>
+<polygon fill="none" stroke="#000000" points="274,-3001.2 274,-3023.2 482,-3023.2 482,-3001.2 274,-3001.2"/>
+<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="279" y="-3018.2"/>
+<text text-anchor="start" x="294" y="-3008.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">prison_code</text>
+<polygon fill="none" stroke="#000000" points="274,-2979.2 274,-3001.2 482,-3001.2 482,-2979.2 274,-2979.2"/>
+<text text-anchor="start" x="294" y="-2986.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">legacy_id</text>
+<polygon fill="#ffffff" stroke="transparent" points="274,-2960.2 274,-2979.2 376,-2979.2 376,-2960.2 274,-2960.2"/>
+<polygon fill="none" stroke="#000000" points="274,-2960.2 274,-2979.2 376,-2979.2 376,-2960.2 274,-2960.2"/>
+<text text-anchor="start" x="277" y="-2966.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
+<polygon fill="#ffffff" stroke="transparent" points="376,-2960.2 376,-2979.2 429,-2979.2 429,-2960.2 376,-2960.2"/>
+<polygon fill="none" stroke="#000000" points="376,-2960.2 376,-2979.2 429,-2979.2 429,-2960.2 376,-2960.2"/>
+<text text-anchor="start" x="419.8862" y="-2966.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="429,-2960.2 429,-2979.2 482,-2979.2 482,-2960.2 429,-2960.2"/>
+<polygon fill="none" stroke="#000000" points="429,-2960.2 429,-2979.2 482,-2979.2 482,-2960.2 429,-2960.2"/>
+<text text-anchor="start" x="472.8862" y="-2966.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+</a>
+</g>
+</g>
+<!-- movement_audit&#45;&gt;prison_tap_locations -->
+<g id="edge20" class="edge">
+<title>movement_audit:w&#45;&gt;prison_tap_locations:e</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M259.6328,-3009.9927C128.1723,-2966.2878 359.4509,-2288.2 203,-2288.2"/>
+<polygon fill="#000000" stroke="#000000" points="266.0928,-3010.9851 273.4533,-3015.7583 270.0464,-3011.5926 274,-3012.2 274,-3012.2 274,-3012.2 270.0464,-3011.5926 274.5467,-3008.6417 266.0928,-3010.9851 266.0928,-3010.9851"/>
+<ellipse fill="none" stroke="#000000" cx="262.9299" cy="-3010.4992" rx="3.2" ry="3.2"/>
+</g>
+<!-- movement_audit&#45;&gt;public.audit_revision -->
+<g id="edge21" class="edge">
+<title>movement_audit:w&#45;&gt;public.audit_revision:e</title>
+<path fill="none" stroke="#000000" d="M260.9323,-3305.1939C195.2555,-3384.2649 289.2906,-4107.2 204,-4107.2"/>
+<polygon fill="#000000" stroke="#000000" points="266.9467,-3301.975 275.6987,-3301.374 270.4733,-3300.0875 274,-3298.2 274,-3298.2 274,-3298.2 270.4733,-3300.0875 272.3013,-3295.026 266.9467,-3301.975 266.9467,-3301.975"/>
+<ellipse fill="none" stroke="#000000" cx="264.1253" cy="-3303.485" rx="3.2" ry="3.2"/>
 </g>
 <!-- authorisation -->
 <g id="node13" class="node">
