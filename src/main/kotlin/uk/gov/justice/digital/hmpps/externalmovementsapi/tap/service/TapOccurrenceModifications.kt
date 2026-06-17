@@ -42,13 +42,13 @@ class TapOccurrenceModifications(
   private val acr: AbsenceCategorisationRetriever,
   private val occurrenceHistory: OccurrenceHistory,
 ) {
-  fun apply(id: UUID, action: OccurrenceAction): AuditHistory {
-    ExternalMovementContext.get().copy(reason = action.reason).set()
+  fun apply(id: UUID, request: OccurrenceActions): AuditHistory {
+    ExternalMovementContext.get().copy(reason = request.reason).set()
     val (readVersion, writeVersion) = transactionTemplate.execute {
       val occurrence = taoRepository.getOccurrence(id)
       val readVersion = occurrence.version
       val rdSupplier = referenceDataRepository.rdProvider()
-      occurrence.applyAction(action, rdSupplier)
+      request.actions.forEach { occurrence.applyAction(it, rdSupplier) }
       taoRepository.flush()
       readVersion!! to occurrence.version!!
     }
@@ -122,19 +122,6 @@ class TapOccurrenceModifications(
 
       else -> throw IllegalArgumentException("Action not supported")
     }
-  }
-
-  fun apply(id: UUID, request: OccurrenceActions): AuditHistory {
-    ExternalMovementContext.get().copy(reason = request.reason).set()
-    val (readVersion, writeVersion) = transactionTemplate.execute {
-      val occurrence = taoRepository.getOccurrence(id)
-      val readVersion = occurrence.version
-      val rdSupplier = referenceDataRepository.rdProvider()
-      request.actions.forEach { occurrence.applyAction(it, rdSupplier) }
-      taoRepository.flush()
-      readVersion!! to occurrence.version!!
-    }
-    return AuditHistory(listOfNotNull(occurrenceHistory.currentAction(id, readVersion, writeVersion)))
   }
 
   private fun TemporaryAbsenceOccurrence.validateDateRange(action: RescheduleOccurrence) {

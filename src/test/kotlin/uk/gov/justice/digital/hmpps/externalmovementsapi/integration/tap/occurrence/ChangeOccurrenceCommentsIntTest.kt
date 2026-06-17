@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceComments
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceActions
 import java.util.UUID
 
 class ChangeOccurrenceCommentsIntTest(
@@ -73,7 +74,7 @@ class ChangeOccurrenceCommentsIntTest(
     val request = action()
     val username = username()
     val caseloadId = word(3)
-    val res = applyOccurrenceComments(occurrence.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
+    val res = applyOccurrenceComments(occurrence.id, request, request.reason, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCommentsChanged.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("comments", occurrence.comments, request.comments))
@@ -181,13 +182,14 @@ class ChangeOccurrenceCommentsIntTest(
   private fun applyOccurrenceComments(
     id: UUID,
     request: ChangeOccurrenceComments,
+    reason: String? = request.reason,
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(ChangeTapOccurrenceLocationIntTest.TAP_OCCURRENCE_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(OccurrenceActions(listOf(request), reason))
     .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
     .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()
