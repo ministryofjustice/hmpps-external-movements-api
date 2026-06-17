@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceActions
 import java.util.UUID
 
 class ChangeTapOccurrenceLocationIntTest(
@@ -83,7 +84,7 @@ class ChangeTapOccurrenceLocationIntTest(
     val request = action()
     val username = username()
     val caseloadId = word(3)
-    val res = applyLocation(occurrence.id, request, username, caseloadId).successResponse<AuditHistory>().content.single()
+    val res = applyLocation(occurrence.id, request, request.reason, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRelocated.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(request.reason)
     assertThat(res.changes).containsExactly(
@@ -168,13 +169,14 @@ class ChangeTapOccurrenceLocationIntTest(
   private fun applyLocation(
     id: UUID,
     request: ChangeOccurrenceLocation,
+    reason: String? = request.reason,
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(OccurrenceActions(listOf(request), reason))
     .headers(setAuthorisation(username = username, roles = listOfNotNull(role)))
     .headers { h -> caseloadId?.also { h.put(CaseloadIdHeader.NAME, listOf(it)) } }
     .exchange()

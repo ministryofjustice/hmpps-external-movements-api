@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.T
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.CancelOccurrence
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceActions
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -56,6 +57,7 @@ class CancelTapOccurrenceIntTest(
     cancelOccurrence(
       newUuid(),
       cancelOccurrenceRequest(),
+      null,
       role,
     ).expectStatus().isForbidden
   }
@@ -153,11 +155,12 @@ class CancelTapOccurrenceIntTest(
   private fun cancelOccurrence(
     id: UUID,
     request: CancelOccurrence,
+    reason: String? = request.reason,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(OccurrenceActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 

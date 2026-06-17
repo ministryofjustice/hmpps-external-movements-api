@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.config.CaseloadIdHeader
 import uk.gov.justice.digital.hmpps.externalmovementsapi.config.OpenApiTags.UI
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.TapOccurrence
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceActions
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.GetTapOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.TapOccurrenceModifications
@@ -37,10 +36,6 @@ class TapOccurrenceController(
   fun getTapOccurrenceHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
   @CaseloadIdHeader
-  @PutMapping("/{id}")
-  fun applyAction(@PathVariable id: UUID, @Valid @RequestBody action: OccurrenceAction) = modify.apply(id, action)
-
-  @CaseloadIdHeader
-  @PutMapping("/{id}/actions")
+  @PutMapping(value = ["/{id}", "/{id}/actions"])
   fun applyActions(@PathVariable id: UUID, @Valid @RequestBody actions: OccurrenceActions) = modify.apply(id, actions)
 }

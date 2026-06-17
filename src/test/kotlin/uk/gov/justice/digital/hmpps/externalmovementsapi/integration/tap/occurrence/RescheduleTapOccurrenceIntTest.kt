@@ -57,6 +57,7 @@ class RescheduleTapOccurrenceIntTest(
     rescheduleOccurrence(
       newUuid(),
       rescheduleOccurrenceRequest(),
+      null,
       role,
     ).expectStatus().isForbidden
   }
@@ -168,11 +169,12 @@ class RescheduleTapOccurrenceIntTest(
   private fun rescheduleOccurrence(
     id: UUID,
     request: RescheduleOccurrence,
+    reason: String? = request.reason,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)
-    .bodyValue(OccurrenceActions(listOf(request), request.reason))
+    .bodyValue(OccurrenceActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
