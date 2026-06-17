@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceAccompaniment
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.OccurrenceActions
 import java.util.UUID
 
 class ChangeTapOccurrenceAccompanimentIntTest(
@@ -53,7 +54,7 @@ class ChangeTapOccurrenceAccompanimentIntTest(
     applyAccompaniment(
       newUuid(),
       action(),
-      role,
+      role = role,
     ).expectStatus().isForbidden
   }
 
@@ -148,11 +149,12 @@ class ChangeTapOccurrenceAccompanimentIntTest(
   private fun applyAccompaniment(
     id: UUID,
     request: ChangeOccurrenceAccompaniment,
+    reason: String? = request.reason,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()
     .uri(TAP_OCCURRENCE_MODIFICATION_URL, id)
-    .bodyValue(request)
+    .bodyValue(OccurrenceActions(listOf(request), reason))
     .headers(setAuthorisation(username = DEFAULT_USERNAME, roles = listOfNotNull(role)))
     .exchange()
 
