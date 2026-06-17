@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.T
 
 data class ChangeOccurrenceLocation(
   @Valid val location: Location,
-  override val reason: String? = null,
 ) : OccurrenceAction {
   override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceRelocated(tao.person.identifier, tao.id)
 }

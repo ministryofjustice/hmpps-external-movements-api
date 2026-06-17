@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.producer.publica
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceAuthorisationDateRangeChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceRescheduled
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.word
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
@@ -104,9 +105,10 @@ class RescheduleTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = rescheduleOccurrenceRequest(LocalDateTime.now().plusDays(3), LocalDateTime.now().plusDays(4))
-    val res = rescheduleOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(20)
+    val res = rescheduleOccurrence(occurrence.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRescheduled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes.map { it.propertyName }).containsExactly("start", "end")
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
@@ -120,7 +122,7 @@ class RescheduleTapOccurrenceIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEvents(saved, setOf(TemporaryAbsenceRescheduled(occurrence.authorisation.person.identifier, occurrence.id)))
@@ -131,9 +133,10 @@ class RescheduleTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = false))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = rescheduleOccurrenceRequest(LocalDateTime.now().plusDays(7), LocalDateTime.now().plusDays(8))
-    val res = rescheduleOccurrence(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(20)
+    val res = rescheduleOccurrence(occurrence.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRescheduled.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes.map { it.propertyName }).containsExactly("start", "end")
 
     val saved = requireNotNull(findTemporaryAbsenceOccurrence(occurrence.id))
@@ -148,7 +151,7 @@ class RescheduleTapOccurrenceIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -163,13 +166,12 @@ class RescheduleTapOccurrenceIntTest(
   private fun rescheduleOccurrenceRequest(
     start: LocalDateTime? = LocalDateTime.now().minusHours(2),
     end: LocalDateTime? = LocalDateTime.now().plusHours(2),
-    reason: String? = "A reason for the reschedule",
-  ) = RescheduleOccurrence(start, end, reason)
+  ) = RescheduleOccurrence(start, end)
 
   private fun rescheduleOccurrence(
     id: UUID,
     request: RescheduleOccurrence,
-    reason: String? = request.reason,
+    reason: String? = word(20),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

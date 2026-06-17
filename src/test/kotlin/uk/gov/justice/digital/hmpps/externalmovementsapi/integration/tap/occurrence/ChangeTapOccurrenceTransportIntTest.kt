@@ -68,9 +68,10 @@ class ChangeTapOccurrenceTransportIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyTransport(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(20)
+    val res = applyTransport(occurrence.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceTransportChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(
         "transport",
@@ -91,7 +92,7 @@ class ChangeTapOccurrenceTransportIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEventPublications(
@@ -108,9 +109,10 @@ class ChangeTapOccurrenceTransportIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
-    val res = applyTransport(occurrence.id, request).successResponse<AuditHistory>().content.single()
+    val reason = word(20)
+    val res = applyTransport(occurrence.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceTransportChanged.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(
         "transport",
@@ -130,7 +132,7 @@ class ChangeTapOccurrenceTransportIntTest(
         TemporaryAbsenceOccurrence::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
     )
 
     verifyEvents(
@@ -143,13 +145,12 @@ class ChangeTapOccurrenceTransportIntTest(
 
   private fun action(
     transportCode: String = "TNR",
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeOccurrenceTransport(transportCode, reason)
+  ) = ChangeOccurrenceTransport(transportCode)
 
   private fun applyTransport(
     id: UUID,
     request: ChangeOccurrenceTransport,
-    reason: String? = request.reason,
+    reason: String? = word(20),
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .put()

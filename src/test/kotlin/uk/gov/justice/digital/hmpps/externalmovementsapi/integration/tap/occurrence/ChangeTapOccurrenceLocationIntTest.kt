@@ -82,11 +82,12 @@ class ChangeTapOccurrenceLocationIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val request = action()
+    val reason = word(20)
     val username = username()
     val caseloadId = word(3)
-    val res = applyLocation(occurrence.id, request, request.reason, username, caseloadId).successResponse<AuditHistory>().content.single()
+    val res = applyLocation(occurrence.id, request, reason, username, caseloadId).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRelocated.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(
         "location",
@@ -106,7 +107,7 @@ class ChangeTapOccurrenceLocationIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = username, reason = request.reason, caseloadId = caseloadId),
+      ExternalMovementContext.get().copy(username = username, reason = reason, caseloadId = caseloadId),
     )
 
     verifyEventPublications(
@@ -124,9 +125,10 @@ class ChangeTapOccurrenceLocationIntTest(
     val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, location = auth.locations.first))
     val occ2 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, location = auth.locations.first))
     val request = action()
-    val res = applyLocation(occ1.id, request, caseloadId = auth.prisonCode).successResponse<AuditHistory>().content.single()
+    val reason = word(20)
+    val res = applyLocation(occ1.id, request, reason, caseloadId = auth.prisonCode).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceRelocated.EVENT_TYPE)
-    assertThat(res.reason).isEqualTo(request.reason)
+    assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(
       AuditedAction.Change(
         "location",
@@ -149,7 +151,7 @@ class ChangeTapOccurrenceLocationIntTest(
         TemporaryAbsenceAuthorisation::class.simpleName!!,
         HmppsDomainEvent::class.simpleName!!,
       ),
-      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = request.reason, caseloadId = auth.prisonCode),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason, caseloadId = auth.prisonCode),
     )
 
     verifyEventPublications(
@@ -163,13 +165,12 @@ class ChangeTapOccurrenceLocationIntTest(
 
   private fun action(
     location: Location = location(),
-    reason: String? = (0..5).joinToString(separator = " ") { word(4) },
-  ) = ChangeOccurrenceLocation(location, reason)
+  ) = ChangeOccurrenceLocation(location)
 
   private fun applyLocation(
     id: UUID,
     request: ChangeOccurrenceLocation,
-    reason: String? = request.reason,
+    reason: String? = word(20),
     username: String = DEFAULT_USERNAME,
     caseloadId: String? = null,
     role: String? = EXTERNAL_MOVEMENTS_UI,

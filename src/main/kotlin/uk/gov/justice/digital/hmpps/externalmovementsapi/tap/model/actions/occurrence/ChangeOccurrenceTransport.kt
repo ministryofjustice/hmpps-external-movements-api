@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.T
 
 data class ChangeOccurrenceTransport(
   val transportCode: String,
-  override val reason: String? = null,
 ) : OccurrenceAction {
   override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceTransportChanged(tao.person.identifier, tao.id)
 }

@@ -2,5 +2,4 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occu
 
 data class ChangeOccurrenceContactInformation(
   val information: String,
-  override val reason: String? = null,
 ) : OccurrenceAction

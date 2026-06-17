@@ -19,7 +19,6 @@ data class RecategoriseOccurrence(
     absenceReasonCategoryCode,
     absenceReasonCode,
   ),
-  override val reason: String? = null,
 ) : OccurrenceAction,
   AbsenceCategorisationAction {
   constructor(aca: AbsenceCategorisationAction) : this(

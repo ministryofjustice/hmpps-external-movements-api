@@ -16,7 +16,6 @@ import kotlin.reflect.KClass
 data class RescheduleOccurrence(
   override val start: LocalDateTime?,
   override val end: LocalDateTime?,
-  override val reason: String? = null,
 ) : OccurrenceAction,
   StartAndEnd<LocalDateTime> {
   override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceRescheduled(tao.person.identifier, tao.id)

@@ -21,7 +21,7 @@ class WebClientConfiguration(
   fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = authorisedWebClient(builder, authorizedClientManager, manageUsersBaseUri)
 
   @Bean
-  fun nomisMigrationWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = authorisedWebClient(builder, authorizedClientManager, nomisMigrationBaseUri, ofSeconds(10))
+  fun nomisMigrationWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = authorisedWebClient(builder, authorizedClientManager, nomisMigrationBaseUri, ofSeconds(15))
 
   @Bean
   fun prisonRegisterApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder): WebClient = authorisedWebClient(builder, authorizedClientManager, prisonRegisterBaseUri)
