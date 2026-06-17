@@ -54,7 +54,12 @@ class GetTapOccurrenceIntTest(
   }
 
   @Test
-  fun `404 not found when id invalid`() {
+  fun `404 not found when id does not exist`() {
+    getTapOccurrence(newUuid()).expectStatus().isNotFound
+  }
+
+  @Test
+  fun `400 bad request when id invalid`() {
     getTapOccurrence(newUuid()).expectStatus().isNotFound
   }
 
@@ -274,6 +279,11 @@ class GetTapOccurrenceIntTest(
 
   private fun getTapOccurrence(
     id: UUID,
+    role: String? = EXTERNAL_MOVEMENTS_UI,
+  ) = getTapOccurrence(id.toString(), role)
+
+  private fun getTapOccurrence(
+    id: String,
     role: String? = EXTERNAL_MOVEMENTS_UI,
   ) = webTestClient
     .get()

@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.HandlerMethodValidationException
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.exception.NotFoundException
@@ -77,6 +78,17 @@ class ExternalMovementsApiExceptionHandler {
       ErrorResponse(
         status = BAD_REQUEST,
         userMessage = "Validation failure: ${e.message}",
+        developerMessage = e.devMessage(),
+      ),
+    )
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+  fun handleArgumentTypeMismatchException(e: MethodArgumentTypeMismatchException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(BAD_REQUEST)
+    .body(
+      ErrorResponse(
+        status = BAD_REQUEST,
+        userMessage = "Method argument type mismatch, expecting ${e.requiredType}",
         developerMessage = e.devMessage(),
       ),
     )
