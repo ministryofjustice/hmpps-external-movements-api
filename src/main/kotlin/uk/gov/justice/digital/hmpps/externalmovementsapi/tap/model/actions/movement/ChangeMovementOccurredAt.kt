@@ -8,7 +8,6 @@ import java.time.temporal.ChronoUnit
 
 data class ChangeMovementOccurredAt(
   val occurredAt: LocalDateTime,
-  override val reason: String? = null,
 ) : MovementAction {
   infix fun changes(occurredAt: LocalDateTime): Boolean = !this.occurredAt.truncatedTo(ChronoUnit.SECONDS).isEqual(occurredAt.truncatedTo(ChronoUnit.SECONDS))
 

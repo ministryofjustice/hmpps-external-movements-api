@@ -181,6 +181,6 @@ class RescheduleTapOccurrenceIntTest(
     .exchange()
 
   companion object {
-    const val TAP_OCCURRENCE_MODIFICATION_URL = "/temporary-absence-occurrences/{id}/actions"
+    const val TAP_OCCURRENCE_MODIFICATION_URL = "/temporary-absence-occurrences/{id}"
   }
 }

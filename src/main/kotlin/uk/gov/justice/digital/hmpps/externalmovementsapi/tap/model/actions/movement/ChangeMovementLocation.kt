@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.Tem
 
 data class ChangeMovementLocation(
   @Valid val location: Location,
-  override val reason: String? = null,
 ) : MovementAction {
   override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementRelocated(tam.person.identifier, tam.id)
 }
