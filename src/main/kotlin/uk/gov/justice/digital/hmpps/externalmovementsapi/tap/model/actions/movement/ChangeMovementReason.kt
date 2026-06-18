@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.Tem
 
 data class ChangeMovementReason(
   val absenceReasonCode: String,
-  override val reason: String? = null,
 ) : MovementAction {
   override fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*> = TapMovementRecategorised(tam.person.identifier, tam.id)
 }

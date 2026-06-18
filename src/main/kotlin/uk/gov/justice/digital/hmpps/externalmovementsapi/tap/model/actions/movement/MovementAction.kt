@@ -19,6 +19,5 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.Tem
   ],
 )
 sealed interface MovementAction : Action {
-  val reason: String?
   fun domainEvent(tam: TemporaryAbsenceMovement): DomainEvent<*>? = null
 }

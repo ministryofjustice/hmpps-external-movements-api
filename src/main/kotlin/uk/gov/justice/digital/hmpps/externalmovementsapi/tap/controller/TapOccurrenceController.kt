@@ -36,6 +36,6 @@ class TapOccurrenceController(
   fun getTapOccurrenceHistory(@PathVariable id: UUID): AuditHistory = history.changes(id)
 
   @CaseloadIdHeader
-  @PutMapping(value = ["/{id}", "/{id}/actions"])
+  @PutMapping(value = ["/{id}"])
   fun applyActions(@PathVariable id: UUID, @Valid @RequestBody actions: OccurrenceActions) = modify.apply(id, actions)
 }

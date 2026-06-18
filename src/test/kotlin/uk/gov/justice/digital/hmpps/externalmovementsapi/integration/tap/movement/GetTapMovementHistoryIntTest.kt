@@ -86,8 +86,8 @@ class GetTapMovementHistoryIntTest(
     manageUsers.findUser(locationUser.username, locationUser)
 
     val originalLocation = movement.location
-    val changeLocation = ChangeMovementLocation(location = location(), reason = "A reason for changing the location")
-    ExternalMovementContext.get().copy(username = locationUser.username, reason = changeLocation.reason).set()
+    val changeLocation = ChangeMovementLocation(location = location())
+    ExternalMovementContext.get().copy(username = locationUser.username, reason = "A reason for changing the location").set()
     transactionTemplate.executeWithoutResult {
       findTemporaryAbsenceMovement(movement.id)?.applyLocation(changeLocation)
     }
@@ -95,9 +95,8 @@ class GetTapMovementHistoryIntTest(
     val accompaniedAction = ChangeMovementAccompaniment(
       "U",
       "This person can go unaccompanied now",
-      "A reason the person can be unaccompanied",
     )
-    ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = accompaniedAction.reason).set()
+    ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = "A reason the person can be unaccompanied").set()
     transactionTemplate.executeWithoutResult {
       findTemporaryAbsenceMovement(movement.id)?.applyAccompaniedBy(accompaniedAction) { domain, code ->
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
@@ -124,7 +123,7 @@ class GetTapMovementHistoryIntTest(
     with(history.content.last()) {
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
       assertThat(domainEvents).containsExactly(TapMovementAccompanimentChanged.EVENT_TYPE)
-      assertThat(reason).isEqualTo(accompaniedAction.reason)
+      assertThat(reason).isEqualTo("A reason the person can be unaccompanied")
       assertThat(changes).containsExactlyInAnyOrder(
         AuditedAction.Change(
           propertyName = "accompaniedBy",
