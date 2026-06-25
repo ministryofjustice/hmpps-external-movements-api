@@ -13,8 +13,8 @@ generic-service:
     jobName: rem-prod-to-preprod-restore
     enabled: true
     timeout: 14400
-    # run after the expiry job at 02:30
-    schedule: "0 3 * * *"
+    # run after the expiry job at 02:30 - using s3 bucket backup must be after 04:30
+    schedule: "30 5 * * *"
     namespace_secrets:
       rds-postgresql-instance-output:
         DB_NAME: "database_name"
@@ -26,6 +26,8 @@ generic-service:
         DB_USER_PREPROD: "database_username"
         DB_PASS_PREPROD: "database_password"
         DB_HOST_PREPROD: "rds_instance_address"
+      s3-db-restore:
+        BUCKET_NAME: "bucket_name"
 
   scheduledDowntime:
     enabled: false
