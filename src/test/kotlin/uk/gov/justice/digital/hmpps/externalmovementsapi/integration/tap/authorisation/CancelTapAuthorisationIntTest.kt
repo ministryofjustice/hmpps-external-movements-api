@@ -82,6 +82,23 @@ class CancelTapAuthorisationIntTest(
   }
 
   @Test
+  fun `409 - single authorisation with expired occurrence cannot be cancelled`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = false))
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().minusDays(1),
+        end = LocalDateTime.now().minusDays(1),
+      ),
+    )
+    assertThat(occ.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
+
+    val res = cancelAuthorisation(auth.id, CancelAuthorisation()).errorResponse(HttpStatus.CONFLICT)
+    assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
+    assertThat(res.developerMessage).isEqualTo("Temporary absence not currently scheduled")
+  }
+
+  @Test
   fun `200 ok - authorisation cancelled`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val pastOccurrence = givenTemporaryAbsenceOccurrence(
