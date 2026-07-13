@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus.Code.SCHEDULED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ApproveAuthorisation
@@ -111,11 +112,17 @@ class TapAuthorisationModifications(
         throw ConflictException(NOT_YET_APPROVED)
       } else {
         cancel(action, rdSupplier)
-        affectedOccurrences().forEach {
-          if (!repeat) {
-            it.makeDpsOnly()
+        if (repeat) {
+          affectedOccurrences().forEach { it.cancel(CancelOccurrence(), rdSupplier) }
+        } else {
+          taoRepository.findByAuthorisationId(id).singleOrNull()?.also {
+            if (it.status.code in listOf(SCHEDULED.name, CANCELLED.name)) {
+              it.makeDpsOnly()
+              it.cancel(CancelOccurrence(), rdSupplier)
+            } else {
+              throw ConflictException("Temporary absence not currently scheduled")
+            }
           }
-          it.cancel(CancelOccurrence(), rdSupplier)
         }
       }
 
