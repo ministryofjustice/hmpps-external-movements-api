@@ -266,6 +266,7 @@ final class TemporaryAbsenceMovement(
       TemporaryAbsenceMovement::accompaniedBy,
       TemporaryAbsenceMovement::accompaniedByComments,
       TemporaryAbsenceMovement::comments,
+      TemporaryAbsenceMovement::occurrence,
     )
   }
 }
