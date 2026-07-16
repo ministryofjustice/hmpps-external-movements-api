@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.manageusers
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.location.Location
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 import java.util.UUID
 
 @Transactional(readOnly = true)
@@ -107,6 +108,7 @@ abstract class HistoryService<T : Identifiable>(
   }
 
   protected fun Any?.asChangeValue(): Any? = when (this) {
+    is TemporaryAbsenceOccurrence -> id
     is ReferenceData -> description
     is Location -> toString()
     is Collection<*> -> map { it.asChangeValue() }

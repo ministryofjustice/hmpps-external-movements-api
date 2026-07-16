@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovemen
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.set
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementAccompanimentChanged
+import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementOccurrenceChanged
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRecorded
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TapMovementRelocated
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
@@ -28,11 +29,13 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.Ma
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.ManageUsersServer.Companion.user
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditHistory
 import uk.gov.justice.digital.hmpps.externalmovementsapi.model.AuditedAction
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement.Direction.IN
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement.Direction.OUT
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementLocation
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementOccurrence
 import java.util.UUID
 
 class GetTapMovementHistoryIntTest(
@@ -87,7 +90,8 @@ class GetTapMovementHistoryIntTest(
 
     val originalLocation = movement.location
     val changeLocation = ChangeMovementLocation(location = location())
-    ExternalMovementContext.get().copy(username = locationUser.username, reason = "A reason for changing the location").set()
+    ExternalMovementContext.get().copy(username = locationUser.username, reason = "A reason for changing the location")
+      .set()
     transactionTemplate.executeWithoutResult {
       findTemporaryAbsenceMovement(movement.id)?.applyLocation(changeLocation)
     }
@@ -96,7 +100,8 @@ class GetTapMovementHistoryIntTest(
       "U",
       "This person can go unaccompanied now",
     )
-    ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = "A reason the person can be unaccompanied").set()
+    ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = "A reason the person can be unaccompanied")
+      .set()
     transactionTemplate.executeWithoutResult {
       findTemporaryAbsenceMovement(movement.id)?.applyAccompaniedBy(accompaniedAction) { domain, code ->
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
@@ -182,6 +187,69 @@ class GetTapMovementHistoryIntTest(
       assertThat(user).isEqualTo(AuditedAction.User(DEFAULT_USERNAME, DEFAULT_NAME))
       assertThat(domainEvents).containsExactly(TapMovementRecorded.EVENT_TYPE)
       assertThat(reason).startsWith("Recorded as having returned in to the prison on")
+    }
+  }
+
+  @Test
+  fun `movement shows previous and next occurrence ids when switched`() {
+    val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
+    val occ1 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val occ2 = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
+    val movement = givenTemporaryAbsenceMovement(temporaryAbsenceMovement(OUT))
+    ExternalMovementContext.get().copy(username = SYSTEM_USERNAME).set()
+
+    transactionTemplate.executeWithoutResult {
+      val rdSupplier = referenceDataRepository.rdProvider()
+      findTemporaryAbsenceMovement(movement.id)?.switchSchedule(ChangeMovementOccurrence(occ1.id), rdSupplier) {
+        requireNotNull(findTemporaryAbsenceOccurrence(it))
+      }
+    }
+    transactionTemplate.executeWithoutResult {
+      val rdSupplier = referenceDataRepository.rdProvider()
+      findTemporaryAbsenceMovement(movement.id)?.switchSchedule(ChangeMovementOccurrence(occ2.id), rdSupplier) {
+        requireNotNull(findTemporaryAbsenceOccurrence(it))
+      }
+    }
+    transactionTemplate.executeWithoutResult {
+      val rdSupplier = referenceDataRepository.rdProvider()
+      findTemporaryAbsenceMovement(movement.id)?.switchSchedule(ChangeMovementOccurrence(null), rdSupplier) {
+        requireNotNull(findTemporaryAbsenceOccurrence(it))
+      }
+    }
+
+    ExternalMovementContext.clear()
+
+    val h1 = getTapMovementHistory(movement.id).successResponse<AuditHistory>()
+    assertThat(h1.content).hasSize(4)
+    with(h1.content[1]) {
+      assertThat(domainEvents).containsExactly(TapMovementOccurrenceChanged.EVENT_TYPE)
+      assertThat(changes).containsExactly(
+        AuditedAction.Change(
+          propertyName = TemporaryAbsenceMovement::occurrence.name,
+          previous = null,
+          change = occ1.id.toString(),
+        ),
+      )
+    }
+    with(h1.content[2]) {
+      assertThat(domainEvents).containsExactly(TapMovementOccurrenceChanged.EVENT_TYPE)
+      assertThat(changes).containsExactly(
+        AuditedAction.Change(
+          propertyName = TemporaryAbsenceMovement::occurrence.name,
+          previous = occ1.id.toString(),
+          change = occ2.id.toString(),
+        ),
+      )
+    }
+    with(h1.content[3]) {
+      assertThat(domainEvents).containsExactly(TapMovementOccurrenceChanged.EVENT_TYPE)
+      assertThat(changes).containsExactly(
+        AuditedAction.Change(
+          propertyName = TemporaryAbsenceMovement::occurrence.name,
+          previous = occ2.id.toString(),
+          change = null,
+        ),
+      )
     }
   }
 
