@@ -20,7 +20,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus.Code.PAUSED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AuthorisationStatus.Code.PENDING
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus.Code.SCHEDULED
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.getByCode
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ApproveAuthorisation
@@ -116,7 +115,7 @@ class TapAuthorisationModifications(
           affectedOccurrences().forEach { it.cancel(CancelOccurrence(), rdSupplier) }
         } else {
           taoRepository.findByAuthorisationId(id).singleOrNull()?.also {
-            if (it.status.code in listOf(SCHEDULED.name, CANCELLED.name)) {
+            if (it.status.code in listOf(OccurrenceStatus.Code.SCHEDULED.name, OccurrenceStatus.Code.CANCELLED.name)) {
               it.makeDpsOnly()
               it.cancel(CancelOccurrence(), rdSupplier)
             } else {

@@ -29,7 +29,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceType
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.exception.AbsenceCategorisationException
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.CreateTapAuthorisationRequest
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.asOccurrence
 import java.time.LocalDateTime.now
 import kotlin.reflect.KClass
 
