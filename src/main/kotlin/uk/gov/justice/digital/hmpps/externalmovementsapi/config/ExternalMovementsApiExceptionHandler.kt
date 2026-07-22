@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.config
 import io.sentry.Hint
 import io.sentry.Sentry
 import jakarta.validation.ValidationException
+import org.slf4j.LoggerFactory
 import org.springframework.context.MessageSourceResolvable
 import org.springframework.dao.DataAccessException
 import org.springframework.dao.DataIntegrityViolationException
@@ -69,7 +70,7 @@ class ExternalMovementsApiExceptionHandler {
         userMessage = "Invalid request",
         developerMessage = e.devMessage(),
       ),
-    )
+    ).also { LOG.error(e.message, it) }
 
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: ValidationException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -118,7 +119,7 @@ class ExternalMovementsApiExceptionHandler {
         userMessage = "Unexpected error",
         developerMessage = e.devMessage(),
       ),
-    )
+    ).also { LOG.error(e.message, it) }
 
   @ExceptionHandler(DataIntegrityViolationException::class, DataAccessException::class)
   fun handleConflictException(e: RuntimeException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -129,7 +130,11 @@ class ExternalMovementsApiExceptionHandler {
         userMessage = "Data integrity conflict",
         developerMessage = e.devMessage(),
       ),
-    )
+    ).also { LOG.error(e.message, it) }
+
+  companion object {
+    private val LOG = LoggerFactory.getLogger(this::class.java)
+  }
 }
 
 private fun List<MessageSourceResolvable>.mapErrors() = map { it.defaultMessage!! }.distinct().sorted().let {

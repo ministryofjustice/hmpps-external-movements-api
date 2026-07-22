@@ -130,9 +130,6 @@ service:
   authorisation-expiration:
     cron: ""
 
-sentry:
-  exception-resolver-order: -2147483647
-
 springdoc:
   default-flat-param-object: false
   paths-to-exclude: "/queue-admin/**"
