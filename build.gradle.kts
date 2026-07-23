@@ -34,7 +34,7 @@ dependencies {
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.hibernate.orm:hibernate-envers")
-  implementation("org.hibernate:hibernate-jcache:$hibernateJcacheVersion")
+  implementation("org.hibernate.orm:hibernate-jcache:$hibernateJcacheVersion")
   implementation("org.springframework.data:spring-data-envers")
   implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
