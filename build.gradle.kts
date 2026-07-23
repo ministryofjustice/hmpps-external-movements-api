@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.5.7"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.1"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
   id("com.google.cloud.tools.jib") version "3.5.4"
@@ -34,7 +34,7 @@ dependencies {
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.hibernate.orm:hibernate-envers")
-  implementation("org.hibernate:hibernate-jcache:$hibernateJcacheVersion")
+  implementation("org.hibernate.orm:hibernate-jcache")
   implementation("org.springframework.data:spring-data-envers")
   implementation("com.fasterxml.uuid:java-uuid-generator:$uuidGeneratorVersion")
 
