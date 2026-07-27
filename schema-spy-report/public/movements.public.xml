@@ -55,6 +55,10 @@
             <column ascending="true" name="id"/>
             <column ascending="true" name="rev_id"/>
          </index>
+         <index name="idx_hmpps_domain_event_audit_event_type_entity_id" unique="false">
+            <column ascending="true" name="event_type"/>
+            <column ascending="true" name="entity_id"/>
+         </index>
          <index name="idx_hmpps_domain_event_audit_revision_entity" unique="false">
             <column ascending="true" name="rev_id"/>
             <column ascending="true" name="entity_id"/>

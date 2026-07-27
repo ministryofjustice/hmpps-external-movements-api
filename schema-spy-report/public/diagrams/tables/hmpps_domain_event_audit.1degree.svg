@@ -34,6 +34,7 @@
 <text text-anchor="start" x="213" y="-176.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">id</text>
 <polygon fill="none" stroke="#000000" points="400,-169.2 400,-191.2 499,-191.2 499,-169.2 400,-169.2"/>
 <text text-anchor="start" x="403" y="-176.9" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">uuid[2147483647]</text>
+<polygon fill="#ffffff" stroke="transparent" points="193,-147.2 193,-169.2 400,-169.2 400,-147.2 193,-147.2"/>
 <polygon fill="none" stroke="#000000" points="193,-147.2 193,-169.2 400,-169.2 400,-147.2 193,-147.2"/>
 <text text-anchor="start" x="213" y="-154.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">event_type</text>
 <polygon fill="none" stroke="#000000" points="400,-147.2 400,-169.2 499,-169.2 499,-147.2 400,-147.2"/>

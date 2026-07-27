@@ -24,6 +24,7 @@
 <text text-anchor="start" x="258.5" y="-374.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_id</text>
 <polygon fill="none" stroke="#000000" points="446.5,-367.2 446.5,-389.2 545.5,-389.2 545.5,-367.2 446.5,-367.2"/>
 <text text-anchor="start" x="449.5" y="-374.9" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">int8[19]</text>
+<polygon fill="#ffffff" stroke="transparent" points="238.5,-345.2 238.5,-367.2 446.5,-367.2 446.5,-345.2 238.5,-345.2"/>
 <polygon fill="none" stroke="#000000" points="238.5,-345.2 238.5,-367.2 446.5,-367.2 446.5,-345.2 238.5,-345.2"/>
 <text text-anchor="start" x="258.5" y="-352.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">rev_type</text>
 <polygon fill="none" stroke="#000000" points="446.5,-345.2 446.5,-367.2 545.5,-367.2 545.5,-345.2 446.5,-345.2"/>

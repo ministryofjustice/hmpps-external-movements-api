@@ -131,7 +131,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="rev_type">rev_type</span></td>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="rev_type">rev_type</span></td>
                                     <td>int2</td>
                                     <td>5</td>
                                     <td title=''></td>
@@ -510,6 +510,12 @@
                                     <td>Primary key</td>
                                     <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span></td>
                                     <td>id + rev_id</td>
+                                </tr>
+                                <tr>
+                                    <td title='Indexed'>idx_authorisation_audit_id_rev_type_rev_id</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span>/<span title='Descending'>Desc</span></td>
+                                    <td>id + rev_type + rev_id</td>
                                 </tr>
                                 </tbody>
                             </table>
