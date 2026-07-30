@@ -21,7 +21,7 @@ generic-prometheus-alerts:
   businessHoursOnly: true
   alertSeverity: move-and-improve-alerts-non-prod
   rdsAlertsDatabases:
-    cloud-platform-348213e2359f7b4e: "External Movements API"
+    cloud-platform-348213e2359f7b4e: "External Movements DB"
   rdsAlertsConnectionThreshold: 100
   sqsOldestAlertQueueNames:
     - "hmpps-external-movements-dev-domain_events_queue"
