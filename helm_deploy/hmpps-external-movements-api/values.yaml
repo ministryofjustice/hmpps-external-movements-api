@@ -35,7 +35,7 @@ generic-service:
 
   # Environment variables to load into the deployment
   env:
-    JDK_JAVA_OPTIONS: "-javaagent:/agent/agent.jar -Xmx512m -XX:+UseG1GC"
+    JDK_JAVA_OPTIONS: "-Xmx512m -XX:+UseG1GC"
     SERVER_PORT: "8080"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     SENTRY_TRACES_SAMPLE_RATE: '0.05'
