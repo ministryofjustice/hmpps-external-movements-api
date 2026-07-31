@@ -182,7 +182,7 @@ class TapAuthorisationModifications(
         occurrences.filter { it.end.isAfter(LocalDateTime.now()) }.forEach {
           it.applyLocation(ChangeOccurrenceLocation(action.location))
         }
-        val allLocations = occurrences.mapTo(linkedSetOf()) { it.location }
+        val allLocations = occurrences.sortedBy { it.id }.mapTo(linkedSetOf()) { it.location }
         applyLocations(ChangeAuthorisationLocations(allLocations))
       }
 
