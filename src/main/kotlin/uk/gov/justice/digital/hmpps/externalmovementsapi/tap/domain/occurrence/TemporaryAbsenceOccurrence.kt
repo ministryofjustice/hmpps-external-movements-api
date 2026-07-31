@@ -3,10 +3,13 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedAttributeNode
 import jakarta.persistence.NamedEntityGraph
+import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
@@ -14,8 +17,6 @@ import jakarta.persistence.Transient
 import jakarta.persistence.Version
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
-import org.hibernate.annotations.Fetch
-import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
@@ -82,7 +83,37 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty1
 
-@NamedEntityGraph(name = "tap.occurrence.full", includeAllAttributes = true)
+@NamedEntityGraph(
+  name = "tap.occurrence.full",
+  includeAllAttributes = true,
+  attributeNodes = [
+    NamedAttributeNode("authorisation", "auth"),
+    NamedAttributeNode("movements", "move"),
+  ],
+  subgraphs = [
+    NamedSubgraph(
+      name = "auth",
+      attributeNodes = [
+        NamedAttributeNode("person"),
+        NamedAttributeNode("status"),
+        NamedAttributeNode("absenceType"),
+        NamedAttributeNode("absenceSubType"),
+        NamedAttributeNode("absenceReasonCategory"),
+        NamedAttributeNode("absenceReason"),
+        NamedAttributeNode("accompaniedBy"),
+        NamedAttributeNode("transport"),
+      ],
+    ),
+    NamedSubgraph(
+      name = "move",
+      attributeNodes = [
+        NamedAttributeNode("person"),
+        NamedAttributeNode("absenceReason"),
+        NamedAttributeNode("accompaniedBy"),
+      ],
+    ),
+  ],
+)
 @Audited
 @Entity
 @Table(schema = "tap", name = "occurrence")
@@ -140,15 +171,13 @@ final class TemporaryAbsenceOccurrence(
     private set
 
   @Audited
-  @Fetch(FetchMode.JOIN)
-  @ManyToOne(optional = false)
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "authorisation_id", nullable = false)
   var authorisation: TemporaryAbsenceAuthorisation = authorisation
     private set
 
   @Audited(targetAuditMode = NOT_AUDITED)
-  @Fetch(FetchMode.JOIN)
-  @ManyToOne(optional = false)
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "person_identifier", nullable = false)
   var person: PersonSummary = authorisation.person
     private set
@@ -364,15 +393,15 @@ final class TemporaryAbsenceOccurrence(
   private fun movementStatus(): OccurrenceStatus.Code? = movements.takeIf { it.isNotEmpty() }
     ?.map { it.direction }?.let {
       when {
-        it.contains(TemporaryAbsenceMovement.Direction.IN) -> applyStatusAction(COMPLETED, CompleteOccurrence())
-        end.isAfter(now()) -> applyStatusAction(IN_PROGRESS, CommenceOccurrence())
-        else -> applyStatusAction(OVERDUE, MarkOccurrenceOverdue())
+        it.contains(TemporaryAbsenceMovement.Direction.IN) -> applyStatusAction(COMPLETED, CompleteOccurrence)
+        end.isAfter(now()) -> applyStatusAction(IN_PROGRESS, CommenceOccurrence)
+        else -> applyStatusAction(OVERDUE, MarkOccurrenceOverdue)
       }
     }
 
   private fun expiredStatus(): OccurrenceStatus.Code? = if (isExpired() || (authorisation.canExpire() && shouldExpire())) {
     if (!isExpired()) {
-      appliedActions += ExpireOccurrence()
+      appliedActions += ExpireOccurrence
     }
     EXPIRED
   } else {
@@ -390,17 +419,17 @@ final class TemporaryAbsenceOccurrence(
   } else {
     val status = OccurrenceStatus.Code.valueOf(authorisation.status.code)
     val action = when (status) {
-      DENIED -> DenyOccurrence()
-      EXPIRED -> ExpireOccurrence()
-      PAUSED -> PauseOccurrence()
+      DENIED -> DenyOccurrence
+      EXPIRED -> ExpireOccurrence
+      PAUSED -> PauseOccurrence
       else -> null
     }
     action?.let { applyStatusAction(status, action) } ?: status
   }
 
   private fun approvedAuthorisationStatuses(): OccurrenceStatus.Code = when {
-    ::status.isInitialized && status.code == PENDING.name -> applyStatusAction(SCHEDULED, ScheduleOccurrence())
-    ::status.isInitialized && status.code == PAUSED.name -> applyStatusAction(SCHEDULED, ResumeOccurrence())
+    ::status.isInitialized && status.code == PENDING.name -> applyStatusAction(SCHEDULED, ScheduleOccurrence)
+    ::status.isInitialized && status.code == PAUSED.name -> applyStatusAction(SCHEDULED, ResumeOccurrence)
     else -> SCHEDULED
   }
 

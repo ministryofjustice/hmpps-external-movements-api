@@ -63,21 +63,21 @@ class ClearTapAuthorisationScheduleIntTest(
   fun `403 forbidden without correct role`(role: String) {
     clearSchedule(
       newUuid(),
-      ClearAuthorisationSchedule(),
+      ClearAuthorisationSchedule,
       role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    clearSchedule(newUuid(), ClearAuthorisationSchedule()).expectStatus().isNotFound
+    clearSchedule(newUuid(), ClearAuthorisationSchedule).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "PAUSED", "CANCELLED"])
   fun `409 - authorisation not approved cannot be cleared`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = clearSchedule(auth.id, ClearAuthorisationSchedule()).errorResponse(HttpStatus.CONFLICT)
+    val res = clearSchedule(auth.id, ClearAuthorisationSchedule).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
@@ -93,7 +93,7 @@ class ClearTapAuthorisationScheduleIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = ClearAuthorisationSchedule()
+    val request = ClearAuthorisationSchedule
     val reason = word(25)
 
     val res = clearSchedule(auth.id, request, reason).successResponse<AuditHistory>().content.single()
@@ -147,7 +147,7 @@ class ClearTapAuthorisationScheduleIntTest(
         end = LocalDateTime.now().plusDays(1),
       ),
     )
-    val request = ClearAuthorisationSchedule()
+    val request = ClearAuthorisationSchedule
     val reason = word(25)
 
     val res = clearSchedule(auth.id, request, reason).successResponse<AuditHistory>().content.single()
@@ -194,7 +194,7 @@ class ClearTapAuthorisationScheduleIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
-    val request = ClearAuthorisationSchedule()
+    val request = ClearAuthorisationSchedule
     val reason = word(26)
 
     val res = clearSchedule(auth.id, request, reason).successResponse<AuditHistory>().content.single()

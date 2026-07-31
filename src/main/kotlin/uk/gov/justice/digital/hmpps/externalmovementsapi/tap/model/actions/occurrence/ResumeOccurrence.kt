@@ -4,6 +4,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceResumed
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 
-class ResumeOccurrence : OccurrenceAction {
+object ResumeOccurrence : OccurrenceAction {
   override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceResumed(tao.person.identifier, tao.id)
 }

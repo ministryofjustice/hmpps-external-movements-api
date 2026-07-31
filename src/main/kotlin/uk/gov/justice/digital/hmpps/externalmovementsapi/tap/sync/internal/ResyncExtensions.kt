@@ -56,12 +56,12 @@ internal fun TemporaryAbsenceAuthorisation.applyLogistics(request: TapAuthorisat
 
 internal fun TemporaryAbsenceAuthorisation.checkStatus(request: TapAuthorisation, rdPaths: ReferenceDataPaths) {
   when (request.statusCode) {
-    EXPIRED.name -> expire(ExpireAuthorisation(), rdPaths::getReferenceData)
-    PENDING.name if (now().isAfter(request.end)) -> expire(ExpireAuthorisation(), rdPaths::getReferenceData)
-    PENDING.name -> defer(DeferAuthorisation(), rdPaths::getReferenceData)
-    APPROVED.name -> approve(ApproveAuthorisation(), rdPaths::getReferenceData)
-    CANCELLED.name -> cancel(CancelAuthorisation(), rdPaths::getReferenceData)
-    DENIED.name -> deny(DenyAuthorisation(), rdPaths::getReferenceData)
+    EXPIRED.name -> expire(ExpireAuthorisation, rdPaths::getReferenceData)
+    PENDING.name if (now().isAfter(request.end)) -> expire(ExpireAuthorisation, rdPaths::getReferenceData)
+    PENDING.name -> defer(DeferAuthorisation, rdPaths::getReferenceData)
+    APPROVED.name -> approve(ApproveAuthorisation, rdPaths::getReferenceData)
+    CANCELLED.name -> cancel(CancelAuthorisation, rdPaths::getReferenceData)
+    DENIED.name -> deny(DenyAuthorisation, rdPaths::getReferenceData)
   }
 }
 
@@ -99,7 +99,7 @@ internal fun TemporaryAbsenceOccurrence.applyLogistics(request: TapOccurrence, r
 
 internal fun TemporaryAbsenceOccurrence.checkCancellation(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
   if (request.isCancelled) {
-    cancel(CancelOccurrence(), rdPaths::getReferenceData)
+    cancel(CancelOccurrence, rdPaths::getReferenceData)
   }
 }
 

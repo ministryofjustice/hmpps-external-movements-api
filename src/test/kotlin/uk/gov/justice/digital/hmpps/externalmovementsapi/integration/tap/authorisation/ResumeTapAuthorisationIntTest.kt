@@ -60,7 +60,7 @@ class ResumeTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     resumeAuthorisation(
       newUuid(),
-      ResumeAuthorisation(),
+      ResumeAuthorisation,
       null,
       role,
     ).expectStatus().isForbidden
@@ -68,14 +68,14 @@ class ResumeTapAuthorisationIntTest(
 
   @Test
   fun `404 authorisation does not exist`() {
-    resumeAuthorisation(newUuid(), ResumeAuthorisation()).expectStatus().isNotFound
+    resumeAuthorisation(newUuid(), ResumeAuthorisation).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PAUSED", "APPROVED"])
   fun `409 - authorisation not paused cannot be resumed`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = resumeAuthorisation(auth.id, ResumeAuthorisation()).errorResponse(HttpStatus.CONFLICT)
+    val res = resumeAuthorisation(auth.id, ResumeAuthorisation).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
@@ -84,7 +84,7 @@ class ResumeTapAuthorisationIntTest(
   fun `200 ok - authorisation resumed`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PAUSED))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
-    val request = ResumeAuthorisation()
+    val request = ResumeAuthorisation
     val reason = word(26)
 
     val res = resumeAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()

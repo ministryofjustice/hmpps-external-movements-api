@@ -41,13 +41,13 @@ class ExternalMovementHandler(
     val hasCancellable = { auth: TemporaryAbsenceAuthorisation -> occurrences[auth.id]?.isNotEmpty() ?: false }
     authsToCancel.forEach { auth ->
       if (auth.repeat || hasCancellable(auth)) {
-        auth.cancel(CancelAuthorisation()) { _: KClass<out ReferenceData>, _: String -> authCancelledStatus }
+        auth.cancel(CancelAuthorisation) { _: KClass<out ReferenceData>, _: String -> authCancelledStatus }
         occurrences[auth.id]?.forEach { occ ->
           if (auth.repeat) {
             occRepository.delete(occ)
           } else {
             occ.makeDpsOnly()
-            occ.cancel(CancelOccurrence()) { _: KClass<out ReferenceData>, _: String -> occCancelledStatus }
+            occ.cancel(CancelOccurrence) { _: KClass<out ReferenceData>, _: String -> occCancelledStatus }
           }
         }
       }

@@ -56,14 +56,14 @@ class DenyTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     denyAuthorisation(
       IdGenerator.newUuid(),
-      DenyAuthorisation(),
+      DenyAuthorisation,
       role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    denyAuthorisation(IdGenerator.newUuid(), DenyAuthorisation()).expectStatus().isNotFound
+    denyAuthorisation(IdGenerator.newUuid(), DenyAuthorisation).expectStatus().isNotFound
   }
 
   @ParameterizedTest
@@ -74,7 +74,7 @@ class DenyTapAuthorisationIntTest(
         status = status,
       ),
     )
-    val res = denyAuthorisation(auth.id, DenyAuthorisation()).errorResponse(HttpStatus.CONFLICT)
+    val res = denyAuthorisation(auth.id, DenyAuthorisation).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_AWAITING_APPROVAL)
   }
@@ -91,7 +91,7 @@ class DenyTapAuthorisationIntTest(
         auth,
       ),
     )
-    val request = DenyAuthorisation()
+    val request = DenyAuthorisation
     val reason = word(26)
     val res = denyAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationDenied.EVENT_TYPE)

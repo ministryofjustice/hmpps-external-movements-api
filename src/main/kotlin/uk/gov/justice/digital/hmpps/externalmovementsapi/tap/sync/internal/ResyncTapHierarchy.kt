@@ -362,7 +362,7 @@ class ResyncTapHierarchy(
       dpsOnly = false,
     ).apply {
       if (isCancelled) {
-        cancel(CancelOccurrence(), rdPaths::getReferenceData)
+        cancel(CancelOccurrence, rdPaths::getReferenceData)
       }
     }
   }
@@ -392,7 +392,7 @@ class ResyncTapHierarchy(
     applyComments(ChangeOccurrenceComments(request.comments))
     applyLegacyId(request.legacyId)
     if (request.isCancelled && request.movements.isEmpty()) {
-      cancel(CancelOccurrence(), rdPaths::getReferenceData)
+      cancel(CancelOccurrence, rdPaths::getReferenceData)
     }
   }
 

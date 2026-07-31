@@ -93,7 +93,7 @@ class GetTapAuthorisationHistoryIntTest(
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
-    val approveAction = ApproveAuthorisation()
+    val approveAction = ApproveAuthorisation
     val appReason = word(26)
     transactionTemplate.executeWithoutResult {
       ExternalMovementContext.get().copy(username = approvingUser.username, reason = appReason).set()
@@ -101,7 +101,7 @@ class GetTapAuthorisationHistoryIntTest(
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
     }
-    val cancelAction = CancelAuthorisation()
+    val cancelAction = CancelAuthorisation
     val canReason = word(26)
     transactionTemplate.executeWithoutResult {
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = canReason).set()

@@ -62,21 +62,21 @@ class ApproveTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     approveAuthorisation(
       newUuid(),
-      ApproveAuthorisation(),
+      ApproveAuthorisation,
       role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    approveAuthorisation(newUuid(), ApproveAuthorisation()).expectStatus().isNotFound
+    approveAuthorisation(newUuid(), ApproveAuthorisation).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["PENDING", "APPROVED"])
   fun `409 - authorisation not awaiting approval cannot be approved`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = approveAuthorisation(auth.id, ApproveAuthorisation()).errorResponse(HttpStatus.CONFLICT)
+    val res = approveAuthorisation(auth.id, ApproveAuthorisation).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_AWAITING_APPROVAL)
   }
@@ -85,7 +85,7 @@ class ApproveTapAuthorisationIntTest(
   fun `200 ok - authorisation approved`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = PENDING))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = ApproveAuthorisation()
+    val request = ApproveAuthorisation
     val reason = word(20)
     val username = username()
     val caseloadId = word(3)
