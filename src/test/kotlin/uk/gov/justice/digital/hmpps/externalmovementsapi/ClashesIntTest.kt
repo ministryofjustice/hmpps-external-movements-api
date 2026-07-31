@@ -50,6 +50,12 @@ class ClashesIntTest(
   }
 
   @ParameterizedTest
+  @MethodSource("badRequests")
+  fun `400 bad request if request does not include at least one person identifier and one clash range`(request: ClashRequest) {
+    getClashes(request).expectStatus().isBadRequest
+  }
+
+  @ParameterizedTest
   @MethodSource("clashes")
   fun `200 ok - can detect clashes`(range: ClashRange) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
@@ -151,6 +157,13 @@ class ClashesIntTest(
       with(CLASH_DATE.minusDays(1)) {
         clashRange(this.atTime(8, 0), end = this.atTime(17, 0))
       },
+    )
+
+    @JvmStatic
+    fun badRequests() = listOf(
+      clashRequest(personIdentifiers = linkedSetOf(), ranges = linkedSetOf()),
+      clashRequest(personIdentifiers = linkedSetOf(clashIdentifier()), ranges = linkedSetOf()),
+      clashRequest(personIdentifiers = linkedSetOf(), ranges = linkedSetOf(clashRange())),
     )
   }
 }
