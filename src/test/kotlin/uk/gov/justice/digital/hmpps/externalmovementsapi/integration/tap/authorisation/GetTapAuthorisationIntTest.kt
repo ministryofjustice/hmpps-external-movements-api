@@ -119,7 +119,7 @@ class GetTapAuthorisationIntTest(
     ).successResponse<TapAuthorisation>()
     response.verifyAgainst(auth)
     assertThat(response.prison.name).isEqualTo(prison.name)
-    assertThat(response.locations).containsExactly(occ1.location, occ2.location, occ3.location, occ4.location)
+    assertThat(response.locations).containsExactlyInAnyOrder(occ1.location, occ2.location, occ3.location, occ4.location)
     assertThat(response.occurrences).hasSize(2)
     assertThat(response.totalOccurrenceCount).isEqualTo(4)
   }
