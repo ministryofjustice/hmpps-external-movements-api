@@ -326,7 +326,8 @@ class ResyncTapHierarchy(
     applyLegacyId(request.legacyId)
     request.schedule()?.also { applySchedule(it) }
     (
-      request.occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
+      request.occurrences.sortedBy { it.id }
+        .mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
         .takeIf { it.isNotEmpty() }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }

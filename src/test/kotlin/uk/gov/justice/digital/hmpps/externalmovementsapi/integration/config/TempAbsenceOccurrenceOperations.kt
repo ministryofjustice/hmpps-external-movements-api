@@ -150,6 +150,7 @@ class TempAbsenceOccurrenceOperationsImpl(
     }
     val saved = temporaryAbsenceOccurrenceRepository.saveAndFlush(occurrence)
     val locations = temporaryAbsenceOccurrenceRepository.findByAuthorisationId(saved.authorisation.id)
+      .sortedBy { it.id }
       .mapTo(linkedSetOf()) { it.location }
     saved.apply {
       val auth = temporaryAbsenceAuthorisationRepository.getAuthorisation(saved.authorisation.id)
