@@ -89,7 +89,7 @@ interface TempAbsenceOccurrenceOperations {
         ) { statusCode -> rdSupplier(OccurrenceStatus::class, statusCode) as OccurrenceStatus }
       }
       if (cancelledAt != null && cancelledBy != null) {
-        occurrence.cancel(CancelOccurrence(), rdSupplier)
+        occurrence.cancel(CancelOccurrence, rdSupplier)
       }
       if (movements.isEmpty()) {
         occurrence.calculateStatus { rdSupplier(OccurrenceStatus::class, it) as OccurrenceStatus }

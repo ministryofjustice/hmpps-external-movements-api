@@ -32,7 +32,7 @@ class AuthorisationExpirer(
       .takeIf { it.isNotEmpty() }
       ?.also {
         val expired = authorisationStatusRepository.getByCode(AuthorisationStatus.Code.EXPIRED.name)
-        it.forEach { taa -> taa.expire(ExpireAuthorisation()) { _, _ -> expired } }
+        it.forEach { taa -> taa.expire(ExpireAuthorisation) { _, _ -> expired } }
       }
   }
 }

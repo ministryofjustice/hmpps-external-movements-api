@@ -62,21 +62,21 @@ class CancelTapAuthorisationIntTest(
   fun `403 forbidden without correct role`(role: String) {
     cancelAuthorisation(
       newUuid(),
-      CancelAuthorisation(),
+      CancelAuthorisation,
       role = role,
     ).expectStatus().isForbidden
   }
 
   @Test
   fun `404 authorisation does not exist`() {
-    cancelAuthorisation(newUuid(), CancelAuthorisation()).expectStatus().isNotFound
+    cancelAuthorisation(newUuid(), CancelAuthorisation).expectStatus().isNotFound
   }
 
   @ParameterizedTest
   @EnumSource(AuthorisationStatus.Code::class, mode = EXCLUDE, names = ["APPROVED", "PAUSED", "CANCELLED"])
   fun `409 - authorisation not approved cannot be cancelled`(status: AuthorisationStatus.Code) {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(status = status))
-    val res = cancelAuthorisation(auth.id, CancelAuthorisation()).errorResponse(HttpStatus.CONFLICT)
+    val res = cancelAuthorisation(auth.id, CancelAuthorisation).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo(NOT_YET_APPROVED)
   }
@@ -93,7 +93,7 @@ class CancelTapAuthorisationIntTest(
     )
     assertThat(occ.status.code).isEqualTo(AuthorisationStatus.Code.EXPIRED.name)
 
-    val res = cancelAuthorisation(auth.id, CancelAuthorisation()).errorResponse(HttpStatus.CONFLICT)
+    val res = cancelAuthorisation(auth.id, CancelAuthorisation).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo("Temporary absence not currently scheduled")
   }
@@ -109,7 +109,7 @@ class CancelTapAuthorisationIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
-    val request = CancelAuthorisation()
+    val request = CancelAuthorisation
     val reason = word(26)
 
     val res = cancelAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
@@ -164,7 +164,7 @@ class CancelTapAuthorisationIntTest(
         end = LocalDateTime.now().plusDays(1),
       ),
     )
-    val request = CancelAuthorisation()
+    val request = CancelAuthorisation
     val reason = word(25)
 
     val res = cancelAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()
@@ -211,7 +211,7 @@ class CancelTapAuthorisationIntTest(
       ),
     )
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, dpsOnly = true))
-    val request = CancelAuthorisation()
+    val request = CancelAuthorisation
     val reason = word(25)
 
     val res = cancelAuthorisation(auth.id, request, reason).successResponse<AuditHistory>().content.single()

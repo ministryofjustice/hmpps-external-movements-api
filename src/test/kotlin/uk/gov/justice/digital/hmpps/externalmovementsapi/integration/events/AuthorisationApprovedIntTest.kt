@@ -38,7 +38,7 @@ class AuthorisationApprovedIntTest(
     )
     val approved = transactionTemplate.execute {
       val toApprove = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
-      toApprove.approve(ApproveAuthorisation()) { domain, code ->
+      toApprove.approve(ApproveAuthorisation) { domain, code ->
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })
       }
       toApprove

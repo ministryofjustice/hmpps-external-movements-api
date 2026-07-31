@@ -103,7 +103,7 @@ class GetTapOccurrenceHistoryIntTest(
       findTemporaryAbsenceOccurrence(occurrence.id)?.applyLocation(changeLocation)
     }
     transactionTemplate.executeWithoutResult {
-      val cancelAction = CancelOccurrence()
+      val cancelAction = CancelOccurrence
       ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = "A reason for cancelling").set()
       findTemporaryAbsenceOccurrence(occurrence.id)?.cancel(cancelAction) { domain, code ->
         requireNotNull(referenceDataRepository.findAll().first { domain.isInstance(it) && it.code == code })

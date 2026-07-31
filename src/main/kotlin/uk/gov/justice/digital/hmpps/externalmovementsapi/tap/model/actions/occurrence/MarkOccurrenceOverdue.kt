@@ -4,6 +4,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.events.DomainEvent
 import uk.gov.justice.digital.hmpps.externalmovementsapi.events.TemporaryAbsenceOverdue
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.occurrence.TemporaryAbsenceOccurrence
 
-class MarkOccurrenceOverdue : OccurrenceAction {
+object MarkOccurrenceOverdue : OccurrenceAction {
   override fun domainEvent(tao: TemporaryAbsenceOccurrence): DomainEvent<*> = TemporaryAbsenceOverdue(tao.person.identifier, tao.id)
 }
