@@ -112,12 +112,12 @@ class TapAuthorisationModifications(
       } else {
         cancel(action, rdSupplier)
         if (repeat) {
-          affectedOccurrences().forEach { it.cancel(CancelOccurrence(), rdSupplier) }
+          affectedOccurrences().forEach { it.cancel(CancelOccurrence, rdSupplier) }
         } else {
           taoRepository.findByAuthorisationId(id).singleOrNull()?.also {
             if (it.status.code in listOf(OccurrenceStatus.Code.SCHEDULED.name, OccurrenceStatus.Code.CANCELLED.name)) {
               it.makeDpsOnly()
-              it.cancel(CancelOccurrence(), rdSupplier)
+              it.cancel(CancelOccurrence, rdSupplier)
             } else {
               throw ConflictException("Temporary absence not currently scheduled")
             }
@@ -139,7 +139,7 @@ class TapAuthorisationModifications(
             taoRepository.delete(it)
           } else {
             it.makeDpsOnly()
-            it.cancel(CancelOccurrence(), rdSupplier)
+            it.cancel(CancelOccurrence, rdSupplier)
           }
         }
       }
@@ -182,7 +182,7 @@ class TapAuthorisationModifications(
         occurrences.filter { it.end.isAfter(LocalDateTime.now()) }.forEach {
           it.applyLocation(ChangeOccurrenceLocation(action.location))
         }
-        val allLocations = occurrences.mapTo(linkedSetOf()) { it.location }
+        val allLocations = occurrences.sortedBy { it.id }.mapTo(linkedSetOf()) { it.location }
         applyLocations(ChangeAuthorisationLocations(allLocations))
       }
 

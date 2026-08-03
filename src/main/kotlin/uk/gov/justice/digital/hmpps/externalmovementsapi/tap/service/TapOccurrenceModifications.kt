@@ -77,7 +77,7 @@ class TapOccurrenceModifications(
         if (status.code !in listOf(SCHEDULED.name, CANCELLED.name)) {
           throw ConflictException("Temporary absence not currently scheduled")
         } else {
-          single?.cancel(CancelAuthorisation(), rdSupplier)?.also {
+          single?.cancel(CancelAuthorisation, rdSupplier)?.also {
             makeDpsOnly()
           }
           cancel(action, rdSupplier)
@@ -112,7 +112,7 @@ class TapOccurrenceModifications(
         applyLocation(action)
         with(authorisation) {
           val newLocations = if (repeat) {
-            (locations + location).mapTo(linkedSetOf()) { it }
+            (locations.toList() + location).mapTo(linkedSetOf()) { it }
           } else {
             linkedSetOf(location)
           }

@@ -26,7 +26,7 @@ data class Location(
     return true
   }
 
-  override fun hashCode(): Int = description?.hashCode() ?: ((0 + (address?.hashCode() ?: 0)) + (postcode?.hashCode() ?: 0))
+  override fun hashCode(): Int = description?.hashCode() ?: ((0 + address.hashCode()) + postcode.hashCode())
 
   companion object {
     fun empty(): Location = Location(null, null, null, null)

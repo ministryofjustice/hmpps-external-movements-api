@@ -74,7 +74,6 @@ spring:
             client-id: ${client.id}
             client-secret: ${client.secret}
             authorization-grant-type: client_credentials
-            scope: read
         provider:
           hmpps-auth:
             token-uri: ${integration.hmpps-auth.url}/oauth/token
@@ -138,6 +137,7 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+    version: 5.32.11
 
 client:
   id: external-movements

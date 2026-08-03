@@ -57,7 +57,7 @@ class CancelTapOccurrenceIntTest(
   fun `403 forbidden without correct role`(role: String) {
     cancelOccurrence(
       newUuid(),
-      CancelOccurrence(),
+      CancelOccurrence,
       null,
       role,
     ).expectStatus().isForbidden
@@ -65,7 +65,7 @@ class CancelTapOccurrenceIntTest(
 
   @Test
   fun `404 occurrence does not exist`() {
-    cancelOccurrence(newUuid(), CancelOccurrence()).expectStatus().isNotFound
+    cancelOccurrence(newUuid(), CancelOccurrence).expectStatus().isNotFound
   }
 
   @Test
@@ -73,7 +73,7 @@ class CancelTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence =
       givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth, end = LocalDateTime.now().minusHours(4)))
-    val res = cancelOccurrence(occurrence.id, CancelOccurrence()).errorResponse(HttpStatus.CONFLICT)
+    val res = cancelOccurrence(occurrence.id, CancelOccurrence).errorResponse(HttpStatus.CONFLICT)
     assertThat(res.status).isEqualTo(HttpStatus.CONFLICT.value())
     assertThat(res.developerMessage).isEqualTo("Temporary absence not currently scheduled")
   }
@@ -83,7 +83,7 @@ class CancelTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation())
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val reason = word(26)
-    val res = cancelOccurrence(occurrence.id, CancelOccurrence(), reason).successResponse<AuditHistory>().content.single()
+    val res = cancelOccurrence(occurrence.id, CancelOccurrence, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactly(TemporaryAbsenceCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("status", "Scheduled", "Cancelled"))
@@ -121,7 +121,7 @@ class CancelTapOccurrenceIntTest(
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true))
     val occurrence = givenTemporaryAbsenceOccurrence(temporaryAbsenceOccurrence(auth))
     val reason = word(26)
-    val res = cancelOccurrence(occurrence.id, CancelOccurrence(), reason).successResponse<AuditHistory>().content.single()
+    val res = cancelOccurrence(occurrence.id, CancelOccurrence, reason).successResponse<AuditHistory>().content.single()
     assertThat(res.domainEvents).containsExactlyInAnyOrder(TemporaryAbsenceCancelled.EVENT_TYPE)
     assertThat(res.reason).isEqualTo(reason)
     assertThat(res.changes).containsExactly(AuditedAction.Change("status", "Scheduled", "Cancelled"))

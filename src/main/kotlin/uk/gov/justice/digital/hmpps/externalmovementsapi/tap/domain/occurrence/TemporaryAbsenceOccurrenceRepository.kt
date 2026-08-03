@@ -27,9 +27,11 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisatio
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.AccompaniedBy
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatus
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceSubType
+import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.clashes.ClashRange
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.Optional
 import java.util.SequencedSet
 import java.util.UUID
 
@@ -48,10 +50,18 @@ interface TemporaryAbsenceOccurrenceRepository :
   )
   fun dateRangeForAuthorisation(authorisationId: UUID): DateRange?
 
+  @EntityGraph("tap.occurrence.full")
+  override fun findById(id: UUID): Optional<TemporaryAbsenceOccurrence>
+
+  @EntityGraph("tap.occurrence.full")
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceOccurrence?
 
   fun countByAuthorisationId(authorisationId: UUID): Int
+
+  @EntityGraph("tap.occurrence.full")
   fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
+
+  @EntityGraph("tap.occurrence.full")
   fun findByAuthorisationIdIn(authorisationIds: Set<UUID>): List<TemporaryAbsenceOccurrence>
 
   @Query(
@@ -132,7 +142,6 @@ interface TemporaryAbsenceOccurrenceRepository :
   @Query("""select tao.id from TemporaryAbsenceOccurrence tao where tao.legacyId in :legacyIds""")
   fun findIdsByLegacyId(legacyIds: Set<Long>): List<UUID>
 
-  @EntityGraph("tap.occurrence.full")
   override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceOccurrence>
 }
 
@@ -143,7 +152,8 @@ fun occurrenceMatchesPrisonCode(prisonCode: String) = Specification<TemporaryAbs
 }
 
 fun occurrenceMatchesPersonPrisonCode(prisonCode: String) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  tao.join<TemporaryAbsenceOccurrence, PersonSummary>(TemporaryAbsenceOccurrence.PERSON, JoinType.INNER).matchesPrisonCode(cb, prisonCode)
+  tao.join<TemporaryAbsenceOccurrence, PersonSummary>(TemporaryAbsenceOccurrence.PERSON, JoinType.INNER)
+    .matchesPrisonCode(cb, prisonCode)
 }
 
 fun occurrenceMatchesPersonIdentifier(personIdentifier: String, prisonCode: String?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
@@ -155,8 +165,7 @@ fun occurrenceMatchesPersonIdentifier(personIdentifier: String, prisonCode: Stri
 }
 
 fun occurrencePersonIdentifierIn(personIdentifiers: SequencedSet<String>) = Specification<TemporaryAbsenceOccurrence> { tao, _, _ ->
-  val person = tao.join<TemporaryAbsenceOccurrence, PersonSummary>(TemporaryAbsenceOccurrence.PERSON, JoinType.INNER)
-  person.get<String>(PersonSummary.IDENTIFIER).`in`(personIdentifiers)
+  tao.get<Any>(TemporaryAbsenceOccurrence.PERSON).get<String>(PersonSummary.IDENTIFIER).`in`(personIdentifiers)
 }
 
 fun occurrenceMatchesPersonName(name: String, prisonCode: String?) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
@@ -182,9 +191,7 @@ fun occurrenceStatusCodeIn(statusCodes: Set<OccurrenceStatus.Code>) = Specificat
 }
 
 fun forAuthorisation(authorisationId: UUID) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
-  val authorisation =
-    tao.join<TemporaryAbsenceOccurrence, TemporaryAbsenceAuthorisation>(TemporaryAbsenceOccurrence.AUTHORISATION, JoinType.INNER)
-  cb.equal(authorisation.get<UUID>(TemporaryAbsenceAuthorisation.ID), authorisationId)
+  cb.equal(tao.get<Any>(TemporaryAbsenceOccurrence.AUTHORISATION).get<String>(TemporaryAbsenceAuthorisation.ID), authorisationId)
 }
 
 fun startAfter(start: LocalDateTime) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
@@ -222,5 +229,18 @@ fun isExternalActivity() = Specification<TemporaryAbsenceOccurrence> { tao, _, c
       rd.get<Set<String>>(AbsenceSubType::groups.name),
       cb.literal(arrayOf("EXTERNAL_ACTIVITIES")),
     ),
+  )
+}
+
+fun clashesFor(personIdentifiers: Set<String>, ranges: Set<ClashRange>) = Specification<TemporaryAbsenceOccurrence> { tao, _, cb ->
+  val rangeRestrictions = ranges.map {
+    cb.and(
+      cb.greaterThan(tao.get(TemporaryAbsenceOccurrence.END), it.start),
+      cb.lessThan(tao.get(TemporaryAbsenceOccurrence.START), it.end),
+    )
+  }
+  cb.and(
+    tao.get<Any>(TemporaryAbsenceOccurrence.PERSON).get<String>(PersonSummary.IDENTIFIER).`in`(personIdentifiers),
+    cb.or(rangeRestrictions),
   )
 }

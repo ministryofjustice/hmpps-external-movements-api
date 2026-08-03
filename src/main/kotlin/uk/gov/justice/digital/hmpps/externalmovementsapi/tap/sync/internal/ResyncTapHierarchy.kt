@@ -326,7 +326,8 @@ class ResyncTapHierarchy(
     applyLegacyId(request.legacyId)
     request.schedule()?.also { applySchedule(it) }
     (
-      request.occurrences.mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
+      request.occurrences.sortedBy { it.id }
+        .mapNotNullTo(linkedSetOf()) { it.location.takeUnless(Location::isNullOrEmpty) }
         .takeIf { it.isNotEmpty() }
         ?: request.location?.takeUnless(Location::isNullOrEmpty)?.let { linkedSetOf(it) }
       )?.also { applyLocations(ChangeAuthorisationLocations(it)) }
@@ -362,7 +363,7 @@ class ResyncTapHierarchy(
       dpsOnly = false,
     ).apply {
       if (isCancelled) {
-        cancel(CancelOccurrence(), rdPaths::getReferenceData)
+        cancel(CancelOccurrence, rdPaths::getReferenceData)
       }
     }
   }
@@ -392,7 +393,7 @@ class ResyncTapHierarchy(
     applyComments(ChangeOccurrenceComments(request.comments))
     applyLegacyId(request.legacyId)
     if (request.isCancelled && request.movements.isEmpty()) {
-      cancel(CancelOccurrence(), rdPaths::getReferenceData)
+      cancel(CancelOccurrence, rdPaths::getReferenceData)
     }
   }
 
