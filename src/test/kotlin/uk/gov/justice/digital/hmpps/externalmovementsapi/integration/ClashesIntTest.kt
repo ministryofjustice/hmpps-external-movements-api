@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.externalmovementsapi
+package uk.gov.justice.digital.hmpps.externalmovementsapi.integration
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.externalmovementsapi.access.Roles
 import uk.gov.justice.digital.hmpps.externalmovementsapi.context.ExternalMovementContext.Companion.SYSTEM_USERNAME
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.personIdentifier
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerator.prisonCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.IntegrationTest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceAuthorisationOperations.Companion.temporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TempAbsenceOccurrenceOperations
@@ -34,8 +32,8 @@ class ClashesIntTest(
   @Test
   fun `401 unauthorised without a valid token`() {
     webTestClient
-      .get()
-      .uri(CLASHES_URL, prisonCode())
+      .post()
+      .uri(CLASHES_URL)
       .exchange()
       .expectStatus()
       .isUnauthorized
