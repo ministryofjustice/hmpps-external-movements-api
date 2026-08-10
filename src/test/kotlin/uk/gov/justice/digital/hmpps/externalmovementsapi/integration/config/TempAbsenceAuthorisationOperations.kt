@@ -147,5 +147,8 @@ class TempAbsenceAuthorisationOperationsImpl(
     temporaryAbsenceAuthorisationRepository.save(authorisation)
   }
 
-  override fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation? = temporaryAbsenceAuthorisationRepository.findByIdOrNull(id)
+  override fun findTemporaryAbsenceAuthorisation(id: UUID): TemporaryAbsenceAuthorisation? = transactionTemplate.execute {
+    referenceDataRepository.findAll()
+    temporaryAbsenceAuthorisationRepository.findByIdOrNull(id)
+  }
 }
