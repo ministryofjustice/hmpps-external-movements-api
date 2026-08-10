@@ -45,9 +45,9 @@ class TapOccurrenceModifications(
   fun apply(id: UUID, request: OccurrenceActions): AuditHistory {
     ExternalMovementContext.get().copy(reason = request.reason).set()
     val (readVersion, writeVersion) = transactionTemplate.execute {
+      val rdSupplier = referenceDataRepository.rdProvider()
       val occurrence = taoRepository.getOccurrence(id)
       val readVersion = occurrence.version
-      val rdSupplier = referenceDataRepository.rdProvider()
       request.actions.forEach { occurrence.applyAction(it, rdSupplier) }
       taoRepository.flush()
       readVersion!! to occurrence.version!!

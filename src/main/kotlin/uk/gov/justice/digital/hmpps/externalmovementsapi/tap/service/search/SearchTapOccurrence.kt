@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service.search
 import org.springframework.data.domain.Page
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
@@ -33,6 +34,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.paged.TapOccu
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.paged.TapOccurrenceSearchRequest
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.paged.TapOccurrenceSearchResponse
 
+@Transactional(readOnly = true)
 @Service
 class SearchTapOccurrence(
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,
