@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedAttributeNode
 import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.PostLoad
 import jakarta.persistence.QueryHint
@@ -23,6 +24,8 @@ import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.jpa.HibernateHints
 import org.hibernate.type.SqlTypes
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
@@ -91,7 +94,7 @@ import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-@NamedEntityGraph(name = "tap.authorisation.full", includeAllAttributes = true)
+@NamedEntityGraph(name = "tap.authorisation.withPerson", attributeNodes = [NamedAttributeNode("person")])
 @Audited
 @Entity
 @Table(schema = "tap", name = "authorisation")
@@ -436,8 +439,11 @@ interface TemporaryAbsenceAuthorisationRepository :
   @Query("""select taa.id from TemporaryAbsenceAuthorisation taa where taa.legacyId in :legacyIds""")
   fun findIdsByLegacyId(legacyIds: Set<Long>): List<UUID>
 
-  @EntityGraph("tap.authorisation.full")
+  @EntityGraph("tap.authorisation.withPerson")
   override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceAuthorisation>
+
+  @EntityGraph("tap.authorisation.withPerson")
+  override fun findAll(spec: Specification<TemporaryAbsenceAuthorisation>, pageable: Pageable): Page<TemporaryAbsenceAuthorisation>
 }
 
 fun TemporaryAbsenceAuthorisationRepository.getAuthorisation(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence authorisation not found")

@@ -7,7 +7,6 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
 import jakarta.persistence.Transient
@@ -18,7 +17,6 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.envers.Audited
 import org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED
 import org.hibernate.type.SqlTypes
-import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
@@ -56,7 +54,6 @@ import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-@NamedEntityGraph(name = "tap.movement.full", includeAllAttributes = true)
 @Audited
 @Entity
 @Table(schema = "tap", name = "movement")
@@ -299,7 +296,6 @@ interface TemporaryAbsenceMovementRepository :
   @Query("""select tam.id from TemporaryAbsenceMovement tam where tam.legacyId in :legacyIds""")
   fun findIdsByLegacyId(legacyIds: Set<String>): List<UUID>
 
-  @EntityGraph("tap.movement.full")
   override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceMovement>
 }
 

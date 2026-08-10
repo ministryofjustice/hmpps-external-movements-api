@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.write.SyncResp
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.write.TapAuthorisation
 import java.util.UUID
 
-@Transactional
+@Transactional(readOnly = true)
 @Service
 class SyncTapAuthorisation(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,

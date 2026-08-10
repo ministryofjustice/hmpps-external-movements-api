@@ -46,10 +46,10 @@ class SyncTapMovement(
   private val movementRepository: TemporaryAbsenceMovementRepository,
 ) {
   fun sync(personIdentifier: String, request: TapMovement): SyncResponse {
+    val rdProvider = referenceDataRepository.rdProvider()
     val occurrence = request.occurrenceId?.let { occurrenceRepository.getOccurrence(it) }?.also {
       require(personIdentifier == it.person.identifier) { "Person identifier does not match occurrence" }
     }
-    val rdProvider = referenceDataRepository.rdProvider()
     val person = occurrence?.person ?: let { personSummaryService.getWithSave(personIdentifier) }
     val movement =
       (request.id?.let { movementRepository.findByIdOrNull(it) } ?: movementRepository.findByLegacyId(request.legacyId))

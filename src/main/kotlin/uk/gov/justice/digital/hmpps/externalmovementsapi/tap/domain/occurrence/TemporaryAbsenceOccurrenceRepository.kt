@@ -50,18 +50,16 @@ interface TemporaryAbsenceOccurrenceRepository :
   )
   fun dateRangeForAuthorisation(authorisationId: UUID): DateRange?
 
-  @EntityGraph("tap.occurrence.full")
+  @EntityGraph("tap.occurrence.withAuth")
   override fun findById(id: UUID): Optional<TemporaryAbsenceOccurrence>
 
-  @EntityGraph("tap.occurrence.full")
+  @EntityGraph("tap.occurrence.withAuth")
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceOccurrence?
 
   fun countByAuthorisationId(authorisationId: UUID): Int
 
-  @EntityGraph("tap.occurrence.full")
   fun findByAuthorisationId(authorisationId: UUID): List<TemporaryAbsenceOccurrence>
 
-  @EntityGraph("tap.occurrence.full")
   fun findByAuthorisationIdIn(authorisationIds: Set<UUID>): List<TemporaryAbsenceOccurrence>
 
   @Query(

@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.getAuthorisation
@@ -17,6 +18,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.integration.I
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.integration.forIntegration
 import java.util.UUID
 
+@Transactional(readOnly = true)
 @Service
 class IntegrationRetriever(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,

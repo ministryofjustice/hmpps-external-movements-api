@@ -160,8 +160,27 @@ class TempAbsenceOccurrenceOperationsImpl(
 
   override fun findTemporaryAbsenceOccurrence(id: UUID): TemporaryAbsenceOccurrence? = transactionTemplate.execute {
     val occurrence = temporaryAbsenceOccurrenceRepository.findByIdOrNull(id)
-    // force getting related movements inside transaction to avoid lazy loading exception in tests
-    occurrence?.movements()?.forEach { it.id }
+    // force getting related items inside transaction to avoid lazy loading exception in tests
+    occurrence?.also {
+      it.movements().forEach { m -> m.id }
+      it.authorisation.also { a ->
+        a.status.description
+        a.person.prisonCode
+        a.transport.description
+        a.accompaniedBy.description
+        a.absenceType?.description
+        a.absenceSubType?.description
+        a.absenceReasonCategory?.description
+        a.absenceReason.description
+      }
+      it.status.description
+      it.transport.description
+      it.accompaniedBy.description
+      it.absenceType?.description
+      it.absenceSubType?.description
+      it.absenceReasonCategory?.description
+      it.absenceReason.description
+    }
     occurrence
   }
 

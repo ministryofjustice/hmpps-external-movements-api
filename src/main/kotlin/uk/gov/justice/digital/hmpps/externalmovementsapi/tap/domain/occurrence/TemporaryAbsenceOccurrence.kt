@@ -84,33 +84,14 @@ import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty1
 
 @NamedEntityGraph(
-  name = "tap.occurrence.full",
-  includeAllAttributes = true,
+  name = "tap.occurrence.withAuth",
   attributeNodes = [
     NamedAttributeNode("authorisation", "auth"),
-    NamedAttributeNode("movements", "move"),
   ],
   subgraphs = [
     NamedSubgraph(
       name = "auth",
-      attributeNodes = [
-        NamedAttributeNode("person"),
-        NamedAttributeNode("status"),
-        NamedAttributeNode("absenceType"),
-        NamedAttributeNode("absenceSubType"),
-        NamedAttributeNode("absenceReasonCategory"),
-        NamedAttributeNode("absenceReason"),
-        NamedAttributeNode("accompaniedBy"),
-        NamedAttributeNode("transport"),
-      ],
-    ),
-    NamedSubgraph(
-      name = "move",
-      attributeNodes = [
-        NamedAttributeNode("person"),
-        NamedAttributeNode("absenceReason"),
-        NamedAttributeNode("accompaniedBy"),
-      ],
+      attributeNodes = [NamedAttributeNode("person")],
     ),
   ],
 )
