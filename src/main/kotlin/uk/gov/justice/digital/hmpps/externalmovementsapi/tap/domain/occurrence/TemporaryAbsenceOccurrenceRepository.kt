@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.Expression
 import jakarta.persistence.criteria.JoinType
 import jakarta.persistence.criteria.Predicate
 import org.hibernate.jpa.HibernateHints
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.EntityGraph
@@ -141,6 +142,9 @@ interface TemporaryAbsenceOccurrenceRepository :
   fun findIdsByLegacyId(legacyIds: Set<Long>): List<UUID>
 
   override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceOccurrence>
+
+  @EntityGraph("tap.occurrence.withAuth")
+  override fun findAll(spec: Specification<TemporaryAbsenceOccurrence>, pageable: Pageable): Page<TemporaryAbsenceOccurrence>
 }
 
 fun TemporaryAbsenceOccurrenceRepository.getOccurrence(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Temporary absence occurrence not found")
