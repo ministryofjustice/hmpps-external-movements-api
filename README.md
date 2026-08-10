@@ -48,24 +48,26 @@ or [raise a PR](https://github.com/ministryofjustice/hmpps-tech-docs).
 
 ## Running the application locally
 
-The application comes with a `dev` spring profile that includes default settings for running locally. This is not
-necessary when deploying to kubernetes as these values are included in the helm configuration templates -
+The application comes with a `local` spring profile that includes default settings for running locally. This is in addition
+to the `dev|preprod|prod` profiles for deploying to kubernetes. The profile is set in the appropriate values-env.yml file
 e.g. `values-dev.yaml`.
 
-There is also a `docker-compose.yml` that can be used to run a local instance of the template in docker and also an
-instance of HMPPS Auth (required if your service calls out to other services using a token).
+There is a `docker-compose.yml` that can be used to run a local instance of local-stack to replicate the sqs/sns queues/topics 
+and the postgres database. In order to start the local-stack and postgres containers run
 
 ```bash
 docker compose pull && docker compose up
 ```
 
-will build the application and run it and HMPPS Auth within a local docker instance.
+Optionally add `-d` to run in the background.
 
-### Running the application in Intellij
+To run locally you will need to get the client_id and client_secret env vars from kubernetes. This is to save having to
+have an instance of every downstream service running locally. These can be retrieved using
 
 ```bash
-docker compose pull && docker compose up --scale hmpps-external-movements-api=0
+kubectl -n hmpps-external-movements-dev get secret hmpps-external-movements-api -o json | jq -r ".data | map_values(@base64d)"
 ```
 
-will just start a docker instance of HMPPS Auth. The application should then be started with a `dev` active profile
-in Intellij.
+To use the dev urls so that dev auth works with the API set the SYSTEM_CLIENT_ID and SYSTEM_CLIENT_SECRET env vars.
+Set the `SPRING_PROFILES_ACTIVE` env var or edit the intellij run config to include the profiles `dev,local`.
+
