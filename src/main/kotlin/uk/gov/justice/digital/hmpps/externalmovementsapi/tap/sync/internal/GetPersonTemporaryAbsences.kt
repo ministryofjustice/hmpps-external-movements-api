@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.internal
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.authorisation.TemporaryAbsenceAuthorisationRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.movement.TemporaryAbsenceMovement
@@ -15,6 +16,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.read.PersonOcc
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.read.PersonTapCounts
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.read.PersonTapDetail
 
+@Transactional(readOnly = true)
 @Service
 class GetPersonTemporaryAbsences(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,

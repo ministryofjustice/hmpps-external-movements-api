@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.externalmovementsapi.tap.service
 
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_REASON_CATEGORY
 import uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata.ReferenceDataDomain.Code.ABSENCE_SUB_TYPE
@@ -24,6 +25,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 @Service
+@Transactional(readOnly = true)
 class GetTapAuthorisation(
   private val authorisationRepository: TemporaryAbsenceAuthorisationRepository,
   private val occurrenceRepository: TemporaryAbsenceOccurrenceRepository,

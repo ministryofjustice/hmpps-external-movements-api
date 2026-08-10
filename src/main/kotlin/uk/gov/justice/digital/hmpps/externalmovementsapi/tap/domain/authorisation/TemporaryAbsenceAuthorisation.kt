@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedAttributeNode
 import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.PostLoad
 import jakarta.persistence.QueryHint
@@ -95,8 +96,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 @NamedEntityGraph(
-  name = "tap.authorisation.full",
-  includeAllAttributes = true,
+  name = "tap.authorisation.withPerson",
+  attributeNodes = [NamedAttributeNode("person")],
 )
 @Audited
 @Entity
@@ -401,10 +402,10 @@ interface TemporaryAbsenceAuthorisationRepository :
   JpaSpecificationExecutor<TemporaryAbsenceAuthorisation>,
   RefreshRepository<TemporaryAbsenceAuthorisation, UUID> {
 
-  @EntityGraph("tap.authorisation.full")
+  @EntityGraph("tap.authorisation.withPerson")
   override fun findById(id: UUID): Optional<TemporaryAbsenceAuthorisation>
 
-  @EntityGraph("tap.authorisation.full")
+  @EntityGraph("tap.authorisation.withPerson")
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceAuthorisation?
 
   @Query(
@@ -428,7 +429,7 @@ interface TemporaryAbsenceAuthorisationRepository :
 
   fun countByPersonIdentifier(personIdentifier: String): Int
 
-  @EntityGraph("tap.authorisation.full")
+  @EntityGraph("tap.authorisation.withPerson")
   fun findByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceAuthorisation>
 
   @Query(
@@ -449,10 +450,10 @@ interface TemporaryAbsenceAuthorisationRepository :
   @Query("""select taa.id from TemporaryAbsenceAuthorisation taa where taa.legacyId in :legacyIds""")
   fun findIdsByLegacyId(legacyIds: Set<Long>): List<UUID>
 
-  @EntityGraph("tap.authorisation.full")
+  @EntityGraph("tap.authorisation.withPerson")
   override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceAuthorisation>
 
-  @EntityGraph("tap.authorisation.full")
+  @EntityGraph("tap.authorisation.withPerson")
   override fun findAll(spec: Specification<TemporaryAbsenceAuthorisation>, pageable: Pageable): Page<TemporaryAbsenceAuthorisation>
 }
 
