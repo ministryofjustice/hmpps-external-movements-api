@@ -5,7 +5,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.NamedAttributeNode
 import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.PostLoad
 import jakarta.persistence.QueryHint
@@ -89,12 +88,16 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.autho
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.paged.AbsenceCategorisationFilter
 import java.time.LocalDate
 import java.time.LocalDate.now
+import java.util.Optional
 import java.util.SequencedSet
 import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-@NamedEntityGraph(name = "tap.authorisation.withPerson", attributeNodes = [NamedAttributeNode("person")])
+@NamedEntityGraph(
+  name = "tap.authorisation.full",
+  includeAllAttributes = true,
+)
 @Audited
 @Entity
 @Table(schema = "tap", name = "authorisation")
@@ -397,6 +400,11 @@ interface TemporaryAbsenceAuthorisationRepository :
   JpaRepository<TemporaryAbsenceAuthorisation, UUID>,
   JpaSpecificationExecutor<TemporaryAbsenceAuthorisation>,
   RefreshRepository<TemporaryAbsenceAuthorisation, UUID> {
+
+  @EntityGraph("tap.authorisation.full")
+  override fun findById(id: UUID): Optional<TemporaryAbsenceAuthorisation>
+
+  @EntityGraph("tap.authorisation.full")
   fun findByLegacyId(legacyId: Long): TemporaryAbsenceAuthorisation?
 
   @Query(
@@ -419,6 +427,8 @@ interface TemporaryAbsenceAuthorisationRepository :
   fun findByStatusAndEndBefore(statusId: UUID, date: LocalDate): List<TemporaryAbsenceAuthorisation>
 
   fun countByPersonIdentifier(personIdentifier: String): Int
+
+  @EntityGraph("tap.authorisation.full")
   fun findByPersonIdentifier(personIdentifier: String): List<TemporaryAbsenceAuthorisation>
 
   @Query(
@@ -439,10 +449,10 @@ interface TemporaryAbsenceAuthorisationRepository :
   @Query("""select taa.id from TemporaryAbsenceAuthorisation taa where taa.legacyId in :legacyIds""")
   fun findIdsByLegacyId(legacyIds: Set<Long>): List<UUID>
 
-  @EntityGraph("tap.authorisation.withPerson")
+  @EntityGraph("tap.authorisation.full")
   override fun findAllById(ids: Iterable<UUID>): List<TemporaryAbsenceAuthorisation>
 
-  @EntityGraph("tap.authorisation.withPerson")
+  @EntityGraph("tap.authorisation.full")
   override fun findAll(spec: Specification<TemporaryAbsenceAuthorisation>, pageable: Pageable): Page<TemporaryAbsenceAuthorisation>
 }
 

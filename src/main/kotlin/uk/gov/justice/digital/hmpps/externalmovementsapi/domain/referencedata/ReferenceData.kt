@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.externalmovementsapi.domain.referencedata
 
+import jakarta.annotation.PostConstruct
 import jakarta.persistence.Column
 import jakarta.persistence.EntityManager
 import jakarta.persistence.Id
@@ -41,5 +42,10 @@ class ReferenceDataRepository(
   fun rdProvider(): (KClass<out ReferenceData>, String) -> ReferenceData {
     val allRd = findAll().associateBy { Hibernate.getClass(it) to it.code }
     return { domain: KClass<out ReferenceData>, code: String -> requireNotNull(allRd[domain.java to code]) { "$code of $domain not found" } }
+  }
+
+  @PostConstruct
+  fun init() {
+    findAll()
   }
 }
