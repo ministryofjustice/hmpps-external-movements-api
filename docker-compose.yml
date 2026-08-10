@@ -1,18 +1,26 @@
 version: "3"
 services:
-  hmpps-external-movements-api:
-    build:
-      context: .
+  localstack:
+    image: localstack/localstack:4.14.0
     networks:
       - hmpps
-    container_name: hmpps-external-movements-api
     ports:
-      - "8080:8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ping"]
+      - "4566:4566"
     environment:
-      - SERVER_PORT=8080
-      - SPRING_PROFILES_ACTIVE=dev
+      - SERVICES=sqs,sns
+
+  tap-db:
+    image: postgres
+    networks:
+      - hmpps
+    container_name: tap-db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=movements
+      - POSTGRES_USER=external
+      - POSTGRES_DB=movements
 
 networks:
   hmpps:
