@@ -31,10 +31,6 @@ annotation class ValidPersonIdentifierOrDateRange(
 
 class PersonIdentifierDateRangeValidator : ConstraintValidator<ValidPersonIdentifierOrDateRange, PersonIdentifierDateRange<*>> {
   override fun isValid(request: PersonIdentifierDateRange<*>, context: ConstraintValidatorContext): Boolean = with(request) {
-    return if (request.isPersonIdentifier()) {
-      true
-    } else {
-      start != null && end != null && ChronoUnit.DAYS.between(start, end) <= 31
-    }
+    return request.isPersonIdentifier() || (start != null && end != null && ChronoUnit.DAYS.between(start, end) <= 31)
   }
 }
