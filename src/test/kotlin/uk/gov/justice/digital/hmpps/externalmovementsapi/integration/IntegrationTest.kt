@@ -39,7 +39,7 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.DataGenerat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.LocationGenerator.location
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.config.TestConfig
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer
-import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer.setLocalStackProperties
+import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.LocalStackContainer.setMiniStackProperties
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.prisonregister.Prison
 import uk.gov.justice.digital.hmpps.externalmovementsapi.integration.wiremock.HmppsAuthApiExtension
@@ -275,7 +275,7 @@ abstract class IntegrationTest {
 
       System.setProperty("aws.region", "eu-west-2")
 
-      localStackContainer?.also { setLocalStackProperties(it, registry) }
+      localStackContainer?.also { setMiniStackProperties(it, registry) }
     }
   }
 }
