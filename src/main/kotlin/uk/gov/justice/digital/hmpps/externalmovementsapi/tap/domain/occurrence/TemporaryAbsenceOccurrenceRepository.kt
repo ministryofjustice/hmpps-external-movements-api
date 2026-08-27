@@ -80,7 +80,7 @@ interface TemporaryAbsenceOccurrenceRepository :
       from TemporaryAbsenceOccurrence ao 
       where ao.authorisation.id = :authorisationId
     )
-    select o.pos as position, (select count(1) from occurrences) as total
+    select o.pos as position, (select count(occ.occurrenceId) from occurrences occ) as total
     from occurrences o where o.occurrenceId = :occurrenceId
     """,
   )
