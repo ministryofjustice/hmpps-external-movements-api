@@ -18,19 +18,15 @@ on:
         type: boolean
 
 permissions:
-  contents: write
-  packages: write
-  id-token: write
-  attestations: write
+  contents: read
 
 jobs:
   helm_lint:
     strategy:
       matrix:
-        environments: ['dev', 'preprod', 'prod']
+        environments: [ 'dev', 'preprod', 'prod' ]
     name: helm lint
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/test_helm_lint.yml@v2 # WORKFLOW_VERSION
-    secrets: inherit
     with:
       environment: ${{ matrix.environments }}
   app_version:
@@ -44,7 +40,6 @@ jobs:
   gradle_verify:
     name: Validate the kotlin
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
-    secrets: inherit
     with:
       gradle-command: 'BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
       upload-build-artifacts: ${{ github.ref == 'refs/heads/main' }}
@@ -52,6 +47,11 @@ jobs:
     needs:
       - app_version
   build:
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
@@ -67,16 +67,6 @@ jobs:
       generate_sbom: true
       attach_sbom_to_registry: true
       sign_image: true
-  schema_spy:
-    uses: ./.github/workflows/schema-spy.yml
-    if: github.ref == 'refs/heads/main'
-    with:
-      docker_compose_file: 'docker-compose-schema-spy.yml'
-      database_name: 'movements'
-      database_schema: 'public,tap'
-      database_user: 'external'
-      database_password: 'movements'
-    secrets: inherit
   deploy_dev:
     name: Deploy to the development environment
     concurrency:
@@ -85,33 +75,33 @@ jobs:
       - build
       - helm_lint
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
-    secrets: inherit
     with:
       environment: 'dev'
       app_version: '${{ needs.build.outputs.app_version }}'
+    secrets: inherit
   deploy_preprod:
-   name: Deploy to pre-production environment
-   concurrency:
-     group: deploy-preprod
-   needs:
-     - build
-     - helm_lint
-   uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
-   secrets: inherit
-   with:
-     environment: 'preprod'
-     app_version: '${{ needs.build.outputs.app_version }}'
+    name: Deploy to pre-production environment
+    concurrency:
+      group: deploy-preprod
+    needs:
+      - build
+      - helm_lint
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+    with:
+      environment: 'preprod'
+      app_version: '${{ needs.build.outputs.app_version }}'
+    secrets: inherit
   deploy_prod:
-   name: Deploy to production environment
-   concurrency:
-     group: deploy-prod
-   needs:
-     - build
-     - deploy_dev
-     - deploy_preprod
-   uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
-   secrets: inherit
-   with:
-     environment: 'prod'
-     app_version: '${{ needs.build.outputs.app_version }}'
-     slack_notification: 'true'
+    name: Deploy to production environment
+    concurrency:
+      group: deploy-prod
+    needs:
+      - build
+      - deploy_dev
+      - deploy_preprod
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+    with:
+      environment: 'prod'
+      app_version: '${{ needs.build.outputs.app_version }}'
+      slack_notification: 'true'
+    secrets: inherit
