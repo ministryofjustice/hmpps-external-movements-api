@@ -184,6 +184,59 @@ class ClearTapAuthorisationScheduleIntTest(
   }
 
   @Test
+  fun `200 ok - single authorisation with expired occurrence set to dps only`() {
+    val auth = givenTemporaryAbsenceAuthorisation(
+      temporaryAbsenceAuthorisation(
+        repeat = false,
+        start = LocalDate.now().plusDays(1),
+        end = LocalDate.now().plusDays(1),
+      ),
+    )
+    val occ = givenTemporaryAbsenceOccurrence(
+      temporaryAbsenceOccurrence(
+        auth,
+        start = LocalDateTime.now().minusDays(2),
+        end = LocalDateTime.now().minusDays(1),
+      ),
+    )
+    assertThat(occ.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+
+    val request = ClearAuthorisationSchedule
+    val reason = word(25)
+
+    val res = clearSchedule(auth.id, request, reason).successResponse<AuditHistory>().content.single()
+    assertThat(res.domainEvents).containsExactly(TemporaryAbsenceAuthorisationCancelled.EVENT_TYPE)
+    assertThat(res.reason).isEqualTo(reason)
+    assertThat(res.changes).containsExactly(
+      AuditedAction.Change("status", "Approved", "Cancelled"),
+    )
+
+    val saved = requireNotNull(findTemporaryAbsenceAuthorisation(auth.id))
+    assertThat(saved.status.code).isEqualTo(AuthorisationStatus.Code.CANCELLED.name)
+    val occurrence = requireNotNull(findTemporaryAbsenceOccurrence(occ.id))
+    assertThat(occurrence.status.code).isEqualTo(OccurrenceStatus.Code.EXPIRED.name)
+    assertThat(occurrence.dpsOnly).isTrue
+
+    verifyAudit(
+      saved,
+      RevisionType.MOD,
+      setOf(
+        TemporaryAbsenceAuthorisation::class.simpleName!!,
+        TemporaryAbsenceOccurrence::class.simpleName!!,
+        HmppsDomainEvent::class.simpleName!!,
+      ),
+      ExternalMovementContext.get().copy(username = DEFAULT_USERNAME, reason = reason),
+    )
+
+    verifyEventPublications(
+      saved,
+      setOf(
+        TemporaryAbsenceAuthorisationCancelled(auth.person.identifier, auth.id).publication(auth.id),
+      ),
+    )
+  }
+
+  @Test
   fun `200 ok - authorisation schedule cleared from paused`() {
     val auth = givenTemporaryAbsenceAuthorisation(temporaryAbsenceAuthorisation(repeat = true, status = PAUSED))
     val pastOccurrence = givenTemporaryAbsenceOccurrence(

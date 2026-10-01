@@ -134,12 +134,23 @@ class TapAuthorisationModifications(
         throw ConflictException(NOT_YET_APPROVED)
       } else {
         cancel(action, rdSupplier)
-        affectedOccurrences().forEach {
-          if (repeat) {
-            taoRepository.delete(it)
-          } else {
-            it.makeDpsOnly()
-            it.cancel(CancelOccurrence, rdSupplier)
+        if (repeat) {
+          affectedOccurrences().forEach(taoRepository::delete)
+        } else {
+          taoRepository.findByAuthorisationId(id).forEach {
+            if (it.status.code in listOf(
+                OccurrenceStatus.Code.PENDING.name,
+                OccurrenceStatus.Code.SCHEDULED.name,
+                OccurrenceStatus.Code.PAUSED.name,
+              )
+            ) {
+              it.cancel(CancelOccurrence, rdSupplier)
+            }
+            if (it.movements().isEmpty()) {
+              it.makeDpsOnly()
+            } else {
+              throw ConflictException("Cannot clear a schedule with a movement")
+            }
           }
         }
       }
