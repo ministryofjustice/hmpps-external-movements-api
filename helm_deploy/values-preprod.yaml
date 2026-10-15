@@ -13,7 +13,6 @@ generic-service:
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
   businessHoursOnly: true
-  alertSeverity: move-and-improve-alerts-non-prod
   rdsAlertsDatabases:
     cloud-platform-9a716c2a18a56ffc: "External Movements DB"
   rdsAlertsConnectionThreshold: 100
