@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedat
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.OccurrenceStatusRepository
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.absencereason.AbsenceReason
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.domain.referencedata.getByCode
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.authorisation.ChangeAuthorisationLocations
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementAccompaniment
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementComments
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementDirection
@@ -30,7 +29,6 @@ import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movem
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementOccurredAt
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementOccurrence
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.movement.ChangeMovementReason
-import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.model.actions.occurrence.ChangeOccurrenceLocation
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.write.SyncResponse
 import uk.gov.justice.digital.hmpps.externalmovementsapi.tap.sync.write.TapMovement
 import java.util.UUID
@@ -65,12 +63,6 @@ class SyncTapMovement(
           }
           movementRepository.save(movement)
         }
-    occurrence?.authorisation?.also { auth ->
-      movementRepository.flush()
-      val locations = occurrenceRepository.findByAuthorisationId(auth.id).sortedBy { it.id }
-        .mapTo(linkedSetOf()) { occ -> occ.location }
-      auth.applyLocations(ChangeAuthorisationLocations(locations))
-    }
     return SyncResponse(movement.id)
   }
 
@@ -89,9 +81,7 @@ class SyncTapMovement(
     rdProvider: (KClass<out ReferenceData>, String) -> ReferenceData,
   ) = TemporaryAbsenceMovement(
     person = person,
-    occurrence = occurrence
-      ?.applyLocation(ChangeOccurrenceLocation(location))
-      ?.calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus },
+    occurrence = occurrence?.calculateStatus { rdProvider(OccurrenceStatus::class, it) as OccurrenceStatus },
     occurredAt = occurredAt,
     direction = valueOf(direction.name),
     prisonCode = prisonCode,
@@ -122,6 +112,6 @@ class SyncTapMovement(
       rdProvider,
     )
     applyReason(ChangeMovementReason(request.absenceReasonCode), rdProvider)
-    applyLocation(ChangeMovementLocation(request.location))
+    applyLocation(ChangeMovementLocation(request.location, true))
   }
 }
