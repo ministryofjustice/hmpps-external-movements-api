@@ -300,7 +300,7 @@ final class TemporaryAbsenceOccurrence(
   }
 
   fun applyLocation(action: ChangeOccurrenceLocation) = apply {
-    if (location != action.location) {
+    if (action changes location) {
       location = action.location
       appliedActions += action
     }

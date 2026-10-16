@@ -190,7 +190,7 @@ final class TemporaryAbsenceMovement(
   }
 
   fun applyLocation(action: ChangeMovementLocation) = apply {
-    if (location != action.location) {
+    if (action changes location) {
       location = action.location
       appliedActions += action
     }

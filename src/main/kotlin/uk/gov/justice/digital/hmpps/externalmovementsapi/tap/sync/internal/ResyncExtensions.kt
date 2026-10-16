@@ -91,7 +91,7 @@ internal fun TemporaryAbsenceOccurrence.applySchedule(request: TapOccurrence) {
 }
 
 internal fun TemporaryAbsenceOccurrence.applyLogistics(request: TapOccurrence, rdPaths: ReferenceDataPaths) {
-  applyLocation(ChangeOccurrenceLocation(request.location))
+  applyLocation(ChangeOccurrenceLocation(request.location, true))
   applyAccompaniment(ChangeOccurrenceAccompaniment(request.accompaniedByCode), rdPaths::getReferenceData)
   applyTransport(ChangeOccurrenceTransport(request.transportCode), rdPaths::getReferenceData)
   request.contactInformation?.also { applyContactInformation(ChangeOccurrenceContactInformation(it)) }

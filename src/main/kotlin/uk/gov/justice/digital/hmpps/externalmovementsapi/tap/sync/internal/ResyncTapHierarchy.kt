@@ -410,7 +410,7 @@ class ResyncTapHierarchy(
     schedule?.also {
       reschedule(RescheduleOccurrence(of(authorisation.start, it.startTime), of(authorisation.end, it.returnTime)))
     }
-    applyLocation(ChangeOccurrenceLocation(authorisation.locations.firstOrNull() ?: Location.empty()))
+    applyLocation(ChangeOccurrenceLocation(authorisation.locations.firstOrNull() ?: Location.empty(), true))
     applyAccompaniment(ChangeOccurrenceAccompaniment(authorisation.accompaniedBy.code), rdSupplier)
     applyTransport(ChangeOccurrenceTransport(authorisation.transport.code), rdSupplier)
     applyComments(ChangeOccurrenceComments(authorisation.comments))
@@ -455,7 +455,7 @@ class ResyncTapHierarchy(
       rdProvider,
     )
     applyReason(ChangeMovementReason(request.absenceReasonCode), rdProvider)
-    applyLocation(ChangeMovementLocation(request.location))
+    applyLocation(ChangeMovementLocation(request.location, true))
   }
 
   private fun ReferenceDataRequired.rdPaths(
