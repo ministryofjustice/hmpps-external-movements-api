@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.15"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.1.1"
   kotlin("plugin.spring") version "2.4.21"
   kotlin("plugin.jpa") version "2.4.21"
 }
@@ -14,9 +14,9 @@ configurations {
 val ehcacheVersion = "3.12.0"
 val hibernateJcacheVersion = "7.4.5.Final"
 val hmppsKotlinVersion = "3.1.0"
-val sentryVersion = "8.64.0"
-val springDocVersion = "3.2.0"
-val sqsStarterVersion = "7.4.1"
+val sentryVersion = "8.65.0"
+val springDocVersion = "3.2.1"
+val sqsStarterVersion = "7.6.0"
 val testContainersVersion = "1.21.4"
 val uuidGeneratorVersion = "5.2.0"
 val wiremockVersion = "3.13.2"
