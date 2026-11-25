@@ -58,5 +58,5 @@ class TapAuthorisationController(
 
   @CaseloadIdHeader
   @PutMapping("/{id}")
-  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody actions: AuthorisationActions) = modify.apply(id, actions)
+  fun applyAuthorisationActions(@PathVariable id: UUID, @Valid @RequestBody actions: AuthorisationActions) = modify.apply(id, actions)
 }

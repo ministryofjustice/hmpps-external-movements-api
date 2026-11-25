@@ -37,5 +37,5 @@ class TapOccurrenceController(
 
   @CaseloadIdHeader
   @PutMapping(value = ["/{id}"])
-  fun applyActions(@PathVariable id: UUID, @Valid @RequestBody actions: OccurrenceActions) = modify.apply(id, actions)
+  fun applyOccurrenceActions(@PathVariable id: UUID, @Valid @RequestBody actions: OccurrenceActions) = modify.apply(id, actions)
 }
