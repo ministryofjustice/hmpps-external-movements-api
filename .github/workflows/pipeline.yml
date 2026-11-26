@@ -44,6 +44,7 @@ jobs:
       gradle-command: 'BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
       upload-build-artifacts: ${{ github.ref == 'refs/heads/main' }}
       java-version: "25"
+      test-report-continue-on-error: true
     needs:
       - app_version
   build:
@@ -67,6 +68,19 @@ jobs:
       generate_sbom: true
       attach_sbom_to_registry: true
       sign_image: true
+  schema_spy:
+    uses: ./.github/workflows/schema-spy.yml
+    if: github.ref == 'refs/heads/main'
+    with:
+      docker_compose_file: 'docker-compose-schema-spy.yml'
+      database_name: 'movements'
+      database_schema: 'public,tap'
+      database_user: 'external'
+      database_password: 'movements'
+      publish: ${{ github.ref == 'refs/heads/main' }}
+    secrets: inherit
+    permissions:
+      contents: write
   deploy_dev:
     name: Deploy to the development environment
     concurrency:

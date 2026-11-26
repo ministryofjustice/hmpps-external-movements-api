@@ -1,0 +1,140 @@
+name: SchemaSpy report
+
+on:
+  workflow_call:
+    inputs:
+      java_version:
+        description: Java version
+        type: string
+        default: '25'
+      java_options:
+        description: Java options
+        type: string
+        default: '-Xmx512m -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2 -Dorg.gradle.daemon=false -Dkotlin.compiler.execution.strategy=in-process'
+      docker_compose_file:
+        description: Path to Docker Compose file to start required containers
+        type: string
+        required: true
+      init_db_cli:
+        description: Command line to initialise database
+        type: string
+        default: './gradlew -Pinit-db=true test --tests uk.gov.justice.digital.hmpps.externalmovementsapi.integration.InitialiseDatabase'
+      database_name:
+        description: Database name
+        type: string
+        required: true
+      database_user:
+        description: Database user name
+        type: string
+        required: true
+      database_password:
+        description: Database user password
+        type: string
+        required: true
+      database_schema:
+        description: Database schema name
+        type: string
+        required: true
+      schemaspy_version:
+        # renovate: datasource=github-releases depName=schemaspy/schemaspy
+        default: '6.2.4'
+        type: string
+        description: Schema spy version
+      schemaspy_sha256:
+        default: '50abf42c6fbf746b36365f81adb9686e1da83344e89f2719a31e6c1209ebcaad'
+        type: string
+        description: SHA256 checksum for SchemaSpy JAR (from GitHub releases)
+      postgres_driver_version:
+        # renovate: datasource=maven depName=org.postgresql:postgresql
+        default: '42.7.3'
+        type: string
+        description: Postgres driver version
+      postgres_driver_sha256:
+        default: 'a2644cbfba1baa145ff7e8c8ef582a6eed7a7ec4ca792f7f054122bdec756268'
+        type: string
+        description: SHA256 checksum for PostgreSQL JDBC driver
+      publish:
+        description: Publish the report to GitHub Pages
+        type: boolean
+        default: true
+
+jobs:
+  schema-spy:
+    name: Schema Spy report generation
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Java
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java_version }}
+          cache: gradle
+          cache-dependency-path: |
+            *.gradle*
+            **/gradle-wrapper.properties
+
+      - name: Initialise database
+        shell: bash
+        env:
+          INIT_DB_CLI: ${{ inputs.init_db_cli }}
+          JAVA_OPTS: ${{ inputs.java_options }}
+          DB_NAME: ${{ inputs.database_name }}
+          DB_SCHEMAS: ${{ inputs.database_schema }}
+          DB_USER: ${{ inputs.database_user }}
+          DB_PASSWORD: ${{ inputs.database_password }}
+          EXCLUDE_REGEX: ${{ inputs.exclude }}
+          SCHEMASPY_VER: ${{ inputs.schemaspy_version }}
+          PG_DRIVER_VER: ${{ inputs.postgres_driver_version }}
+          COMPOSE_FILE: ${{ inputs.docker_compose_file }}
+        run: |
+          set -euo pipefail
+
+          docker compose -f "$COMPOSE_FILE" up -d
+
+          CLEAN_SPY_VER="${SCHEMASPY_VER#v}"
+          SPY_URL="https://github.com/schemaspy/schemaspy/releases/download/v${CLEAN_SPY_VER}/schemaspy-${CLEAN_SPY_VER}.jar"
+          PG_URL="https://jdbc.postgresql.org/download/postgresql-${PG_DRIVER_VER}.jar"
+
+          echo "Downloading SchemaSpy from: $SPY_URL"
+          curl -fsSL "$SPY_URL" --output /tmp/schemaspy.jar
+
+          echo "Downloading PostgreSQL driver from: $PG_URL"
+          curl -fsSL "$PG_URL" --output /tmp/postgres-driver.jar
+
+          if [ -n "$INIT_DB_CLI" ]; then
+            bash -c "$INIT_DB_CLI"
+          fi
+
+          EXCLUDE_ARGS=()
+          if [ -n "$EXCLUDE_REGEX" ]; then
+            EXCLUDE_ARGS=(-I "$EXCLUDE_REGEX")
+          fi
+
+          # shellcheck disable=SC2086
+          java $JAVA_OPTS -jar /tmp/schemaspy.jar \
+            -t pgsql \
+            -dp /tmp/postgres-driver.jar \
+            -db "$DB_NAME" \
+            -host localhost \
+            -port 5432 \
+            -schemas "$DB_SCHEMAS" \
+            -vizjs \
+            -u "$DB_USER" \
+            -p "$DB_PASSWORD" \
+            "${EXCLUDE_ARGS[@]}" \
+            -o /tmp/schema-spy-report
+
+      - name: Publish to GitHub Pages
+        if: ${{ inputs.publish }}
+        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
+        with:
+          branch: gh-pages
+          folder: /tmp/schema-spy-report
+          target-folder: schema-spy-report
+
