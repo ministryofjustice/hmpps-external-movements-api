@@ -1,0 +1,8 @@
+reference_data_domain
+reference_data
+migration_system_audit
+hmpps_domain_event
+flyway_schema_history
+hmpps_domain_event_audit
+person_summary
+audit_revision
